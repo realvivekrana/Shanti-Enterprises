@@ -1,0 +1,72 @@
+import { Link, useNavigate } from 'react-router-dom';
+import { useCart } from '../context/CartContext';
+
+const Navbar = () => {
+  const { cartCount } = useCart();
+  const navigate = useNavigate();
+  const userInfo = localStorage.getItem('userInfo');
+  const user = userInfo ? JSON.parse(userInfo) : null;
+
+  const handleLogout = () => {
+    localStorage.removeItem('userInfo');
+    navigate('/');
+    window.location.reload();
+  };
+
+  return (
+    <nav className="bg-white border-b border-slate-200 sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+        <Link to="/" className="flex items-center gap-2">
+          <div className="w-9 h-9 bg-teal-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">
+            S
+          </div>
+          <span className="text-lg font-bold text-slate-800">Shanti Enterprises</span>
+        </Link>
+
+        <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
+          <Link to="/" className="hover:text-teal-600 transition-colors">Home</Link>
+          {user?.role === 'admin' && (
+            <Link to="/admin/products" className="hover:text-teal-600 transition-colors">Admin</Link>
+          )}
+        </div>
+
+        <div className="flex items-center gap-5">
+          {user ? (
+            <div className="flex items-center gap-3 text-sm">
+              <span className="text-slate-500 hidden sm:inline">Hi, {user.name}</span>
+              <button
+                onClick={handleLogout}
+                className="text-slate-600 hover:text-teal-600 font-medium transition-colors"
+              >
+                Logout
+              </button>
+            </div>
+          ) : (
+            <Link
+              to="/login"
+              className="text-sm font-medium text-slate-600 hover:text-teal-600 transition-colors"
+            >
+              Login
+            </Link>
+          )}
+
+          <Link
+            to="/cart"
+            className="relative flex items-center justify-center w-10 h-10 rounded-lg hover:bg-slate-100 transition-colors"
+          >
+            <svg className="w-5 h-5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 1.947-4.804 2.415-7.454a1.125 1.125 0 00-1.11-1.296H5.25M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+            </svg>
+            {cartCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-teal-600 text-white text-xs font-semibold rounded-full w-5 h-5 flex items-center justify-center">
+                {cartCount}
+              </span>
+            )}
+          </Link>
+        </div>
+      </div>
+    </nav>
+  );
+};
+
+export default Navbar;
