@@ -5,7 +5,10 @@ const getProducts = async (req, res) => {
     const { category, search } = req.query;
     let filter = {};
 
-    if (category) filter.category = category;
+    if (category) {
+      const categories = category.split(',');
+      filter.category = categories.length > 1 ? { $in: categories } : categories[0];
+    }
     if (search) filter.name = { $regex: search, $options: 'i' };
 
     const products = await Product.find(filter).sort({ createdAt: -1 });
@@ -19,9 +22,7 @@ const getProducts = async (req, res) => {
 const getProductById = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
-    if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
-    }
+    if (!product) return res.status(404).json({ message: 'Product not found' });
     res.json(product);
   } catch (error) {
     console.error(error);
@@ -43,10 +44,7 @@ const createProduct = async (req, res) => {
 const updateProduct = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
-    if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
-    }
-
+    if (!product) return res.status(404).json({ message: 'Product not found' });
     Object.assign(product, req.body);
     const updatedProduct = await product.save();
     res.json(updatedProduct);
@@ -59,10 +57,7 @@ const updateProduct = async (req, res) => {
 const deleteProduct = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
-    if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
-    }
-
+    if (!product) return res.status(404).json({ message: 'Product not found' });
     await product.deleteOne();
     res.json({ message: 'Product removed' });
   } catch (error) {
@@ -71,10 +66,4 @@ const deleteProduct = async (req, res) => {
   }
 };
 
-module.exports = {
-  getProducts,
-  getProductById,
-  createProduct,
-  updateProduct,
-  deleteProduct,
-};
+module.exports = { getProducts, getProductById, createProduct, updateProduct, deleteProduct };

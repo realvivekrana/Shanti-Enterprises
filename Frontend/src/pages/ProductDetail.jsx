@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import API from '../api/axios';
 import { useCart } from '../context/CartContext';
 
+const marketplaces = ['Flipkart', 'Amazon', 'Myntra', 'Meesho'];
+
 const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -57,6 +59,17 @@ const ProductDetail = () => {
           <p className={`mt-4 text-sm font-medium ${product.stock > 0 ? 'text-emerald-600' : 'text-red-600'}`}>
             {product.stock > 0 ? `In Stock (${product.stock} available)` : 'Out of Stock'}
           </p>
+
+          <div className="mt-5">
+            <p className="text-xs text-slate-500 mb-2">Suitable for sellers on</p>
+            <div className="flex flex-wrap gap-2">
+              {marketplaces.map((name) => (
+                <span key={name} className="px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600">
+                  {name}
+                </span>
+              ))}
+            </div>
+          </div>
 
           <div className="flex items-center gap-4 mt-6">
             <div className="flex items-center border border-slate-300 rounded-lg">
