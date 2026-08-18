@@ -1,41 +1,252 @@
-const asyncHandler = require('../utils/asyncHandler');
-const ApiError = require('../utils/ApiError');
-const ApiResponse = require('../utils/ApiResponse');
-const User = require('../models/User');
+const asyncHandler =
+  require('../utils/asyncHandler');
 
-// @desc  Get logged-in user's wishlist
-// @route GET /api/wishlist
-const getWishlist = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user._id).populate('wishlist');
-  res.status(200).json(new ApiResponse(200, user.wishlist, 'Wishlist fetched'));
-});
+const ApiError =
+  require('../utils/ApiError');
 
-// @desc  Add a product to wishlist
-// @route POST /api/wishlist/:productId
-const addToWishlist = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user._id);
-  const { productId } = req.params;
+const ApiResponse =
+  require('../utils/ApiResponse');
 
-  if (user.wishlist.includes(productId)) {
-    throw new ApiError(400, 'Product already in wishlist');
-  }
+const User =
+  require('../models/User');
 
-  user.wishlist.push(productId);
-  await user.save();
+const Product =
+  require('../models/Product');
 
-  res.status(200).json(new ApiResponse(200, user.wishlist, 'Added to wishlist'));
-});
+// ==============================
+// GET MY WISHLIST
+// ==============================
+// GET /api/wishlist
 
-// @desc  Remove a product from wishlist
-// @route DELETE /api/wishlist/:productId
-const removeFromWishlist = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user._id);
-  const { productId } = req.params;
+const getMyWishlist =
+  asyncHandler(async (req, res) => {
 
-  user.wishlist = user.wishlist.filter((id) => id.toString() !== productId);
-  await user.save();
+    const user =
+      await User.findById(
+        req.user._id
+      ).populate('wishlist');
 
-  res.status(200).json(new ApiResponse(200, user.wishlist, 'Removed from wishlist'));
-});
+    if (!user) {
+      throw new ApiError(
+        404,
+        'User not found'
+      );
+    }
 
-module.exports = { getWishlist, addToWishlist, removeFromWishlist };
+    res.status(200).json(
+      new ApiResponse(
+        200,
+        user.wishlist || [],
+        'Wishlist fetched successfully'
+      )
+    );
+  });
+
+// ==============================
+// ADD TO WISHLIST
+// ==============================
+// POST /api/wishlist/:productId
+
+const addToWishlist =
+  asyncHandler(async (req, res) => {
+
+    const { productId } =
+      req.params;
+
+    // ==============================
+    // CHECK PRODUCT
+    // ==============================
+
+    const product =
+      await Product.findById(
+        productId
+      );
+
+    if (!product) {
+      throw new ApiError(
+        404,
+        'Product not found'
+      );
+    }
+
+    // ==============================
+    // GET USER
+    // ==============================
+
+    const user =
+      await User.findById(
+        req.user._id
+      );
+
+    if (!user) {
+      throw new ApiError(
+        404,
+        'User not found'
+      );
+    }
+
+    // ==============================
+    // CHECK DUPLICATE
+    // ==============================
+
+    const alreadyExists =
+      user.wishlist.some(
+        (id) =>
+          id.toString() ===
+          productId.toString()
+      );
+
+    if (alreadyExists) {
+      throw new ApiError(
+        400,
+        'Product already exists in wishlist'
+      );
+    }
+
+    // ==============================
+    // ADD PRODUCT
+    // ==============================
+
+    user.wishlist.push(
+      productId
+    );
+
+    await user.save();
+
+    // ==============================
+    // GET UPDATED WISHLIST
+    // ==============================
+
+    const updatedUser =
+      await User.findById(
+        req.user._id
+      ).populate('wishlist');
+
+    res.status(200).json(
+      new ApiResponse(
+        200,
+        updatedUser.wishlist,
+        'Product added to wishlist'
+      )
+    );
+  });
+
+// ==============================
+// REMOVE FROM WISHLIST
+// ==============================
+// DELETE /api/wishlist/:productId
+
+const removeFromWishlist =
+  asyncHandler(async (req, res) => {
+
+    const { productId } =
+      req.params;
+
+    const user =
+      await User.findById(
+        req.user._id
+      );
+
+    if (!user) {
+      throw new ApiError(
+        404,
+        'User not found'
+      );
+    }
+
+    const exists =
+      user.wishlist.some(
+        (id) =>
+          id.toString() ===
+          productId.toString()
+      );
+
+    if (!exists) {
+      throw new ApiError(
+        404,
+        'Product not found in wishlist'
+      );
+    }
+
+    // ==============================
+    // REMOVE PRODUCT
+    // ==============================
+
+    user.wishlist =
+      user.wishlist.filter(
+        (id) =>
+          id.toString() !==
+          productId.toString()
+      );
+
+    await user.save();
+
+    // ==============================
+    // UPDATED WISHLIST
+    // ==============================
+
+    const updatedUser =
+      await User.findById(
+        req.user._id
+      ).populate('wishlist');
+
+    res.status(200).json(
+      new ApiResponse(
+        200,
+        updatedUser.wishlist,
+        'Product removed from wishlist'
+      )
+    );
+  });
+
+// ==============================
+// CHECK WISHLIST
+// ==============================
+// GET /api/wishlist/check/:productId
+
+const checkWishlist =
+  asyncHandler(async (req, res) => {
+
+    const { productId } =
+      req.params;
+
+    const user =
+      await User.findById(
+        req.user._id
+      );
+
+    if (!user) {
+      throw new ApiError(
+        404,
+        'User not found'
+      );
+    }
+
+    const isWishlisted =
+      user.wishlist.some(
+        (id) =>
+          id.toString() ===
+          productId.toString()
+      );
+
+    res.status(200).json(
+      new ApiResponse(
+        200,
+        {
+          isWishlisted,
+        },
+        'Wishlist status fetched'
+      )
+    );
+  });
+
+// ==============================
+// EXPORT
+// ==============================
+
+module.exports = {
+  getMyWishlist,
+  addToWishlist,
+  removeFromWishlist,
+  checkWishlist,
+};

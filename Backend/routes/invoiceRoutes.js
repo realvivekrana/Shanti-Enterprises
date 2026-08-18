@@ -4,37 +4,32 @@ const router =
   express.Router();
 
 const {
-  getDashboardSummary,
-  getSalesReport,
-} =
-  require('../controllers/dashboardController');
+  getOrCreateInvoice,
+  downloadInvoicePDF,
+} = require('../controllers/invoiceController');
 
 const {
   protect,
-  admin,
-} =
-  require('../middleware/authMiddleware');
+} = require('../middleware/authMiddleware');
 
 // ==============================
-// DASHBOARD SUMMARY
+// GET / CREATE INVOICE
 // ==============================
 
 router.get(
-  '/summary',
+  '/:orderId',
   protect,
-  admin,
-  getDashboardSummary
+  getOrCreateInvoice
 );
 
 // ==============================
-// SALES REPORT
+// DOWNLOAD PDF
 // ==============================
 
 router.get(
-  '/sales-report',
+  '/:orderId/download',
   protect,
-  admin,
-  getSalesReport
+  downloadInvoicePDF
 );
 
 module.exports =
