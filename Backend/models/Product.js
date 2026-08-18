@@ -11,9 +11,12 @@ const productSchema = new mongoose.Schema(
     },
     price: { type: Number, required: true },
     stock: { type: Number, required: true, default: 0 },
+    lowStockThreshold: { type: Number, default: 10 },
     images: [{ type: String }],
     sizes: [{ size: String, priceOverride: Number }],
     isBestSeller: { type: Boolean, default: false },
+    averageRating: { type: Number, default: 0 },
+    numReviews: { type: Number, default: 0 },
   },
   { timestamps: true }
 );
