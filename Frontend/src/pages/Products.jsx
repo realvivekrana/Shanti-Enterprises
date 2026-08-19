@@ -111,8 +111,7 @@ const Products = () => {
   const [
     sort,
     setSort,
-  ] = useState('default'
-  );
+  ] = useState('default');
 
 
   const [
@@ -127,81 +126,81 @@ const Products = () => {
 
   useEffect(() => {
 
-    const fetchProducts =
-      async () => {
+    const fetchProducts = async () => {
 
-        try {
+      try {
 
-          setLoading(true);
+        setLoading(true);
 
-          setError('');
-
-
-          const response =
-            await fetch(
-              `${API_URL}/api/products`
-            );
+        setError('');
 
 
-          if (!response.ok) {
-
-            throw new Error(
-              'Failed to fetch products'
-            );
-
-          }
-
-
-          const data =
-            await response.json();
-
-
-          /*
-           * Backend response ko flexible rakha
-           * gaya hai taaki existing API ke saath
-           * kaam kar sake.
-           */
-
-          const productData =
-            Array.isArray(data)
-              ? data
-              : Array.isArray(data.data)
-                ? data.data
-                : Array.isArray(
-                    data.products
-                  )
-                  ? data.products
-                  : Array.isArray(
-                      data.data?.products
-                    )
-                    ? data.data.products
-                    : [];
-
-
-          setProducts(
-            productData
-          );
-
-        } catch (err) {
-
-          console.error(
-            'Products fetch error:',
-            err
+        const response =
+          await fetch(
+            `${API_URL}/api/products`
           );
 
 
-          setError(
-            err.message ||
-            'Unable to load products'
+        if (!response.ok) {
+
+          throw new Error(
+            'Failed to fetch products'
           );
-
-        } finally {
-
-          setLoading(false);
 
         }
 
-      };
+
+        const data =
+          await response.json();
+
+
+        /*
+         * Backend response flexible rakha gaya hai
+         * taaki existing API ke saath kaam kare.
+         */
+
+        const productData =
+          Array.isArray(data)
+            ? data
+            : Array.isArray(data.data)
+              ? data.data
+              : Array.isArray(
+                  data.products
+                )
+                ? data.products
+                : Array.isArray(
+                    data.data?.products
+                  )
+                  ? data.data.products
+                  : [];
+
+
+        setProducts(
+          productData
+        );
+
+
+      } catch (err) {
+
+        console.error(
+          'Products fetch error:',
+          err
+        );
+
+
+        setError(
+          err.message ||
+          'Unable to load products'
+        );
+
+
+      } finally {
+
+        setLoading(false);
+
+      }
+
+    };
 
 
     fetchProducts();
@@ -584,7 +583,10 @@ const Products = () => {
       // STOCK
       // ==================================================
 
-      if (stock === 'in-stock') {
+      if (
+        stock ===
+        'in-stock'
+      ) {
 
         result =
           result.filter(
@@ -596,7 +598,10 @@ const Products = () => {
       }
 
 
-      if (stock === 'out-of-stock') {
+      if (
+        stock ===
+        'out-of-stock'
+      ) {
 
         result =
           result.filter(
@@ -777,6 +782,10 @@ const Products = () => {
 
     };
 
+
+  // ====================================================
+  // RENDER
+  // ====================================================
 
   return (
 
@@ -1499,9 +1508,9 @@ const Products = () => {
       </main>
 
 
-      {/* ==================================================
+      {/* ======================================================
           MOBILE FILTER DRAWER
-      ================================================== */}
+      ====================================================== */}
 
       {mobileFiltersOpen && (
 
@@ -1713,9 +1722,7 @@ const FilterContent = ({
 
     <div>
 
-      {/* ==================================================
-          FILTER HEADER
-      ================================================== */}
+      {/* FILTER HEADER */}
 
       <div
         className="
@@ -1759,9 +1766,7 @@ const FilterContent = ({
       </div>
 
 
-      {/* ==================================================
-          CATEGORY
-      ================================================== */}
+      {/* CATEGORY */}
 
       <FilterSection
         title="Category"
@@ -1818,9 +1823,7 @@ const FilterContent = ({
       </FilterSection>
 
 
-      {/* ==================================================
-          PRICE
-      ================================================== */}
+      {/* PRICE */}
 
       <FilterSection
         title="Price"
@@ -1890,9 +1893,7 @@ const FilterContent = ({
       </FilterSection>
 
 
-      {/* ==================================================
-          MOQ
-      ================================================== */}
+      {/* MOQ */}
 
       <FilterSection
         title="MOQ"
@@ -2005,9 +2006,7 @@ const FilterContent = ({
       </FilterSection>
 
 
-      {/* ==================================================
-          BRAND
-      ================================================== */}
+      {/* BRAND */}
 
       <FilterSection
         title="Brand"
@@ -2087,9 +2086,7 @@ const FilterContent = ({
       </FilterSection>
 
 
-      {/* ==================================================
-          STOCK
-      ================================================== */}
+      {/* STOCK */}
 
       <FilterSection
         title="Stock"
@@ -2296,9 +2293,7 @@ const ProductCard = ({
       "
     >
 
-      {/* ==================================================
-          IMAGE
-      ================================================== */}
+      {/* IMAGE */}
 
       <Link
         to={`/product/${productId}`}
@@ -2313,7 +2308,9 @@ const ProductCard = ({
         {image ? (
 
           <img
-            src={image}
+            src={
+              image
+            }
             alt={
               product.name ||
               'Product'
@@ -2351,9 +2348,7 @@ const ProductCard = ({
       </Link>
 
 
-      {/* ==================================================
-          CONTENT
-      ================================================== */}
+      {/* CONTENT */}
 
       <div
         className="
@@ -2362,7 +2357,7 @@ const ProductCard = ({
         "
       >
 
-        {/* Brand */}
+        {/* BRAND */}
 
         {product.displayBrand && (
 
@@ -2384,7 +2379,7 @@ const ProductCard = ({
         )}
 
 
-        {/* Name */}
+        {/* NAME */}
 
         <Link
           to={`/product/${productId}`}
@@ -2406,7 +2401,7 @@ const ProductCard = ({
         </Link>
 
 
-        {/* Price */}
+        {/* PRICE */}
 
         <div
           className="
@@ -2464,7 +2459,7 @@ const ProductCard = ({
         </div>
 
 
-        {/* MOQ */}
+        {/* MOQ + STOCK */}
 
         <div
           className="
@@ -2499,8 +2494,6 @@ const ProductCard = ({
           </span>
 
 
-          {/* STOCK */}
-
           <span
             className={`
               text-[10px]
@@ -2523,7 +2516,7 @@ const ProductCard = ({
         </div>
 
 
-        {/* Add Cart */}
+        {/* ADD TO CART */}
 
         <button
           type="button"
