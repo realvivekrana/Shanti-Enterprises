@@ -20,6 +20,9 @@ import PolicyPage from './components/PolicyPage';
 // ======================================================
 
 import Home from './pages/Home';
+import Products from './pages/Products';
+import Categories from './pages/Categories';
+import About from './pages/About';
 import ProductDetail from './pages/ProductDetail';
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
@@ -52,17 +55,17 @@ import Orders from './pages/Orders';
 
 
 // ======================================================
-// NOTIFICATIONS
-// ======================================================
-
-import Notifications from './pages/Notifications';
-
-
-// ======================================================
 // WISHLIST
 // ======================================================
 
 import MyWishlist from './pages/MyWishlist';
+
+
+// ======================================================
+// NOTIFICATIONS
+// ======================================================
+
+import Notifications from './pages/Notifications';
 
 
 // ======================================================
@@ -72,7 +75,13 @@ import MyWishlist from './pages/MyWishlist';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminProducts from './pages/admin/AdminProducts';
 import AdminProductForm from './pages/admin/AdminProductForm';
-import ReportsAnalytics from './pages/admin/ReportsAnalytics';
+
+
+// ======================================================
+// ADMIN SHIPPING
+// ======================================================
+
+import AdminShipping from './pages/admin/AdminShipping';
 
 
 // ======================================================
@@ -88,7 +97,6 @@ function App() {
       <BrowserRouter>
 
         <div className="flex flex-col min-h-screen">
-
 
           {/* ==================================================
               NAVBAR
@@ -114,7 +122,7 @@ function App() {
 
 
               {/* ==================================================
-                  PUBLIC
+                  HOME
               ================================================== */}
 
               <Route
@@ -125,6 +133,46 @@ function App() {
               />
 
 
+              {/* ==================================================
+                  PRODUCTS
+              ================================================== */}
+
+              <Route
+                path="/products"
+                element={
+                  <Products />
+                }
+              />
+
+
+              {/* ==================================================
+                  CATEGORIES
+              ================================================== */}
+
+              <Route
+                path="/categories"
+                element={
+                  <Categories />
+                }
+              />
+
+
+              {/* ==================================================
+                  ABOUT
+              ================================================== */}
+
+              <Route
+                path="/about"
+                element={
+                  <About />
+                }
+              />
+
+
+              {/* ==================================================
+                  PRODUCT DETAILS
+              ================================================== */}
+
               <Route
                 path="/product/:id"
                 element={
@@ -132,6 +180,10 @@ function App() {
                 }
               />
 
+
+              {/* ==================================================
+                  CART
+              ================================================== */}
 
               <Route
                 path="/cart"
@@ -141,6 +193,10 @@ function App() {
               />
 
 
+              {/* ==================================================
+                  CHECKOUT
+              ================================================== */}
+
               <Route
                 path="/checkout"
                 element={
@@ -148,6 +204,10 @@ function App() {
                 }
               />
 
+
+              {/* ==================================================
+                  ORDER SUCCESS
+              ================================================== */}
 
               <Route
                 path="/order-success/:id"
@@ -158,7 +218,7 @@ function App() {
 
 
               {/* ==================================================
-                  BULK ORDER UPLOAD
+                  BULK ORDER
               ================================================== */}
 
               <Route
@@ -234,25 +294,13 @@ function App() {
 
 
               {/* ==================================================
-                  MY ORDERS
+                  ORDERS
               ================================================== */}
 
               <Route
                 path="/orders"
                 element={
                   <Orders />
-                }
-              />
-
-
-              {/* ==================================================
-                  NOTIFICATIONS
-              ================================================== */}
-
-              <Route
-                path="/notifications"
-                element={
-                  <Notifications />
                 }
               />
 
@@ -265,6 +313,18 @@ function App() {
                 path="/wishlist"
                 element={
                   <MyWishlist />
+                }
+              />
+
+
+              {/* ==================================================
+                  NOTIFICATIONS
+              ================================================== */}
+
+              <Route
+                path="/notifications"
+                element={
+                  <Notifications />
                 }
               />
 
@@ -342,22 +402,21 @@ function App() {
 
 
               {/* ==================================================
-                  REPORTS & ANALYTICS
+                  ADMIN SHIPPING
               ================================================== */}
 
               <Route
-                path="/admin/reports"
+                path="/admin/shipping"
                 element={
 
                   <AdminRoute>
 
-                    <ReportsAnalytics />
+                    <AdminShipping />
 
                   </AdminRoute>
 
                 }
               />
-
 
             </Routes>
 
