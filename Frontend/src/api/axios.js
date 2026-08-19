@@ -1,132 +1,114 @@
 import axios from 'axios';
 
+// =====================================================
+// API BASE URL
+// =====================================================
+
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  'http://localhost:5000';
+
+// =====================================================
+// AXIOS INSTANCE
+// =====================================================
+
 const API = axios.create({
-  baseURL: 'http://localhost:5000/api',
+  baseURL: `${API_URL}/api`,
+
+  headers: {
+    'Content-Type': 'application/json',
+  },
 });
 
-// ======================================================
-// ATTACH AUTH TOKEN
-// ======================================================
+// =====================================================
+// REQUEST INTERCEPTOR
+// =====================================================
 
 API.interceptors.request.use(
   (config) => {
+    const token =
+      localStorage.getItem('token');
 
-    const userInfo =
-      localStorage.getItem('userInfo');
-
-    if (userInfo) {
-
-      try {
-
-        const user =
-          JSON.parse(userInfo);
-
-        if (user?.token) {
-
-          config.headers.Authorization =
-            `Bearer ${user.token}`;
-
-        }
-
-      } catch (error) {
-
-        console.error(
-          'Invalid userInfo in localStorage:',
-          error
-        );
-
-      }
-
+    if (token) {
+      config.headers.Authorization =
+        `Bearer ${token}`;
     }
 
     return config;
-
   },
+
   (error) => {
-
     return Promise.reject(error);
-
   }
 );
 
-
-// ======================================================
+// =====================================================
 // RESPONSE INTERCEPTOR
-// ======================================================
+// =====================================================
 
 API.interceptors.response.use(
-
   (response) => {
-
-    const responseData =
-      response.data;
-
-
-    // ==================================================
-    // UNWRAP STANDARD API RESPONSE
-    // ==================================================
-    //
-    // Backend response:
-    //
-    // {
-    //   success: true,
-    //   data: [...]
-    // }
-    //
-    // Frontend ko directly:
-    //
-    // [...]
-    //
-    // chahiye.
-    //
-
-    if (
-      responseData &&
-      typeof responseData === 'object' &&
-      !Array.isArray(responseData) &&
-      Object.prototype.hasOwnProperty.call(
-        responseData,
-        'success'
-      ) &&
-      Object.prototype.hasOwnProperty.call(
-        responseData,
-        'data'
-      )
-    ) {
-
-      response.data =
-        responseData.data;
-
-    }
-
     return response;
-
   },
 
-
-  // ==================================================
-  // RESPONSE ERROR
-  // ==================================================
-
   (error) => {
+    // =================================================
+    // UNAUTHORIZED
+    // =================================================
 
     if (
       error.response?.status === 401
     ) {
+      const currentPath =
+        window.location.pathname;
 
-      console.warn(
-        'Unauthorized request.'
-      );
+      // ===============================================
+      // ADMIN
+      // ===============================================
 
+      if (
+        currentPath.startsWith('/admin')
+      ) {
+        localStorage.removeItem(
+          'userInfo'
+        );
+
+        localStorage.removeItem(
+          'token'
+        );
+
+        localStorage.removeItem(
+          'adminToken'
+        );
+
+        window.location.href =
+          '/admin/login';
+      }
+
+      // ===============================================
+      // CUSTOMER
+      // ===============================================
+
+      else {
+        localStorage.removeItem(
+          'userInfo'
+        );
+
+        localStorage.removeItem(
+          'token'
+        );
+
+        localStorage.removeItem(
+          'adminToken'
+        );
+
+        window.location.href =
+          '/login';
+      }
     }
 
-    return Promise.reject(
-      error
-    );
-
+    return Promise.reject(error);
   }
-
 );
-
 
 export default API;

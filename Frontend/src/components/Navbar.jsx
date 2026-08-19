@@ -5,233 +5,196 @@ import {
 } from 'react-router-dom';
 
 import { useCart } from '../context/CartContext';
-
 import NotificationBell from './NotificationBell';
 
-
-// ======================================================
-// NAVBAR
-// ======================================================
-
 const Navbar = () => {
-
   const navigate = useNavigate();
 
-  const {
-    cartCount,
-  } = useCart();
+  const { cartCount } = useCart();
 
-
-  // ====================================================
+  // ======================================================
   // STATES
-  // ====================================================
+  // ======================================================
 
   const [
     mobileMenuOpen,
     setMobileMenuOpen,
   ] = useState(false);
 
-
   const [
     categoryOpen,
     setCategoryOpen,
   ] = useState(false);
 
+  const [
+    accountOpen,
+    setAccountOpen,
+  ] = useState(false);
 
   const [
     search,
     setSearch,
   ] = useState('');
 
-
-  // ====================================================
+  // ======================================================
   // USER
-  // ====================================================
+  // ======================================================
 
   const userInfo =
     localStorage.getItem('userInfo');
 
-
   let user = null;
 
-
   if (userInfo) {
-
     try {
-
-      user =
-        JSON.parse(
-          userInfo
-        );
-
+      user = JSON.parse(userInfo);
     } catch (error) {
-
       console.error(
         'Invalid user information:',
         error
       );
-
+      localStorage.removeItem('userInfo');
     }
-
   }
 
-
-  // ====================================================
+  // ======================================================
   // SEARCH
-  // ====================================================
+  // ======================================================
 
   const handleSearch = (e) => {
-
     e.preventDefault();
 
-
-    const value =
-      search.trim();
-
+    const value = search.trim();
 
     if (!value) {
-
       navigate('/products');
-
       return;
-
     }
 
-
     navigate(
-      `/products?search=${encodeURIComponent(value)}`
+      `/products?search=${encodeURIComponent(
+        value
+      )}`
     );
-
 
     setSearch('');
-
     setMobileMenuOpen(false);
-
   };
 
-
-  // ====================================================
+  // ======================================================
   // CLOSE MOBILE MENU
-  // ====================================================
+  // ======================================================
 
   const closeMobileMenu = () => {
-
     setMobileMenuOpen(false);
-
     setCategoryOpen(false);
-
+    setAccountOpen(false);
   };
 
-
-  // ====================================================
+  // ======================================================
   // LOGOUT
-  // ====================================================
+  // ======================================================
 
   const handleLogout = () => {
-
-    localStorage.removeItem(
-      'userInfo'
-    );
-
-
-    localStorage.removeItem(
-      'token'
-    );
-
+    localStorage.removeItem('userInfo');
+    localStorage.removeItem('token');
 
     closeMobileMenu();
-
 
     navigate('/login');
 
     window.location.reload();
-
   };
 
+  // ======================================================
+  // ACCOUNT CLICK
+  // ======================================================
 
-  // ====================================================
-  // MOBILE MENU ITEMS
-  // ====================================================
+  const handleAccountClick = () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+
+    if (user.role === 'admin') {
+      navigate('/admin/dashboard');
+    } else {
+      navigate('/dashboard');
+    }
+
+    setAccountOpen(false);
+  };
+
+  // ======================================================
+  // MOBILE LINKS
+  // ======================================================
 
   const mobileLinks = [
-
     {
       label: 'Products',
       path: '/products',
     },
-
     {
       label: 'Categories',
       path: '/categories',
     },
-
     {
       label: 'Bulk Orders',
       path: '/bulk-order-upload',
     },
-
     {
       label: 'My Orders',
       path: '/orders',
       auth: true,
     },
-
     {
       label: 'RFQ',
       path: '/create-rfq',
       auth: true,
     },
-
     {
       label: 'Wishlist',
       path: '/wishlist',
       auth: true,
     },
-
     {
       label: 'About',
       path: '/about',
     },
-
     {
       label: 'Contact',
       path: '/contact',
     },
-
   ];
 
-
-  // ====================================================
-  // CATEGORY ITEMS
-  // ====================================================
+  // ======================================================
+  // CATEGORIES
+  // ======================================================
 
   const categories = [
-
     {
       name: 'Courier Bags',
       value: 'Courier Bags',
     },
-
     {
       name: 'Boxes & Tapes',
       value: 'Boxes,Tapes',
     },
-
     {
       name: 'Labels & Stickers',
       value: 'Labels',
     },
-
     {
       name: 'Paper Shredded',
       value: 'Paper Shredded',
     },
-
   ];
 
+  // ======================================================
+  // RETURN
+  // ======================================================
 
   return (
-
     <>
       {/* ==================================================
           NAVBAR
@@ -260,7 +223,7 @@ const Navbar = () => {
         >
 
           {/* ==================================================
-              MAIN NAVBAR ROW
+              MAIN ROW
           ================================================== */}
 
           <div
@@ -284,7 +247,7 @@ const Navbar = () => {
               "
             >
 
-              {/* MOBILE MENU BUTTON */}
+              {/* MOBILE MENU */}
 
               <button
                 type="button"
@@ -303,59 +266,27 @@ const Navbar = () => {
                   rounded-lg
                   text-slate-700
                   hover:bg-slate-100
-                  transition
                 "
                 aria-label="Menu"
               >
 
                 {mobileMenuOpen ? (
-
-                  <svg
-                    className="w-6 h-6"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-
-                  </svg>
-
+                  <span className="text-2xl">
+                    ×
+                  </span>
                 ) : (
-
-                  <svg
-                    className="w-6 h-6"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M4 6h16M4 12h16M4 18h16"
-                    />
-
-                  </svg>
-
+                  <span className="text-2xl">
+                    ☰
+                  </span>
                 )}
 
               </button>
-
 
               {/* LOGO */}
 
               <Link
                 to="/"
-                onClick={
-                  closeMobileMenu
-                }
+                onClick={closeMobileMenu}
                 className="
                   flex
                   items-center
@@ -378,21 +309,12 @@ const Navbar = () => {
                     justify-center
                     font-bold
                     text-lg
-                    sm:text-xl
                   "
                 >
-
                   S
-
                 </div>
 
-
-                <div
-                  className="
-                    hidden
-                    sm:block
-                  "
-                >
+                <div className="hidden sm:block">
 
                   <div
                     className="
@@ -400,14 +322,10 @@ const Navbar = () => {
                       sm:text-base
                       font-bold
                       text-slate-800
-                      leading-tight
                     "
                   >
-
                     Shanti Enterprises
-
                   </div>
-
 
                   <div
                     className="
@@ -415,9 +333,7 @@ const Navbar = () => {
                       text-slate-500
                     "
                   >
-
                     Wholesale Solutions
-
                   </div>
 
                 </div>
@@ -425,7 +341,6 @@ const Navbar = () => {
               </Link>
 
             </div>
-
 
             {/* ==================================================
                 DESKTOP NAVIGATION
@@ -443,11 +358,7 @@ const Navbar = () => {
 
               {/* CATEGORIES */}
 
-              <div
-                className="
-                  relative
-                "
-              >
+              <div className="relative">
 
                 <button
                   type="button"
@@ -464,35 +375,11 @@ const Navbar = () => {
                     font-semibold
                     text-slate-700
                     hover:text-teal-600
-                    transition
                   "
                 >
-
                   Categories
-
-                  <svg
-                    className="
-                      w-4
-                      h-4
-                    "
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M19 9l-7 7-7-7"
-                    />
-
-                  </svg>
-
+                  <span>▼</span>
                 </button>
-
-
-                {/* CATEGORY DROPDOWN */}
 
                 {categoryOpen && (
 
@@ -515,9 +402,7 @@ const Navbar = () => {
                     <Link
                       to="/categories"
                       onClick={() =>
-                        setCategoryOpen(
-                          false
-                        )
+                        setCategoryOpen(false)
                       }
                       className="
                         block
@@ -528,14 +413,10 @@ const Navbar = () => {
                         font-semibold
                         text-slate-700
                         hover:bg-teal-50
-                        hover:text-teal-700
                       "
                     >
-
                       All Categories
-
                     </Link>
-
 
                     {categories.map(
                       (category) => (
@@ -567,12 +448,9 @@ const Navbar = () => {
                             text-sm
                             text-slate-600
                             hover:bg-slate-50
-                            hover:text-teal-600
                           "
                         >
-
                           {category.name}
-
                         </button>
 
                       )
@@ -584,7 +462,6 @@ const Navbar = () => {
 
               </div>
 
-
               {/* PRODUCTS */}
 
               <Link
@@ -594,14 +471,10 @@ const Navbar = () => {
                   font-semibold
                   text-slate-700
                   hover:text-teal-600
-                  transition
                 "
               >
-
                 Products
-
               </Link>
-
 
               {/* BULK ORDERS */}
 
@@ -612,14 +485,10 @@ const Navbar = () => {
                   font-semibold
                   text-slate-700
                   hover:text-teal-600
-                  transition
                 "
               >
-
                 Bulk Orders
-
               </Link>
-
 
               {/* RFQ */}
 
@@ -630,105 +499,54 @@ const Navbar = () => {
                   font-semibold
                   text-slate-700
                   hover:text-teal-600
-                  transition
                 "
               >
-
                 RFQ
-
               </Link>
 
             </nav>
-
 
             {/* ==================================================
                 DESKTOP SEARCH
             ================================================== */}
 
             <form
-              onSubmit={
-                handleSearch
-              }
+              onSubmit={handleSearch}
               className="
                 hidden
                 md:flex
-                lg:flex
                 flex-1
                 max-w-md
                 mx-6
               "
             >
 
-              <div
+              <input
+                type="text"
+                value={search}
+                onChange={(e) =>
+                  setSearch(
+                    e.target.value
+                  )
+                }
+                placeholder="Search products..."
                 className="
-                  relative
                   w-full
+                  h-10
+                  px-4
+                  rounded-lg
+                  border
+                  border-slate-200
+                  bg-slate-50
+                  text-sm
+                  outline-none
+                  focus:border-teal-500
+                  focus:ring-2
+                  focus:ring-teal-100
                 "
-              >
-
-                <svg
-                  className="
-                    absolute
-                    left-3
-                    top-1/2
-                    -translate-y-1/2
-                    w-5
-                    h-5
-                    text-slate-400
-                  "
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                >
-
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="
-                      m21 21-4.35-4.35
-                      m0 0A7.5 7.5 0 1 0
-                      6.05 6.05a7.5 7.5 0 0 0
-                      10.6 10.6Z
-                    "
-                  />
-
-                </svg>
-
-
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(e) =>
-                    setSearch(
-                      e.target.value
-                    )
-                  }
-                  placeholder="Search products..."
-                  className="
-                    w-full
-                    h-10
-                    pl-10
-                    pr-4
-                    rounded-lg
-                    border
-                    border-slate-200
-                    bg-slate-50
-                    text-sm
-                    text-slate-700
-                    outline-none
-                    placeholder:text-slate-400
-                    focus:border-teal-500
-                    focus:ring-2
-                    focus:ring-teal-100
-                    transition
-                  "
-                />
-
-              </div>
+              />
 
             </form>
-
 
             {/* ==================================================
                 RIGHT SIDE
@@ -761,54 +579,23 @@ const Navbar = () => {
                     text-slate-700
                     hover:bg-slate-100
                     hover:text-red-500
-                    transition
                   "
                   title="Wishlist"
                 >
-
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                  >
-
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="
-                        M20.84 4.61
-                        a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06
-                        a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84
-                        a5.5 5.5 0 0 0 0-7.78Z
-                      "
-                    />
-
-                  </svg>
-
+                  ❤️
                 </Link>
 
               )}
-
 
               {/* NOTIFICATION */}
 
               {user && (
 
-                <div
-                  className="
-                    hidden
-                    sm:block
-                  "
-                >
-
+                <div className="hidden sm:block">
                   <NotificationBell />
-
                 </div>
 
               )}
-
 
               {/* CART */}
 
@@ -824,39 +611,11 @@ const Navbar = () => {
                   rounded-lg
                   text-slate-700
                   hover:bg-slate-100
-                  transition
                 "
                 title="Cart"
               >
 
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                >
-
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="
-                      M2.25 3h1.386
-                      c.51 0 .955.343 1.087.835
-                      l.383 1.437
-                      M7.5 14.25
-                      a3 3 0 0 0-3 3h15.75
-                      m-12.75-3h11.218
-                      c1.121-2.3
-                      1.947-4.804
-                      2.415-7.454
-                      a1.125 1.125 0 0 0-1.11-1.296H5.25
-                      M7.5 14.25L5.106 5.272
-                    "
-                  />
-
-                </svg>
-
+                🛒
 
                 {cartCount > 0 && (
 
@@ -878,195 +637,336 @@ const Navbar = () => {
                       justify-center
                     "
                   >
-
                     {cartCount}
-
                   </span>
 
                 )}
 
               </Link>
 
+              {/* ==================================================
+                  ACCOUNT
+              ================================================== */}
 
-              {/* ACCOUNT */}
+              <div className="relative">
 
-              <Link
-                to={
-                  user
-                    ? '/profile'
-                    : '/login'
-                }
-                className="
-                  hidden
-                  sm:flex
-                  items-center
-                  gap-2
-                  px-2
-                  sm:px-3
-                  py-2
-                  rounded-lg
-                  hover:bg-slate-100
-                  transition
-                "
-              >
-
-                <div
+                <button
+                  type="button"
+                  onClick={() =>
+                    setAccountOpen(
+                      !accountOpen
+                    )
+                  }
                   className="
-                    w-8
-                    h-8
-                    rounded-full
-                    bg-slate-100
                     flex
                     items-center
-                    justify-center
-                    text-slate-600
+                    gap-2
+                    px-2
+                    sm:px-3
+                    py-2
+                    rounded-lg
+                    hover:bg-slate-100
                   "
                 >
 
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
+                  <div
+                    className="
+                      w-8
+                      h-8
+                      rounded-full
+                      bg-slate-100
+                      flex
+                      items-center
+                      justify-center
+                    "
+                  >
+                    👤
+                  </div>
+
+                  <div
+                    className="
+                      hidden
+                      lg:block
+                      text-left
+                    "
                   >
 
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="
-                        M15.75 6a3.75 3.75 0 1 1-7.5 0
-                        3.75 3.75 0 0 1 7.5 0ZM4.5 20.25
-                        a7.5 7.5 0 0 1 15 0
+                    <p
+                      className="
+                        text-[10px]
+                        text-slate-400
                       "
-                    />
+                    >
+                      Account
+                    </p>
 
-                  </svg>
+                    <p
+                      className="
+                        text-xs
+                        font-semibold
+                        text-slate-700
+                        max-w-24
+                        truncate
+                      "
+                    >
+                      {user
+                        ? user.name ||
+                          'Account'
+                        : 'Login'}
+                    </p>
 
-                </div>
+                  </div>
 
+                </button>
 
-                <div
-                  className="
-                    hidden
-                    lg:block
-                    text-left
-                  "
-                >
+                {/* ACCOUNT DROPDOWN */}
 
-                  <p
+                {accountOpen && (
+
+                  <div
                     className="
-                      text-[10px]
-                      text-slate-400
+                      absolute
+                      right-0
+                      top-full
+                      mt-2
+                      w-56
+                      bg-white
+                      border
+                      border-slate-200
+                      rounded-xl
+                      shadow-xl
+                      p-2
                     "
                   >
-                    Account
-                  </p>
 
+                    {!user ? (
 
-                  <p
-                    className="
-                      text-xs
-                      font-semibold
-                      text-slate-700
-                      max-w-24
-                      truncate
-                    "
-                  >
+                      <>
+                        <Link
+                          to="/login"
+                          onClick={() =>
+                            setAccountOpen(
+                              false
+                            )
+                          }
+                          className="
+                            block
+                            px-4
+                            py-3
+                            rounded-lg
+                            text-sm
+                            font-semibold
+                            text-slate-700
+                            hover:bg-teal-50
+                          "
+                        >
+                          🔐 Login
+                        </Link>
 
-                    {user
-                      ? user.name || 'Account'
-                      : 'Login'}
+                        <Link
+                          to="/register"
+                          onClick={() =>
+                            setAccountOpen(
+                              false
+                            )
+                          }
+                          className="
+                            block
+                            px-4
+                            py-3
+                            rounded-lg
+                            text-sm
+                            font-semibold
+                            text-slate-700
+                            hover:bg-slate-50
+                          "
+                        >
+                          📝 Register
+                        </Link>
+                      </>
 
-                  </p>
+                    ) : (
 
-                </div>
+                      <>
 
-              </Link>
+                        {/* USER */}
+
+                        <div
+                          className="
+                            px-4
+                            py-3
+                            border-b
+                            border-slate-100
+                            mb-1
+                          "
+                        >
+
+                          <p
+                            className="
+                              text-sm
+                              font-bold
+                              text-slate-800
+                            "
+                          >
+                            {user.name ||
+                              'User'}
+                          </p>
+
+                          <p
+                            className="
+                              text-xs
+                              text-slate-500
+                              mt-1
+                            "
+                          >
+                            {user.role ===
+                            'admin'
+                              ? 'Administrator'
+                              : 'Customer'}
+                          </p>
+
+                        </div>
+
+                        {/* ADMIN DASHBOARD */}
+
+                        {user.role ===
+                          'admin' && (
+
+                          <button
+                            type="button"
+                            onClick={() => {
+
+                              navigate(
+                                '/admin/dashboard'
+                              );
+
+                              setAccountOpen(
+                                false
+                              );
+
+                            }}
+                            className="
+                              w-full
+                              text-left
+                              px-4
+                              py-3
+                              rounded-lg
+                              text-sm
+                              font-semibold
+                              text-teal-700
+                              hover:bg-teal-50
+                            "
+                          >
+                            📊 Admin Dashboard
+                          </button>
+
+                        )}
+
+                        {/* CUSTOMER DASHBOARD */}
+
+                        {user.role !==
+                          'admin' && (
+
+                          <button
+                            type="button"
+                            onClick={() => {
+
+                              navigate(
+                                '/dashboard'
+                              );
+
+                              setAccountOpen(
+                                false
+                              );
+
+                            }}
+                            className="
+                              w-full
+                              text-left
+                              px-4
+                              py-3
+                              rounded-lg
+                              text-sm
+                              font-semibold
+                              text-slate-700
+                              hover:bg-slate-50
+                            "
+                          >
+                            👤 My Dashboard
+                          </button>
+
+                        )}
+
+                        {/* LOGOUT */}
+
+                        <button
+                          type="button"
+                          onClick={
+                            handleLogout
+                          }
+                          className="
+                            w-full
+                            text-left
+                            px-4
+                            py-3
+                            rounded-lg
+                            text-sm
+                            font-semibold
+                            text-red-600
+                            hover:bg-red-50
+                          "
+                        >
+                          🚪 Logout
+                        </button>
+
+                      </>
+
+                    )}
+
+                  </div>
+
+                )}
+
+              </div>
 
             </div>
 
           </div>
-
 
           {/* ==================================================
               MOBILE SEARCH
           ================================================== */}
 
           <form
-            onSubmit={
-              handleSearch
-            }
+            onSubmit={handleSearch}
             className="
               md:hidden
               pb-3
             "
           >
 
-            <div
+            <input
+              type="text"
+              value={search}
+              onChange={(e) =>
+                setSearch(
+                  e.target.value
+                )
+              }
+              placeholder="Search products..."
               className="
-                relative
+                w-full
+                h-11
+                px-4
+                rounded-xl
+                border
+                border-slate-200
+                bg-slate-50
+                text-sm
+                outline-none
+                focus:border-teal-500
               "
-            >
-
-              <svg
-                className="
-                  absolute
-                  left-3
-                  top-1/2
-                  -translate-y-1/2
-                  w-5
-                  h-5
-                  text-slate-400
-                "
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="1.8"
-              >
-
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="
-                    m21 21-4.35-4.35
-                    m0 0A7.5 7.5 0 1 0
-                    6.05 6.05a7.5 7.5 0 0 0
-                    10.6 10.6Z
-                  "
-                />
-
-              </svg>
-
-
-              <input
-                type="text"
-                value={search}
-                onChange={(e) =>
-                  setSearch(
-                    e.target.value
-                  )
-                }
-                placeholder="Search products..."
-                className="
-                  w-full
-                  h-11
-                  pl-10
-                  pr-4
-                  rounded-xl
-                  border
-                  border-slate-200
-                  bg-slate-50
-                  text-sm
-                  outline-none
-                  placeholder:text-slate-400
-                  focus:border-teal-500
-                  focus:ring-2
-                  focus:ring-teal-100
-                "
-              />
-
-            </div>
+            />
 
           </form>
 
@@ -1074,9 +974,8 @@ const Navbar = () => {
 
       </header>
 
-
       {/* ======================================================
-          MOBILE MENU BACKDROP
+          MOBILE BACKDROP
       ====================================================== */}
 
       {mobileMenuOpen && (
@@ -1095,7 +994,6 @@ const Navbar = () => {
         />
 
       )}
-
 
       {/* ======================================================
           MOBILE MENU
@@ -1123,7 +1021,7 @@ const Navbar = () => {
         `}
       >
 
-        {/* MOBILE MENU HEADER */}
+        {/* HEADER */}
 
         <div
           className="
@@ -1147,11 +1045,8 @@ const Navbar = () => {
               text-slate-800
             "
           >
-
             Shanti Enterprises
-
           </Link>
-
 
           <button
             type="button"
@@ -1169,29 +1064,12 @@ const Navbar = () => {
               hover:bg-slate-100
             "
           >
-
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M6 18L18 6M6 6l12 12"
-              />
-
-            </svg>
-
+            ✕
           </button>
 
         </div>
 
-
-        {/* MOBILE MENU CONTENT */}
+        {/* CONTENT */}
 
         <div
           className="
@@ -1201,20 +1079,15 @@ const Navbar = () => {
           "
         >
 
-          {/* USER */}
+          {/* ==================================================
+              USER / LOGIN
+          ================================================== */}
 
           {user ? (
 
-            <Link
-              to="/profile"
-              onClick={
-                closeMobileMenu
-              }
+            <div
               className="
                 mb-4
-                flex
-                items-center
-                gap-3
                 p-4
                 rounded-xl
                 bg-teal-50
@@ -1223,60 +1096,123 @@ const Navbar = () => {
               "
             >
 
-              <div
-                className="
-                  w-11
-                  h-11
-                  rounded-full
-                  bg-teal-600
-                  text-white
-                  flex
-                  items-center
-                  justify-center
-                  font-bold
-                "
-              >
+              <div className="flex items-center gap-3">
 
-                {user.name
-                  ? user.name
-                      .charAt(0)
-                      .toUpperCase()
-                  : 'U'}
-
-              </div>
-
-
-              <div>
-
-                <p
+                <div
                   className="
-                    text-sm
+                    w-11
+                    h-11
+                    rounded-full
+                    bg-teal-600
+                    text-white
+                    flex
+                    items-center
+                    justify-center
                     font-bold
-                    text-slate-800
                   "
                 >
+                  {user.name
+                    ? user.name
+                        .charAt(0)
+                        .toUpperCase()
+                    : 'U'}
+                </div>
 
-                  {user.name ||
-                    'Account'}
+                <div>
 
-                </p>
+                  <p
+                    className="
+                      text-sm
+                      font-bold
+                      text-slate-800
+                    "
+                  >
+                    {user.name ||
+                      'Account'}
+                  </p>
 
+                  <p
+                    className="
+                      text-xs
+                      text-teal-600
+                      mt-0.5
+                    "
+                  >
+                    {user.role ===
+                    'admin'
+                      ? 'Administrator'
+                      : 'Customer'}
+                  </p>
 
-                <p
-                  className="
-                    text-xs
-                    text-teal-600
-                    mt-0.5
-                  "
-                >
-
-                  View Profile
-
-                </p>
+                </div>
 
               </div>
 
-            </Link>
+              {/* ADMIN DASHBOARD */}
+
+              {user.role ===
+                'admin' && (
+
+                <button
+                  type="button"
+                  onClick={() => {
+
+                    navigate(
+                      '/admin/dashboard'
+                    );
+
+                    closeMobileMenu();
+
+                  }}
+                  className="
+                    w-full
+                    mt-4
+                    py-3
+                    rounded-lg
+                    bg-teal-600
+                    text-white
+                    font-semibold
+                    text-sm
+                  "
+                >
+                  📊 Admin Dashboard
+                </button>
+
+              )}
+
+              {/* CUSTOMER DASHBOARD */}
+
+              {user.role !==
+                'admin' && (
+
+                <button
+                  type="button"
+                  onClick={() => {
+
+                    navigate(
+                      '/dashboard'
+                    );
+
+                    closeMobileMenu();
+
+                  }}
+                  className="
+                    w-full
+                    mt-4
+                    py-3
+                    rounded-lg
+                    bg-teal-600
+                    text-white
+                    font-semibold
+                    text-sm
+                  "
+                >
+                  👤 My Dashboard
+                </button>
+
+              )}
+
+            </div>
 
           ) : (
 
@@ -1296,21 +1232,16 @@ const Navbar = () => {
                 font-semibold
               "
             >
-
-              Login
-
+              🔐 Login
             </Link>
 
           )}
 
+          {/* ==================================================
+              MENU LINKS
+          ================================================== */}
 
-          {/* MENU LINKS */}
-
-          <div
-            className="
-              space-y-1
-            "
-          >
+          <div className="space-y-1">
 
             {mobileLinks.map(
               (item) => {
@@ -1319,11 +1250,8 @@ const Navbar = () => {
                   item.auth &&
                   !user
                 ) {
-
                   return null;
-
                 }
-
 
                 return (
 
@@ -1349,7 +1277,6 @@ const Navbar = () => {
                       text-slate-700
                       hover:bg-teal-50
                       hover:text-teal-700
-                      transition
                     "
                   >
 
@@ -1357,11 +1284,7 @@ const Navbar = () => {
                       {item.label}
                     </span>
 
-                    <span
-                      className="
-                        text-slate-400
-                      "
-                    >
+                    <span>
                       →
                     </span>
 
@@ -1371,7 +1294,6 @@ const Navbar = () => {
 
               }
             )}
-
 
             {/* CART */}
 
@@ -1391,14 +1313,12 @@ const Navbar = () => {
                 font-medium
                 text-slate-700
                 hover:bg-teal-50
-                hover:text-teal-700
               "
             >
 
               <span>
                 Cart
               </span>
-
 
               {cartCount > 0 && (
 
@@ -1417,9 +1337,7 @@ const Navbar = () => {
                     justify-center
                   "
                 >
-
                   {cartCount}
-
                 </span>
 
               )}
@@ -1428,8 +1346,9 @@ const Navbar = () => {
 
           </div>
 
-
-          {/* DIVIDER */}
+          {/* ==================================================
+              DIVIDER
+          ================================================== */}
 
           <div
             className="
@@ -1439,16 +1358,13 @@ const Navbar = () => {
             "
           />
 
-
-          {/* MOBILE AUTH */}
+          {/* ==================================================
+              AUTH
+          ================================================== */}
 
           {!user ? (
 
-            <div
-              className="
-                space-y-2
-              "
-            >
+            <div className="space-y-2">
 
               <Link
                 to="/login"
@@ -1465,14 +1381,10 @@ const Navbar = () => {
                   border-slate-200
                   text-slate-700
                   font-semibold
-                  hover:bg-slate-50
                 "
               >
-
                 Login
-
               </Link>
-
 
               <Link
                 to="/register"
@@ -1488,12 +1400,9 @@ const Navbar = () => {
                   bg-slate-900
                   text-white
                   font-semibold
-                  hover:bg-slate-800
                 "
               >
-
                 Register
-
               </Link>
 
             </div>
@@ -1516,9 +1425,7 @@ const Navbar = () => {
                 hover:bg-red-50
               "
             >
-
-              Logout
-
+              🚪 Logout
             </button>
 
           )}
@@ -1526,12 +1433,8 @@ const Navbar = () => {
         </div>
 
       </aside>
-
     </>
-
   );
-
 };
-
 
 export default Navbar;

@@ -5,476 +5,515 @@ import API from '../api/axios';
 const Register = () => {
   const navigate = useNavigate();
 
+  // =====================================================
+  // FORM STATE
+  // =====================================================
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
-    phone: '',
-    businessName: '',
-    gstNumber: '',
-
-    businessAddress: {
-      addressLine1: '',
-      addressLine2: '',
-      city: '',
-      state: '',
-      pincode: '',
-    },
-
-    billingAddress: {
-      addressLine1: '',
-      addressLine2: '',
-      city: '',
-      state: '',
-      pincode: '',
-    },
-
-    shippingAddress: {
-      addressLine1: '',
-      addressLine2: '',
-      city: '',
-      state: '',
-      pincode: '',
-    },
+    confirmPassword: '',
   });
 
-  const [sameAddress, setSameAddress] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // =====================================================
+  // HANDLE INPUT
+  // =====================================================
+
   const handleChange = (e) => {
-    const { name, value } = e.target;
-
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
   };
 
-  const handleAddressChange = (section, e) => {
-    const { name, value } = e.target;
-
-    setFormData((prev) => ({
-      ...prev,
-      [section]: {
-        ...prev[section],
-        [name]: value,
-      },
-    }));
-  };
-
-  const handleSameAddressChange = (e) => {
-    const checked = e.target.checked;
-
-    setSameAddress(checked);
-
-    if (checked) {
-      setFormData((prev) => ({
-        ...prev,
-        shippingAddress: {
-          ...prev.billingAddress,
-        },
-      }));
-    }
-  };
+  // =====================================================
+  // SUBMIT
+  // =====================================================
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     setError('');
+    setSuccess('');
+
+    // ===================================================
+    // PASSWORD CHECK
+    // ===================================================
+
+    if (
+      formData.password !==
+      formData.confirmPassword
+    ) {
+      setError(
+        'Password and Confirm Password do not match.'
+      );
+
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setError(
+        'Password must be at least 6 characters.'
+      );
+
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const payload = {
-        name: formData.name,
-        email: formData.email,
-        password: formData.password,
-        phone: formData.phone,
-        businessName: formData.businessName,
-        gstNumber: formData.gstNumber,
+      // =================================================
+      // SEND ONLY BASIC USER DATA
+      // =================================================
 
-        addresses: {
-          business: formData.businessAddress,
-          billing: formData.billingAddress,
-          shipping: sameAddress
-            ? formData.billingAddress
-            : formData.shippingAddress,
-        },
-      };
+      const { data } = await API.post(
+        '/auth/register',
+        {
+          name: formData.name.trim(),
+          email: formData.email.trim(),
+          password: formData.password,
+        }
+      );
 
-      const { data } = await API.post('/auth/register', payload);
+      // =================================================
+      // SAVE USER IF BACKEND RETURNS LOGIN DATA
+      // =================================================
 
-      localStorage.setItem('userInfo', JSON.stringify(data));
+      if (data?.token || data?.user) {
+        localStorage.setItem(
+          'userInfo',
+          JSON.stringify(data)
+        );
+      }
 
-      navigate('/');
-      window.location.reload();
+      setSuccess(
+        'Account created successfully!'
+      );
+
+      // =================================================
+      // REDIRECT
+      // =================================================
+
+      setTimeout(() => {
+        navigate('/login');
+      }, 1200);
+
     } catch (err) {
+      console.error(
+        'Registration Error:',
+        err
+      );
+
       setError(
         err.response?.data?.message ||
-          'Registration failed. Please try again.'
+        'Registration failed. Please try again.'
       );
+
     } finally {
       setLoading(false);
     }
   };
 
-  const inputClass =
-    'w-full border border-slate-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent';
+  // =====================================================
+  // INPUT CLASS
+  // =====================================================
 
-  const sectionClass =
-    'border border-slate-200 rounded-xl p-5 bg-slate-50';
+  const inputClass =
+    `
+      w-full
+      border
+      border-slate-300
+      rounded-lg
+      px-4
+      py-3
+      text-sm
+      text-slate-800
+      bg-white
+      focus:outline-none
+      focus:ring-2
+      focus:ring-teal-500
+      focus:border-transparent
+    `;
+
+  // =====================================================
+  // UI
+  // =====================================================
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-10">
-      <div className="bg-white border border-slate-200 rounded-xl p-6 md:p-8">
-        <h1 className="text-2xl font-bold text-slate-800 mb-1">
-          Create Business Account
-        </h1>
+    <div
+      className="
+        min-h-[75vh]
+        flex
+        items-center
+        justify-center
+        px-4
+        py-12
+        bg-slate-50
+      "
+    >
 
-        <p className="text-slate-500 text-sm mb-8">
-          Register with your business details to start wholesale shopping.
-        </p>
+      <div className="w-full max-w-md">
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* ==============================
-              PERSONAL INFORMATION
-          ============================== */}
-          <div className={sectionClass}>
-            <h2 className="text-lg font-semibold text-slate-800 mb-4">
-              Personal Information
-            </h2>
+        <div
+          className="
+            bg-white
+            border
+            border-slate-200
+            rounded-2xl
+            shadow-sm
+            p-6
+            sm:p-8
+          "
+        >
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* =================================================
+              HEADER
+          ================================================= */}
+
+          <div className="text-center mb-7">
+
+            <div
+              className="
+                w-14
+                h-14
+                mx-auto
+                rounded-full
+                bg-teal-50
+                text-teal-700
+                flex
+                items-center
+                justify-center
+                text-2xl
+                mb-4
+              "
+            >
+              👤
+            </div>
+
+            <h1
+              className="
+                text-2xl
+                font-extrabold
+                text-slate-900
+              "
+            >
+              Create Account
+            </h1>
+
+            <p
+              className="
+                text-sm
+                text-slate-500
+                mt-2
+              "
+            >
+              Create your Shanti Enterprises
+              customer account
+            </p>
+
+          </div>
+
+
+          {/* =================================================
+              FORM
+          ================================================= */}
+
+          <form
+            onSubmit={handleSubmit}
+            className="space-y-4"
+          >
+
+            {/* =================================================
+                NAME
+            ================================================= */}
+
+            <div>
+
+              <label
+                className="
+                  block
+                  text-sm
+                  font-semibold
+                  text-slate-700
+                  mb-1.5
+                "
+              >
+                Full Name
+              </label>
+
               <input
                 type="text"
                 name="name"
-                placeholder="Full Name"
-                required
+                placeholder="Enter your name"
                 value={formData.name}
                 onChange={handleChange}
+                required
+                autoComplete="name"
                 className={inputClass}
               />
 
-              <input
-                type="tel"
-                name="phone"
-                placeholder="Mobile Number"
-                required
-                value={formData.phone}
-                onChange={handleChange}
-                className={inputClass}
-              />
+            </div>
+
+
+            {/* =================================================
+                EMAIL
+            ================================================= */}
+
+            <div>
+
+              <label
+                className="
+                  block
+                  text-sm
+                  font-semibold
+                  text-slate-700
+                  mb-1.5
+                "
+              >
+                Email
+              </label>
 
               <input
                 type="email"
                 name="email"
-                placeholder="Email Address"
-                required
+                placeholder="Enter your email"
                 value={formData.email}
                 onChange={handleChange}
+                required
+                autoComplete="email"
                 className={inputClass}
               />
+
+            </div>
+
+
+            {/* =================================================
+                PASSWORD
+            ================================================= */}
+
+            <div>
+
+              <label
+                className="
+                  block
+                  text-sm
+                  font-semibold
+                  text-slate-700
+                  mb-1.5
+                "
+              >
+                Password
+              </label>
 
               <input
                 type="password"
                 name="password"
-                placeholder="Password (min 6 characters)"
-                required
-                minLength={6}
+                placeholder="Minimum 6 characters"
                 value={formData.password}
                 onChange={handleChange}
-                className={inputClass}
-              />
-            </div>
-          </div>
-
-          {/* ==============================
-              BUSINESS INFORMATION
-          ============================== */}
-          <div className={sectionClass}>
-            <h2 className="text-lg font-semibold text-slate-800 mb-4">
-              Business Information
-            </h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <input
-                type="text"
-                name="businessName"
-                placeholder="Business / Company Name"
                 required
-                value={formData.businessName}
-                onChange={handleChange}
+                minLength={6}
+                autoComplete="new-password"
                 className={inputClass}
               />
 
-              <input
-                type="text"
-                name="gstNumber"
-                placeholder="GST Number (Optional)"
-                value={formData.gstNumber}
-                onChange={handleChange}
-                className={inputClass}
-              />
             </div>
-          </div>
 
-          {/* ==============================
-              BUSINESS ADDRESS
-          ============================== */}
-          <div className={sectionClass}>
-            <h2 className="text-lg font-semibold text-slate-800 mb-4">
-              Business Address
-            </h2>
 
-            <div className="space-y-4">
-              <input
-                type="text"
-                name="addressLine1"
-                placeholder="Address Line 1"
-                required
-                value={formData.businessAddress.addressLine1}
-                onChange={(e) =>
-                  handleAddressChange('businessAddress', e)
-                }
-                className={inputClass}
-              />
+            {/* =================================================
+                CONFIRM PASSWORD
+            ================================================= */}
 
-              <input
-                type="text"
-                name="addressLine2"
-                placeholder="Address Line 2 (Optional)"
-                value={formData.businessAddress.addressLine2}
-                onChange={(e) =>
-                  handleAddressChange('businessAddress', e)
-                }
-                className={inputClass}
-              />
+            <div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <input
-                  type="text"
-                  name="city"
-                  placeholder="City"
-                  required
-                  value={formData.businessAddress.city}
-                  onChange={(e) =>
-                    handleAddressChange('businessAddress', e)
-                  }
-                  className={inputClass}
-                />
-
-                <input
-                  type="text"
-                  name="state"
-                  placeholder="State"
-                  required
-                  value={formData.businessAddress.state}
-                  onChange={(e) =>
-                    handleAddressChange('businessAddress', e)
-                  }
-                  className={inputClass}
-                />
-
-                <input
-                  type="text"
-                  name="pincode"
-                  placeholder="Pincode"
-                  required
-                  value={formData.businessAddress.pincode}
-                  onChange={(e) =>
-                    handleAddressChange('businessAddress', e)
-                  }
-                  className={inputClass}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* ==============================
-              BILLING ADDRESS
-          ============================== */}
-          <div className={sectionClass}>
-            <h2 className="text-lg font-semibold text-slate-800 mb-4">
-              Billing Address
-            </h2>
-
-            <div className="space-y-4">
-              <input
-                type="text"
-                name="addressLine1"
-                placeholder="Address Line 1"
-                required
-                value={formData.billingAddress.addressLine1}
-                onChange={(e) =>
-                  handleAddressChange('billingAddress', e)
-                }
-                className={inputClass}
-              />
-
-              <input
-                type="text"
-                name="addressLine2"
-                placeholder="Address Line 2 (Optional)"
-                value={formData.billingAddress.addressLine2}
-                onChange={(e) =>
-                  handleAddressChange('billingAddress', e)
-                }
-                className={inputClass}
-              />
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <input
-                  type="text"
-                  name="city"
-                  placeholder="City"
-                  required
-                  value={formData.billingAddress.city}
-                  onChange={(e) =>
-                    handleAddressChange('billingAddress', e)
-                  }
-                  className={inputClass}
-                />
-
-                <input
-                  type="text"
-                  name="state"
-                  placeholder="State"
-                  required
-                  value={formData.billingAddress.state}
-                  onChange={(e) =>
-                    handleAddressChange('billingAddress', e)
-                  }
-                  className={inputClass}
-                />
-
-                <input
-                  type="text"
-                  name="pincode"
-                  placeholder="Pincode"
-                  required
-                  value={formData.billingAddress.pincode}
-                  onChange={(e) =>
-                    handleAddressChange('billingAddress', e)
-                  }
-                  className={inputClass}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* ==============================
-              SHIPPING ADDRESS
-          ============================== */}
-          <div className={sectionClass}>
-            <div className="flex items-center justify-between gap-4 mb-4">
-              <h2 className="text-lg font-semibold text-slate-800">
-                Shipping Address
-              </h2>
-
-              <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={sameAddress}
-                  onChange={handleSameAddressChange}
-                  className="w-4 h-4"
-                />
-                Same as billing
+              <label
+                className="
+                  block
+                  text-sm
+                  font-semibold
+                  text-slate-700
+                  mb-1.5
+                "
+              >
+                Confirm Password
               </label>
+
+              <input
+                type="password"
+                name="confirmPassword"
+                placeholder="Re-enter your password"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                required
+                minLength={6}
+                autoComplete="new-password"
+                className={inputClass}
+              />
+
             </div>
 
-            {!sameAddress && (
-              <div className="space-y-4">
-                <input
-                  type="text"
-                  name="addressLine1"
-                  placeholder="Address Line 1"
-                  required={!sameAddress}
-                  value={formData.shippingAddress.addressLine1}
-                  onChange={(e) =>
-                    handleAddressChange('shippingAddress', e)
-                  }
-                  className={inputClass}
-                />
 
-                <input
-                  type="text"
-                  name="addressLine2"
-                  placeholder="Address Line 2 (Optional)"
-                  value={formData.shippingAddress.addressLine2}
-                  onChange={(e) =>
-                    handleAddressChange('shippingAddress', e)
-                  }
-                  className={inputClass}
-                />
+            {/* =================================================
+                ERROR
+            ================================================= */}
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <input
-                    type="text"
-                    name="city"
-                    placeholder="City"
-                    required={!sameAddress}
-                    value={formData.shippingAddress.city}
-                    onChange={(e) =>
-                      handleAddressChange('shippingAddress', e)
-                    }
-                    className={inputClass}
-                  />
+            {error && (
 
-                  <input
-                    type="text"
-                    name="state"
-                    placeholder="State"
-                    required={!sameAddress}
-                    value={formData.shippingAddress.state}
-                    onChange={(e) =>
-                      handleAddressChange('shippingAddress', e)
-                    }
-                    className={inputClass}
-                  />
-
-                  <input
-                    type="text"
-                    name="pincode"
-                    placeholder="Pincode"
-                    required={!sameAddress}
-                    value={formData.shippingAddress.pincode}
-                    onChange={(e) =>
-                      handleAddressChange('shippingAddress', e)
-                    }
-                    className={inputClass}
-                  />
-                </div>
+              <div
+                className="
+                  bg-red-50
+                  border
+                  border-red-200
+                  text-red-700
+                  rounded-lg
+                  p-3
+                  text-sm
+                "
+              >
+                {error}
               </div>
+
             )}
+
+
+            {/* =================================================
+                SUCCESS
+            ================================================= */}
+
+            {success && (
+
+              <div
+                className="
+                  bg-green-50
+                  border
+                  border-green-200
+                  text-green-700
+                  rounded-lg
+                  p-3
+                  text-sm
+                "
+              >
+                {success}
+              </div>
+
+            )}
+
+
+            {/* =================================================
+                REGISTER BUTTON
+            ================================================= */}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="
+                w-full
+                bg-teal-600
+                hover:bg-teal-700
+                disabled:bg-slate-300
+                disabled:cursor-not-allowed
+                text-white
+                font-semibold
+                py-3
+                rounded-lg
+                transition
+              "
+            >
+              {loading
+                ? 'Creating Account...'
+                : 'Create Account'}
+            </button>
+
+          </form>
+
+
+          {/* =================================================
+              LOGIN
+          ================================================= */}
+
+          <div
+            className="
+              text-center
+              mt-6
+              pt-5
+              border-t
+              border-slate-200
+            "
+          >
+
+            <p
+              className="
+                text-sm
+                text-slate-600
+              "
+            >
+              Already have an account?{' '}
+
+              <Link
+                to="/login"
+                className="
+                  text-teal-700
+                  font-semibold
+                  hover:underline
+                "
+              >
+                Login
+              </Link>
+            </p>
+
           </div>
 
-          {/* ERROR */}
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm">
-              {error}
-            </div>
-          )}
 
-          {/* REGISTER BUTTON */}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-teal-600 text-white py-3 rounded-lg hover:bg-teal-700 transition-colors font-medium disabled:bg-slate-300"
-          >
-            {loading ? 'Creating account...' : 'Create Business Account'}
-          </button>
-        </form>
+          {/* =================================================
+              PROFILE INFORMATION NOTE
+          ================================================= */}
 
-        <p className="text-sm text-slate-600 mt-5 text-center">
-          Already have an account?{' '}
-          <Link
-            to="/login"
-            className="text-teal-700 font-medium hover:underline"
+          <div
+            className="
+              mt-5
+              bg-slate-50
+              border
+              border-slate-200
+              rounded-xl
+              p-4
+            "
           >
-            Login
-          </Link>
-        </p>
+
+            <p
+              className="
+                text-xs
+                font-semibold
+                text-slate-700
+                mb-1
+              "
+            >
+              💡 Complete your profile later
+            </p>
+
+            <p
+              className="
+                text-xs
+                leading-5
+                text-slate-500
+              "
+            >
+              Business details, phone number,
+              shipping address and GST information
+              can be added later from your account
+              or during checkout.
+            </p>
+
+          </div>
+
+        </div>
+
       </div>
+
     </div>
   );
 };

@@ -4,416 +4,212 @@ import {
   Route,
 } from 'react-router-dom';
 
-import {
-  CartProvider,
-} from './context/CartContext';
+// =====================================================
+// COMPONENTS
+// =====================================================
 
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
-import AdminRoute from './components/AdminRoute';
-import DiscountPopup from './components/DiscountPopup';
-import PolicyPage from './components/PolicyPage';
 
-// ======================================================
+// =====================================================
 // PUBLIC PAGES
-// ======================================================
+// =====================================================
 
 import Home from './pages/Home';
 import Products from './pages/Products';
-import Categories from './pages/Categories';
-import About from './pages/About';
 import ProductDetail from './pages/ProductDetail';
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
-import OrderSuccess from './pages/OrderSuccess';
-import OrderTracking from './pages/OrderTracking';
-import BulkOrderUpload from './pages/BulkOrderUpload';
-import ReturnRequest from './pages/ReturnRequest';
-import CustomerDashboard from './pages/CustomerDashboard';
 
-// ======================================================
+// =====================================================
 // AUTH
-// ======================================================
+// =====================================================
 
 import Login from './pages/Login';
 import Register from './pages/Register';
 
-// ======================================================
-// RFQ
-// ======================================================
+// =====================================================
+// CUSTOMER
+// =====================================================
 
-import CreateRFQ from './pages/CreateRFQ';
-import MyRFQs from './pages/MyRFQs';
-import MyQuotations from './pages/MyQuotations';
+import CustomerDashboard from './pages/CustomerDashboard';
 
-// ======================================================
-// CUSTOMER ORDERS
-// ======================================================
-
-import Orders from './pages/Orders';
-
-// ======================================================
-// WISHLIST
-// ======================================================
-
-import MyWishlist from './pages/MyWishlist';
-
-// ======================================================
-// NOTIFICATIONS
-// ======================================================
-
-import Notifications from './pages/Notifications';
-
-// ======================================================
+// =====================================================
 // ADMIN
-// ======================================================
+// =====================================================
 
+import AdminLogin from './pages/admin/AdminLogin';
 import AdminDashboard from './pages/admin/AdminDashboard';
-import AdminProducts from './pages/admin/AdminProducts';
-import AdminProductForm from './pages/admin/AdminProductForm';
+import AdminRoute from './components/AdminRoute';
 
-// ======================================================
-// ADMIN SHIPPING
-// ======================================================
+// =====================================================
+// RFQ
+// =====================================================
 
-import AdminShipping from './pages/admin/AdminShipping';
+import RFQ from './pages/RFQ';
 
-// ======================================================
+
+// =====================================================
 // APP
-// ======================================================
+// =====================================================
 
-function App() {
+const App = () => {
   return (
-    <CartProvider>
-
-      <BrowserRouter>
-
-        <div className="flex flex-col min-h-screen">
-
-          {/* ==================================================
-              NAVBAR
-          ================================================== */}
-
-          <Navbar />
-
-          {/* ==================================================
-              DISCOUNT POPUP
-          ================================================== */}
-
-          <DiscountPopup />
-
-          {/* ==================================================
-              MAIN
-          ================================================== */}
-
-          <main className="flex-grow">
-
-            <Routes>
-
-              {/* ==================================================
-                  HOME
-              ================================================== */}
-
-              <Route
-                path="/"
-                element={
-                  <Home />
-                }
-              />
-
-              {/* ==================================================
-                  CUSTOMER DASHBOARD
-              ================================================== */}
-
-              <Route
-                path="/dashboard"
-                element={
-                  <CustomerDashboard />
-                }
-              />
-
-              {/* ==================================================
-                  PRODUCTS
-              ================================================== */}
-
-              <Route
-                path="/products"
-                element={
-                  <Products />
-                }
-              />
-
-              {/* ==================================================
-                  CATEGORIES
-              ================================================== */}
-
-              <Route
-                path="/categories"
-                element={
-                  <Categories />
-                }
-              />
-
-              {/* ==================================================
-                  ABOUT
-              ================================================== */}
-
-              <Route
-                path="/about"
-                element={
-                  <About />
-                }
-              />
-
-              {/* ==================================================
-                  PRODUCT DETAILS
-              ================================================== */}
-
-              <Route
-                path="/product/:id"
-                element={
-                  <ProductDetail />
-                }
-              />
-
-              {/* ==================================================
-                  CART
-              ================================================== */}
-
-              <Route
-                path="/cart"
-                element={
-                  <Cart />
-                }
-              />
-
-              {/* ==================================================
-                  CHECKOUT
-              ================================================== */}
-
-              <Route
-                path="/checkout"
-                element={
-                  <Checkout />
-                }
-              />
-
-              {/* ==================================================
-                  ORDER SUCCESS
-              ================================================== */}
-
-              <Route
-                path="/order-success/:id"
-                element={
-                  <OrderSuccess />
-                }
-              />
-
-              {/* ==================================================
-                  ORDER TRACKING
-              ================================================== */}
-
-              <Route
-                path="/order-tracking/:id"
-                element={
-                  <OrderTracking />
-                }
-              />
-
-              {/* ==================================================
-                  RETURNS & REFUNDS
-              ================================================== */}
-
-              <Route
-                path="/orders/:orderId/return"
-                element={
-                  <ReturnRequest />
-                }
-              />
-
-              {/* ==================================================
-                  BULK ORDER
-              ================================================== */}
-
-              <Route
-                path="/bulk-order-upload"
-                element={
-                  <BulkOrderUpload />
-                }
-              />
-
-              {/* ==================================================
-                  AUTH
-              ================================================== */}
-
-              <Route
-                path="/login"
-                element={
-                  <Login />
-                }
-              />
-
-              <Route
-                path="/register"
-                element={
-                  <Register />
-                }
-              />
-
-              {/* ==================================================
-                  POLICIES
-              ================================================== */}
-
-              <Route
-                path="/policies/:type"
-                element={
-                  <PolicyPage />
-                }
-              />
-
-              {/* ==================================================
-                  RFQ
-              ================================================== */}
-
-              <Route
-                path="/products/:id/rfq"
-                element={
-                  <CreateRFQ />
-                }
-              />
-
-              <Route
-                path="/my-rfqs"
-                element={
-                  <MyRFQs />
-                }
-              />
-
-              {/* ==================================================
-                  QUOTATIONS
-              ================================================== */}
-
-              <Route
-                path="/my-quotations"
-                element={
-                  <MyQuotations />
-                }
-              />
-
-              {/* ==================================================
-                  ORDERS
-              ================================================== */}
-
-              <Route
-                path="/orders"
-                element={
-                  <Orders />
-                }
-              />
-
-              {/* ==================================================
-                  WISHLIST
-              ================================================== */}
-
-              <Route
-                path="/wishlist"
-                element={
-                  <MyWishlist />
-                }
-              />
-
-              {/* ==================================================
-                  NOTIFICATIONS
-              ================================================== */}
-
-              <Route
-                path="/notifications"
-                element={
-                  <Notifications />
-                }
-              />
-
-              {/* ==================================================
-                  ADMIN DASHBOARD
-              ================================================== */}
-
-              <Route
-                path="/admin/dashboard"
-                element={
-                  <AdminRoute>
-                    <AdminDashboard />
-                  </AdminRoute>
-                }
-              />
-
-              {/* ==================================================
-                  ADMIN PRODUCTS
-              ================================================== */}
-
-              <Route
-                path="/admin/products"
-                element={
-                  <AdminRoute>
-                    <AdminProducts />
-                  </AdminRoute>
-                }
-              />
-
-              {/* ==================================================
-                  ADMIN CREATE PRODUCT
-              ================================================== */}
-
-              <Route
-                path="/admin/products/new"
-                element={
-                  <AdminRoute>
-                    <AdminProductForm />
-                  </AdminRoute>
-                }
-              />
-
-              {/* ==================================================
-                  ADMIN EDIT PRODUCT
-              ================================================== */}
-
-              <Route
-                path="/admin/products/:id/edit"
-                element={
-                  <AdminRoute>
-                    <AdminProductForm />
-                  </AdminRoute>
-                }
-              />
-
-              {/* ==================================================
-                  ADMIN SHIPPING
-              ================================================== */}
-
-              <Route
-                path="/admin/shipping"
-                element={
-                  <AdminRoute>
-                    <AdminShipping />
-                  </AdminRoute>
-                }
-              />
-
-            </Routes>
-
-          </main>
-
-          {/* ==================================================
-              FOOTER
-          ================================================== */}
-
-          <Footer />
-
-        </div>
-
-      </BrowserRouter>
-
-    </CartProvider>
+    <BrowserRouter>
+
+      {/* =================================================
+          NAVBAR
+      ================================================= */}
+
+      <Navbar />
+
+      {/* =================================================
+          ROUTES
+      ================================================= */}
+
+      <Routes>
+
+        {/* =================================================
+            HOME
+        ================================================= */}
+
+        <Route
+          path="/"
+          element={<Home />}
+        />
+
+        {/* =================================================
+            PRODUCTS
+        ================================================= */}
+
+        <Route
+          path="/products"
+          element={<Products />}
+        />
+
+        <Route
+          path="/products/:id"
+          element={<ProductDetail />}
+        />
+
+        {/* =================================================
+            CART
+        ================================================= */}
+
+        <Route
+          path="/cart"
+          element={<Cart />}
+        />
+
+        {/* =================================================
+            CHECKOUT
+        ================================================= */}
+
+        <Route
+          path="/checkout"
+          element={<Checkout />}
+        />
+
+        {/* =================================================
+            CUSTOMER LOGIN
+        ================================================= */}
+
+        <Route
+          path="/login"
+          element={<Login />}
+        />
+
+        {/* =================================================
+            CUSTOMER REGISTER
+        ================================================= */}
+
+        <Route
+          path="/register"
+          element={<Register />}
+        />
+
+        {/* =================================================
+            CUSTOMER DASHBOARD
+        ================================================= */}
+
+        <Route
+          path="/dashboard"
+          element={<CustomerDashboard />}
+        />
+
+        {/* =================================================
+            RFQ
+        ================================================= */}
+
+        <Route
+          path="/rfq"
+          element={<RFQ />}
+        />
+
+        {/* =================================================
+            ADMIN LOGIN
+        ================================================= */}
+
+        <Route
+          path="/admin/login"
+          element={<AdminLogin />}
+        />
+
+        {/* =================================================
+            ADMIN DASHBOARD
+        ================================================= */}
+
+        <Route
+          path="/admin/dashboard"
+          element={
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
+          }
+        />
+
+        {/* =================================================
+            404
+        ================================================= */}
+
+        <Route
+          path="*"
+          element={
+            <div className="min-h-[60vh] flex items-center justify-center px-4">
+
+              <div className="text-center">
+
+                <h1 className="text-5xl font-bold text-slate-900">
+                  404
+                </h1>
+
+                <p className="text-slate-500 mt-3">
+                  Page not found.
+                </p>
+
+                <a
+                  href="/"
+                  className="inline-block mt-5 px-5 py-2.5 bg-teal-600 text-white rounded-lg font-semibold hover:bg-teal-700"
+                >
+                  Go Home
+                </a>
+
+              </div>
+
+            </div>
+          }
+        />
+
+      </Routes>
+
+      {/* =================================================
+          FOOTER
+      ================================================= */}
+
+      <Footer />
+
+    </BrowserRouter>
   );
-}
+};
 
 export default App;

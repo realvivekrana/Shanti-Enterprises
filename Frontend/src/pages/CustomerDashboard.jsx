@@ -1,234 +1,410 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import {
+  useEffect,
+  useState,
+} from 'react';
+
+import {
+  Link,
+  useNavigate,
+} from 'react-router-dom';
+
 import API from '../api/axios';
 
 const CustomerDashboard = () => {
   const navigate = useNavigate();
 
-  const [user, setUser] = useState(null);
-  const [orders, setOrders] = useState([]);
-  const [rfqs, setRfqs] = useState([]);
-  const [quotations, setQuotations] = useState([]);
-  const [notifications, setNotifications] = useState([]);
-
-  const [loading, setLoading] = useState(true);
-
   // =====================================================
   // USER
   // =====================================================
 
+  const [user, setUser] =
+    useState(null);
+
+  // =====================================================
+  // DASHBOARD DATA
+  // =====================================================
+
+  const [orders, setOrders] =
+    useState([]);
+
+  const [rfqs, setRfqs] =
+    useState([]);
+
+  const [quotations, setQuotations] =
+    useState([]);
+
+  const [notifications, setNotifications] =
+    useState([]);
+
+  // =====================================================
+  // LOADING
+  // =====================================================
+
+  const [loading, setLoading] =
+    useState(true);
+
+  // =====================================================
+  // ERROR
+  // =====================================================
+
+  const [error, setError] =
+    useState('');
+
+  // =====================================================
+  // GET CURRENT USER
+  // =====================================================
+
   useEffect(() => {
     const userInfo =
-      localStorage.getItem('userInfo');
+      localStorage.getItem(
+        'userInfo'
+      );
 
-    if (userInfo) {
-      try {
-        setUser(JSON.parse(userInfo));
-      } catch {
-        setUser(null);
-      }
+    // ===============================================
+    // USER NOT LOGGED IN
+    // ===============================================
+
+    if (!userInfo) {
+      navigate('/login', {
+        replace: true,
+      });
+
+      return;
     }
-  }, []);
+
+    // ===============================================
+    // PARSE USER
+    // ===============================================
+
+    try {
+      const parsedUser =
+        JSON.parse(userInfo);
+
+      /*
+       * Standard format:
+       *
+       * {
+       *   _id,
+       *   name,
+       *   email,
+       *   role,
+       *   token
+       * }
+       *
+       * Old format support:
+       *
+       * {
+       *   user: {...},
+       *   token: "..."
+       * }
+       */
+
+      const currentUser =
+        parsedUser?.user ||
+        parsedUser;
+
+      // =============================================
+      // USER VALIDATION
+      // =============================================
+
+      if (!currentUser) {
+        throw new Error(
+          'Invalid user information'
+        );
+      }
+
+      // =============================================
+      // ADMIN SHOULD NOT ACCESS CUSTOMER DASHBOARD
+      // =============================================
+
+      if (
+        currentUser.role === 'admin'
+      ) {
+        navigate(
+          '/admin/dashboard',
+          {
+            replace: true,
+          }
+        );
+
+        return;
+      }
+
+      // =============================================
+      // CUSTOMER
+      // =============================================
+
+      setUser(currentUser);
+
+    } catch (err) {
+      console.error(
+        'User information error:',
+        err
+      );
+
+      localStorage.removeItem(
+        'userInfo'
+      );
+
+      localStorage.removeItem(
+        'token'
+      );
+
+      localStorage.removeItem(
+        'adminToken'
+      );
+
+      navigate('/login', {
+        replace: true,
+      });
+    }
+  }, [navigate]);
 
   // =====================================================
-  // LOAD DASHBOARD DATA
+  // FETCH DASHBOARD DATA
   // =====================================================
 
   useEffect(() => {
-    const loadDashboard = async () => {
-      try {
-        setLoading(true);
+    if (!user) {
+      return;
+    }
 
-        const results =
-          await Promise.allSettled([
-            API.get('/orders/myorders'),
-            API.get('/rfq/my'),
-            API.get('/quotations/my'),
-            API.get('/notifications'),
+    const fetchDashboardData =
+      async () => {
+        try {
+          setLoading(true);
+          setError('');
+
+          // ===========================================
+          // API REQUESTS
+          // ===========================================
+
+          const [
+            ordersResponse,
+            rfqsResponse,
+            quotationsResponse,
+            notificationsResponse,
+          ] = await Promise.allSettled([
+            API.get(
+              '/orders/myorders'
+            ),
+
+            API.get(
+              '/rfqs/my'
+            ),
+
+            API.get(
+              '/quotations/my'
+            ),
+
+            API.get(
+              '/notifications'
+            ),
           ]);
 
-        // -----------------------------------------------
-        // ORDERS
-        // -----------------------------------------------
+          // ===========================================
+          // ORDERS
+          // ===========================================
 
-        if (
-          results[0].status === 'fulfilled'
-        ) {
-          const data =
-            results[0].value.data;
+          if (
+            ordersResponse.status ===
+            'fulfilled'
+          ) {
+            const data =
+              ordersResponse.value?.data;
 
-          setOrders(
-            data?.orders ||
-              data ||
-              []
+            const orderData =
+              Array.isArray(data)
+                ? data
+                : Array.isArray(
+                    data?.data
+                  )
+                ? data.data
+                : Array.isArray(
+                    data?.orders
+                  )
+                ? data.orders
+                : Array.isArray(
+                    data?.data?.orders
+                  )
+                ? data.data.orders
+                : [];
+
+            setOrders(
+              orderData
+            );
+          } else {
+            console.error(
+              'Orders API error:',
+              ordersResponse.reason
+            );
+
+            setOrders([]);
+          }
+
+          // ===========================================
+          // RFQS
+          // ===========================================
+
+          if (
+            rfqsResponse.status ===
+            'fulfilled'
+          ) {
+            const data =
+              rfqsResponse.value?.data;
+
+            const rfqData =
+              Array.isArray(data)
+                ? data
+                : Array.isArray(
+                    data?.data
+                  )
+                ? data.data
+                : Array.isArray(
+                    data?.rfqs
+                  )
+                ? data.rfqs
+                : Array.isArray(
+                    data?.data?.rfqs
+                  )
+                ? data.data.rfqs
+                : [];
+
+            setRfqs(
+              rfqData
+            );
+          } else {
+            console.error(
+              'RFQ API error:',
+              rfqsResponse.reason
+            );
+
+            setRfqs([]);
+          }
+
+          // ===========================================
+          // QUOTATIONS
+          // ===========================================
+
+          if (
+            quotationsResponse.status ===
+            'fulfilled'
+          ) {
+            const data =
+              quotationsResponse.value?.data;
+
+            const quotationData =
+              Array.isArray(data)
+                ? data
+                : Array.isArray(
+                    data?.data
+                  )
+                ? data.data
+                : Array.isArray(
+                    data?.quotations
+                  )
+                ? data.quotations
+                : Array.isArray(
+                    data?.data?.quotations
+                  )
+                ? data.data.quotations
+                : [];
+
+            setQuotations(
+              quotationData
+            );
+          } else {
+            console.error(
+              'Quotation API error:',
+              quotationsResponse.reason
+            );
+
+            setQuotations([]);
+          }
+
+          // ===========================================
+          // NOTIFICATIONS
+          // ===========================================
+
+          if (
+            notificationsResponse.status ===
+            'fulfilled'
+          ) {
+            const data =
+              notificationsResponse.value?.data;
+
+            const notificationData =
+              Array.isArray(data)
+                ? data
+                : Array.isArray(
+                    data?.data
+                  )
+                ? data.data
+                : Array.isArray(
+                    data?.notifications
+                  )
+                ? data.notifications
+                : Array.isArray(
+                    data?.data?.notifications
+                  )
+                ? data.data.notifications
+                : [];
+
+            setNotifications(
+              notificationData
+            );
+          } else {
+            console.error(
+              'Notification API error:',
+              notificationsResponse.reason
+            );
+
+            setNotifications([]);
+          }
+
+        } catch (err) {
+
+          console.error(
+            'Dashboard error:',
+            err
           );
-        }
 
-        // -----------------------------------------------
-        // RFQs
-        // -----------------------------------------------
-
-        if (
-          results[1].status === 'fulfilled'
-        ) {
-          const data =
-            results[1].value.data;
-
-          setRfqs(
-            data?.rfqs ||
-              data ||
-              []
+          setError(
+            err.response?.data?.message ||
+            err.message ||
+            'Unable to load dashboard data.'
           );
+
+        } finally {
+          setLoading(false);
         }
+      };
 
-        // -----------------------------------------------
-        // QUOTATIONS
-        // -----------------------------------------------
+    fetchDashboardData();
 
-        if (
-          results[2].status === 'fulfilled'
-        ) {
-          const data =
-            results[2].value.data;
-
-          setQuotations(
-            data?.quotations ||
-              data ||
-              []
-          );
-        }
-
-        // -----------------------------------------------
-        // NOTIFICATIONS
-        // -----------------------------------------------
-
-        if (
-          results[3].status === 'fulfilled'
-        ) {
-          const data =
-            results[3].value.data;
-
-          setNotifications(
-            data?.notifications ||
-              data ||
-              []
-          );
-        }
-
-      } catch (error) {
-        console.error(
-          'Dashboard error:',
-          error
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadDashboard();
-  }, []);
+  }, [user]);
 
   // =====================================================
-  // USER DISPLAY
+  // LOGOUT
   // =====================================================
 
-  const userName =
-    user?.name ||
-    user?.username ||
-    'Customer';
+  const handleLogout = () => {
+    localStorage.removeItem(
+      'userInfo'
+    );
 
-  const businessName =
-    user?.businessName ||
-    user?.companyName ||
-    'Business Account';
+    localStorage.removeItem(
+      'token'
+    );
 
-  // =====================================================
-  // DASHBOARD MENU
-  // =====================================================
+    localStorage.removeItem(
+      'adminToken'
+    );
 
-  const menuItems = [
-    {
-      title: 'Dashboard',
-      icon: '🏠',
-      path: '/dashboard',
-    },
-    {
-      title: 'Orders',
-      icon: '📦',
-      path: '/orders',
-    },
-    {
-      title: 'RFQs',
-      icon: '📝',
-      path: '/my-rfqs',
-    },
-    {
-      title: 'Quotations',
-      icon: '💰',
-      path: '/my-quotations',
-    },
-    {
-      title: 'Wishlist',
-      icon: '❤️',
-      path: '/wishlist',
-    },
-    {
-      title: 'Returns',
-      icon: '🔄',
-      path: '/orders',
-    },
-    {
-      title: 'Invoices',
-      icon: '🧾',
-      path: '/orders',
-    },
-    {
-      title: 'Addresses',
-      icon: '📍',
-      path: '/profile/addresses',
-    },
-    {
-      title: 'Notifications',
-      icon: '🔔',
-      path: '/notifications',
-    },
-    {
-      title: 'Settings',
-      icon: '⚙️',
-      path: '/profile/settings',
-    },
-  ];
-
-  // =====================================================
-  // STATS
-  // =====================================================
-
-  const stats = [
-    {
-      title: 'Orders',
-      value: orders.length,
-      icon: '📦',
-      path: '/orders',
-    },
-    {
-      title: 'RFQs',
-      value: rfqs.length,
-      icon: '📝',
-      path: '/my-rfqs',
-    },
-    {
-      title: 'Quotations',
-      value: quotations.length,
-      icon: '💰',
-      path: '/my-quotations',
-    },
-    {
-      title: 'Notifications',
-      value: notifications.length,
-      icon: '🔔',
-      path: '/notifications',
-    },
-  ];
+    navigate('/login', {
+      replace: true,
+    });
+  };
 
   // =====================================================
   // FORMAT DATE
@@ -236,41 +412,98 @@ const CustomerDashboard = () => {
 
   const formatDate = (date) => {
     if (!date) {
-      return '—';
+      return '-';
     }
 
-    return new Date(
-      date
-    ).toLocaleDateString(
+    try {
+      return new Date(
+        date
+      ).toLocaleDateString(
+        'en-IN',
+        {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+        }
+      );
+    } catch {
+      return '-';
+    }
+  };
+
+  // =====================================================
+  // FORMAT CURRENCY
+  // =====================================================
+
+  const formatCurrency = (amount) => {
+    const value =
+      Number(amount);
+
+    if (
+      !Number.isFinite(value)
+    ) {
+      return '₹0';
+    }
+
+    return value.toLocaleString(
       'en-IN',
       {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
+        style: 'currency',
+        currency: 'INR',
+        maximumFractionDigits: 2,
       }
     );
   };
 
   // =====================================================
-  // RECENT ORDERS
+  // ORDER STATUS
   // =====================================================
 
-  const recentOrders =
-    orders.slice(0, 5);
+  const getOrderStatus = (order) => {
+    return (
+      order?.status ||
+      order?.orderStatus ||
+      'Pending'
+    );
+  };
+
+  // =====================================================
+  // RFQ STATUS
+  // =====================================================
+
+  const getRfqStatus = (rfq) => {
+    return (
+      rfq?.status ||
+      'Pending'
+    );
+  };
+
+  // =====================================================
+  // QUOTATION STATUS
+  // =====================================================
+
+  const getQuotationStatus = (
+    quotation
+  ) => {
+    return (
+      quotation?.status ||
+      'Pending'
+    );
+  };
 
   // =====================================================
   // LOADING
   // =====================================================
 
-  if (loading) {
+  if (loading && !user) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
 
         <div className="text-center">
 
-          <div className="w-10 h-10 border-4 border-teal-200 border-t-teal-600 rounded-full animate-spin mx-auto" />
+          <div className="w-10 h-10 border-4 border-slate-200 border-t-teal-600 rounded-full animate-spin mx-auto" />
 
-          <p className="mt-4 text-slate-500">
+          <p className="mt-4 text-sm text-slate-500">
             Loading dashboard...
           </p>
 
@@ -281,6 +514,55 @@ const CustomerDashboard = () => {
   }
 
   // =====================================================
+  // USER NOT AVAILABLE
+  // =====================================================
+
+  if (!user) {
+    return null;
+  }
+
+  // =====================================================
+  // COUNTS
+  // =====================================================
+
+  const totalOrders =
+    orders.length;
+
+  const totalRfqs =
+    rfqs.length;
+
+  const totalQuotations =
+    quotations.length;
+
+  const unreadNotifications =
+    notifications.filter(
+      (notification) =>
+        !notification?.read &&
+        !notification?.isRead
+    ).length;
+
+  // =====================================================
+  // RECENT ORDERS
+  // =====================================================
+
+  const recentOrders =
+    orders.slice(0, 5);
+
+  // =====================================================
+  // RECENT RFQS
+  // =====================================================
+
+  const recentRfqs =
+    rfqs.slice(0, 5);
+
+  // =====================================================
+  // RECENT QUOTATIONS
+  // =====================================================
+
+  const recentQuotations =
+    quotations.slice(0, 5);
+
+  // =====================================================
   // UI
   // =====================================================
 
@@ -288,494 +570,476 @@ const CustomerDashboard = () => {
     <div className="min-h-screen bg-slate-50">
 
       {/* =================================================
-          MOBILE HEADER
+          HEADER
       ================================================= */}
 
-      <div className="lg:hidden bg-white border-b border-slate-200 px-4 py-5">
+      <section className="bg-white border-b border-slate-200">
 
-        <p className="text-xs font-semibold uppercase tracking-wide text-teal-600">
-          My Account
-        </p>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
-        <h1 className="text-2xl font-extrabold text-slate-900 mt-1">
-          👤 {userName}
-        </h1>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 
-        <p className="text-sm text-slate-500 mt-1">
-          {businessName}
-        </p>
+            <div>
 
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
-
-        <div className="grid grid-cols-1 lg:grid-cols-[250px_1fr] gap-6">
-
-          {/* =================================================
-              DESKTOP SIDEBAR
-          ================================================= */}
-
-          <aside className="hidden lg:block">
-
-            <div className="bg-white border border-slate-200 rounded-2xl p-4 sticky top-24">
-
-              {/* PROFILE */}
-
-              <div className="px-3 py-4 border-b border-slate-100">
-
-                <div className="w-14 h-14 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center text-2xl font-bold">
-                  {userName
-                    .charAt(0)
-                    .toUpperCase()}
-                </div>
-
-                <h2 className="font-bold text-slate-900 mt-3">
-                  {userName}
-                </h2>
-
-                <p className="text-sm text-slate-500 mt-1">
-                  {businessName}
-                </p>
-
-              </div>
-
-              {/* MENU */}
-
-              <nav className="mt-4 space-y-1">
-
-                {menuItems.map(
-                  (item) => (
-
-                    <button
-                      key={item.title}
-                      type="button"
-                      onClick={() =>
-                        navigate(
-                          item.path
-                        )
-                      }
-                      className={`
-                        w-full
-                        flex
-                        items-center
-                        gap-3
-                        px-3
-                        py-2.5
-                        rounded-lg
-                        text-sm
-                        font-medium
-                        text-left
-                        transition
-                        ${
-                          item.title ===
-                          'Dashboard'
-                            ? 'bg-teal-50 text-teal-700'
-                            : 'text-slate-600 hover:bg-slate-50'
-                        }
-                      `}
-                    >
-
-                      <span>
-                        {item.icon}
-                      </span>
-
-                      <span>
-                        {item.title}
-                      </span>
-
-                    </button>
-
-                  )
-                )}
-
-              </nav>
-
-            </div>
-
-          </aside>
-
-          {/* =================================================
-              MAIN CONTENT
-          ================================================= */}
-
-          <main>
-
-            {/* =================================================
-                DESKTOP TITLE
-            ================================================= */}
-
-            <div className="hidden lg:block mb-6">
-
-              <p className="text-sm font-semibold text-teal-600 uppercase tracking-wide">
-                My Account
+              <p className="text-sm text-slate-500">
+                Customer Dashboard
               </p>
 
-              <h1 className="text-3xl font-extrabold text-slate-900 mt-1">
-                Dashboard
+              <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mt-1">
+                Welcome, {user?.name || 'Customer'}
               </h1>
 
-              <p className="text-slate-500 mt-1">
-                Manage your wholesale business account.
+              <p className="text-sm text-slate-500 mt-1">
+                {user?.email || ''}
               </p>
 
             </div>
 
-            {/* =================================================
-                MOBILE MENU
-            ================================================= */}
+            <div className="flex items-center gap-3">
 
-            <div className="lg:hidden bg-white border border-slate-200 rounded-2xl p-4 mb-6">
-
-              <h2 className="font-bold text-slate-900 mb-3">
-                Account Menu
-              </h2>
-
-              <div className="grid grid-cols-2 gap-2">
-
-                {menuItems
-                  .filter(
-                    (item) =>
-                      item.title !==
-                      'Dashboard'
-                  )
-                  .map(
-                    (item) => (
-
-                      <button
-                        key={
-                          item.title
-                        }
-                        type="button"
-                        onClick={() =>
-                          navigate(
-                            item.path
-                          )
-                        }
-                        className="flex items-center gap-2 px-3 py-3 rounded-xl bg-slate-50 hover:bg-teal-50 text-left text-sm font-medium text-slate-700"
-                      >
-
-                        <span>
-                          {item.icon}
-                        </span>
-
-                        <span>
-                          {item.title}
-                        </span>
-
-                      </button>
-
-                    )
-                  )}
-
-              </div>
-
-            </div>
-
-            {/* =================================================
-                WELCOME CARD
-            ================================================= */}
-
-            <div className="bg-gradient-to-r from-teal-600 to-teal-700 rounded-2xl p-6 sm:p-7 text-white mb-6">
-
-              <p className="text-teal-100 text-sm">
-                Welcome back
-              </p>
-
-              <h2 className="text-2xl sm:text-3xl font-extrabold mt-1">
-                {userName} 👋
-              </h2>
-
-              <p className="text-teal-100 mt-2">
-                {businessName}
-              </p>
+              <Link
+                to="/products"
+                className="px-4 py-2.5 rounded-lg bg-teal-600 text-white text-sm font-semibold hover:bg-teal-700 transition"
+              >
+                Browse Products
+              </Link>
 
               <button
                 type="button"
-                onClick={() =>
-                  navigate(
-                    '/products'
-                  )
-                }
-                className="mt-5 px-5 py-2.5 bg-white text-teal-700 rounded-lg font-semibold hover:bg-teal-50 transition"
+                onClick={handleLogout}
+                className="px-4 py-2.5 rounded-lg border border-slate-300 text-slate-700 text-sm font-semibold hover:bg-slate-100 transition"
               >
-                Continue Shopping
+                Logout
               </button>
 
             </div>
 
-            {/* =================================================
-                STATS
-            ================================================= */}
+          </div>
 
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        </div>
 
-              {stats.map(
-                (stat) => (
+      </section>
 
-                  <button
-                    key={stat.title}
-                    type="button"
-                    onClick={() =>
-                      navigate(
-                        stat.path
-                      )
-                    }
-                    className="bg-white border border-slate-200 rounded-2xl p-5 text-left hover:border-teal-300 hover:shadow-sm transition"
-                  >
+      {/* =================================================
+          MAIN
+      ================================================= */}
 
-                    <div className="flex items-center justify-between">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-                      <span className="text-2xl">
-                        {stat.icon}
-                      </span>
+        {/* =================================================
+            ERROR
+        ================================================= */}
 
-                      <span className="text-2xl font-extrabold text-slate-900">
-                        {stat.value}
-                      </span>
+        {error && (
 
-                    </div>
+          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
 
-                    <p className="text-sm text-slate-500 mt-3">
-                      {stat.title}
-                    </p>
+            {error}
 
-                  </button>
+          </div>
 
-                )
-              )}
+        )}
+
+        {/* =================================================
+            SUMMARY CARDS
+        ================================================= */}
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
+          {/* ORDERS */}
+
+          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+
+            <p className="text-sm text-slate-500">
+              Total Orders
+            </p>
+
+            <p className="text-3xl font-bold text-slate-900 mt-2">
+              {totalOrders}
+            </p>
+
+            <Link
+              to="/orders"
+              className="inline-block text-sm font-semibold text-teal-600 mt-3 hover:underline"
+            >
+              View Orders →
+            </Link>
+
+          </div>
+
+          {/* RFQS */}
+
+          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+
+            <p className="text-sm text-slate-500">
+              RFQ Requests
+            </p>
+
+            <p className="text-3xl font-bold text-slate-900 mt-2">
+              {totalRfqs}
+            </p>
+
+            <Link
+              to="/rfq"
+              className="inline-block text-sm font-semibold text-teal-600 mt-3 hover:underline"
+            >
+              Request Quote →
+            </Link>
+
+          </div>
+
+          {/* QUOTATIONS */}
+
+          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+
+            <p className="text-sm text-slate-500">
+              Quotations
+            </p>
+
+            <p className="text-3xl font-bold text-slate-900 mt-2">
+              {totalQuotations}
+            </p>
+
+            <Link
+              to="/quotations"
+              className="inline-block text-sm font-semibold text-teal-600 mt-3 hover:underline"
+            >
+              View Quotations →
+            </Link>
+
+          </div>
+
+          {/* NOTIFICATIONS */}
+
+          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+
+            <p className="text-sm text-slate-500">
+              Notifications
+            </p>
+
+            <p className="text-3xl font-bold text-slate-900 mt-2">
+              {unreadNotifications}
+            </p>
+
+            <Link
+              to="/notifications"
+              className="inline-block text-sm font-semibold text-teal-600 mt-3 hover:underline"
+            >
+              View Notifications →
+            </Link>
+
+          </div>
+
+        </div>
+
+        {/* =================================================
+            QUICK ACTIONS
+        ================================================= */}
+
+        <section className="mt-8">
+
+          <h2 className="text-xl font-bold text-slate-900 mb-4">
+            Quick Actions
+          </h2>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
+            <Link
+              to="/products"
+              className="bg-white border border-slate-200 rounded-xl p-5 hover:border-teal-300 hover:shadow-sm transition"
+            >
+
+              <p className="font-bold text-slate-900">
+                Browse Products
+              </p>
+
+              <p className="text-sm text-slate-500 mt-1">
+                Explore wholesale products
+              </p>
+
+            </Link>
+
+            <Link
+              to="/rfq"
+              className="bg-white border border-slate-200 rounded-xl p-5 hover:border-teal-300 hover:shadow-sm transition"
+            >
+
+              <p className="font-bold text-slate-900">
+                Request Quotation
+              </p>
+
+              <p className="text-sm text-slate-500 mt-1">
+                Ask for a custom wholesale price
+              </p>
+
+            </Link>
+
+            <Link
+              to="/cart"
+              className="bg-white border border-slate-200 rounded-xl p-5 hover:border-teal-300 hover:shadow-sm transition"
+            >
+
+              <p className="font-bold text-slate-900">
+                Shopping Cart
+              </p>
+
+              <p className="text-sm text-slate-500 mt-1">
+                Review your selected products
+              </p>
+
+            </Link>
+
+            <Link
+              to="/profile"
+              className="bg-white border border-slate-200 rounded-xl p-5 hover:border-teal-300 hover:shadow-sm transition"
+            >
+
+              <p className="font-bold text-slate-900">
+                My Profile
+              </p>
+
+              <p className="text-sm text-slate-500 mt-1">
+                Manage your account
+              </p>
+
+            </Link>
+
+          </div>
+
+        </section>
+
+        {/* =================================================
+            RECENT ORDERS
+        ================================================= */}
+
+        <section className="mt-8">
+
+          <div className="flex items-center justify-between mb-4">
+
+            <h2 className="text-xl font-bold text-slate-900">
+              Recent Orders
+            </h2>
+
+            <Link
+              to="/orders"
+              className="text-sm font-semibold text-teal-600 hover:underline"
+            >
+              View All
+            </Link>
+
+          </div>
+
+          <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+
+            {recentOrders.length === 0 ? (
+
+              <div className="p-8 text-center">
+
+                <p className="text-slate-500">
+                  No orders found.
+                </p>
+
+                <Link
+                  to="/products"
+                  className="inline-block mt-3 text-sm font-semibold text-teal-600 hover:underline"
+                >
+                  Start Shopping →
+                </Link>
+
+              </div>
+
+            ) : (
+
+              <div className="overflow-x-auto">
+
+                <table className="w-full text-sm">
+
+                  <thead className="bg-slate-50 border-b border-slate-200">
+
+                    <tr>
+
+                      <th className="text-left px-5 py-3 font-semibold text-slate-600">
+                        Order
+                      </th>
+
+                      <th className="text-left px-5 py-3 font-semibold text-slate-600">
+                        Date
+                      </th>
+
+                      <th className="text-left px-5 py-3 font-semibold text-slate-600">
+                        Amount
+                      </th>
+
+                      <th className="text-left px-5 py-3 font-semibold text-slate-600">
+                        Status
+                      </th>
+
+                    </tr>
+
+                  </thead>
+
+                  <tbody>
+
+                    {recentOrders.map(
+                      (order, index) => {
+
+                        const orderId =
+                          order?._id ||
+                          order?.id ||
+                          index;
+
+                        const amount =
+                          order?.totalPrice ??
+                          order?.totalAmount ??
+                          order?.total ??
+                          0;
+
+                        const status =
+                          getOrderStatus(
+                            order
+                          );
+
+                        return (
+                          <tr
+                            key={orderId}
+                            className="border-b border-slate-100 last:border-b-0"
+                          >
+
+                            <td className="px-5 py-4 font-semibold text-slate-900">
+                              #
+                              {String(
+                                orderId
+                              ).slice(-8)}
+                            </td>
+
+                            <td className="px-5 py-4 text-slate-600">
+                              {formatDate(
+                                order?.createdAt ||
+                                order?.orderDate
+                              )}
+                            </td>
+
+                            <td className="px-5 py-4 text-slate-900 font-semibold">
+                              {formatCurrency(
+                                amount
+                              )}
+                            </td>
+
+                            <td className="px-5 py-4">
+
+                              <span className="inline-flex px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold">
+                                {status}
+                              </span>
+
+                            </td>
+
+                          </tr>
+                        );
+                      }
+                    )}
+
+                  </tbody>
+
+                </table>
+
+              </div>
+
+            )}
+
+          </div>
+
+        </section>
+
+        {/* =================================================
+            RFQ + QUOTATIONS
+        ================================================= */}
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+
+          {/* RFQS */}
+
+          <section>
+
+            <div className="flex items-center justify-between mb-4">
+
+              <h2 className="text-xl font-bold text-slate-900">
+                Recent RFQs
+              </h2>
+
+              <Link
+                to="/rfq"
+                className="text-sm font-semibold text-teal-600 hover:underline"
+              >
+                View All
+              </Link>
 
             </div>
 
-            {/* =================================================
-                QUICK ACTIONS
-            ================================================= */}
+            <div className="bg-white border border-slate-200 rounded-2xl shadow-sm">
 
-            <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 mb-6">
+              {recentRfqs.length === 0 ? (
 
-              <div className="flex items-center justify-between mb-5">
-
-                <div>
-
-                  <h2 className="text-xl font-bold text-slate-900">
-                    Quick Actions
-                  </h2>
-
-                  <p className="text-sm text-slate-500 mt-1">
-                    Quickly access important account features.
-                  </p>
-
-                </div>
-
-              </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    navigate('/orders')
-                  }
-                  className="p-4 rounded-xl bg-slate-50 hover:bg-teal-50 transition text-left"
-                >
-
-                  <div className="text-2xl">
-                    📦
-                  </div>
-
-                  <p className="font-semibold text-slate-800 mt-2">
-                    My Orders
-                  </p>
-
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    navigate('/my-rfqs')
-                  }
-                  className="p-4 rounded-xl bg-slate-50 hover:bg-teal-50 transition text-left"
-                >
-
-                  <div className="text-2xl">
-                    📝
-                  </div>
-
-                  <p className="font-semibold text-slate-800 mt-2">
-                    My RFQs
-                  </p>
-
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    navigate(
-                      '/my-quotations'
-                    )
-                  }
-                  className="p-4 rounded-xl bg-slate-50 hover:bg-teal-50 transition text-left"
-                >
-
-                  <div className="text-2xl">
-                    💰
-                  </div>
-
-                  <p className="font-semibold text-slate-800 mt-2">
-                    Quotations
-                  </p>
-
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    navigate(
-                      '/wishlist'
-                    )
-                  }
-                  className="p-4 rounded-xl bg-slate-50 hover:bg-teal-50 transition text-left"
-                >
-
-                  <div className="text-2xl">
-                    ❤️
-                  </div>
-
-                  <p className="font-semibold text-slate-800 mt-2">
-                    Wishlist
-                  </p>
-
-                </button>
-
-              </div>
-
-            </div>
-
-            {/* =================================================
-                RECENT ORDERS
-            ================================================= */}
-
-            <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6">
-
-              <div className="flex items-center justify-between gap-3 mb-5">
-
-                <div>
-
-                  <h2 className="text-xl font-bold text-slate-900">
-                    Recent Orders
-                  </h2>
-
-                  <p className="text-sm text-slate-500 mt-1">
-                    Your latest wholesale orders.
-                  </p>
-
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    navigate('/orders')
-                  }
-                  className="text-sm font-semibold text-teal-600 hover:text-teal-700"
-                >
-                  View All
-                </button>
-
-              </div>
-
-              {recentOrders.length === 0 ? (
-
-                <div className="py-10 text-center">
-
-                  <div className="text-4xl">
-                    📦
-                  </div>
-
-                  <p className="font-semibold text-slate-800 mt-3">
-                    No orders yet
-                  </p>
-
-                  <p className="text-sm text-slate-500 mt-1">
-                    Your recent orders will appear here.
-                  </p>
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      navigate(
-                        '/products'
-                      )
-                    }
-                    className="mt-4 px-5 py-2.5 bg-teal-600 text-white rounded-lg font-semibold"
-                  >
-                    Start Shopping
-                  </button>
-
+                <div className="p-6 text-center text-sm text-slate-500">
+                  No quotation requests yet.
                 </div>
 
               ) : (
 
-                <div className="space-y-3">
+                <div className="divide-y divide-slate-100">
 
-                  {recentOrders.map(
-                    (order, index) => (
+                  {recentRfqs.map(
+                    (rfq, index) => {
 
-                      <div
-                        key={
-                          order._id ||
-                          index
-                        }
-                        className="border border-slate-100 rounded-xl p-4"
-                      >
+                      const rfqId =
+                        rfq?._id ||
+                        rfq?.id ||
+                        index;
 
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                      const productName =
+                        rfq?.product?.name ||
+                        rfq?.productName ||
+                        rfq?.product ||
+                        'Product';
 
-                          <div>
+                      return (
+                        <div
+                          key={rfqId}
+                          className="p-5"
+                        >
 
-                            <p className="font-semibold text-slate-900">
-                              Order #
-                              {String(
-                                order._id ||
-                                ''
-                              ).slice(
-                                -8
+                          <div className="flex items-start justify-between gap-4">
+
+                            <div>
+
+                              <p className="font-semibold text-slate-900">
+                                {productName}
+                              </p>
+
+                              <p className="text-xs text-slate-500 mt-1">
+                                Quantity:{' '}
+                                {rfq?.quantity ??
+                                  '-'}
+                              </p>
+
+                              <p className="text-xs text-slate-500 mt-1">
+                                {formatDate(
+                                  rfq?.createdAt
+                                )}
+                              </p>
+
+                            </div>
+
+                            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-700">
+                              {getRfqStatus(
+                                rfq
                               )}
-                            </p>
-
-                            <p className="text-sm text-slate-500 mt-1">
-                              {formatDate(
-                                order.createdAt
-                              )}
-                            </p>
-
-                          </div>
-
-                          <div className="flex items-center gap-3">
-
-                            <span className="px-3 py-1 rounded-full bg-teal-50 text-teal-700 text-xs font-semibold">
-                              {order.status ||
-                                order.orderStatus ||
-                                'Order Placed'}
                             </span>
-
-                            <button
-                              type="button"
-                              onClick={() =>
-                                navigate(
-                                  `/order-tracking/${order._id}`
-                                )
-                              }
-                              className="text-sm font-semibold text-teal-600"
-                            >
-                              Track
-                            </button>
 
                           </div>
 
                         </div>
-
-                      </div>
-
-                    )
+                      );
+                    }
                   )}
 
                 </div>
@@ -784,11 +1048,204 @@ const CustomerDashboard = () => {
 
             </div>
 
-          </main>
+          </section>
+
+          {/* QUOTATIONS */}
+
+          <section>
+
+            <div className="flex items-center justify-between mb-4">
+
+              <h2 className="text-xl font-bold text-slate-900">
+                Recent Quotations
+              </h2>
+
+              <Link
+                to="/quotations"
+                className="text-sm font-semibold text-teal-600 hover:underline"
+              >
+                View All
+              </Link>
+
+            </div>
+
+            <div className="bg-white border border-slate-200 rounded-2xl shadow-sm">
+
+              {recentQuotations.length === 0 ? (
+
+                <div className="p-6 text-center text-sm text-slate-500">
+                  No quotations available.
+                </div>
+
+              ) : (
+
+                <div className="divide-y divide-slate-100">
+
+                  {recentQuotations.map(
+                    (
+                      quotation,
+                      index
+                    ) => {
+
+                      const quotationId =
+                        quotation?._id ||
+                        quotation?.id ||
+                        index;
+
+                      const productName =
+                        quotation?.product?.name ||
+                        quotation?.productName ||
+                        'Product';
+
+                      const price =
+                        quotation?.totalPrice ??
+                        quotation?.quotedPrice ??
+                        quotation?.price ??
+                        0;
+
+                      return (
+                        <div
+                          key={
+                            quotationId
+                          }
+                          className="p-5"
+                        >
+
+                          <div className="flex items-start justify-between gap-4">
+
+                            <div>
+
+                              <p className="font-semibold text-slate-900">
+                                {productName}
+                              </p>
+
+                              <p className="text-sm text-slate-700 mt-1 font-semibold">
+                                {formatCurrency(
+                                  price
+                                )}
+                              </p>
+
+                              <p className="text-xs text-slate-500 mt-1">
+                                {formatDate(
+                                  quotation?.createdAt
+                                )}
+                              </p>
+
+                            </div>
+
+                            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-700">
+                              {getQuotationStatus(
+                                quotation
+                              )}
+                            </span>
+
+                          </div>
+
+                        </div>
+                      );
+                    }
+                  )}
+
+                </div>
+
+              )}
+
+            </div>
+
+          </section>
 
         </div>
 
-      </div>
+        {/* =================================================
+            PROFILE INFORMATION
+        ================================================= */}
+
+        <section className="mt-8">
+
+          <h2 className="text-xl font-bold text-slate-900 mb-4">
+            Account Information
+          </h2>
+
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+
+              <div>
+
+                <p className="text-xs text-slate-500 uppercase tracking-wide">
+                  Name
+                </p>
+
+                <p className="font-semibold text-slate-900 mt-1">
+                  {user?.name || '-'}
+                </p>
+
+              </div>
+
+              <div>
+
+                <p className="text-xs text-slate-500 uppercase tracking-wide">
+                  Email
+                </p>
+
+                <p className="font-semibold text-slate-900 mt-1 break-all">
+                  {user?.email || '-'}
+                </p>
+
+              </div>
+
+              <div>
+
+                <p className="text-xs text-slate-500 uppercase tracking-wide">
+                  Account Type
+                </p>
+
+                <p className="font-semibold text-slate-900 mt-1 capitalize">
+                  {user?.role ||
+                    'Customer'}
+                </p>
+
+              </div>
+
+              {user?.businessName && (
+
+                <div>
+
+                  <p className="text-xs text-slate-500 uppercase tracking-wide">
+                    Business
+                  </p>
+
+                  <p className="font-semibold text-slate-900 mt-1">
+                    {user.businessName}
+                  </p>
+
+                </div>
+
+              )}
+
+              {user?.phone && (
+
+                <div>
+
+                  <p className="text-xs text-slate-500 uppercase tracking-wide">
+                    Phone
+                  </p>
+
+                  <p className="font-semibold text-slate-900 mt-1">
+                    {user.phone}
+                  </p>
+
+                </div>
+
+              )}
+
+            </div>
+
+          </div>
+
+        </section>
+
+      </main>
 
     </div>
   );

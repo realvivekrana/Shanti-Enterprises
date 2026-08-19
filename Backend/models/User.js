@@ -1,123 +1,154 @@
 const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
 
-const addressSchema = new mongoose.Schema(
-  {
-    addressLine1: {
-      type: String,
-      trim: true,
-    },
-    addressLine2: {
-      type: String,
-      trim: true,
-    },
-    city: {
-      type: String,
-      trim: true,
-    },
-    state: {
-      type: String,
-      trim: true,
-    },
-    pincode: {
-      type: String,
-      trim: true,
-    },
-    country: {
-      type: String,
-      trim: true,
-      default: 'India',
-    },
-  },
-  { _id: false }
-);
+// ======================================================
+// USER SCHEMA
+// ======================================================
 
 const userSchema = new mongoose.Schema(
   {
-    // Customer personal information
+    // ====================================================
+    // NAME
+    // ====================================================
+
     name: {
       type: String,
-      required: true,
+      required: [true, 'Name is required'],
       trim: true,
+      minlength: 2,
+      maxlength: 100,
     },
+
+    // ====================================================
+    // EMAIL
+    // ====================================================
 
     email: {
       type: String,
-      required: true,
+      required: [true, 'Email is required'],
       unique: true,
       lowercase: true,
       trim: true,
     },
 
+    // ====================================================
+    // PASSWORD
+    // ====================================================
+
     password: {
       type: String,
-      required: true,
+      required: [true, 'Password is required'],
       minlength: 6,
+      select: false,
     },
+
+    // ====================================================
+    // PHONE
+    // OPTIONAL DURING REGISTRATION
+    // ====================================================
 
     phone: {
       type: String,
-      required: true,
+      default: '',
       trim: true,
     },
 
-    // Business information
+    // ====================================================
+    // BUSINESS NAME
+    // OPTIONAL DURING REGISTRATION
+    // ====================================================
+
     businessName: {
       type: String,
-      required: true,
-      trim: true,
-    },
-
-    gstNumber: {
-      type: String,
-      trim: true,
-      uppercase: true,
       default: '',
+      trim: true,
     },
 
-    // Business / Billing / Shipping addresses
-    addresses: {
-      business: {
-        type: addressSchema,
-        default: () => ({}),
-      },
+    // ====================================================
+    // ROLE
+    // ====================================================
 
-      billing: {
-        type: addressSchema,
-        default: () => ({}),
-      },
-
-      shipping: {
-        type: addressSchema,
-        default: () => ({}),
-      },
-    },
-
-    // User role
     role: {
       type: String,
-      enum: ['customer', 'admin', 'staff', 'supplier'],
+      enum: [
+        'customer',
+        'admin',
+      ],
       default: 'customer',
     },
 
-    // Account status
-    status: {
-      type: String,
-      enum: ['active', 'inactive', 'pending', 'suspended'],
-      default: 'active',
+    // ====================================================
+    // ACCOUNT STATUS
+    // ====================================================
+
+    blocked: {
+      type: Boolean,
+      default: false,
     },
 
-    wishlist: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Product',
-      },
-    ],
+    // ====================================================
+    // PROFILE IMAGE
+    // ====================================================
 
-    // Kept for compatibility with the existing project
-    isActive: {
-      type: Boolean,
-      default: true,
+    avatar: {
+      type: String,
+      default: '',
+    },
+
+    // ====================================================
+    // BUSINESS DETAILS
+    // OPTIONAL
+    // ====================================================
+
+    gstNumber: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+
+    // ====================================================
+    // ADDRESS
+    // OPTIONAL
+    // ====================================================
+
+    address: {
+      street: {
+        type: String,
+        default: '',
+        trim: true,
+      },
+
+      city: {
+        type: String,
+        default: '',
+        trim: true,
+      },
+
+      state: {
+        type: String,
+        default: '',
+        trim: true,
+      },
+
+      pincode: {
+        type: String,
+        default: '',
+        trim: true,
+      },
+
+      country: {
+        type: String,
+        default: 'India',
+        trim: true,
+      },
+    },
+
+    // ====================================================
+    // LAST LOGIN
+    // ====================================================
+
+    lastLogin: {
+      type: Date,
+      default: null,
     },
   },
   {
@@ -125,17 +156,35 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-// Hash password before saving
-userSchema.pre('save', async function () {
-  if (!this.isModified('password')) return;
+// ======================================================
+// EMAIL INDEX
+// ======================================================
 
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
+userSchema.index({
+  email: 1,
 });
 
-// Compare entered password with hashed password
-userSchema.methods.matchPassword = async function (enteredPassword) {
-  return await bcrypt.compare(enteredPassword, this.password);
+// ======================================================
+// REMOVE PASSWORD WHEN CONVERTING TO JSON
+// ======================================================
+
+userSchema.methods.toJSON = function () {
+  const user =
+    this.toObject();
+
+  delete user.password;
+
+  return user;
 };
 
-module.exports = mongoose.model('User', userSchema);
+// ======================================================
+// EXPORT MODEL
+// ======================================================
+
+const User =
+  mongoose.model(
+    'User',
+    userSchema
+  );
+
+module.exports = User;
