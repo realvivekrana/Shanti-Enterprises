@@ -11,6 +11,10 @@ const Checkout = () => {
 
   const navigate = useNavigate();
 
+  // ==============================
+  // ADDRESS
+  // ==============================
+
   const [address, setAddress] = useState({
     street: '',
     city: '',
@@ -18,6 +22,10 @@ const Checkout = () => {
     pincode: '',
     phone: '',
   });
+
+  // ==============================
+  // PAYMENT METHOD
+  // ==============================
 
   const [paymentMethod, setPaymentMethod] =
     useState('COD');
@@ -33,6 +41,10 @@ const Checkout = () => {
 
   const [error, setError] =
     useState('');
+
+  // ==============================
+  // USER
+  // ==============================
 
   const userInfo =
     localStorage.getItem('userInfo');
@@ -91,7 +103,7 @@ const Checkout = () => {
   }, [cartItems]);
 
   // ==============================
-  // ADDRESS
+  // ADDRESS CHANGE
   // ==============================
 
   const handleChange = (e) => {
@@ -117,7 +129,9 @@ const Checkout = () => {
 
         return (
           sum +
-          Number(itemPricing.subtotal || 0)
+          Number(
+            itemPricing.subtotal || 0
+          )
         );
       },
       0
@@ -128,6 +142,38 @@ const Checkout = () => {
   const totalPrice =
     itemsPrice +
     shippingPrice;
+
+  // ==============================
+  // BACKEND PAYMENT METHOD
+  // ==============================
+  //
+  // UI:
+  // UPI
+  // Card
+  // Net Banking
+  // COD
+  // Credit Terms
+  //
+  // Backend currently uses:
+  // Razorpay
+  // COD
+  //
+  // Therefore online methods are
+  // converted to Razorpay before
+  // sending the order.
+  // ==============================
+
+  const getBackendPaymentMethod = () => {
+    if (
+      paymentMethod === 'UPI' ||
+      paymentMethod === 'Card' ||
+      paymentMethod === 'Net Banking'
+    ) {
+      return 'Razorpay';
+    }
+
+    return paymentMethod;
+  };
 
   // ==============================
   // CREATE ORDER IN DATABASE
@@ -147,16 +193,16 @@ const Checkout = () => {
           quantity:
             item.quantity,
 
-          // Frontend price is only sent
-          // for compatibility.
-          //
-          // Backend calculates the
-          // actual wholesale price.
+          // Backend calculates actual
+          // wholesale price.
           price:
             pricing[item._id]
               ?.unitPrice ||
             item.price,
         }));
+
+      const backendPaymentMethod =
+        getBackendPaymentMethod();
 
       const { data } =
         await API.post(
@@ -167,7 +213,8 @@ const Checkout = () => {
             shippingAddress:
               address,
 
-            paymentMethod,
+            paymentMethod:
+              backendPaymentMethod,
 
             itemsPrice,
 
@@ -177,20 +224,9 @@ const Checkout = () => {
           }
         );
 
-      // ==========================================
-      // IMPORTANT
-      // ==========================================
-      //
-      // New backend response:
-      //
-      // {
-      //   order: {...},
-      //   inventory: [...]
-      // }
-      //
-      // Keep compatibility if backend
-      // returns the old direct order object.
-      // ==========================================
+      // ==============================
+      // ORDER RESPONSE
+      // ==============================
 
       const createdOrder =
         data?.order || data;
@@ -219,7 +255,7 @@ const Checkout = () => {
       clearCart();
 
       // ==============================
-      // GO TO SUCCESS PAGE
+      // SUCCESS PAGE
       // ==============================
 
       navigate(
@@ -235,7 +271,6 @@ const Checkout = () => {
     async () => {
 
       try {
-
         const { data } =
           await API.post(
             '/payment/create-order',
@@ -246,7 +281,6 @@ const Checkout = () => {
           );
 
         const options = {
-
           key:
             'rzp_test_TQ87uv6EO8OzPI',
 
@@ -269,21 +303,18 @@ const Checkout = () => {
             async (response) => {
 
               try {
+                // ==============================
+                // VERIFY PAYMENT
+                // ==============================
 
-                const {
-                  data: verifyData,
-                } =
-                  await API.post(
-                    '/payment/verify',
-                    response
-                  );
+                await API.post(
+                  '/payment/verify',
+                  response
+                );
 
-                // Axios response interceptor
-                // already unwraps ApiResponse.
-                //
-                // Therefore verifyData may be:
-                // true/object instead of:
-                // { success: true }
+                // ==============================
+                // CREATE ORDER
+                // ==============================
 
                 await createOrderInDB({
                   id:
@@ -297,22 +328,17 @@ const Checkout = () => {
                 });
 
               } catch (err) {
-
                 setError(
                   err.response?.data?.message ||
                     err.message ||
                     'Payment verification failed'
                 );
-
               } finally {
-
                 setLoading(false);
-
               }
             },
 
           prefill: {
-
             name:
               user?.name || '',
 
@@ -321,36 +347,28 @@ const Checkout = () => {
 
             contact:
               address.phone,
-
           },
 
           theme: {
-
             color:
               '#0d9488',
-
           },
 
           modal: {
-
             ondismiss:
               () =>
                 setLoading(false),
-
           },
-
         };
 
         // ==============================
-        // RAZORPAY CHECK
+        // CHECK RAZORPAY
         // ==============================
 
         if (!window.Razorpay) {
-
           throw new Error(
             'Razorpay SDK is not loaded.'
           );
-
         }
 
         const razorpayInstance =
@@ -361,7 +379,6 @@ const Checkout = () => {
         razorpayInstance.open();
 
       } catch (err) {
-
         setError(
           err.response?.data?.message ||
             err.message ||
@@ -388,7 +405,6 @@ const Checkout = () => {
       // ==============================
 
       if (!isLoggedIn) {
-
         setError(
           'Please login to place an order.'
         );
@@ -401,7 +417,6 @@ const Checkout = () => {
       // ==============================
 
       if (loadingPricing) {
-
         setError(
           'Please wait while wholesale prices are calculated.'
         );
@@ -410,16 +425,37 @@ const Checkout = () => {
       }
 
       // ==============================
-      // CHECK ALL PRICES
+      // CHECK PRICES
       // ==============================
 
       if (
         Object.keys(pricing).length !==
         cartItems.length
       ) {
-
         setError(
           'Unable to calculate all product prices.'
+        );
+
+        return;
+      }
+
+      // ==============================
+      // CREDIT TERMS
+      // ==============================
+      //
+      // IMPORTANT:
+      // Credit Terms needs backend
+      // support in Order model.
+      //
+      // Until backend enum supports it,
+      // don't send the order.
+      // ==============================
+
+      if (
+        paymentMethod === 'Credit Terms'
+      ) {
+        setError(
+          'Credit Terms payment is not enabled in the backend yet.'
         );
 
         return;
@@ -433,19 +469,28 @@ const Checkout = () => {
 
       try {
 
+        // ==============================
+        // ONLINE PAYMENT
+        // ==============================
+
         if (
-          paymentMethod ===
-          'Razorpay'
+          paymentMethod === 'Razorpay' ||
+          paymentMethod === 'UPI' ||
+          paymentMethod === 'Card' ||
+          paymentMethod === 'Net Banking'
         ) {
 
           await handleRazorpayPayment();
 
         } else {
 
+          // ==============================
+          // COD
+          // ==============================
+
           await createOrderInDB();
 
           setLoading(false);
-
         }
 
       } catch (err) {
@@ -467,14 +512,11 @@ const Checkout = () => {
   if (
     cartItems.length === 0
   ) {
-
     return (
       <div className="max-w-3xl mx-auto px-4 py-20 text-center">
-
         <p className="text-slate-500 text-lg">
           Your cart is empty.
         </p>
-
       </div>
     );
   }
@@ -487,18 +529,147 @@ const Checkout = () => {
     'w-full border border-slate-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent';
 
   // ==============================
+  // PAYMENT OPTION
+  // ==============================
+
+  const paymentOptions = [
+    {
+      value: 'UPI',
+      title: 'UPI',
+      description: 'Pay using UPI apps',
+    },
+    {
+      value: 'Card',
+      title: 'Card',
+      description: 'Credit or Debit Card',
+    },
+    {
+      value: 'Net Banking',
+      title: 'Net Banking',
+      description: 'Pay using your bank account',
+    },
+    {
+      value: 'COD',
+      title: 'COD',
+      description: 'Cash on Delivery',
+    },
+    {
+      value: 'Credit Terms',
+      title: 'Credit Terms',
+      description: 'Pay according to approved credit terms',
+    },
+  ];
+
+  // ==============================
   // UI
   // ==============================
 
   return (
+    <div className="max-w-5xl mx-auto px-4 py-10">
 
-    <div className="max-w-4xl mx-auto px-4 py-10">
+      {/* ==============================
+          HEADER
+      ============================== */}
 
-      <h1 className="text-2xl font-bold text-slate-800 mb-6">
-        Wholesale Checkout
-      </h1>
+      <div className="mb-8">
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+        <p className="text-sm font-semibold text-teal-600">
+          SHANTI ENTERPRISES
+        </p>
+
+        <h1 className="text-3xl font-bold text-slate-900 mt-1">
+          Checkout
+        </h1>
+
+        <p className="text-slate-500 mt-2">
+          Complete your wholesale order in three simple steps.
+        </p>
+
+      </div>
+
+      {/* ==============================
+          CHECKOUT STEPS
+      ============================== */}
+
+      <div className="bg-white border border-slate-200 rounded-xl p-5 mb-8">
+
+        <div className="grid grid-cols-3 gap-3">
+
+          {/* STEP 1 */}
+
+          <div className="flex items-center gap-3">
+
+            <div className="w-10 h-10 rounded-full bg-teal-600 text-white flex items-center justify-center font-bold">
+              ✓
+            </div>
+
+            <div>
+              <p className="text-xs text-slate-500">
+                Step 1
+              </p>
+
+              <p className="font-semibold text-slate-800">
+                Address
+              </p>
+            </div>
+
+          </div>
+
+          {/* STEP 2 */}
+
+          <div className="flex items-center gap-3">
+
+            <div className="w-10 h-10 rounded-full bg-teal-600 text-white flex items-center justify-center font-bold">
+              ✓
+            </div>
+
+            <div>
+              <p className="text-xs text-slate-500">
+                Step 2
+              </p>
+
+              <p className="font-semibold text-slate-800">
+                Shipping
+              </p>
+            </div>
+
+          </div>
+
+          {/* STEP 3 */}
+
+          <div className="flex items-center gap-3">
+
+            <div className="w-10 h-10 rounded-full bg-teal-600 text-white flex items-center justify-center font-bold">
+              3
+            </div>
+
+            <div>
+              <p className="text-xs text-slate-500">
+                Step 3
+              </p>
+
+              <p className="font-semibold text-slate-800">
+                Payment
+              </p>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      {/* ==============================
+          ERROR
+      ============================== */}
+
+      {error && (
+        <div className="mb-6 bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 text-sm">
+          {error}
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
         {/* ==============================
             CHECKOUT FORM
@@ -506,74 +677,86 @@ const Checkout = () => {
 
         <form
           onSubmit={handlePlaceOrder}
-          className="space-y-4"
+          className="space-y-5"
         >
 
-          <h2 className="font-semibold text-slate-800 text-sm uppercase tracking-wide">
-            Shipping Address
-          </h2>
+          {/* ==============================
+              ADDRESS
+          ============================== */}
 
-          {/* STREET */}
+          <div className="bg-white border border-slate-200 rounded-xl p-6">
 
-          <input
-            type="text"
-            name="street"
-            placeholder="Street Address"
-            required
-            value={address.street}
-            onChange={handleChange}
-            className={inputClass}
-          />
+            <h2 className="text-xl font-bold text-slate-900">
+              Delivery Address
+            </h2>
 
-          {/* CITY + STATE */}
+            <p className="text-sm text-slate-500 mt-1 mb-5">
+              Enter the address where you want the wholesale order delivered.
+            </p>
 
-          <div className="grid grid-cols-2 gap-4">
+            {/* STREET */}
 
             <input
               type="text"
-              name="city"
-              placeholder="City"
+              name="street"
+              placeholder="Street Address"
               required
-              value={address.city}
+              value={address.street}
               onChange={handleChange}
               className={inputClass}
             />
 
-            <input
-              type="text"
-              name="state"
-              placeholder="State"
-              required
-              value={address.state}
-              onChange={handleChange}
-              className={inputClass}
-            />
+            {/* CITY + STATE */}
 
-          </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
 
-          {/* PINCODE + PHONE */}
+              <input
+                type="text"
+                name="city"
+                placeholder="City"
+                required
+                value={address.city}
+                onChange={handleChange}
+                className={inputClass}
+              />
 
-          <div className="grid grid-cols-2 gap-4">
+              <input
+                type="text"
+                name="state"
+                placeholder="State"
+                required
+                value={address.state}
+                onChange={handleChange}
+                className={inputClass}
+              />
 
-            <input
-              type="text"
-              name="pincode"
-              placeholder="Pincode"
-              required
-              value={address.pincode}
-              onChange={handleChange}
-              className={inputClass}
-            />
+            </div>
 
-            <input
-              type="text"
-              name="phone"
-              placeholder="Phone Number"
-              required
-              value={address.phone}
-              onChange={handleChange}
-              className={inputClass}
-            />
+            {/* PINCODE + PHONE */}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+
+              <input
+                type="text"
+                name="pincode"
+                placeholder="Pincode"
+                required
+                value={address.pincode}
+                onChange={handleChange}
+                className={inputClass}
+              />
+
+              <input
+                type="text"
+                name="phone"
+                placeholder="Phone Number"
+                required
+                value={address.phone}
+                onChange={handleChange}
+                className={inputClass}
+              />
+
+            </div>
 
           </div>
 
@@ -581,71 +764,98 @@ const Checkout = () => {
               PAYMENT METHOD
           ============================== */}
 
-          <h2 className="font-semibold text-slate-800 text-sm uppercase tracking-wide pt-4">
-            Payment Method
-          </h2>
+          <div className="bg-white border border-slate-200 rounded-xl p-6">
 
-          <div className="flex gap-4">
+            <h2 className="text-xl font-bold text-slate-900">
+              Payment Method
+            </h2>
 
-            {/* COD */}
-
-            <label className="flex items-center gap-2 text-sm text-slate-700">
-
-              <input
-                type="radio"
-                name="paymentMethod"
-                value="COD"
-                checked={
-                  paymentMethod ===
-                  'COD'
-                }
-                onChange={(e) =>
-                  setPaymentMethod(
-                    e.target.value
-                  )
-                }
-              />
-
-              Cash on Delivery
-
-            </label>
-
-            {/* RAZORPAY */}
-
-            <label className="flex items-center gap-2 text-sm text-slate-700">
-
-              <input
-                type="radio"
-                name="paymentMethod"
-                value="Razorpay"
-                checked={
-                  paymentMethod ===
-                  'Razorpay'
-                }
-                onChange={(e) =>
-                  setPaymentMethod(
-                    e.target.value
-                  )
-                }
-              />
-
-              Online Payment
-
-            </label>
-
-          </div>
-
-          {/* ==============================
-              ERROR
-          ============================== */}
-
-          {error && (
-
-            <p className="text-red-600 text-sm">
-              {error}
+            <p className="text-sm text-slate-500 mt-1 mb-5">
+              Select your preferred payment option.
             </p>
 
-          )}
+            <div className="space-y-3">
+
+              {paymentOptions.map(
+                (option) => (
+
+                  <label
+                    key={option.value}
+                    className={`flex items-start gap-3 border rounded-xl p-4 cursor-pointer transition ${
+                      paymentMethod === option.value
+                        ? 'border-teal-500 bg-teal-50'
+                        : 'border-slate-200 hover:border-teal-300'
+                    }`}
+                  >
+
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value={option.value}
+                      checked={
+                        paymentMethod ===
+                        option.value
+                      }
+                      onChange={(e) =>
+                        setPaymentMethod(
+                          e.target.value
+                        )
+                      }
+                      className="mt-1"
+                    />
+
+                    <div>
+
+                      <p className="font-semibold text-slate-800">
+                        {option.title}
+                      </p>
+
+                      <p className="text-sm text-slate-500 mt-1">
+                        {option.description}
+                      </p>
+
+                    </div>
+
+                  </label>
+
+                )
+              )}
+
+            </div>
+
+            {/* ONLINE PAYMENT INFO */}
+
+            {(
+              paymentMethod === 'UPI' ||
+              paymentMethod === 'Card' ||
+              paymentMethod === 'Net Banking'
+            ) && (
+
+              <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-700">
+
+                You will be redirected to Razorpay
+                to complete your{' '}
+                {paymentMethod} payment.
+
+              </div>
+
+            )}
+
+            {/* CREDIT TERMS INFO */}
+
+            {paymentMethod === 'Credit Terms' && (
+
+              <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm text-yellow-700">
+
+                Credit Terms requires backend
+                approval and customer credit
+                configuration.
+
+              </div>
+
+            )}
+
+          </div>
 
           {/* ==============================
               PLACE ORDER
@@ -655,15 +865,18 @@ const Checkout = () => {
             type="submit"
             disabled={
               loading ||
-              loadingPricing
+              loadingPricing ||
+              paymentMethod === 'Credit Terms'
             }
-            className="w-full bg-teal-600 text-white py-3 rounded-lg hover:bg-teal-700 transition-colors font-medium disabled:bg-slate-300"
+            className="w-full bg-teal-600 text-white py-3.5 rounded-lg hover:bg-teal-700 transition-colors font-semibold disabled:bg-slate-300 disabled:cursor-not-allowed"
           >
 
             {loading
               ? 'Processing...'
               : loadingPricing
               ? 'Calculating prices...'
+              : paymentMethod === 'Credit Terms'
+              ? 'Credit Terms Not Available'
               : 'Place Order'}
 
           </button>
@@ -676,9 +889,11 @@ const Checkout = () => {
 
         <div className="bg-white border border-slate-200 rounded-xl p-6 h-fit">
 
-          <h2 className="font-semibold text-slate-800 mb-4">
+          <h2 className="text-xl font-bold text-slate-900 mb-5">
             Wholesale Order Summary
           </h2>
+
+          {/* PRODUCTS */}
 
           {cartItems.map(
             (item) => {
@@ -690,30 +905,30 @@ const Checkout = () => {
 
                 <div
                   key={item._id}
-                  className="py-3 border-b border-slate-100"
+                  className="py-4 border-b border-slate-100"
                 >
 
-                  <div className="flex justify-between text-sm text-slate-700">
+                  <div className="flex justify-between gap-4 text-sm">
 
-                    <span>
+                    <div>
 
-                      {item.name}
+                      <p className="font-semibold text-slate-800">
+                        {item.name}
+                      </p>
 
-                      {' × '}
+                      <p className="text-slate-500 mt-1">
+                        Quantity: {item.quantity}
+                      </p>
 
-                      {item.quantity}
+                    </div>
 
-                    </span>
-
-                    <span className="font-medium">
-
+                    <span className="font-semibold text-slate-800 whitespace-nowrap">
                       ₹
                       {itemPricing
                         ? Number(
                             itemPricing.subtotal
                           ).toFixed(2)
                         : '—'}
-
                     </span>
 
                   </div>
@@ -722,7 +937,7 @@ const Checkout = () => {
 
                   {itemPricing && (
 
-                    <div className="text-xs text-slate-500 mt-1">
+                    <div className="text-xs text-slate-500 mt-2">
 
                       ₹
                       {Number(
@@ -768,9 +983,9 @@ const Checkout = () => {
             }
           )}
 
-          {/* PRODUCTS */}
+          {/* PRODUCTS TOTAL */}
 
-          <div className="border-t border-slate-200 mt-3 pt-3 flex justify-between text-sm text-slate-600">
+          <div className="border-t border-slate-200 mt-3 pt-4 flex justify-between text-sm text-slate-600">
 
             <span>
               Products
@@ -785,7 +1000,7 @@ const Checkout = () => {
 
           {/* SHIPPING */}
 
-          <div className="flex justify-between text-sm text-slate-600 mt-2">
+          <div className="flex justify-between text-sm text-slate-600 mt-3">
 
             <span>
               Shipping
@@ -800,13 +1015,13 @@ const Checkout = () => {
 
           {/* TOTAL */}
 
-          <div className="border-t border-slate-200 mt-3 pt-3 flex justify-between font-bold text-lg text-slate-800">
+          <div className="border-t border-slate-200 mt-4 pt-4 flex justify-between font-bold text-xl text-slate-900">
 
             <span>
               Total
             </span>
 
-            <span>
+            <span className="text-teal-700">
               ₹
               {totalPrice.toFixed(2)}
             </span>
@@ -818,7 +1033,6 @@ const Checkout = () => {
       </div>
 
     </div>
-
   );
 };
 
