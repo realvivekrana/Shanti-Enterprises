@@ -1,8 +1,4 @@
 import {
-  useMemo,
-} from 'react';
-
-import {
   Link,
   useNavigate,
 } from 'react-router-dom';
@@ -13,280 +9,222 @@ import {
 
 
 // ======================================================
-// CONSTANTS
-// ======================================================
-
-const GST_RATE = 0.18;
-
-const SHIPPING_CHARGE = 2000;
-
-const BULK_DISCOUNT_THRESHOLD = 50000;
-
-const BULK_DISCOUNT_RATE = 0.05;
-
-
-// ======================================================
 // CART PAGE
 // ======================================================
 
 const Cart = () => {
 
+  const {
+    cartItems,
+    removeFromCart,
+    updateQuantity,
+    cartError,
+    setCartError,
+    getItemPricing,
+    cartSummary,
+    shippingPrice,
+    cartTotal,
+  } = useCart();
+
+
   const navigate =
     useNavigate();
 
 
-  const {
-    cartItems = [],
-    addToCart,
-    removeFromCart,
-    updateCartQuantity,
-    clearCart,
-  } = useCart();
+  // ====================================================
+  // FORMAT PRICE
+  // ====================================================
+
+  const formatPrice = (
+    value
+  ) => {
+
+    return Number(
+      value || 0
+    ).toLocaleString(
+      'en-IN',
+      {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2,
+      }
+    );
+
+  };
 
 
   // ====================================================
-  // NORMALIZE CART ITEMS
+  // EMPTY CART
   // ====================================================
 
-  const normalizedItems =
-    useMemo(() => {
+  if (
+    cartItems.length === 0
+  ) {
 
-      return cartItems.map(
-        (item) => {
+    return (
 
-          const product =
-            item.product ||
-            item;
+      <div
+        className="
+          min-h-[70vh]
+          bg-slate-50
+          px-4
+          py-12
+          sm:py-20
+        "
+      >
 
+        <div
+          className="
+            max-w-xl
+            mx-auto
+            bg-white
+            border
+            border-slate-200
+            rounded-2xl
+            p-8
+            sm:p-12
+            text-center
+          "
+        >
 
-          const quantity =
-            Number(
-              item.quantity ||
-              1
-            );
+          <div
+            className="
+              w-20
+              h-20
+              mx-auto
+              rounded-full
+              bg-teal-50
+              flex
+              items-center
+              justify-center
+              text-4xl
+            "
+          >
 
+            🛒
 
-          /*
-           * Product Details page se wholesale
-           * price aa sakta hai.
-           */
-
-          const unitPrice =
-            Number(
-              item.unitPrice ??
-              item.price ??
-              product.unitPrice ??
-              product.price ??
-              product.sellingPrice ??
-              0
-            );
-
-
-          const image =
-            item.image ||
-            product.image ||
-            product.images?.[0] ||
-            product.thumbnail ||
-            '';
-
-
-          const name =
-            item.name ||
-            product.name ||
-            'Product';
-
-
-          const productId =
-            item._id ||
-            item.productId ||
-            product._id ||
-            product.id;
+          </div>
 
 
-          return {
+          <h1
+            className="
+              mt-6
+              text-2xl
+              sm:text-3xl
+              font-extrabold
+              text-slate-800
+            "
+          >
 
-            ...item,
+            Your Cart is Empty
 
-            product,
-
-            productId,
-
-            name,
-
-            image,
-
-            quantity,
-
-            unitPrice,
-
-            lineTotal:
-              unitPrice *
-              quantity,
-
-          };
-
-        }
-      );
-
-    }, [
-      cartItems,
-    ]);
+          </h1>
 
 
-  // ====================================================
-  // SUBTOTAL
-  // ====================================================
+          <p
+            className="
+              mt-2
+              text-sm
+              text-slate-500
+            "
+          >
 
-  const subtotal =
-    useMemo(() => {
+            Add wholesale products to
+            your cart to continue.
 
-      return normalizedItems.reduce(
-        (
-          total,
-          item
-        ) =>
-          total +
-          item.lineTotal,
-        0
-      );
-
-    }, [
-      normalizedItems,
-    ]);
+          </p>
 
 
-  // ====================================================
-  // TOTAL QUANTITY
-  // ====================================================
+          <Link
+            to="/products"
+            className="
+              inline-flex
+              items-center
+              justify-center
+              mt-6
+              px-6
+              h-11
+              rounded-xl
+              bg-teal-600
+              text-white
+              text-sm
+              font-bold
+              hover:bg-teal-700
+              transition
+            "
+          >
 
-  const totalQuantity =
-    useMemo(() => {
+            Continue Shopping
 
-      return normalizedItems.reduce(
-        (
-          total,
-          item
-        ) =>
-          total +
-          item.quantity,
-        0
-      );
+          </Link>
 
-    }, [
-      normalizedItems,
-    ]);
+        </div>
+
+      </div>
+
+    );
+
+  }
 
 
   // ====================================================
-  // BULK DISCOUNT
+  // DECREASE QUANTITY
   // ====================================================
 
-  const bulkDiscount =
-    useMemo(() => {
+  const handleDecrease =
+    (item) => {
 
-      /*
-       * B2B cart discount:
-       *
-       * ₹50,000+ subtotal
-       * => 5% bulk discount
-       *
-       * Isko later backend pricing engine
-       * ke according replace kiya ja sakta hai.
-       */
+      const moq =
+        Number(
+          item.moq || 1
+        );
+
 
       if (
-        subtotal >=
-        BULK_DISCOUNT_THRESHOLD
+        Number(
+          item.quantity
+        ) <= moq
       ) {
 
-        return Number(
-          (
-            subtotal *
-            BULK_DISCOUNT_RATE
-          ).toFixed(2)
+        setCartError(
+          `Minimum order quantity for ${item.name} is ${moq} pieces.`
         );
+
+        return;
 
       }
 
 
-      return 0;
+      updateQuantity(
+        item._id,
+        Number(
+          item.quantity
+        ) - 1
+      );
 
-    }, [
-      subtotal,
-    ]);
-
-
-  // ====================================================
-  // TAXABLE AMOUNT
-  // ====================================================
-
-  const taxableAmount =
-    Math.max(
-      0,
-      subtotal -
-      bulkDiscount
-    );
+    };
 
 
   // ====================================================
-  // GST
-  // ====================================================
-
-  const gst =
-    Number(
-      (
-        taxableAmount *
-        GST_RATE
-      ).toFixed(2)
-    );
-
-
-  // ====================================================
-  // SHIPPING
-  // ====================================================
-
-  const shipping =
-    normalizedItems.length > 0
-      ? SHIPPING_CHARGE
-      : 0;
-
-
-  // ====================================================
-  // GRAND TOTAL
-  // ====================================================
-
-  const grandTotal =
-    taxableAmount +
-    gst +
-    shipping;
-
-
-  // ====================================================
-  // UPDATE QUANTITY
+  // INCREASE QUANTITY
   // ====================================================
 
   const handleIncrease =
     (item) => {
 
-      const nextQuantity =
-        item.quantity + 1;
+      const stock =
+        Number(
+          item.stock || 0
+        );
 
 
       if (
-        typeof addToCart ===
-        'function'
+        Number(
+          item.quantity
+        ) >= stock
       ) {
 
-        /*
-         * Existing CartContext agar
-         * addToCart(product, quantity)
-         * support karta hai.
-         */
-
-        addToCart(
-          item.product ||
-          item,
-          1
+        setCartError(
+          `Only ${stock} pieces of ${item.name} are available.`
         );
 
         return;
@@ -294,60 +232,18 @@ const Cart = () => {
       }
 
 
-      if (
-        typeof updateCartQuantity ===
-        'function'
-      ) {
-
-        updateCartQuantity(
-          item.productId,
-          nextQuantity
-        );
-
-      }
-
-    };
-
-
-  const handleDecrease =
-    (item) => {
-
-      const nextQuantity =
-        item.quantity - 1;
-
-
-      if (
-        nextQuantity <= 0
-      ) {
-
-        handleRemove(
-          item
-        );
-
-        return;
-
-      }
-
-
-      if (
-        typeof updateCartQuantity ===
-        'function'
-      ) {
-
-        updateCartQuantity(
-          item.productId,
-          nextQuantity
-        );
-
-        return;
-
-      }
+      updateQuantity(
+        item._id,
+        Number(
+          item.quantity
+        ) + 1
+      );
 
     };
 
 
   // ====================================================
-  // DIRECT QUANTITY
+  // MANUAL QUANTITY
   // ====================================================
 
   const handleQuantityChange =
@@ -362,8 +258,20 @@ const Cart = () => {
         );
 
 
+      const moq =
+        Number(
+          item.moq || 1
+        );
+
+
+      const stock =
+        Number(
+          item.stock || 0
+        );
+
+
       if (
-        !Number.isFinite(
+        !Number.isInteger(
           quantity
         )
       ) {
@@ -374,11 +282,11 @@ const Cart = () => {
 
 
       if (
-        quantity <= 0
+        quantity < moq
       ) {
 
-        handleRemove(
-          item
+        setCartError(
+          `Minimum order quantity for ${item.name} is ${moq} pieces.`
         );
 
         return;
@@ -387,59 +295,32 @@ const Cart = () => {
 
 
       if (
-        typeof updateCartQuantity ===
-        'function'
+        quantity > stock
       ) {
 
-        updateCartQuantity(
-          item.productId,
-          Math.floor(
-            quantity
-          )
+        setCartError(
+          `Only ${stock} pieces of ${item.name} are available.`
         );
 
+        return;
+
       }
+
+
+      updateQuantity(
+        item._id,
+        quantity
+      );
 
     };
 
 
   // ====================================================
-  // REMOVE
-  // ====================================================
-
-  const handleRemove =
-    (item) => {
-
-      if (
-        typeof removeFromCart ===
-        'function'
-      ) {
-
-        removeFromCart(
-          item.productId
-        );
-
-      }
-
-    };
-
-
-  // ====================================================
-  // CHECKOUT
+  // PROCEED CHECKOUT
   // ====================================================
 
   const handleCheckout =
     () => {
-
-      if (
-        normalizedItems.length ===
-        0
-      ) {
-
-        return;
-
-      }
-
 
       navigate(
         '/checkout'
@@ -449,122 +330,8 @@ const Cart = () => {
 
 
   // ====================================================
-  // EMPTY CART
+  // RENDER
   // ====================================================
-
-  if (
-    normalizedItems.length ===
-    0
-  ) {
-
-    return (
-
-      <div
-        className="
-          min-h-screen
-          bg-slate-50
-          px-4
-          py-10
-        "
-      >
-
-        <div
-          className="
-            max-w-3xl
-            mx-auto
-          "
-        >
-
-          <div
-            className="
-              bg-white
-              border
-              border-slate-200
-              rounded-2xl
-              p-8
-              sm:p-12
-              text-center
-            "
-          >
-
-            <div
-              className="
-                w-20
-                h-20
-                mx-auto
-                rounded-full
-                bg-slate-100
-                flex
-                items-center
-                justify-center
-                text-4xl
-              "
-            >
-
-              🛒
-
-            </div>
-
-
-            <h1
-              className="
-                mt-6
-                text-2xl
-                sm:text-3xl
-                font-extrabold
-                text-slate-900
-              "
-            >
-
-              Your Cart is Empty
-
-            </h1>
-
-
-            <p
-              className="
-                mt-3
-                text-sm
-                text-slate-500
-              "
-            >
-
-              Add wholesale products to your
-              cart and place your bulk order.
-
-            </p>
-
-
-            <Link
-              to="/products"
-              className="
-                inline-flex
-                mt-6
-                px-6
-                py-3
-                rounded-xl
-                bg-teal-600
-                text-white
-                text-sm
-                font-bold
-                hover:bg-teal-700
-              "
-            >
-
-              Continue Shopping
-
-            </Link>
-
-          </div>
-
-        </div>
-
-      </div>
-
-    );
-
-  }
-
 
   return (
 
@@ -592,71 +359,58 @@ const Cart = () => {
             max-w-7xl
             mx-auto
             px-4
+            sm:px-6
+            lg:px-8
             py-7
             sm:py-9
           "
         >
 
-          <div
+          <p
             className="
-              flex
-              flex-wrap
-              items-end
-              justify-between
-              gap-3
+              text-xs
+              sm:text-sm
+              font-bold
+              uppercase
+              tracking-wider
+              text-teal-600
             "
           >
 
-            <div>
+            Wholesale Order
 
-              <p
-                className="
-                  text-sm
-                  font-semibold
-                  uppercase
-                  tracking-wider
-                  text-teal-600
-                "
-              >
-
-                Wholesale Cart
-
-              </p>
+          </p>
 
 
-              <h1
-                className="
-                  mt-1
-                  text-3xl
-                  sm:text-4xl
-                  font-extrabold
-                  text-slate-900
-                "
-              >
+          <h1
+            className="
+              mt-1
+              text-2xl
+              sm:text-3xl
+              lg:text-4xl
+              font-extrabold
+              text-slate-900
+            "
+          >
 
-                Your Cart
+            Your Cart
 
-              </h1>
-
-            </div>
+          </h1>
 
 
-            <div
-              className="
-                text-sm
-                text-slate-500
-              "
-            >
+          <p
+            className="
+              mt-2
+              text-sm
+              text-slate-500
+            "
+          >
 
-              {totalQuantity}{' '}
+            Review your bulk order,
+            wholesale pricing and taxes
+            before checkout.
 
-              {totalQuantity === 1
-                ? 'piece'
-                : 'pieces'}
-
-            </div>
-
-          </div>
+          </p>
 
         </div>
 
@@ -664,7 +418,7 @@ const Cart = () => {
 
 
       {/* ==================================================
-          MAIN
+          MAIN CONTENT
       ================================================== */}
 
       <main
@@ -672,180 +426,891 @@ const Cart = () => {
           max-w-7xl
           mx-auto
           px-4
+          sm:px-6
+          lg:px-8
           py-6
-          sm:py-8
+          sm:py-10
         "
       >
+
+        {/* ==================================================
+            ERROR
+        ================================================== */}
+
+        {cartError && (
+
+          <div
+            className="
+              mb-6
+              bg-red-50
+              border
+              border-red-200
+              text-red-700
+              rounded-xl
+              px-4
+              py-3
+              text-sm
+            "
+          >
+
+            {cartError}
+
+          </div>
+
+        )}
+
 
         <div
           className="
             grid
             grid-cols-1
-            xl:grid-cols-[1fr_360px]
+            lg:grid-cols-[1fr_380px]
             gap-6
+            lg:gap-8
             items-start
           "
         >
 
           {/* ==================================================
-              CART PRODUCTS
+              CART ITEMS
           ================================================== */}
 
-          <section
-            className="
-              bg-white
-              border
-              border-slate-200
-              rounded-2xl
-              overflow-hidden
-            "
-          >
+          <section>
 
-            {/* DESKTOP HEADER */}
+            {/* ==================================================
+                DESKTOP TABLE
+            ================================================== */}
 
             <div
               className="
                 hidden
-                md:grid
-                md:grid-cols-[minmax(0,1fr)_110px_130px_140px_40px]
-                gap-4
-                px-5
-                py-4
-                bg-slate-50
-                border-b
+                md:block
+                bg-white
+                border
                 border-slate-200
-                text-xs
-                font-bold
-                uppercase
-                tracking-wide
-                text-slate-500
+                rounded-2xl
+                overflow-hidden
               "
             >
 
-              <div>
-                Product
+              {/* TABLE HEADER */}
+
+              <div
+                className="
+                  grid
+                  grid-cols-[minmax(260px,1.8fr)_110px_130px_140px]
+                  gap-4
+                  px-5
+                  py-4
+                  bg-slate-50
+                  border-b
+                  border-slate-200
+                  text-xs
+                  font-bold
+                  uppercase
+                  tracking-wide
+                  text-slate-500
+                "
+              >
+
+                <span>
+                  Product
+                </span>
+
+                <span>
+                  Qty
+                </span>
+
+                <span>
+                  Price
+                </span>
+
+                <span
+                  className="
+                    text-right
+                  "
+                >
+                  Total
+                </span>
+
               </div>
 
-              <div>
-                Qty
-              </div>
 
-              <div>
-                Price
-              </div>
+              {/* TABLE ROWS */}
 
-              <div>
-                Total
-              </div>
+              {cartItems.map(
+                (item) => {
 
-              <div />
-
-            </div>
-
-
-            {/* ==================================================
-                ITEMS
-            ================================================== */}
-
-            <div>
-
-              {normalizedItems.map(
-                (item) => (
-
-                  <CartItem
-                    key={
-                      item.productId
-                    }
-                    item={
+                  const pricing =
+                    getItemPricing(
                       item
-                    }
-                    onIncrease={
-                      handleIncrease
-                    }
-                    onDecrease={
-                      handleDecrease
-                    }
-                    onQuantityChange={
-                      handleQuantityChange
-                    }
-                    onRemove={
-                      handleRemove
-                    }
-                  />
+                    );
 
-                )
+
+                  const moq =
+                    Number(
+                      item.moq || 1
+                    );
+
+
+                  const stock =
+                    Number(
+                      item.stock || 0
+                    );
+
+
+                  return (
+
+                    <div
+                      key={
+                        item._id
+                      }
+                      className="
+                        grid
+                        grid-cols-[minmax(260px,1.8fr)_110px_130px_140px]
+                        gap-4
+                        items-center
+                        px-5
+                        py-5
+                        border-b
+                        border-slate-100
+                        last:border-b-0
+                      "
+                    >
+
+                      {/* PRODUCT */}
+
+                      <div
+                        className="
+                          flex
+                          items-center
+                          gap-4
+                          min-w-0
+                        "
+                      >
+
+                        <Link
+                          to={`/product/${item._id}`}
+                          className="
+                            w-20
+                            h-20
+                            shrink-0
+                            rounded-xl
+                            overflow-hidden
+                            bg-slate-100
+                            border
+                            border-slate-200
+                          "
+                        >
+
+                          <img
+                            src={
+                              item.image ||
+                              item.images?.[0] ||
+                              'https://via.placeholder.com/120x120?text=No+Image'
+                            }
+                            alt={
+                              item.name
+                            }
+                            className="
+                              w-full
+                              h-full
+                              object-cover
+                            "
+                          />
+
+                        </Link>
+
+
+                        <div
+                          className="
+                            min-w-0
+                          "
+                        >
+
+                          <Link
+                            to={`/product/${item._id}`}
+                            className="
+                              font-bold
+                              text-slate-800
+                              hover:text-teal-700
+                              line-clamp-2
+                            "
+                          >
+
+                            {item.name}
+
+                          </Link>
+
+
+                          <p
+                            className="
+                              mt-1
+                              text-xs
+                              text-slate-500
+                            "
+                          >
+
+                            MOQ:{' '}
+
+                            <strong
+                              className="
+                                text-slate-700
+                              "
+                            >
+
+                              {moq}
+
+                            </strong>
+
+                            {' pieces'}
+
+                          </p>
+
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              removeFromCart(
+                                item._id
+                              )
+                            }
+                            className="
+                              mt-2
+                              text-xs
+                              font-semibold
+                              text-red-500
+                              hover:text-red-700
+                            "
+                          >
+
+                            Remove
+
+                          </button>
+
+                        </div>
+
+                      </div>
+
+
+                      {/* QUANTITY */}
+
+                      <div>
+
+                        <div
+                          className="
+                            inline-flex
+                            items-center
+                            border
+                            border-slate-300
+                            rounded-lg
+                            overflow-hidden
+                          "
+                        >
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleDecrease(
+                                item
+                              )
+                            }
+                            disabled={
+                              Number(
+                                item.quantity
+                              ) <= moq
+                            }
+                            className="
+                              w-8
+                              h-9
+                              flex
+                              items-center
+                              justify-center
+                              hover:bg-slate-100
+                              disabled:text-slate-300
+                              disabled:cursor-not-allowed
+                            "
+                          >
+
+                            −
+
+                          </button>
+
+
+                          <input
+                            type="number"
+                            min={moq}
+                            max={stock}
+                            value={
+                              item.quantity
+                            }
+                            onChange={(event) =>
+                              handleQuantityChange(
+                                item,
+                                event.target.value
+                              )
+                            }
+                            className="
+                              w-12
+                              h-9
+                              text-center
+                              text-sm
+                              font-semibold
+                              outline-none
+                              border-x
+                              border-slate-200
+                            "
+                          />
+
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleIncrease(
+                                item
+                              )
+                            }
+                            disabled={
+                              Number(
+                                item.quantity
+                              ) >= stock
+                            }
+                            className="
+                              w-8
+                              h-9
+                              flex
+                              items-center
+                              justify-center
+                              hover:bg-slate-100
+                              disabled:text-slate-300
+                              disabled:cursor-not-allowed
+                            "
+                          >
+
+                            +
+
+                          </button>
+
+                        </div>
+
+                      </div>
+
+
+                      {/* PRICE */}
+
+                      <div>
+
+                        <p
+                          className="
+                            font-bold
+                            text-slate-800
+                          "
+                        >
+
+                          ₹
+                          {formatPrice(
+                            pricing.wholesaleUnitPrice
+                          )}
+
+                        </p>
+
+
+                        {pricing.wholesaleUnitPrice <
+                          pricing.baseUnitPrice && (
+
+                          <p
+                            className="
+                              mt-1
+                              text-xs
+                              text-slate-400
+                              line-through
+                            "
+                          >
+
+                            ₹
+                            {formatPrice(
+                              pricing.baseUnitPrice
+                            )}
+
+                          </p>
+
+                        )}
+
+                      </div>
+
+
+                      {/* TOTAL */}
+
+                      <div
+                        className="
+                          text-right
+                        "
+                      >
+
+                        <p
+                          className="
+                            font-extrabold
+                            text-slate-900
+                          "
+                        >
+
+                          ₹
+                          {formatPrice(
+                            pricing.subtotal
+                          )}
+
+                        </p>
+
+
+                        {pricing.bulkDiscount >
+                          0 && (
+
+                          <p
+                            className="
+                              mt-1
+                              text-xs
+                              font-semibold
+                              text-emerald-600
+                            "
+                          >
+
+                            Save ₹
+                            {formatPrice(
+                              pricing.bulkDiscount
+                            )}
+
+                          </p>
+
+                        )}
+
+                      </div>
+
+                    </div>
+
+                  );
+
+                }
               )}
 
             </div>
 
 
             {/* ==================================================
-                CART FOOTER
+                MOBILE CART
             ================================================== */}
 
             <div
               className="
-                p-4
-                sm:p-5
-                border-t
-                border-slate-200
-                flex
-                flex-col
-                sm:flex-row
-                gap-3
-                justify-between
+                md:hidden
+                space-y-4
               "
             >
 
-              <Link
-                to="/products"
-                className="
-                  inline-flex
-                  items-center
-                  justify-center
-                  h-11
-                  px-5
-                  rounded-xl
-                  border
-                  border-slate-200
-                  text-sm
-                  font-bold
-                  text-slate-700
-                  hover:bg-slate-50
-                "
-              >
+              {cartItems.map(
+                (item) => {
 
-                ← Continue Shopping
-
-              </Link>
+                  const pricing =
+                    getItemPricing(
+                      item
+                    );
 
 
-              {typeof clearCart ===
-                'function' && (
+                  const moq =
+                    Number(
+                      item.moq || 1
+                    );
 
-                <button
-                  type="button"
-                  onClick={
-                    clearCart
-                  }
-                  className="
-                    h-11
-                    px-5
-                    rounded-xl
-                    text-sm
-                    font-semibold
-                    text-red-600
-                    hover:bg-red-50
-                  "
-                >
 
-                  Clear Cart
+                  const stock =
+                    Number(
+                      item.stock || 0
+                    );
 
-                </button>
 
+                  return (
+
+                    <div
+                      key={
+                        item._id
+                      }
+                      className="
+                        bg-white
+                        border
+                        border-slate-200
+                        rounded-2xl
+                        p-4
+                      "
+                    >
+
+                      {/* PRODUCT */}
+
+                      <div
+                        className="
+                          flex
+                          gap-3
+                        "
+                      >
+
+                        <Link
+                          to={`/product/${item._id}`}
+                          className="
+                            w-20
+                            h-20
+                            shrink-0
+                            rounded-xl
+                            overflow-hidden
+                            bg-slate-100
+                            border
+                            border-slate-200
+                          "
+                        >
+
+                          <img
+                            src={
+                              item.image ||
+                              item.images?.[0] ||
+                              'https://via.placeholder.com/120x120?text=No+Image'
+                            }
+                            alt={
+                              item.name
+                            }
+                            className="
+                              w-full
+                              h-full
+                              object-cover
+                            "
+                          />
+
+                        </Link>
+
+
+                        <div
+                          className="
+                            flex-1
+                            min-w-0
+                          "
+                        >
+
+                          <div
+                            className="
+                              flex
+                              justify-between
+                              gap-3
+                            "
+                          >
+
+                            <Link
+                              to={`/product/${item._id}`}
+                              className="
+                                font-bold
+                                text-sm
+                                text-slate-800
+                                line-clamp-2
+                              "
+                            >
+
+                              {item.name}
+
+                            </Link>
+
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                removeFromCart(
+                                  item._id
+                                )
+                              }
+                              className="
+                                shrink-0
+                                text-xs
+                                text-red-500
+                                font-semibold
+                              "
+                            >
+
+                              Remove
+
+                            </button>
+
+                          </div>
+
+
+                          <p
+                            className="
+                              mt-1
+                              text-xs
+                              text-slate-500
+                            "
+                          >
+
+                            MOQ: {moq} pieces
+
+                          </p>
+
+                        </div>
+
+                      </div>
+
+
+                      {/* DETAILS */}
+
+                      <div
+                        className="
+                          mt-4
+                          pt-4
+                          border-t
+                          border-slate-100
+                          space-y-4
+                        "
+                      >
+
+                        {/* QTY */}
+
+                        <div
+                          className="
+                            flex
+                            items-center
+                            justify-between
+                          "
+                        >
+
+                          <span
+                            className="
+                              text-sm
+                              text-slate-500
+                            "
+                          >
+                            Quantity
+                          </span>
+
+
+                          <div
+                            className="
+                              inline-flex
+                              items-center
+                              border
+                              border-slate-300
+                              rounded-lg
+                              overflow-hidden
+                            "
+                          >
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleDecrease(
+                                  item
+                                )
+                              }
+                              disabled={
+                                Number(
+                                  item.quantity
+                                ) <= moq
+                              }
+                              className="
+                                w-9
+                                h-9
+                                hover:bg-slate-100
+                                disabled:text-slate-300
+                              "
+                            >
+                              −
+                            </button>
+
+
+                            <input
+                              type="number"
+                              min={moq}
+                              max={stock}
+                              value={
+                                item.quantity
+                              }
+                              onChange={(event) =>
+                                handleQuantityChange(
+                                  item,
+                                  event.target.value
+                                )
+                              }
+                              className="
+                                w-14
+                                h-9
+                                text-center
+                                text-sm
+                                font-bold
+                                outline-none
+                                border-x
+                                border-slate-200
+                              "
+                            />
+
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleIncrease(
+                                  item
+                                )
+                              }
+                              disabled={
+                                Number(
+                                  item.quantity
+                                ) >= stock
+                              }
+                              className="
+                                w-9
+                                h-9
+                                hover:bg-slate-100
+                                disabled:text-slate-300
+                              "
+                            >
+                              +
+                            </button>
+
+                          </div>
+
+                        </div>
+
+
+                        {/* PRICE */}
+
+                        <div
+                          className="
+                            flex
+                            items-center
+                            justify-between
+                          "
+                        >
+
+                          <span
+                            className="
+                              text-sm
+                              text-slate-500
+                            "
+                          >
+                            Price / piece
+                          </span>
+
+
+                          <span
+                            className="
+                              font-bold
+                              text-slate-800
+                            "
+                          >
+
+                            ₹
+                            {formatPrice(
+                              pricing.wholesaleUnitPrice
+                            )}
+
+                          </span>
+
+                        </div>
+
+
+                        {/* TOTAL */}
+
+                        <div
+                          className="
+                            flex
+                            items-center
+                            justify-between
+                          "
+                        >
+
+                          <span
+                            className="
+                              text-sm
+                              text-slate-500
+                            "
+                          >
+                            Total
+                          </span>
+
+
+                          <span
+                            className="
+                              text-lg
+                              font-extrabold
+                              text-slate-900
+                            "
+                          >
+
+                            ₹
+                            {formatPrice(
+                              pricing.subtotal
+                            )}
+
+                          </span>
+
+                        </div>
+
+
+                        {/* SAVING */}
+
+                        {pricing.bulkDiscount >
+                          0 && (
+
+                          <div
+                            className="
+                              flex
+                              items-center
+                              justify-between
+                              text-sm
+                              text-emerald-600
+                              font-semibold
+                            "
+                          >
+
+                            <span>
+                              Bulk Discount
+                            </span>
+
+                            <span>
+                              - ₹
+                              {formatPrice(
+                                pricing.bulkDiscount
+                              )}
+                            </span>
+
+                          </div>
+
+                        )}
+
+                      </div>
+
+                    </div>
+
+                  );
+
+                }
               )}
 
             </div>
+
+
+            {/* ==================================================
+                CONTINUE SHOPPING
+            ================================================== */}
+
+            <Link
+              to="/products"
+              className="
+                inline-flex
+                items-center
+                gap-2
+                mt-5
+                text-sm
+                font-semibold
+                text-teal-700
+                hover:text-teal-800
+              "
+            >
+
+              ← Continue Shopping
+
+            </Link>
 
           </section>
 
@@ -862,8 +1327,8 @@ const Cart = () => {
               rounded-2xl
               p-5
               sm:p-6
-              xl:sticky
-              xl:top-24
+              lg:sticky
+              lg:top-24
             "
           >
 
@@ -871,7 +1336,7 @@ const Cart = () => {
               className="
                 text-xl
                 font-extrabold
-                text-slate-900
+                text-slate-800
               "
             >
 
@@ -880,36 +1345,74 @@ const Cart = () => {
             </h2>
 
 
-            {/* ==================================================
-                SUBTOTAL
-            ================================================== */}
+            <p
+              className="
+                mt-1
+                text-xs
+                text-slate-500
+              "
+            >
 
-            <SummaryRow
-              label="Subtotal"
-              value={
-                subtotal
-              }
-            />
+              Wholesale order breakdown
+
+            </p>
 
 
-            {/* ==================================================
-                BULK DISCOUNT
-            ================================================== */}
+            {/* ORIGINAL SUBTOTAL */}
 
             <div
               className="
+                mt-6
                 flex
-                items-center
                 justify-between
                 gap-4
-                py-3
+                text-sm
               "
             >
 
               <span
                 className="
-                  text-sm
-                  text-slate-600
+                  text-slate-500
+                "
+              >
+
+                Subtotal
+
+              </span>
+
+
+              <span
+                className="
+                  font-semibold
+                  text-slate-700
+                "
+              >
+
+                ₹
+                {formatPrice(
+                  cartSummary.baseSubtotal
+                )}
+
+              </span>
+
+            </div>
+
+
+            {/* BULK DISCOUNT */}
+
+            <div
+              className="
+                mt-3
+                flex
+                justify-between
+                gap-4
+                text-sm
+              "
+            >
+
+              <span
+                className="
+                  text-emerald-600
                 "
               >
 
@@ -919,68 +1422,154 @@ const Cart = () => {
 
 
               <span
-                className={`
-                  text-sm
-                  font-bold
-                  ${
-                    bulkDiscount > 0
-                      ? 'text-emerald-600'
-                      : 'text-slate-400'
-                  }
-                `}
+                className="
+                  font-semibold
+                  text-emerald-600
+                "
               >
 
-                {bulkDiscount > 0
-                  ? `- ₹${bulkDiscount.toLocaleString(
-                      'en-IN'
-                    )}`
-                  : '₹0'}
+                - ₹
+                {formatPrice(
+                  cartSummary.bulkDiscount
+                )}
 
               </span>
 
             </div>
 
 
-            {/* ==================================================
+            {/* WHOLESALE SUBTOTAL */}
+
+            <div
+              className="
+                mt-3
+                flex
+                justify-between
+                gap-4
+                text-sm
+              "
+            >
+
+              <span
+                className="
+                  text-slate-600
+                "
+              >
+
+                Wholesale Subtotal
+
+              </span>
+
+
+              <span
+                className="
+                  font-bold
+                  text-slate-800
+                "
+              >
+
+                ₹
+                {formatPrice(
+                  cartSummary.subtotal
+                )}
+
+              </span>
+
+            </div>
+
+
+            {/* GST */}
+
+            <div
+              className="
+                mt-3
+                flex
+                justify-between
+                gap-4
+                text-sm
+              "
+            >
+
+              <span
+                className="
+                  text-slate-500
+                "
+              >
+
                 GST
-            ================================================== */}
 
-            <SummaryRow
-              label="GST (18%)"
-              value={
-                gst
-              }
-            />
+              </span>
 
 
-            {/* ==================================================
-                SHIPPING
-            ================================================== */}
+              <span
+                className="
+                  font-semibold
+                  text-slate-700
+                "
+              >
 
-            <SummaryRow
-              label="Shipping"
-              value={
-                shipping
-              }
-            />
+                ₹
+                {formatPrice(
+                  cartSummary.gst
+                )}
+
+              </span>
+
+            </div>
 
 
-            {/* ==================================================
-                DIVIDER
-            ================================================== */}
+            {/* SHIPPING */}
+
+            <div
+              className="
+                mt-3
+                flex
+                justify-between
+                gap-4
+                text-sm
+              "
+            >
+
+              <span
+                className="
+                  text-slate-500
+                "
+              >
+
+                Shipping
+
+              </span>
+
+
+              <span
+                className="
+                  font-semibold
+                  text-slate-700
+                "
+              >
+
+                ₹
+                {formatPrice(
+                  shippingPrice
+                )}
+
+              </span>
+
+            </div>
+
+
+            {/* DIVIDER */}
 
             <div
               className="
                 border-t
                 border-slate-200
-                my-2
+                my-5
               "
             />
 
 
-            {/* ==================================================
-                GRAND TOTAL
-            ================================================== */}
+            {/* GRAND TOTAL */}
 
             <div
               className="
@@ -988,14 +1577,13 @@ const Cart = () => {
                 items-center
                 justify-between
                 gap-4
-                pt-3
               "
             >
 
               <span
                 className="
-                  text-base
-                  font-bold
+                  text-lg
+                  font-extrabold
                   text-slate-800
                 "
               >
@@ -1009,71 +1597,21 @@ const Cart = () => {
                 className="
                   text-2xl
                   font-extrabold
-                  text-teal-700
+                  text-slate-900
                 "
               >
 
                 ₹
-                {
-                  grandTotal.toLocaleString(
-                    'en-IN'
-                  )
-                }
+                {formatPrice(
+                  cartTotal
+                )}
 
               </span>
 
             </div>
 
 
-            {/* ==================================================
-                BULK DISCOUNT INFO
-            ================================================== */}
-
-            {bulkDiscount === 0 && (
-              <div
-                className="
-                  mt-5
-                  p-3
-                  rounded-xl
-                  bg-teal-50
-                  border
-                  border-teal-100
-                "
-              >
-
-                <p
-                  className="
-                    text-xs
-                    text-teal-800
-                    leading-5
-                  "
-                >
-
-                  💡 Add{' '}
-
-                  <strong>
-                    ₹
-                    {Math.max(
-                      0,
-                      BULK_DISCOUNT_THRESHOLD -
-                      subtotal
-                    ).toLocaleString(
-                      'en-IN'
-                    )}
-                  </strong>
-
-                  {' '}more to unlock
-                  the bulk discount.
-
-                </p>
-
-              </div>
-            )}
-
-
-            {/* ==================================================
-                PROCEED CHECKOUT
-            ================================================== */}
+            {/* CHECKOUT */}
 
             <button
               type="button"
@@ -1087,37 +1625,61 @@ const Cart = () => {
                 rounded-xl
                 bg-teal-600
                 text-white
-                text-sm
                 font-bold
                 hover:bg-teal-700
-                transition-colors
+                transition
               "
             >
 
-              Proceed to Checkout →
+              Proceed to Checkout
 
             </button>
 
 
-            {/* ==================================================
-                SECURE ORDER
-            ================================================== */}
+            {/* CONTINUE */}
+
+            <Link
+              to="/products"
+              className="
+                block
+                text-center
+                mt-4
+                text-sm
+                font-semibold
+                text-teal-700
+                hover:underline
+              "
+            >
+
+              Continue Shopping
+
+            </Link>
+
+
+            {/* B2B NOTE */}
 
             <div
               className="
-                mt-4
-                text-center
+                mt-5
+                p-3
+                rounded-xl
+                bg-teal-50
+                border
+                border-teal-100
               "
             >
 
               <p
                 className="
                   text-xs
-                  text-slate-400
+                  leading-5
+                  text-teal-800
                 "
               >
 
-                🔒 Secure wholesale checkout
+                Wholesale pricing is applied
+                automatically according to
+                your order quantity.
 
               </p>
 
@@ -1128,661 +1690,6 @@ const Cart = () => {
         </div>
 
       </main>
-
-    </div>
-
-  );
-
-};
-
-
-// ======================================================
-// CART ITEM
-// ======================================================
-
-const CartItem = ({
-  item,
-  onIncrease,
-  onDecrease,
-  onQuantityChange,
-  onRemove,
-}) => {
-
-  return (
-
-    <article
-      className="
-        p-4
-        sm:p-5
-        border-b
-        border-slate-200
-        last:border-b-0
-      "
-    >
-
-      {/* ==================================================
-          DESKTOP
-      ================================================== */}
-
-      <div
-        className="
-          hidden
-          md:grid
-          md:grid-cols-[minmax(0,1fr)_110px_130px_140px_40px]
-          gap-4
-          items-center
-        "
-      >
-
-        {/* PRODUCT */}
-
-        <ProductInfo
-          item={
-            item
-          }
-        />
-
-
-        {/* QUANTITY */}
-
-        <QuantityControl
-          item={
-            item
-          }
-          onIncrease={
-            onIncrease
-          }
-          onDecrease={
-            onDecrease
-          }
-          onQuantityChange={
-            onQuantityChange
-          }
-        />
-
-
-        {/* PRICE */}
-
-        <div
-          className="
-            text-sm
-            font-semibold
-            text-slate-700
-          "
-        >
-
-          ₹
-          {
-            item.unitPrice.toLocaleString(
-              'en-IN'
-            )
-          }
-
-        </div>
-
-
-        {/* TOTAL */}
-
-        <div
-          className="
-            text-base
-            font-extrabold
-            text-slate-900
-          "
-        >
-
-          ₹
-          {
-            item.lineTotal.toLocaleString(
-              'en-IN'
-            )
-          }
-
-        </div>
-
-
-        {/* REMOVE */}
-
-        <button
-          type="button"
-          onClick={() =>
-            onRemove(
-              item
-            )
-          }
-          className="
-            w-9
-            h-9
-            rounded-lg
-            text-slate-400
-            hover:text-red-600
-            hover:bg-red-50
-          "
-          title="Remove product"
-        >
-
-          ×
-
-        </button>
-
-      </div>
-
-
-      {/* ==================================================
-          MOBILE
-      ================================================== */}
-
-      <div
-        className="
-          md:hidden
-        "
-      >
-
-        <div
-          className="
-            flex
-            gap-3
-          "
-        >
-
-          {/* IMAGE */}
-
-          <Link
-            to={`/product/${item.productId}`}
-            className="
-              w-24
-              h-24
-              shrink-0
-              rounded-xl
-              bg-slate-100
-              overflow-hidden
-            "
-          >
-
-            {item.image ? (
-
-              <img
-                src={
-                  item.image
-                }
-                alt={
-                  item.name
-                }
-                className="
-                  w-full
-                  h-full
-                  object-cover
-                "
-              />
-
-            ) : (
-
-              <div
-                className="
-                  w-full
-                  h-full
-                  flex
-                  items-center
-                  justify-center
-                  text-2xl
-                  text-slate-300
-                "
-              >
-
-                📦
-
-              </div>
-
-            )}
-
-          </Link>
-
-
-          {/* INFO */}
-
-          <div
-            className="
-              flex-1
-              min-w-0
-            "
-          >
-
-            <Link
-              to={`/product/${item.productId}`}
-              className="
-                block
-                font-bold
-                text-sm
-                text-slate-800
-                line-clamp-2
-                hover:text-teal-700
-              "
-            >
-
-              {item.name}
-
-            </Link>
-
-
-            <p
-              className="
-                mt-1
-                text-sm
-                font-semibold
-                text-slate-500
-              "
-            >
-
-              ₹
-              {
-                item.unitPrice.toLocaleString(
-                  'en-IN'
-                )
-              }
-
-              {' '}
-
-              / piece
-
-            </p>
-
-
-            <p
-              className="
-                mt-1
-                text-xs
-                text-slate-400
-              "
-            >
-
-              MOQ:{' '}
-
-              {item.product?.moq ||
-                item.product?.minimumOrderQuantity ||
-                1}
-
-            </p>
-
-          </div>
-
-
-          {/* REMOVE */}
-
-          <button
-            type="button"
-            onClick={() =>
-              onRemove(
-                item
-              )
-            }
-            className="
-              w-8
-              h-8
-              shrink-0
-              rounded-lg
-              text-slate-400
-              hover:text-red-600
-              hover:bg-red-50
-            "
-          >
-
-            ×
-
-          </button>
-
-        </div>
-
-
-        {/* MOBILE BOTTOM */}
-
-        <div
-          className="
-            mt-4
-            pt-4
-            border-t
-            border-slate-100
-            flex
-            items-center
-            justify-between
-            gap-4
-          "
-        >
-
-          <QuantityControl
-            item={
-              item
-            }
-            onIncrease={
-              onIncrease
-            }
-            onDecrease={
-              onDecrease
-            }
-            onQuantityChange={
-              onQuantityChange
-            }
-          />
-
-
-          <div
-            className="
-              text-right
-            "
-          >
-
-            <p
-              className="
-                text-xs
-                text-slate-400
-              "
-            >
-
-              Total
-
-            </p>
-
-
-            <p
-              className="
-                text-lg
-                font-extrabold
-                text-slate-900
-              "
-            >
-
-              ₹
-              {
-                item.lineTotal.toLocaleString(
-                  'en-IN'
-                )
-              }
-
-            </p>
-
-          </div>
-
-        </div>
-
-      </div>
-
-    </article>
-
-  );
-
-};
-
-
-// ======================================================
-// PRODUCT INFO
-// ======================================================
-
-const ProductInfo = ({
-  item,
-}) => {
-
-  return (
-
-    <div
-      className="
-        flex
-        items-center
-        gap-4
-        min-w-0
-      "
-    >
-
-      <Link
-        to={`/product/${item.productId}`}
-        className="
-          w-20
-          h-20
-          shrink-0
-          rounded-xl
-          bg-slate-100
-          overflow-hidden
-        "
-      >
-
-        {item.image ? (
-
-          <img
-            src={
-              item.image
-            }
-            alt={
-              item.name
-            }
-            className="
-              w-full
-              h-full
-              object-cover
-            "
-          />
-
-        ) : (
-
-          <div
-            className="
-              w-full
-              h-full
-              flex
-              items-center
-              justify-center
-              text-2xl
-              text-slate-300
-            "
-          >
-
-            📦
-
-          </div>
-
-        )}
-
-      </Link>
-
-
-      <div
-        className="
-          min-w-0
-        "
-      >
-
-        <Link
-          to={`/product/${item.productId}`}
-          className="
-            block
-            font-bold
-            text-sm
-            text-slate-800
-            truncate
-            hover:text-teal-700
-          "
-        >
-
-          {item.name}
-
-        </Link>
-
-
-        <p
-          className="
-            mt-1
-            text-xs
-            text-slate-400
-          "
-        >
-
-          MOQ:{' '}
-
-          {item.product?.moq ||
-            item.product?.minimumOrderQuantity ||
-            1}
-
-        </p>
-
-      </div>
-
-    </div>
-
-  );
-
-};
-
-
-// ======================================================
-// QUANTITY CONTROL
-// ======================================================
-
-const QuantityControl = ({
-  item,
-  onIncrease,
-  onDecrease,
-  onQuantityChange,
-}) => {
-
-  return (
-
-    <div
-      className="
-        inline-flex
-        items-center
-        h-9
-        rounded-lg
-        border
-        border-slate-200
-        overflow-hidden
-        bg-white
-      "
-    >
-
-      <button
-        type="button"
-        onClick={() =>
-          onDecrease(
-            item
-          )
-        }
-        className="
-          w-8
-          h-full
-          text-base
-          font-bold
-          text-slate-600
-          hover:bg-slate-50
-        "
-      >
-
-        −
-
-      </button>
-
-
-      <input
-        type="number"
-        min="1"
-        value={
-          item.quantity
-        }
-        onChange={(event) =>
-          onQuantityChange(
-            item,
-            event.target.value
-          )
-        }
-        className="
-          w-12
-          h-full
-          text-center
-          text-sm
-          font-bold
-          text-slate-800
-          outline-none
-          border-x
-          border-slate-200
-        "
-      />
-
-
-      <button
-        type="button"
-        onClick={() =>
-          onIncrease(
-            item
-          )
-        }
-        className="
-          w-8
-          h-full
-          text-base
-          font-bold
-          text-slate-600
-          hover:bg-slate-50
-        "
-      >
-
-        +
-
-      </button>
-
-    </div>
-
-  );
-
-};
-
-
-// ======================================================
-// SUMMARY ROW
-// ======================================================
-
-const SummaryRow = ({
-  label,
-  value,
-}) => {
-
-  return (
-
-    <div
-      className="
-        flex
-        items-center
-        justify-between
-        gap-4
-        py-3
-      "
-    >
-
-      <span
-        className="
-          text-sm
-          text-slate-600
-        "
-      >
-
-        {label}
-
-      </span>
-
-
-      <span
-        className="
-          text-sm
-          font-semibold
-          text-slate-800
-        "
-      >
-
-        ₹
-        {
-          Number(
-            value
-          ).toLocaleString(
-            'en-IN'
-          )
-        }
-
-      </span>
 
     </div>
 
