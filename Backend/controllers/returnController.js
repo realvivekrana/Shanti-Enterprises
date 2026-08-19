@@ -13,857 +13,1072 @@ const ReturnRequest =
 const Order =
   require('../models/Order');
 
-// ==============================
+const Product =
+  require('../models/Product');
+
+
+// ======================================================
+// NOTIFICATION SERVICE
+// ======================================================
+
+const {
+
+  sendReturnUpdate,
+
+  sendRefundUpdate,
+
+} = require(
+  '../services/notificationService'
+);
+
+
+// ======================================================
 // CREATE RETURN REQUEST
-// ==============================
+// ======================================================
 
 const createReturnRequest =
-  asyncHandler(async (req, res) => {
-    const {
-      reason,
-      type,
-      description,
-      items,
-      evidenceImages,
-    } = req.body;
+  asyncHandler(
+    async (req, res) => {
 
-    const {
-      orderId,
-    } = req.params;
-
-    // ==============================
-    // VALIDATION
-    // ==============================
-
-    if (!reason || !type) {
-      throw new ApiError(
-        400,
-        'Reason and type (return/refund) are required'
-      );
-    }
-
-    const validReasons = [
-      'Damaged',
-      'Wrong Product',
-      'Quantity Mismatch',
-      'Defective',
-      'Quality Issue',
-      'Other',
-    ];
-
-    if (
-      !validReasons.includes(
-        reason
-      )
-    ) {
-      throw new ApiError(
-        400,
-        'Invalid return reason'
-      );
-    }
-
-    if (
-      ![
-        'return',
-        'refund',
-      ].includes(type)
-    ) {
-      throw new ApiError(
-        400,
-        'Type must be return or refund'
-      );
-    }
-
-    // ==============================
-    // FIND ORDER
-    // ==============================
-
-    const order =
-      await Order.findById(
-        orderId
-      );
-
-    if (!order) {
-      throw new ApiError(
-        404,
-        'Order not found'
-      );
-    }
-
-    // ==============================
-    // OWNER CHECK
-    // ==============================
-
-    if (
-      order.user.toString() !==
-      req.user._id.toString()
-    ) {
-      throw new ApiError(
-        403,
-        'Not authorized for this order'
-      );
-    }
-
-    // ==============================
-    // ONLY DELIVERED ORDERS
-    // ==============================
-
-    if (
-      order.orderStatus !==
-      'Delivered'
-    ) {
-      throw new ApiError(
-        400,
-        'Only delivered orders can be returned or refunded'
-      );
-    }
-
-    // ==============================
-    // EXISTING REQUEST
-    // ==============================
-
-    const existing =
-      await ReturnRequest.findOne({
-        order: orderId,
-
-        status: {
-          $nin: [
-            'Rejected',
-            'Cancelled',
-          ],
-        },
-      });
-
-    if (existing) {
-      throw new ApiError(
-        400,
-        'A return/refund request already exists for this order'
-      );
-    }
-
-    // ==============================
-    // PREPARE RETURN ITEMS
-    // ==============================
-
-    let returnItems = [];
-
-    if (
-      Array.isArray(items) &&
-      items.length > 0
-    ) {
-      returnItems =
-        items.map(
-          (item) => {
-            const orderItem =
-              order.orderItems.find(
-                (orderProduct) =>
-                  orderProduct.product.toString() ===
-                  item.product.toString()
-              );
-
-            if (!orderItem) {
-              throw new ApiError(
-                400,
-                `Product ${item.product} does not belong to this order`
-              );
-            }
-
-            const returnQuantity =
-              Number(
-                item.returnQuantity
-              );
-
-            if (
-              !Number.isInteger(
-                returnQuantity
-              ) ||
-              returnQuantity <= 0
-            ) {
-              throw new ApiError(
-                400,
-                'Return quantity must be a positive whole number'
-              );
-            }
-
-            if (
-              returnQuantity >
-              orderItem.quantity
-            ) {
-              throw new ApiError(
-                400,
-                `Return quantity cannot exceed ordered quantity for ${orderItem.name}`
-              );
-            }
-
-            return {
-              product:
-                orderItem.product,
-
-              name:
-                orderItem.name,
-
-              orderedQuantity:
-                orderItem.quantity,
-
-              returnQuantity,
-
-              price:
-                orderItem.price,
-            };
-          }
-        );
-    } else {
-      // If frontend doesn't send items,
-      // return complete order automatically.
-
-      returnItems =
-        order.orderItems.map(
-          (item) => ({
-            product:
-              item.product,
-
-            name:
-              item.name,
-
-            orderedQuantity:
-              item.quantity,
-
-            returnQuantity:
-              item.quantity,
-
-            price:
-              item.price,
-          })
-        );
-    }
-
-    // ==============================
-    // CALCULATE REFUND
-    // ==============================
-
-    const requestedRefundAmount =
-      returnItems.reduce(
-        (total, item) =>
-          total +
-          item.price *
-            item.returnQuantity,
-        0
-      );
-
-    // ==============================
-    // CREATE REQUEST
-    // ==============================
-
-    const returnRequest =
-      await ReturnRequest.create({
-        order:
-          orderId,
-
-        user:
-          req.user._id,
-
+      const {
+        orderId,
         reason,
+        description,
+        items,
+        images,
+      } = req.body;
 
-        type,
 
-        description:
-          description || '',
+      // ==================================================
+      // ORDER ID
+      // ==================================================
 
-        items:
-          returnItems,
+      if (
+        !orderId
+      ) {
 
-        requestedRefundAmount,
+        throw new ApiError(
+          400,
+          'Order ID is required'
+        );
 
-        evidenceImages:
-          Array.isArray(
-            evidenceImages
-          )
-            ? evidenceImages
-            : [],
+      }
 
-        status:
-          'Requested',
 
-        statusHistory: [
-          {
-            status:
-              'Requested',
+      // ==================================================
+      // FIND ORDER
+      // ==================================================
 
-            note:
-              'Return/refund request submitted',
+      const order =
+        await Order.findById(
+          orderId
+        );
 
-            updatedBy:
-              req.user._id,
+
+      if (
+        !order
+      ) {
+
+        throw new ApiError(
+          404,
+          'Order not found'
+        );
+
+      }
+
+
+      // ==================================================
+      // ORDER OWNER
+      // ==================================================
+
+      if (
+        order.user.toString() !==
+        req.user._id.toString()
+      ) {
+
+        throw new ApiError(
+          403,
+          'You are not authorized to request return for this order'
+        );
+
+      }
+
+
+      // ==================================================
+      // ORDER STATUS
+      // ==================================================
+
+      if (
+        order.orderStatus !==
+        'Delivered'
+      ) {
+
+        throw new ApiError(
+          400,
+          'Return can only be requested after delivery'
+        );
+
+      }
+
+
+      // ==================================================
+      // EXISTING RETURN
+      // ==================================================
+
+      const existingRequest =
+        await ReturnRequest.findOne({
+
+          order:
+            orderId,
+
+          user:
+            req.user._id,
+
+          status: {
+
+            $nin: [
+
+              'Rejected',
+
+              'Cancelled',
+
+            ],
+
           },
-        ],
-      });
 
-    res.status(201).json(
-      new ApiResponse(
-        201,
-        returnRequest,
-        'Return/refund request submitted'
-      )
-    );
-  });
+        });
 
-// ==============================
-// GET MY RETURNS
-// ==============================
+
+      if (
+        existingRequest
+      ) {
+
+        throw new ApiError(
+          400,
+          'A return request already exists for this order'
+        );
+
+      }
+
+
+      // ==================================================
+      // VALIDATION
+      // ==================================================
+
+      if (
+        !reason
+      ) {
+
+        throw new ApiError(
+          400,
+          'Return reason is required'
+        );
+
+      }
+
+
+      // ==================================================
+      // CREATE RETURN REQUEST
+      // ==================================================
+
+      const returnRequest =
+        await ReturnRequest.create({
+
+          order:
+            orderId,
+
+          user:
+            req.user._id,
+
+          reason,
+
+          description:
+            description ||
+            '',
+
+          items:
+            items ||
+            [],
+
+          images:
+            images ||
+            [],
+
+          status:
+            'Requested',
+
+        });
+
+
+      // ==================================================
+      // NOTIFICATION
+      // ==================================================
+
+      try {
+
+        await sendReturnUpdate({
+
+          userId:
+            req.user._id,
+
+          orderId:
+            order._id,
+
+          returnRequestId:
+            returnRequest._id,
+
+          status:
+            'Requested',
+
+        });
+
+      } catch (error) {
+
+        console.error(
+          'Return notification failed:',
+          error.message
+        );
+
+      }
+
+
+      // ==================================================
+      // RESPONSE
+      // ==================================================
+
+      res.status(201).json(
+
+        new ApiResponse(
+
+          201,
+
+          returnRequest,
+
+          'Return/refund request submitted'
+
+        )
+
+      );
+
+    }
+  );
+
+
+// ======================================================
+// GET MY RETURN REQUESTS
+// ======================================================
 
 const getMyReturnRequests =
-  asyncHandler(async (req, res) => {
-    const requests =
-      await ReturnRequest.find({
-        user:
-          req.user._id,
-      })
-        .populate(
-          'order',
-          'totalPrice orderStatus'
-        )
-        .populate(
-          'items.product',
-          'name sku images'
-        )
-        .sort({
-          createdAt: -1,
-        });
+  asyncHandler(
+    async (req, res) => {
 
-    res.status(200).json(
-      new ApiResponse(
-        200,
-        requests,
-        'Your return requests fetched'
-      )
-    );
-  });
+      const requests =
+        await ReturnRequest.find({
 
-// ==============================
-// GET ALL RETURNS
-// ==============================
+          user:
+            req.user._id,
+
+        })
+
+          .populate(
+
+            'order',
+
+            'orderItems totalPrice orderStatus createdAt'
+
+          )
+
+          .sort({
+
+            createdAt:
+              -1,
+
+          });
+
+
+      res.status(200).json(
+
+        new ApiResponse(
+
+          200,
+
+          requests,
+
+          'Return requests fetched successfully'
+
+        )
+
+      );
+
+    }
+  );
+
+
+// ======================================================
+// GET ALL RETURN REQUESTS
+// ======================================================
 
 const getAllReturnRequests =
-  asyncHandler(async (req, res) => {
-    const requests =
-      await ReturnRequest.find({})
-        .populate(
-          'user',
-          'name email phone businessName'
-        )
-        .populate(
-          'order',
-          'totalPrice orderStatus'
-        )
-        .populate(
-          'items.product',
-          'name sku images'
-        )
-        .sort({
-          createdAt: -1,
-        });
+  asyncHandler(
+    async (req, res) => {
 
-    res.status(200).json(
-      new ApiResponse(
-        200,
-        requests,
-        'All return requests fetched'
-      )
-    );
-  });
+      const requests =
+        await ReturnRequest.find({})
 
-// ==============================
+          .populate(
+
+            'user',
+
+            'name email phone businessName'
+
+          )
+
+          .populate(
+
+            'order',
+
+            'orderItems totalPrice orderStatus'
+
+          )
+
+          .sort({
+
+            createdAt:
+              -1,
+
+          });
+
+
+      res.status(200).json(
+
+        new ApiResponse(
+
+          200,
+
+          requests,
+
+          'All return requests fetched'
+
+        )
+
+      );
+
+    }
+  );
+
+
+// ======================================================
 // UPDATE RETURN STATUS
-// ADMIN
-// ==============================
+// ======================================================
 
 const updateReturnStatus =
-  asyncHandler(async (req, res) => {
-    const {
-      status,
-      adminNote,
-      approvedRefundAmount,
-    } = req.body;
+  asyncHandler(
+    async (req, res) => {
 
-    const validStatuses = [
-      'Requested',
-      'Under Review',
-      'Approved',
-      'Rejected',
-      'Pickup Scheduled',
-      'Picked Up',
-      'Received',
-      'Inspection',
-      'Refund Pending',
-      'Refunded',
-      'Cancelled',
-    ];
+      const {
+        status,
+        adminNote,
+      } = req.body;
 
-    if (
-      !validStatuses.includes(
-        status
-      )
-    ) {
-      throw new ApiError(
-        400,
-        `Status must be one of: ${validStatuses.join(
-          ', '
-        )}`
-      );
-    }
 
-    const request =
-      await ReturnRequest.findById(
-        req.params.id
-      );
+      // ==================================================
+      // VALID STATUSES
+      // ==================================================
 
-    if (!request) {
-      throw new ApiError(
-        404,
-        'Return request not found'
-      );
-    }
+      const validStatuses = [
 
-    // ==============================
-    // PREVENT CHANGES AFTER REFUND
-    // ==============================
+        'Requested',
 
-    if (
-      request.status ===
-        'Refunded' &&
-      status !==
+        'Under Review',
+
+        'Approved',
+
+        'Rejected',
+
+        'Pickup Scheduled',
+
+        'Picked Up',
+
+        'Inspection',
+
+        'Refund Pending',
+
+        'Refunded',
+
+        'Cancelled',
+
+      ];
+
+
+      if (
+        !validStatuses.includes(
+          status
+        )
+      ) {
+
+        throw new ApiError(
+
+          400,
+
+          `Status must be one of: ${
+            validStatuses.join(', ')
+          }`
+
+        );
+
+      }
+
+
+      // ==================================================
+      // FIND REQUEST
+      // ==================================================
+
+      const request =
+        await ReturnRequest.findById(
+          req.params.id
+        );
+
+
+      if (
+        !request
+      ) {
+
+        throw new ApiError(
+          404,
+          'Return request not found'
+        );
+
+      }
+
+
+      // ==================================================
+      // UPDATE
+      // ==================================================
+
+      request.status =
+        status;
+
+
+      if (
+        adminNote !==
+        undefined
+      ) {
+
+        request.adminNote =
+          adminNote;
+
+      }
+
+
+      // ==================================================
+      // REFUND PENDING
+      // ==================================================
+
+      if (
+        status ===
+        'Refund Pending'
+      ) {
+
+        request.refund.status =
+          'pending';
+
+      }
+
+
+      // ==================================================
+      // REFUNDED
+      // ==================================================
+
+      if (
+        status ===
         'Refunded'
-    ) {
-      throw new ApiError(
-        400,
-        'Refunded request cannot be moved to another status'
+      ) {
+
+        request.refund.status =
+          'completed';
+
+        request.refund.refundedAt =
+          new Date();
+
+      }
+
+
+      await request.save();
+
+
+      // ==================================================
+      // NOTIFICATION
+      // ==================================================
+
+      try {
+
+        if (
+          status ===
+          'Refunded'
+        ) {
+
+          await sendRefundUpdate({
+
+            userId:
+              request.user,
+
+            orderId:
+              request.order,
+
+            amount:
+              request.refund?.amount ||
+              request.approvedRefundAmount ||
+              0,
+
+            status:
+              'Completed',
+
+          });
+
+        } else {
+
+          await sendReturnUpdate({
+
+            userId:
+              request.user,
+
+            orderId:
+              request.order,
+
+            returnRequestId:
+              request._id,
+
+            status,
+
+          });
+
+        }
+
+      } catch (error) {
+
+        console.error(
+
+          'Return/refund notification failed:',
+
+          error.message
+
+        );
+
+      }
+
+
+      // ==================================================
+      // RESPONSE
+      // ==================================================
+
+      res.status(200).json(
+
+        new ApiResponse(
+
+          200,
+
+          request,
+
+          'Return request status updated'
+
+        )
+
       );
+
     }
+  );
 
-    // ==============================
-    // APPROVED REFUND
-    // ==============================
 
-    if (
-      approvedRefundAmount !==
-      undefined
-    ) {
-      const amount =
-        Number(
-          approvedRefundAmount
-        );
-
-      if (
-        !Number.isFinite(
-          amount
-        ) ||
-        amount < 0
-      ) {
-        throw new ApiError(
-          400,
-          'Invalid approved refund amount'
-        );
-      }
-
-      if (
-        amount >
-        request.requestedRefundAmount
-      ) {
-        throw new ApiError(
-          400,
-          'Approved refund cannot exceed requested refund amount'
-        );
-      }
-
-      request.approvedRefundAmount =
-        amount;
-
-      request.refund.amount =
-        amount;
-    }
-
-    // ==============================
-    // STATUS
-    // ==============================
-
-    request.status =
-      status;
-
-    if (adminNote !== undefined) {
-      request.adminNote =
-        adminNote;
-    }
-
-    // ==============================
-    // INSPECTION
-    // ==============================
-
-    if (
-      status ===
-      'Inspection'
-    ) {
-      request.inspectionStatus =
-        'Pending';
-    }
-
-    // ==============================
-    // REFUND PENDING
-    // ==============================
-
-    if (
-      status ===
-      'Refund Pending'
-    ) {
-      request.refund.status =
-        'Pending';
-    }
-
-    // ==============================
-    // REFUNDED
-    // ==============================
-
-    if (
-      status ===
-      'Refunded'
-    ) {
-      request.refund.status =
-        'Completed';
-
-      request.refund.processedAt =
-        new Date();
-    }
-
-    // ==============================
-    // PICKUP
-    // ==============================
-
-    if (
-      status ===
-      'Picked Up'
-    ) {
-      request.pickup.pickedUpAt =
-        new Date();
-    }
-
-    // ==============================
-    // HISTORY
-    // ==============================
-
-    request.statusHistory.push({
-      status,
-
-      note:
-        adminNote || '',
-
-      updatedBy:
-        req.user._id,
-
-      timestamp:
-        new Date(),
-    });
-
-    await request.save();
-
-    res.status(200).json(
-      new ApiResponse(
-        200,
-        request,
-        'Return request status updated'
-      )
-    );
-  });
-
-// ==============================
+// ======================================================
 // UPDATE PICKUP DETAILS
-// ADMIN
-// ==============================
+// ======================================================
 
 const updatePickupDetails =
-  asyncHandler(async (req, res) => {
-    const {
-      carrier,
-      trackingId,
-      trackingUrl,
-      scheduledDate,
-    } = req.body;
+  asyncHandler(
+    async (req, res) => {
 
-    const request =
-      await ReturnRequest.findById(
-        req.params.id
-      );
+      const {
 
-    if (!request) {
-      throw new ApiError(
-        404,
-        'Return request not found'
-      );
-    }
+        pickupDate,
 
-    request.pickup.carrier =
-      carrier || '';
+        pickupAgent,
 
-    request.pickup.trackingId =
-      trackingId || '';
+        pickupTrackingId,
 
-    request.pickup.trackingUrl =
-      trackingUrl || '';
+        pickupNote,
 
-    request.pickup.scheduledDate =
-      scheduledDate || null;
+      } = req.body;
 
-    if (
-      request.status ===
-      'Approved'
-    ) {
+
+      // ==================================================
+      // FIND REQUEST
+      // ==================================================
+
+      const request =
+        await ReturnRequest.findById(
+          req.params.id
+        );
+
+
+      if (
+        !request
+      ) {
+
+        throw new ApiError(
+          404,
+          'Return request not found'
+        );
+
+      }
+
+
+      // ==================================================
+      // PICKUP DETAILS
+      // ==================================================
+
+      request.pickup = {
+
+        ...(request.pickup?.toObject?.() ||
+          request.pickup ||
+          {}),
+
+        pickupDate:
+          pickupDate ||
+          request.pickup?.pickupDate ||
+          null,
+
+        pickupAgent:
+          pickupAgent ||
+          request.pickup?.pickupAgent ||
+          null,
+
+        trackingId:
+          pickupTrackingId ||
+          request.pickup?.trackingId ||
+          null,
+
+        note:
+          pickupNote ||
+          request.pickup?.note ||
+          '',
+
+      };
+
+
+      // ==================================================
+      // STATUS
+      // ==================================================
+
       request.status =
         'Pickup Scheduled';
 
-      request.statusHistory.push({
-        status:
-          'Pickup Scheduled',
 
-        note:
-          'Reverse pickup scheduled',
+      await request.save();
 
-        updatedBy:
-          req.user._id,
-      });
+
+      // ==================================================
+      // NOTIFICATION
+      // ==================================================
+
+      try {
+
+        await sendReturnUpdate({
+
+          userId:
+            request.user,
+
+          orderId:
+            request.order,
+
+          returnRequestId:
+            request._id,
+
+          status:
+            'Pickup Scheduled',
+
+        });
+
+      } catch (error) {
+
+        console.error(
+
+          'Pickup notification failed:',
+
+          error.message
+
+        );
+
+      }
+
+
+      // ==================================================
+      // RESPONSE
+      // ==================================================
+
+      res.status(200).json(
+
+        new ApiResponse(
+
+          200,
+
+          request,
+
+          'Reverse pickup details updated'
+
+        )
+
+      );
+
     }
+  );
 
-    await request.save();
 
-    res.status(200).json(
-      new ApiResponse(
-        200,
-        request,
-        'Reverse pickup details updated'
-      )
-    );
-  });
-
-// ==============================
-// INSPECTION
-// ADMIN
-// ==============================
+// ======================================================
+// UPDATE INSPECTION
+// ======================================================
 
 const updateInspection =
-  asyncHandler(async (req, res) => {
-    const {
-      inspectionStatus,
-      inspectionNote,
-    } = req.body;
+  asyncHandler(
+    async (req, res) => {
 
-    const validInspectionStatuses = [
-      'Pending',
-      'Passed',
-      'Failed',
-    ];
+      const {
 
-    if (
-      !validInspectionStatuses.includes(
-        inspectionStatus
-      )
-    ) {
-      throw new ApiError(
-        400,
-        'Invalid inspection status'
-      );
-    }
+        result,
 
-    const request =
-      await ReturnRequest.findById(
-        req.params.id
-      );
+        note,
 
-    if (!request) {
-      throw new ApiError(
-        404,
-        'Return request not found'
-      );
-    }
+      } = req.body;
 
-    request.inspectionStatus =
-      inspectionStatus;
 
-    request.inspectionNote =
-      inspectionNote || '';
+      // ==================================================
+      // VALIDATION
+      // ==================================================
 
-    request.inspectedAt =
-      new Date();
+      const validResults = [
 
-    request.inspectedBy =
-      req.user._id;
+        'Passed',
 
-    if (
-      inspectionStatus ===
-      'Passed'
-    ) {
+        'Failed',
+
+        'Pending',
+
+      ];
+
+
+      if (
+        result &&
+        !validResults.includes(
+          result
+        )
+      ) {
+
+        throw new ApiError(
+
+          400,
+
+          `Inspection result must be one of: ${
+            validResults.join(', ')
+          }`
+
+        );
+
+      }
+
+
+      // ==================================================
+      // FIND REQUEST
+      // ==================================================
+
+      const request =
+        await ReturnRequest.findById(
+          req.params.id
+        );
+
+
+      if (
+        !request
+      ) {
+
+        throw new ApiError(
+          404,
+          'Return request not found'
+        );
+
+      }
+
+
+      // ==================================================
+      // INSPECTION
+      // ==================================================
+
+      request.inspection = {
+
+        ...(request.inspection?.toObject?.() ||
+          request.inspection ||
+          {}),
+
+        result:
+          result ||
+          request.inspection?.result ||
+          'Pending',
+
+        note:
+          note ||
+          request.inspection?.note ||
+          '',
+
+        inspectedAt:
+          new Date(),
+
+      };
+
+
+      // ==================================================
+      // STATUS
+      // ==================================================
+
       request.status =
-        'Refund Pending';
+        'Inspection';
+
+
+      await request.save();
+
+
+      // ==================================================
+      // NOTIFICATION
+      // ==================================================
+
+      try {
+
+        await sendReturnUpdate({
+
+          userId:
+            request.user,
+
+          orderId:
+            request.order,
+
+          returnRequestId:
+            request._id,
+
+          status:
+            'Inspection',
+
+        });
+
+      } catch (error) {
+
+        console.error(
+
+          'Inspection notification failed:',
+
+          error.message
+
+        );
+
+      }
+
+
+      // ==================================================
+      // RESPONSE
+      // ==================================================
+
+      res.status(200).json(
+
+        new ApiResponse(
+
+          200,
+
+          request,
+
+          'Product inspection updated'
+
+        )
+
+      );
+
     }
+  );
 
-    if (
-      inspectionStatus ===
-      'Failed'
-    ) {
-      request.status =
-        'Rejected';
-    }
 
-    request.statusHistory.push({
-      status:
-        request.status,
-
-      note:
-        inspectionNote || '',
-
-      updatedBy:
-        req.user._id,
-    });
-
-    await request.save();
-
-    res.status(200).json(
-      new ApiResponse(
-        200,
-        request,
-        'Product inspection updated'
-      )
-    );
-  });
-
-// ==============================
+// ======================================================
 // PROCESS REFUND
-// ADMIN
-// ==============================
+// ======================================================
 
 const processRefund =
-  asyncHandler(async (req, res) => {
-    const {
-      method,
-      transactionId,
-      amount,
-    } = req.body;
+  asyncHandler(
+    async (req, res) => {
 
-    const validMethods = [
-      'original_payment',
-      'bank_transfer',
-      'upi',
-      'credit',
-      'manual',
-    ];
+      const {
 
-    if (
-      !validMethods.includes(
-        method
-      )
-    ) {
-      throw new ApiError(
-        400,
-        'Invalid refund method'
+        amount,
+
+        transactionId,
+
+        note,
+
+      } = req.body;
+
+
+      // ==================================================
+      // FIND REQUEST
+      // ==================================================
+
+      const request =
+        await ReturnRequest.findById(
+          req.params.id
+        );
+
+
+      if (
+        !request
+      ) {
+
+        throw new ApiError(
+          404,
+          'Return request not found'
+        );
+
+      }
+
+
+      // ==================================================
+      // REFUND AMOUNT
+      // ==================================================
+
+      const refundAmount =
+        Number(
+          amount
+        );
+
+
+      if (
+        !Number.isFinite(
+          refundAmount
+        ) ||
+        refundAmount <= 0
+      ) {
+
+        throw new ApiError(
+          400,
+          'Valid refund amount is required'
+        );
+
+      }
+
+
+      // ==================================================
+      // UPDATE REFUND
+      // ==================================================
+
+      request.refund = {
+
+        ...(request.refund?.toObject?.() ||
+          request.refund ||
+          {}),
+
+        amount:
+          refundAmount,
+
+        status:
+          'completed',
+
+        transactionId:
+          transactionId ||
+          null,
+
+        note:
+          note ||
+          '',
+
+        refundedAt:
+          new Date(),
+
+      };
+
+
+      request.status =
+        'Refunded';
+
+
+      await request.save();
+
+
+      // ==================================================
+      // NOTIFICATION
+      // ======================================================
+
+      try {
+
+        await sendRefundUpdate({
+
+          userId:
+            request.user,
+
+          orderId:
+            request.order,
+
+          amount:
+            refundAmount,
+
+          status:
+            'Completed',
+
+        });
+
+      } catch (error) {
+
+        console.error(
+
+          'Refund notification failed:',
+
+          error.message
+
+        );
+
+      }
+
+
+      // ==================================================
+      // RESPONSE
+      // ==================================================
+
+      res.status(200).json(
+
+        new ApiResponse(
+
+          200,
+
+          request,
+
+          'Refund processed successfully'
+
+        )
+
       );
+
     }
+  );
 
-    const request =
-      await ReturnRequest.findById(
-        req.params.id
-      );
 
-    if (!request) {
-      throw new ApiError(
-        404,
-        'Return request not found'
-      );
-    }
-
-    if (
-      request.status !==
-      'Refund Pending'
-    ) {
-      throw new ApiError(
-        400,
-        'Return is not ready for refund'
-      );
-    }
-
-    const refundAmount =
-      Number(
-        amount ||
-          request.approvedRefundAmount
-      );
-
-    if (
-      !Number.isFinite(
-        refundAmount
-      ) ||
-      refundAmount <= 0
-    ) {
-      throw new ApiError(
-        400,
-        'Valid refund amount is required'
-      );
-    }
-
-    if (
-      refundAmount >
-      request.approvedRefundAmount
-    ) {
-      throw new ApiError(
-        400,
-        'Refund cannot exceed approved refund amount'
-      );
-    }
-
-    request.refund.amount =
-      refundAmount;
-
-    request.refund.method =
-      method;
-
-    request.refund.transactionId =
-      transactionId || '';
-
-    request.refund.status =
-      'Completed';
-
-    request.refund.processedAt =
-      new Date();
-
-    request.status =
-      'Refunded';
-
-    request.statusHistory.push({
-      status:
-        'Refunded',
-
-      note:
-        `Refund processed using ${method}`,
-
-      updatedBy:
-        req.user._id,
-    });
-
-    await request.save();
-
-    res.status(200).json(
-      new ApiResponse(
-        200,
-        request,
-        'Refund processed successfully'
-      )
-    );
-  });
-
-// ==============================
-// EXPORT
-// ==============================
+// ======================================================
+// EXPORTS
+// ======================================================
 
 module.exports = {
+
   createReturnRequest,
+
   getMyReturnRequests,
+
   getAllReturnRequests,
+
   updateReturnStatus,
+
   updatePickupDetails,
+
   updateInspection,
+
   processRefund,
+
 };

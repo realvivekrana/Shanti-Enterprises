@@ -52,6 +52,13 @@ import Orders from './pages/Orders';
 
 
 // ======================================================
+// NOTIFICATIONS
+// ======================================================
+
+import Notifications from './pages/Notifications';
+
+
+// ======================================================
 // WISHLIST
 // ======================================================
 
@@ -65,6 +72,7 @@ import MyWishlist from './pages/MyWishlist';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminProducts from './pages/admin/AdminProducts';
 import AdminProductForm from './pages/admin/AdminProductForm';
+import ReportsAnalytics from './pages/admin/ReportsAnalytics';
 
 
 // ======================================================
@@ -238,6 +246,18 @@ function App() {
 
 
               {/* ==================================================
+                  NOTIFICATIONS
+              ================================================== */}
+
+              <Route
+                path="/notifications"
+                element={
+                  <Notifications />
+                }
+              />
+
+
+              {/* ==================================================
                   WISHLIST
               ================================================== */}
 
@@ -314,6 +334,24 @@ function App() {
                   <AdminRoute>
 
                     <AdminProductForm />
+
+                  </AdminRoute>
+
+                }
+              />
+
+
+              {/* ==================================================
+                  REPORTS & ANALYTICS
+              ================================================== */}
+
+              <Route
+                path="/admin/reports"
+                element={
+
+                  <AdminRoute>
+
+                    <ReportsAnalytics />
 
                   </AdminRoute>
 
