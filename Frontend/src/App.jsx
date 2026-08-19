@@ -28,6 +28,7 @@ import Checkout from './pages/Checkout';
 import OrderSuccess from './pages/OrderSuccess';
 import OrderTracking from './pages/OrderTracking';
 import BulkOrderUpload from './pages/BulkOrderUpload';
+import ReturnRequest from './pages/ReturnRequest';
 
 // ======================================================
 // AUTH
@@ -204,6 +205,17 @@ function App() {
                 path="/order-tracking/:id"
                 element={
                   <OrderTracking />
+                }
+              />
+
+              {/* ==================================================
+                  RETURNS & REFUNDS
+              ================================================== */}
+
+              <Route
+                path="/orders/:orderId/return"
+                element={
+                  <ReturnRequest />
                 }
               />
 
