@@ -10,27 +10,22 @@ import {
   useParams,
 } from 'react-router-dom';
 
-import API from '../api/axios';
-
 import {
   useCart,
 } from '../context/CartContext';
 
 
 // ======================================================
-// MARKETPLACES
+// API
 // ======================================================
 
-const marketplaces = [
-  'Flipkart',
-  'Amazon',
-  'Myntra',
-  'Meesho',
-];
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  'http://localhost:5000';
 
 
 // ======================================================
-// PRODUCT DETAIL
+// PRODUCT DETAILS PAGE
 // ======================================================
 
 const ProductDetail = () => {
@@ -46,8 +41,6 @@ const ProductDetail = () => {
 
   const {
     addToCart,
-    cartError,
-    setCartError,
   } = useCart();
 
 
@@ -86,21 +79,11 @@ const ProductDetail = () => {
 
 
   const [
-    wishlist,
-    setWishlist,
-  ] = useState(false);
-
-
-  const [
-    wishlistLoading,
-    setWishlistLoading,
-  ] = useState(false);
-
-
-  const [
-    relatedProducts,
-    setRelatedProducts,
-  ] = useState([]);
+    activeTab,
+    setActiveTab,
+  ] = useState(
+    'details'
+  );
 
 
   // ====================================================
@@ -112,21 +95,42 @@ const ProductDetail = () => {
     const fetchProduct =
       async () => {
 
-        setLoading(true);
-        setError('');
-
-
         try {
 
+          setLoading(true);
+
+          setError('');
+
+
           const response =
-            await API.get(
-              `/products/${id}`
+            await fetch(
+              `${API_URL}/api/products/${id}`
             );
 
 
+          if (!response.ok) {
+
+            throw new Error(
+              'Product not found'
+            );
+
+          }
+
+
+          const data =
+            await response.json();
+
+
+          /*
+           * Existing backend ke possible
+           * response structures handle kar rahe hain.
+           */
+
           const productData =
-            response.data?.data ||
-            response.data;
+            data?.data?.product ||
+            data?.data ||
+            data?.product ||
+            data;
 
 
           setProduct(
@@ -134,34 +138,17 @@ const ProductDetail = () => {
           );
 
 
-          const moq =
-            Number(
-              productData?.moq ||
-              productData?.minimumOrderQuantity ||
-              1
-            );
-
-
-          setQuantity(
-            Math.max(
-              moq,
-              1
-            )
-          );
-
-
         } catch (err) {
 
           console.error(
-            'Product detail error:',
+            'Product details error:',
             err
           );
 
 
           setError(
-            err.response?.data
-              ?.message ||
-            'Product not found'
+            err.message ||
+            'Unable to load product'
           );
 
 
@@ -176,163 +163,233 @@ const ProductDetail = () => {
 
     fetchProduct();
 
-  }, [id]);
+  }, [
+    id,
+  ]);
 
 
   // ====================================================
-  // FETCH RELATED PRODUCTS
+  // NORMALIZED PRODUCT VALUES
   // ====================================================
 
-  useEffect(() => {
-
-    const fetchRelatedProducts =
-      async () => {
-
-        if (!product) {
-          return;
-        }
-
-
-        try {
-
-          const response =
-            await API.get(
-              '/products'
-            );
-
-
-          const data =
-            response.data?.data ||
-            response.data?.products ||
-            response.data ||
-            [];
-
-
-          const products =
-            Array.isArray(data)
-              ? data
-              : [];
-
-
-          const related =
-            products
-              .filter(
-                (item) =>
-                  String(
-                    item._id
-                  ) !==
-                  String(
-                    product._id
-                  )
-              )
-              .filter(
-                (item) =>
-                  !product.category ||
-                  !item.category ||
-                  item.category ===
-                    product.category
-              )
-              .slice(
-                0,
-                4
-              );
-
-
-          setRelatedProducts(
-            related
-          );
-
-
-        } catch (err) {
-
-          console.error(
-            'Related products error:',
-            err
-          );
-
-        }
-
-      };
-
-
-    fetchRelatedProducts();
-
-  }, [product]);
-
-
-  // ====================================================
-  // PRODUCT VALUES
-  // ====================================================
-
-  const moq =
-    Number(
-      product?.moq ||
-      product?.minimumOrderQuantity ||
-      1
-    );
-
-
-  const stock =
-    Number(
-      product?.stock ||
-      product?.countInStock ||
-      0
-    );
-
-
-  const basePrice =
-    Number(
-      product?.price ||
-      0
-    );
-
-
-  const wholesalePrice =
-    Number(
-      product?.wholesalePrice ||
-      product?.bulkPrice ||
-      basePrice
-    );
-
-
-  // ====================================================
-  // IMAGES
-  // ====================================================
-
-  const images =
+  const productData =
     useMemo(() => {
 
       if (!product) {
-        return [];
+
+        return null;
+
       }
+
+
+      const images =
+        product.images?.length
+          ? product.images
+          : product.image
+            ? [product.image]
+            : product.thumbnail
+              ? [product.thumbnail]
+              : [];
+
+
+      const basePrice =
+        Number(
+          product.price ??
+          product.sellingPrice ??
+          product.salePrice ??
+          0
+        );
+
+
+      const productMOQ =
+        Number(
+          product.moq ??
+          product.minimumOrderQuantity ??
+          product.minOrderQuantity ??
+          1
+        );
+
+
+      const productStock =
+        Number(
+          product.stock ??
+          product.countInStock ??
+          product.inventory ??
+          product.quantity ??
+          0
+        );
+
+
+      const productSKU =
+        product.sku ||
+        product.SKU ||
+        product.productCode ||
+        'N/A';
+
+
+      const rating =
+        Number(
+          product.rating ??
+          product.ratings ??
+          0
+        );
+
+
+      const reviewCount =
+        Number(
+          product.numReviews ??
+          product.reviewCount ??
+          product.reviews?.length ??
+          0
+        );
+
+
+      /*
+       * Wholesale pricing tiers.
+       *
+       * Agar backend se wholesalePricing
+       * milta hai to usko use karenge.
+       *
+       * Nahi milta to product ke normal
+       * price se fallback tiers banenge.
+       */
+
+      let pricingTiers = [];
 
 
       if (
         Array.isArray(
-          product.images
+          product.wholesalePricing
         ) &&
-        product.images.length > 0
+        product.wholesalePricing.length > 0
       ) {
 
-        return product.images;
+        pricingTiers =
+          product.wholesalePricing
+            .map(
+              (tier) => ({
 
-      }
+                minQuantity:
+                  Number(
+                    tier.minQuantity ??
+                    tier.minQty ??
+                    tier.minimumQuantity ??
+                    1
+                  ),
 
+                maxQuantity:
+                  tier.maxQuantity === null ||
+                  tier.maxQuantity === undefined ||
+                  tier.maxQuantity === ''
+                    ? null
+                    : Number(
+                        tier.maxQuantity
+                      ),
 
-      if (
-        product.image
-      ) {
+                price:
+                  Number(
+                    tier.price ??
+                    tier.unitPrice ??
+                    basePrice
+                  ),
 
-        return [
-          product.image,
+              })
+            )
+            .sort(
+              (
+                a,
+                b
+              ) =>
+                a.minQuantity -
+                b.minQuantity
+            );
+
+      } else {
+
+        /*
+         * Default B2B pricing engine.
+         *
+         * Example:
+         * 1–49     base price
+         * 50–199   12% discount
+         * 200–499  20% discount
+         * 500+     28% discount
+         *
+         * Ye fallback hai.
+         * Real product ke wholesalePricing
+         * aane par wahi prices use honge.
+         */
+
+        pricingTiers = [
+
+          {
+            minQuantity: 1,
+            maxQuantity: 49,
+            price: basePrice,
+          },
+
+          {
+            minQuantity: 50,
+            maxQuantity: 199,
+            price:
+              Number(
+                (
+                  basePrice *
+                  0.88
+                ).toFixed(2)
+              ),
+          },
+
+          {
+            minQuantity: 200,
+            maxQuantity: 499,
+            price:
+              Number(
+                (
+                  basePrice *
+                  0.80
+                ).toFixed(2)
+              ),
+          },
+
+          {
+            minQuantity: 500,
+            maxQuantity: null,
+            price:
+              Number(
+                (
+                  basePrice *
+                  0.72
+                ).toFixed(2)
+              ),
+          },
+
         ];
 
       }
 
 
-      return [
-        'https://via.placeholder.com/700x700?text=No+Image',
-      ];
+      return {
+
+        ...product,
+
+        images,
+
+        basePrice,
+
+        productMOQ,
+
+        productStock,
+
+        productSKU,
+
+        rating,
+
+        reviewCount,
+
+        pricingTiers,
+
+      };
 
     }, [
       product,
@@ -340,77 +397,51 @@ const ProductDetail = () => {
 
 
   // ====================================================
-  // CURRENT PRICE
+  // CURRENT PRICING TIER
   // ====================================================
 
-  const currentWholesalePrice =
+  const currentPricingTier =
     useMemo(() => {
 
       if (
-        !product?.wholesalePricing ||
-        !Array.isArray(
-          product.wholesalePricing
-        )
+        !productData ||
+        !productData.pricingTiers?.length
       ) {
 
-        return wholesalePrice;
+        return null;
 
       }
 
 
-      const tiers =
-        [
-          ...product.wholesalePricing,
-        ]
-          .sort(
-            (a, b) =>
-              Number(
-                a.minQuantity
-              ) -
-              Number(
-                b.minQuantity
-              )
-          );
+      /*
+       * Highest matching tier select karenge.
+       */
+
+      let matchedTier =
+        productData.pricingTiers[0];
 
 
-      let price =
-        wholesalePrice;
-
-
-      tiers.forEach(
+      productData.pricingTiers.forEach(
         (tier) => {
 
-          const minimum =
-            Number(
-              tier.minQuantity ||
-              0
-            );
+          const meetsMinimum =
+            quantity >=
+            tier.minQuantity;
 
 
-          const maximum =
-            tier.maxQuantity ===
-            null ||
-            tier.maxQuantity ===
-            undefined ||
-            tier.maxQuantity ===
-            ''
-              ? Infinity
-              : Number(
-                  tier.maxQuantity
-                );
+          const withinMaximum =
+            tier.maxQuantity === null ||
+            quantity <=
+            tier.maxQuantity;
 
 
           if (
-            quantity >=
-              minimum &&
-            quantity <=
-              maximum
+            meetsMinimum &&
+            withinMaximum
           ) {
 
-            price =
-              Number(
-                tier.price
-              );
+            matchedTier =
+              tier;
 
           }
 
@@ -418,96 +449,93 @@ const ProductDetail = () => {
       );
 
 
-      return price;
+      return matchedTier;
 
     }, [
-      product,
+      productData,
       quantity,
-      wholesalePrice,
     ]);
 
 
   // ====================================================
-  // TOTAL
+  // CURRENT UNIT PRICE
   // ====================================================
 
-  const totalPrice =
-    currentWholesalePrice *
+  const unitPrice =
+    currentPricingTier?.price ||
+    productData?.basePrice ||
+    0;
+
+
+  // ====================================================
+  // SUBTOTAL
+  // ====================================================
+
+  const subtotal =
+    unitPrice *
     quantity;
 
 
   // ====================================================
-  // QUANTITY INCREASE
+  // MOQ VALIDATION
+  // ====================================================
+
+  const minimumQuantity =
+    productData?.productMOQ ||
+    1;
+
+
+  // ====================================================
+  // STOCK VALIDATION
+  // ====================================================
+
+  const isOutOfStock =
+    productData
+      ? productData.productStock <= 0
+      : false;
+
+
+  // ====================================================
+  // QUANTITY CHANGE
   // ====================================================
 
   const increaseQuantity =
     () => {
 
-      if (!product) {
-        return;
-      }
-
-
-      if (
-        quantity >=
-        stock
-      ) {
-
-        setCartError(
-          `Only ${stock} pieces are available.`
-        );
-
-        return;
-
-      }
+      const nextQuantity =
+        quantity + 1;
 
 
       setQuantity(
-        (current) =>
-          Math.min(
-            stock,
-            current + 1
-          )
+        nextQuantity
       );
-
-
-      setCartError('');
 
     };
 
-
-  // ====================================================
-  // QUANTITY DECREASE
-  // ====================================================
 
   const decreaseQuantity =
     () => {
 
-      setQuantity(
-        (current) =>
-          Math.max(
-            moq,
-            current - 1
-          )
-      );
+      const nextQuantity =
+        quantity - 1;
 
 
-      setCartError('');
+      if (
+        nextQuantity >=
+        minimumQuantity
+      ) {
+
+        setQuantity(
+          nextQuantity
+        );
+
+      }
 
     };
 
 
-  // ====================================================
-  // MANUAL QUANTITY
-  // ====================================================
-
-  const handleQuantityChange =
+  const handleQuantityInput =
     (event) => {
-
-      if (!product) {
-        return;
-      }
-
 
       const value =
         Number(
@@ -516,7 +544,7 @@ const ProductDetail = () => {
 
 
       if (
-        !Number.isInteger(
+        !Number.isFinite(
           value
         )
       ) {
@@ -527,18 +555,13 @@ const ProductDetail = () => {
 
 
       if (
-        value < moq
+        value <
+        minimumQuantity
       ) {
 
         setQuantity(
-          moq
+          minimumQuantity
         );
-
-
-        setCartError(
-          `Minimum order quantity is ${moq} pieces.`
-        );
-
 
         return;
 
@@ -546,18 +569,14 @@ const ProductDetail = () => {
 
 
       if (
-        value > stock
+        productData?.productStock > 0 &&
+        value >
+        productData.productStock
       ) {
 
         setQuantity(
-          stock
+          productData.productStock
         );
-
-
-        setCartError(
-          `Only ${stock} pieces are available.`
-        );
-
 
         return;
 
@@ -565,11 +584,10 @@ const ProductDetail = () => {
 
 
       setQuantity(
-        value
+        Math.floor(
+          value
+        )
       );
-
-
-      setCartError('');
 
     };
 
@@ -581,19 +599,7 @@ const ProductDetail = () => {
   const handleAddToCart =
     () => {
 
-      if (!product) {
-        return;
-      }
-
-
-      if (
-        quantity < moq
-      ) {
-
-        setCartError(
-          `Minimum order quantity is ${moq} pieces.`
-        );
-
+      if (!productData) {
 
         return;
 
@@ -601,88 +607,59 @@ const ProductDetail = () => {
 
 
       if (
-        quantity > stock
+        quantity <
+        minimumQuantity
       ) {
 
-        setCartError(
-          `Only ${stock} pieces are available.`
+        alert(
+          `Minimum order quantity is ${minimumQuantity}`
         );
-
 
         return;
 
       }
 
 
-      const added =
+      if (
+        isOutOfStock
+      ) {
+
+        alert(
+          'This product is out of stock'
+        );
+
+        return;
+
+      }
+
+
+      try {
+
         addToCart(
-          product,
+          productData,
           quantity
         );
 
 
-      if (added) {
+        /*
+         * Cart add hone ke baad
+         * customer ko cart page par
+         * le ja sakte hain.
+         */
 
         navigate(
           '/cart'
         );
 
-      }
+      } catch (err) {
 
-    };
-
-
-  // ====================================================
-  // BUY NOW
-  // ====================================================
-
-  const handleBuyNow =
-    () => {
-
-      if (!product) {
-        return;
-      }
-
-
-      if (
-        quantity < moq
-      ) {
-
-        setCartError(
-          `Minimum order quantity is ${moq} pieces.`
+        console.error(
+          'Add to cart error:',
+          err
         );
 
-
-        return;
-
-      }
-
-
-      if (
-        quantity > stock
-      ) {
-
-        setCartError(
-          `Only ${stock} pieces are available.`
-        );
-
-
-        return;
-
-      }
-
-
-      const added =
-        addToCart(
-          product,
-          quantity
-        );
-
-
-      if (added) {
-
-        navigate(
-          '/checkout'
+        alert(
+          'Unable to add product to cart'
         );
 
       }
@@ -691,107 +668,34 @@ const ProductDetail = () => {
 
 
   // ====================================================
-  // REQUEST QUOTATION
+  // REQUEST QUOTE
   // ====================================================
 
-  const handleRequestQuotation =
+  const handleRequestQuote =
     () => {
 
-      if (!product) {
+      if (!productData) {
+
         return;
+
       }
 
 
       navigate(
-        `/products/${product._id}/rfq`
-      );
+        `/products/${productData._id || productData.id}/rfq`,
+        {
+          state: {
 
-    };
+            quantity,
 
+            unitPrice,
 
-  // ====================================================
-  // WISHLIST
-  // ====================================================
+            subtotal,
 
-  const handleWishlist =
-    async () => {
-
-      if (
-        wishlistLoading
-      ) {
-
-        return;
-
-      }
-
-
-      setWishlistLoading(
-        true
-      );
-
-
-      try {
-
-        if (
-          wishlist
-        ) {
-
-          await API.delete(
-            `/wishlist/${product._id}`
-          );
-
-
-          setWishlist(
-            false
-          );
-
-        } else {
-
-          await API.post(
-            '/wishlist',
-            {
-              product:
-                product._id,
-            }
-          );
-
-
-          setWishlist(
-            true
-          );
+          },
 
         }
-
-      } catch (err) {
-
-        console.error(
-          'Wishlist error:',
-          err
-        );
-
-
-        // ----------------------------------------------
-        // FALLBACK
-        // ----------------------------------------------
-
-        if (
-          err.response?.status ===
-          401
-        ) {
-
-          navigate(
-            '/login'
-          );
-
-        }
-
-      } finally {
-
-        setWishlistLoading(
-          false
-        );
-
-      }
+      );
 
     };
 
@@ -806,11 +710,11 @@ const ProductDetail = () => {
 
       <div
         className="
-          min-h-[60vh]
+          min-h-screen
+          bg-slate-50
           flex
           items-center
           justify-center
-          bg-slate-50
         "
       >
 
@@ -822,14 +726,14 @@ const ProductDetail = () => {
 
           <div
             className="
-              w-12
-              h-12
+              w-10
+              h-10
+              mx-auto
               border-4
-              border-slate-200
+              border-teal-100
               border-t-teal-600
               rounded-full
               animate-spin
-              mx-auto
             "
           />
 
@@ -859,17 +763,20 @@ const ProductDetail = () => {
   // ERROR
   // ====================================================
 
-  if (error) {
+  if (
+    error ||
+    !productData
+  ) {
 
     return (
 
       <div
         className="
-          min-h-[60vh]
+          min-h-screen
+          bg-slate-50
           flex
           items-center
           justify-center
-          bg-slate-50
           px-4
         "
       >
@@ -880,7 +787,7 @@ const ProductDetail = () => {
             w-full
             bg-white
             border
-            border-red-200
+            border-slate-200
             rounded-2xl
             p-8
             text-center
@@ -889,7 +796,7 @@ const ProductDetail = () => {
 
           <div
             className="
-              text-5xl
+              text-4xl
             "
           >
 
@@ -898,7 +805,7 @@ const ProductDetail = () => {
           </div>
 
 
-          <h2
+          <h1
             className="
               mt-4
               text-xl
@@ -909,18 +816,19 @@ const ProductDetail = () => {
 
             Product Not Found
 
-          </h2>
+          </h1>
 
 
           <p
             className="
               mt-2
               text-sm
-              text-red-600
+              text-slate-500
             "
           >
 
-            {error}
+            {error ||
+              'This product is not available.'}
 
           </p>
 
@@ -928,14 +836,15 @@ const ProductDetail = () => {
           <Link
             to="/products"
             className="
-              inline-block
+              inline-flex
               mt-6
               px-5
-              py-2.5
+              py-3
               rounded-xl
               bg-teal-600
               text-white
-              font-semibold
+              text-sm
+              font-bold
               hover:bg-teal-700
             "
           >
@@ -952,15 +861,6 @@ const ProductDetail = () => {
 
   }
 
-
-  if (!product) {
-    return null;
-  }
-
-
-  // ====================================================
-  // RENDER
-  // ====================================================
 
   return (
 
@@ -980,7 +880,7 @@ const ProductDetail = () => {
           max-w-7xl
           mx-auto
           px-4
-          pt-6
+          pt-5
         "
       >
 
@@ -989,7 +889,8 @@ const ProductDetail = () => {
             flex
             items-center
             gap-2
-            text-sm
+            text-xs
+            sm:text-sm
             text-slate-500
             overflow-x-auto
             whitespace-nowrap
@@ -999,7 +900,7 @@ const ProductDetail = () => {
           <Link
             to="/"
             className="
-              hover:text-teal-600
+              hover:text-teal-700
             "
           >
 
@@ -1016,7 +917,7 @@ const ProductDetail = () => {
           <Link
             to="/products"
             className="
-              hover:text-teal-600
+              hover:text-teal-700
             "
           >
 
@@ -1032,12 +933,13 @@ const ProductDetail = () => {
 
           <span
             className="
-              text-slate-800
+              text-slate-700
               font-medium
+              truncate
             "
           >
 
-            {product.name}
+            {productData.name}
 
           </span>
 
@@ -1047,7 +949,7 @@ const ProductDetail = () => {
 
 
       {/* ==================================================
-          MAIN PRODUCT
+          PRODUCT MAIN
       ================================================== */}
 
       <main
@@ -1056,1482 +958,78 @@ const ProductDetail = () => {
           mx-auto
           px-4
           py-6
+          sm:py-8
         "
       >
 
         <div
           className="
-            bg-white
-            rounded-3xl
-            border
-            border-slate-200
-            overflow-hidden
+            grid
+            grid-cols-1
+            lg:grid-cols-2
+            gap-8
+            lg:gap-12
           "
         >
 
-          <div
-            className="
-              grid
-              grid-cols-1
-              lg:grid-cols-2
-              gap-0
-            "
-          >
+          {/* ==================================================
+              PRODUCT IMAGES
+          ================================================== */}
 
-            {/* ==================================================
-                LEFT - IMAGES
-            ================================================== */}
+          <section>
 
             <div
               className="
-                p-5
-                sm:p-8
-                bg-slate-50
+                bg-white
+                border
+                border-slate-200
+                rounded-2xl
+                overflow-hidden
               "
             >
 
               <div
                 className="
-                  relative
-                  bg-white
-                  rounded-2xl
-                  border
-                  border-slate-200
+                  aspect-square
+                  bg-slate-100
+                  flex
+                  items-center
+                  justify-center
                   overflow-hidden
                 "
               >
 
-                <img
-                  src={
-                    images[
-                      selectedImage
-                    ] ||
-                    images[0]
-                  }
-                  alt={
-                    product.name
-                  }
-                  className="
-                    w-full
-                    aspect-square
-                    object-contain
-                  "
-                />
-
-
-                {/* Wishlist */}
-
-                <button
-                  type="button"
-                  onClick={
-                    handleWishlist
-                  }
-                  disabled={
-                    wishlistLoading
-                  }
-                  className="
-                    absolute
-                    top-4
-                    right-4
-                    w-11
-                    h-11
-                    rounded-full
-                    bg-white
-                    shadow-md
-                    flex
-                    items-center
-                    justify-center
-                    text-xl
-                    hover:scale-105
-                    transition-transform
-                  "
-                  title="Wishlist"
-                >
-
-                  {wishlist
-                    ? '❤️'
-                    : '♡'}
-
-                </button>
-
-              </div>
-
-
-              {/* ==================================================
-                  IMAGE THUMBNAILS
-              ================================================== */}
-
-              {images.length >
-                1 && (
-
-                <div
-                  className="
-                    flex
-                    gap-3
-                    mt-4
-                    overflow-x-auto
-                  "
-                >
-
-                  {images.map(
-                    (
-                      image,
-                      index
-                    ) => (
-
-                      <button
-                        type="button"
-                        key={
-                          `${image}-${index}`
-                        }
-                        onClick={() =>
-                          setSelectedImage(
-                            index
-                          )
-                        }
-                        className={`
-                          w-20
-                          h-20
-                          shrink-0
-                          rounded-xl
-                          overflow-hidden
-                          border-2
-                          bg-white
-                          ${
-                            selectedImage ===
-                            index
-                              ? 'border-teal-600'
-                              : 'border-slate-200'
-                          }
-                        `}
-                      >
-
-                        <img
-                          src={image}
-                          alt={`${product.name} ${index + 1}`}
-                          className="
-                            w-full
-                            h-full
-                            object-cover
-                          "
-                        />
-
-                      </button>
-
-                    )
-                  )}
-
-                </div>
-
-              )}
-
-            </div>
-
-
-            {/* ==================================================
-                RIGHT - DETAILS
-            ================================================== */}
-
-            <div
-              className="
-                p-5
-                sm:p-8
-              "
-            >
-
-              {/* Category */}
-
-              <p
-                className="
-                  text-xs
-                  font-bold
-                  uppercase
-                  tracking-wider
-                  text-teal-600
-                "
-              >
-
-                {product.category ||
-                  'Wholesale Product'}
-
-              </p>
-
-
-              {/* Name */}
-
-              <h1
-                className="
-                  mt-2
-                  text-2xl
-                  sm:text-3xl
-                  font-extrabold
-                  text-slate-900
-                "
-              >
-
-                {product.name}
-
-              </h1>
-
-
-              {/* SKU */}
-
-              {product.sku && (
-
-                <p
-                  className="
-                    mt-2
-                    text-xs
-                    text-slate-400
-                  "
-                >
-
-                  SKU:
-                  {' '}
-                  {product.sku}
-
-                </p>
-
-              )}
-
-
-              {/* Rating */}
-
-              <div
-                className="
-                  flex
-                  items-center
-                  gap-2
-                  mt-4
-                "
-              >
-
-                <span
-                  className="
-                    text-amber-500
-                  "
-                >
-
-                  ★★★★★
-
-                </span>
-
-
-                <span
-                  className="
-                    text-sm
-                    text-slate-500
-                  "
-                >
-
-                  Customer Reviews
-
-                </span>
-
-              </div>
-
-
-              {/* ==================================================
-                  PRICE
-              ================================================== */}
-
-              <div
-                className="
-                  mt-6
-                  p-5
-                  rounded-2xl
-                  bg-teal-50
-                  border
-                  border-teal-100
-                "
-              >
-
-                <p
-                  className="
-                    text-xs
-                    text-teal-700
-                    font-semibold
-                  "
-                >
-
-                  WHOLESALE PRICE
-
-                </p>
-
-
-                <div
-                  className="
-                    flex
-                    items-end
-                    gap-3
-                    mt-1
-                  "
-                >
-
-                  <span
-                    className="
-                      text-3xl
-                      font-extrabold
-                      text-teal-900
-                    "
-                  >
-
-                    ₹
-                    {currentWholesalePrice.toLocaleString(
-                      'en-IN',
-                      {
-                        minimumFractionDigits:
-                          2,
-                      }
-                    )}
-
-                  </span>
-
-
-                  {basePrice >
-                    currentWholesalePrice && (
-
-                    <span
-                      className="
-                        text-sm
-                        text-slate-400
-                        line-through
-                        mb-1
-                      "
-                    >
-
-                      ₹
-                      {basePrice.toLocaleString(
-                        'en-IN'
-                      )}
-
-                    </span>
-
-                  )}
-
-                </div>
-
-
-                <p
-                  className="
-                    text-xs
-                    text-teal-700
-                    mt-1
-                  "
-                >
-
-                  Per piece
-
-                </p>
-
-              </div>
-
-
-              {/* ==================================================
-                  STOCK + MOQ
-              ================================================== */}
-
-              <div
-                className="
-                  grid
-                  grid-cols-2
-                  gap-3
-                  mt-5
-                "
-              >
-
-                <div
-                  className="
-                    rounded-xl
-                    bg-slate-50
-                    border
-                    border-slate-200
-                    p-4
-                  "
-                >
-
-                  <p
-                    className="
-                      text-xs
-                      text-slate-400
-                    "
-                  >
-
-                    Minimum Order
-
-                  </p>
-
-
-                  <p
-                    className="
-                      mt-1
-                      font-bold
-                      text-slate-800
-                    "
-                  >
-
-                    {moq} pieces
-
-                  </p>
-
-                </div>
-
-
-                <div
-                  className="
-                    rounded-xl
-                    bg-slate-50
-                    border
-                    border-slate-200
-                    p-4
-                  "
-                >
-
-                  <p
-                    className="
-                      text-xs
-                      text-slate-400
-                    "
-                  >
-
-                    Availability
-
-                  </p>
-
-
-                  <p
-                    className={`
-                      mt-1
-                      font-bold
-                      ${
-                        stock > 0
-                          ? 'text-emerald-600'
-                          : 'text-red-600'
-                      }
-                    `}
-                  >
-
-                    {stock > 0
-                      ? `${stock} pcs`
-                      : 'Out of Stock'}
-
-                  </p>
-
-                </div>
-
-              </div>
-
-
-              {/* ==================================================
-                  WHOLESALE TIERS
-              ================================================== */}
-
-              {product.wholesalePricing &&
-                Array.isArray(
-                  product.wholesalePricing
-                ) &&
-                product.wholesalePricing
-                  .length > 0 && (
-
-                <div
-                  className="
-                    mt-6
-                    rounded-2xl
-                    border
-                    border-slate-200
-                    overflow-hidden
-                  "
-                >
-
-                  <div
-                    className="
-                      px-4
-                      py-3
-                      bg-slate-50
-                      border-b
-                      border-slate-200
-                    "
-                  >
-
-                    <h2
-                      className="
-                        text-sm
-                        font-bold
-                        text-slate-800
-                      "
-                    >
-
-                      Bulk Pricing
-
-                    </h2>
-
-                  </div>
-
-
-                  <div
-                    className="
-                      divide-y
-                      divide-slate-100
-                    "
-                  >
-
-                    {[
-                      ...product.wholesalePricing,
-                    ]
-                      .sort(
-                        (a, b) =>
-                          Number(
-                            a.minQuantity
-                          ) -
-                          Number(
-                            b.minQuantity
-                          )
-                      )
-                      .map(
-                        (
-                          tier,
-                          index
-                        ) => {
-
-                          const min =
-                            Number(
-                              tier.minQuantity ||
-                              0
-                            );
-
-
-                          const max =
-                            tier.maxQuantity ??
-                            '+';
-
-
-                          const active =
-                            quantity >=
-                            min &&
-                            (
-                              tier.maxQuantity ===
-                                null ||
-                              tier.maxQuantity ===
-                                undefined ||
-                              quantity <=
-                                Number(
-                                  tier.maxQuantity
-                                )
-                            );
-
-
-                          return (
-
-                            <div
-                              key={
-                                index
-                              }
-                              className={`
-                                flex
-                                items-center
-                                justify-between
-                                px-4
-                                py-3
-                                ${
-                                  active
-                                    ? 'bg-teal-50'
-                                    : 'bg-white'
-                                }
-                              `}
-                            >
-
-                              <div>
-
-                                <p
-                                  className="
-                                    text-sm
-                                    font-semibold
-                                    text-slate-700
-                                  "
-                                >
-
-                                  {min}
-                                  {' - '}
-                                  {max}
-                                  {' '}
-                                  pieces
-
-                                </p>
-
-
-                                {active && (
-
-                                  <span
-                                    className="
-                                      text-[10px]
-                                      text-teal-700
-                                      font-semibold
-                                    "
-                                  >
-
-                                    Current price tier
-
-                                  </span>
-
-                                )}
-
-                              </div>
-
-
-                              <p
-                                className="
-                                  font-bold
-                                  text-slate-900
-                                "
-                              >
-
-                                ₹
-                                {Number(
-                                  tier.price
-                                ).toLocaleString(
-                                  'en-IN',
-                                  {
-                                    minimumFractionDigits:
-                                      2,
-                                  }
-                                )}
-
-                                <span
-                                  className="
-                                    text-xs
-                                    font-normal
-                                    text-slate-400
-                                  "
-                                >
-
-                                  {' '}
-                                  / piece
-
-                                </span>
-
-                              </p>
-
-                            </div>
-
-                          );
-
-                        }
-                      )}
-
-                  </div>
-
-                </div>
-
-              )}
-
-
-              {/* ==================================================
-                  DESCRIPTION
-              ================================================== */}
-
-              <div
-                className="
-                  mt-6
-                "
-              >
-
-                <h2
-                  className="
-                    text-sm
-                    font-bold
-                    text-slate-800
-                  "
-                >
-
-                  Product Description
-
-                </h2>
-
-
-                <p
-                  className="
-                    mt-2
-                    text-sm
-                    text-slate-600
-                    leading-6
-                  "
-                >
-
-                  {product.description ||
-                    'Quality wholesale product suitable for business and bulk purchasing.'}
-
-                </p>
-
-              </div>
-
-
-              {/* ==================================================
-                  QUANTITY
-              ================================================== */}
-
-              <div
-                className="
-                  mt-6
-                "
-              >
-
-                <div
-                  className="
-                    flex
-                    items-center
-                    justify-between
-                    mb-2
-                  "
-                >
-
-                  <p
-                    className="
-                      text-sm
-                      font-bold
-                      text-slate-700
-                    "
-                  >
-
-                    Order Quantity
-
-                  </p>
-
-
-                  <span
-                    className="
-                      text-xs
-                      text-slate-400
-                    "
-                  >
-
-                    MOQ: {moq}
-
-                  </span>
-
-                </div>
-
-
-                <div
-                  className="
-                    flex
-                    items-center
-                    gap-3
-                  "
-                >
-
-                  <div
-                    className="
-                      flex
-                      items-center
-                      border
-                      border-slate-300
-                      rounded-xl
-                      overflow-hidden
-                    "
-                  >
-
-                    <button
-                      type="button"
-                      onClick={
-                        decreaseQuantity
-                      }
-                      disabled={
-                        quantity <=
-                        moq
-                      }
-                      className="
-                        w-11
-                        h-11
-                        text-xl
-                        text-slate-600
-                        hover:bg-slate-100
-                        disabled:text-slate-300
-                        disabled:cursor-not-allowed
-                      "
-                    >
-
-                      −
-
-                    </button>
-
-
-                    <input
-                      type="number"
-                      min={moq}
-                      max={stock}
-                      value={
-                        quantity
-                      }
-                      onChange={
-                        handleQuantityChange
-                      }
-                      className="
-                        w-20
-                        h-11
-                        text-center
-                        border-x
-                        border-slate-200
-                        outline-none
-                        font-semibold
-                      "
-                    />
-
-
-                    <button
-                      type="button"
-                      onClick={
-                        increaseQuantity
-                      }
-                      disabled={
-                        quantity >=
-                        stock
-                      }
-                      className="
-                        w-11
-                        h-11
-                        text-xl
-                        text-slate-600
-                        hover:bg-slate-100
-                        disabled:text-slate-300
-                        disabled:cursor-not-allowed
-                      "
-                    >
-
-                      +
-
-                    </button>
-
-                  </div>
-
-
-                  <div
-                    className="
-                      text-sm
-                      text-slate-500
-                    "
-                  >
-
-                    {quantity} pcs
-
-                  </div>
-
-                </div>
-
-              </div>
-
-
-              {/* ==================================================
-                  TOTAL
-              ================================================== */}
-
-              <div
-                className="
-                  mt-5
-                  flex
-                  items-center
-                  justify-between
-                  p-4
-                  rounded-xl
-                  bg-slate-50
-                  border
-                  border-slate-200
-                "
-              >
-
-                <span
-                  className="
-                    text-sm
-                    text-slate-500
-                  "
-                >
-
-                  Estimated Total
-
-                </span>
-
-
-                <span
-                  className="
-                    text-xl
-                    font-extrabold
-                    text-slate-900
-                  "
-                >
-
-                  ₹
-                  {totalPrice.toLocaleString(
-                    'en-IN',
-                    {
-                      minimumFractionDigits:
-                        2,
+                {productData.images.length >
+                0 ? (
+
+                  <img
+                    src={
+                      productData.images[
+                        selectedImage
+                      ]
                     }
-                  )}
+                    alt={
+                      productData.name
+                    }
+                    className="
+                      w-full
+                      h-full
+                      object-contain
+                      p-4
+                      sm:p-8
+                    "
+                  />
 
-                </span>
-
-              </div>
-
-
-              {/* ==================================================
-                  CART ERROR
-              ================================================== */}
-
-              {cartError && (
-
-                <div
-                  className="
-                    mt-4
-                    p-3
-                    rounded-xl
-                    bg-red-50
-                    border
-                    border-red-200
-                    text-sm
-                    text-red-600
-                  "
-                >
-
-                  {cartError}
-
-                </div>
-
-              )}
-
-
-              {/* ==================================================
-                  ACTIONS
-              ================================================== */}
-
-              <div
-                className="
-                  mt-5
-                  grid
-                  grid-cols-1
-                  sm:grid-cols-2
-                  gap-3
-                "
-              >
-
-                <button
-                  type="button"
-                  onClick={
-                    handleAddToCart
-                  }
-                  disabled={
-                    stock <= 0
-                  }
-                  className="
-                    py-3.5
-                    rounded-xl
-                    bg-teal-600
-                    text-white
-                    font-bold
-                    hover:bg-teal-700
-                    disabled:bg-slate-300
-                    disabled:cursor-not-allowed
-                    transition-colors
-                  "
-                >
-
-                  🛒 Add to Cart
-
-                </button>
-
-
-                <button
-                  type="button"
-                  onClick={
-                    handleBuyNow
-                  }
-                  disabled={
-                    stock <= 0
-                  }
-                  className="
-                    py-3.5
-                    rounded-xl
-                    bg-slate-900
-                    text-white
-                    font-bold
-                    hover:bg-slate-800
-                    disabled:bg-slate-300
-                    disabled:cursor-not-allowed
-                    transition-colors
-                  "
-                >
-
-                  ⚡ Buy Now
-
-                </button>
-
-              </div>
-
-
-              {/* RFQ */}
-
-              <button
-                type="button"
-                onClick={
-                  handleRequestQuotation
-                }
-                disabled={
-                  stock <= 0
-                }
-                className="
-                  w-full
-                  mt-3
-                  py-3.5
-                  rounded-xl
-                  border-2
-                  border-teal-600
-                  text-teal-700
-                  font-bold
-                  hover:bg-teal-50
-                  disabled:border-slate-300
-                  disabled:text-slate-400
-                  disabled:cursor-not-allowed
-                  transition-colors
-                "
-              >
-
-                📋 Request Best Wholesale Price
-
-              </button>
-
-
-              <p
-                className="
-                  text-xs
-                  text-center
-                  text-slate-400
-                  mt-2
-                "
-              >
-
-                Need a large quantity?
-                Request a special price
-                from our sales team.
-
-              </p>
-
-
-              {/* ==================================================
-                  TRUST FEATURES
-              ================================================== */}
-
-              <div
-                className="
-                  grid
-                  grid-cols-2
-                  gap-3
-                  mt-7
-                  pt-6
-                  border-t
-                  border-slate-200
-                "
-              >
-
-                <div
-                  className="
-                    text-center
-                  "
-                >
+                ) : (
 
                   <div
                     className="
-                      text-2xl
-                    "
-                  >
-
-                    🚚
-
-                  </div>
-
-
-                  <p
-                    className="
-                      mt-1
-                      text-xs
-                      font-semibold
-                      text-slate-700
-                    "
-                  >
-
-                    Business Delivery
-
-                  </p>
-
-
-                  <p
-                    className="
-                      text-[10px]
-                      text-slate-400
-                    "
-                  >
-
-                    Reliable shipping
-
-                  </p>
-
-                </div>
-
-
-                <div
-                  className="
-                    text-center
-                  "
-                >
-
-                  <div
-                    className="
-                      text-2xl
-                    "
-                  >
-
-                    🔒
-
-                  </div>
-
-
-                  <p
-                    className="
-                      mt-1
-                      text-xs
-                      font-semibold
-                      text-slate-700
-                    "
-                  >
-
-                    Secure Payment
-
-                  </p>
-
-
-                  <p
-                    className="
-                      text-[10px]
-                      text-slate-400
-                    "
-                  >
-
-                    Safe checkout
-
-                  </p>
-
-                </div>
-
-
-                <div
-                  className="
-                    text-center
-                  "
-                >
-
-                  <div
-                    className="
-                      text-2xl
+                      text-7xl
+                      text-slate-300
                     "
                   >
 
                     📦
-
-                  </div>
-
-
-                  <p
-                    className="
-                      mt-1
-                      text-xs
-                      font-semibold
-                      text-slate-700
-                    "
-                  >
-
-                    Bulk Orders
-
-                  </p>
-
-
-                  <p
-                    className="
-                      text-[10px]
-                      text-slate-400
-                    "
-                  >
-
-                    Wholesale pricing
-
-                  </p>
-
-                </div>
-
-
-                <div
-                  className="
-                    text-center
-                  "
-                >
-
-                  <div
-                    className="
-                      text-2xl
-                    "
-                  >
-
-                    🔄
-
-                  </div>
-
-
-                  <p
-                    className="
-                      mt-1
-                      text-xs
-                      font-semibold
-                      text-slate-700
-                    "
-                  >
-
-                    Easy Returns
-
-                  </p>
-
-
-                  <p
-                    className="
-                      text-[10px]
-                      text-slate-400
-                    "
-                  >
-
-                    Business support
-
-                  </p>
-
-                </div>
-
-              </div>
-
-            </div>
-
-          </div>
-
-        </div>
-
-
-        {/* ==================================================
-            PRODUCT INFORMATION
-        ================================================== */}
-
-        <section
-          className="
-            mt-6
-            bg-white
-            rounded-3xl
-            border
-            border-slate-200
-            p-5
-            sm:p-8
-          "
-        >
-
-          <div
-            className="
-              grid
-              grid-cols-1
-              md:grid-cols-3
-              gap-6
-            "
-          >
-
-            {/* Description */}
-
-            <div>
-
-              <h2
-                className="
-                  font-bold
-                  text-slate-800
-                "
-              >
-
-                Product Information
-
-              </h2>
-
-
-              <p
-                className="
-                  mt-2
-                  text-sm
-                  text-slate-500
-                  leading-6
-                "
-              >
-
-                {product.description ||
-                  'Product information is available for business and wholesale buyers.'}
-
-              </p>
-
-            </div>
-
-
-            {/* Specifications */}
-
-            <div>
-
-              <h2
-                className="
-                  font-bold
-                  text-slate-800
-                "
-              >
-
-                Specifications
-
-              </h2>
-
-
-              <div
-                className="
-                  mt-3
-                  space-y-2
-                  text-sm
-                "
-              >
-
-                <div
-                  className="
-                    flex
-                    justify-between
-                    gap-4
-                  "
-                >
-
-                  <span
-                    className="
-                      text-slate-400
-                    "
-                  >
-
-                    Category
-
-                  </span>
-
-
-                  <span
-                    className="
-                      font-medium
-                      text-slate-700
-                      text-right
-                    "
-                  >
-
-                    {product.category ||
-                      'N/A'}
-
-                  </span>
-
-                </div>
-
-
-                <div
-                  className="
-                    flex
-                    justify-between
-                    gap-4
-                  "
-                >
-
-                  <span
-                    className="
-                      text-slate-400
-                    "
-                  >
-
-                    MOQ
-
-                  </span>
-
-
-                  <span
-                    className="
-                      font-medium
-                      text-slate-700
-                    "
-                  >
-
-                    {moq} pcs
-
-                  </span>
-
-                </div>
-
-
-                <div
-                  className="
-                    flex
-                    justify-between
-                    gap-4
-                  "
-                >
-
-                  <span
-                    className="
-                      text-slate-400
-                    "
-                  >
-
-                    Stock
-
-                  </span>
-
-
-                  <span
-                    className="
-                      font-medium
-                      text-slate-700
-                    "
-                  >
-
-                    {stock} pcs
-
-                  </span>
-
-                </div>
-
-
-                {product.brand && (
-
-                  <div
-                    className="
-                      flex
-                      justify-between
-                      gap-4
-                    "
-                  >
-
-                    <span
-                      className="
-                        text-slate-400
-                      "
-                    >
-
-                      Brand
-
-                    </span>
-
-
-                    <span
-                      className="
-                        font-medium
-                        text-slate-700
-                      "
-                    >
-
-                      {product.brand}
-
-                    </span>
 
                   </div>
 
@@ -2542,51 +1040,339 @@ const ProductDetail = () => {
             </div>
 
 
-            {/* Shipping */}
+            {/* ==================================================
+                THUMBNAILS
+            ================================================== */}
 
-            <div>
+            {productData.images.length >
+              1 && (
 
-              <h2
+              <div
                 className="
-                  font-bold
-                  text-slate-800
+                  flex
+                  gap-3
+                  mt-4
+                  overflow-x-auto
+                  pb-1
                 "
               >
 
-                Shipping & Returns
+                {productData.images.map(
+                  (
+                    image,
+                    index
+                  ) => (
 
-              </h2>
+                    <button
+                      key={
+                        `${image}-${index}`
+                      }
+                      type="button"
+                      onClick={() =>
+                        setSelectedImage(
+                          index
+                        )
+                      }
+                      className={`
+                        w-20
+                        h-20
+                        shrink-0
+                        rounded-xl
+                        overflow-hidden
+                        border-2
+                        ${
+                          selectedImage ===
+                          index
+                            ? 'border-teal-600'
+                            : 'border-slate-200'
+                        }
+                      `}
+                    >
+
+                      <img
+                        src={
+                          image
+                        }
+                        alt={
+                          `${productData.name} ${index + 1}`
+                        }
+                        className="
+                          w-full
+                          h-full
+                          object-cover
+                        "
+                      />
+
+                    </button>
+
+                  )
+                )}
+
+              </div>
+
+            )}
+
+          </section>
+
+
+          {/* ==================================================
+              PRODUCT INFORMATION
+          ================================================== */}
+
+          <section>
+
+            {/* ==================================================
+                BRAND
+            ================================================== */}
+
+            {productData.brand && (
+
+              <p
+                className="
+                  text-sm
+                  font-bold
+                  uppercase
+                  tracking-wider
+                  text-teal-600
+                "
+              >
+
+                {typeof productData.brand ===
+                'object'
+                  ? productData.brand.name
+                  : productData.brand}
+
+              </p>
+
+            )}
+
+
+            {/* ==================================================
+                PRODUCT NAME
+            ================================================== */}
+
+            <h1
+              className="
+                mt-2
+                text-2xl
+                sm:text-3xl
+                lg:text-4xl
+                font-extrabold
+                leading-tight
+                text-slate-900
+              "
+            >
+
+              {productData.name}
+
+            </h1>
+
+
+            {/* ==================================================
+                RATING + SKU
+            ================================================== */}
+
+            <div
+              className="
+                mt-4
+                flex
+                flex-wrap
+                items-center
+                gap-4
+                text-sm
+              "
+            >
+
+              <div
+                className="
+                  flex
+                  items-center
+                  gap-1
+                "
+              >
+
+                <span
+                  className="
+                    text-yellow-500
+                  "
+                >
+
+                  ★
+
+                </span>
+
+
+                <span
+                  className="
+                    font-bold
+                    text-slate-700
+                  "
+                >
+
+                  {productData.rating
+                    ? productData.rating.toFixed(
+                        1
+                      )
+                    : 'No rating'}
+
+                </span>
+
+
+                {productData.reviewCount >
+                  0 && (
+
+                  <span
+                    className="
+                      text-slate-400
+                    "
+                  >
+
+                    (
+                    {
+                      productData.reviewCount
+                    } reviews)
+
+                  </span>
+
+                )}
+
+              </div>
+
+
+              <span
+                className="
+                  text-slate-300
+                "
+              >
+
+                |
+
+              </span>
 
 
               <div
                 className="
-                  mt-3
-                  space-y-3
-                  text-sm
                   text-slate-500
                 "
               >
 
-                <p>
+                SKU:{' '}
 
-                  🚚 Business shipping
-                  available for bulk orders.
+                <strong
+                  className="
+                    text-slate-700
+                  "
+                >
+
+                  {
+                    productData.productSKU
+                  }
+
+                </strong>
+
+              </div>
+
+            </div>
+
+
+            {/* ==================================================
+                MOQ / STOCK
+            ================================================== */}
+
+            <div
+              className="
+                mt-5
+                flex
+                flex-wrap
+                gap-3
+              "
+            >
+
+              <div
+                className="
+                  px-4
+                  py-2
+                  rounded-xl
+                  bg-teal-50
+                  border
+                  border-teal-100
+                "
+              >
+
+                <p
+                  className="
+                    text-[11px]
+                    text-teal-600
+                    font-semibold
+                  "
+                >
+
+                  Minimum Order
 
                 </p>
 
 
-                <p>
+                <p
+                  className="
+                    mt-0.5
+                    text-sm
+                    font-bold
+                    text-teal-800
+                  "
+                >
 
-                  📦 Shipping charges are
-                  calculated during checkout.
+                  {productData.productMOQ}
+                  {' '}
+                  pieces
+
+                </p>
+
+              </div>
+
+
+              <div
+                className={`
+                  px-4
+                  py-2
+                  rounded-xl
+                  border
+                  ${
+                    isOutOfStock
+                      ? 'bg-red-50 border-red-100'
+                      : 'bg-emerald-50 border-emerald-100'
+                  }
+                `}
+              >
+
+                <p
+                  className="
+                    text-[11px]
+                    font-semibold
+                    text-slate-500
+                  "
+                >
+
+                  Availability
 
                 </p>
 
 
-                <p>
+                <p
+                  className={`
+                    mt-0.5
+                    text-sm
+                    font-bold
+                    ${
+                      isOutOfStock
+                        ? 'text-red-600'
+                        : 'text-emerald-700'
+                    }
+                  `}
+                >
 
-                  🔄 Returns are subject to
-                  the applicable return policy.
+                  {isOutOfStock
+                    ? 'Out of Stock'
+                    : `${productData.productStock} pieces available`}
 
                 </p>
 
@@ -2594,84 +1380,1040 @@ const ProductDetail = () => {
 
             </div>
 
-          </div>
 
-        </section>
+            {/* ==================================================
+                WHOLESALE PRICING
+            ================================================== */}
+
+            <div
+              className="
+                mt-7
+                rounded-2xl
+                border
+                border-slate-200
+                bg-white
+                overflow-hidden
+              "
+            >
+
+              <div
+                className="
+                  px-5
+                  py-4
+                  bg-slate-50
+                  border-b
+                  border-slate-200
+                "
+              >
+
+                <div
+                  className="
+                    flex
+                    items-center
+                    justify-between
+                    gap-3
+                  "
+                >
+
+                  <div>
+
+                    <h2
+                      className="
+                        text-lg
+                        font-bold
+                        text-slate-800
+                      "
+                    >
+
+                      Wholesale Pricing
+
+                    </h2>
+
+
+                    <p
+                      className="
+                        mt-1
+                        text-xs
+                        text-slate-500
+                      "
+                    >
+
+                      Buy more, save more
+
+                    </p>
+
+                  </div>
+
+
+                  <span
+                    className="
+                      text-xl
+                    "
+                  >
+
+                    💰
+
+                  </span>
+
+                </div>
+
+              </div>
+
+
+              {/* TABLE */}
+
+              <div
+                className="
+                  overflow-x-auto
+                "
+              >
+
+                <table
+                  className="
+                    w-full
+                    text-sm
+                  "
+                >
+
+                  <thead>
+
+                    <tr
+                      className="
+                        border-b
+                        border-slate-100
+                        text-left
+                      "
+                    >
+
+                      <th
+                        className="
+                          px-5
+                          py-3
+                          font-semibold
+                          text-slate-500
+                        "
+                      >
+
+                        Quantity
+
+                      </th>
+
+
+                      <th
+                        className="
+                          px-5
+                          py-3
+                          text-right
+                          font-semibold
+                          text-slate-500
+                        "
+                      >
+
+                        Price / Unit
+
+                      </th>
+
+                    </tr>
+
+                  </thead>
+
+
+                  <tbody>
+
+                    {productData.pricingTiers.map(
+                      (
+                        tier,
+                        index
+                      ) => {
+
+                        const isActive =
+                          currentPricingTier ===
+                          tier;
+
+
+                        const quantityLabel =
+                          tier.maxQuantity ===
+                          null
+                            ? `${tier.minQuantity}+`
+                            : `${tier.minQuantity}–${tier.maxQuantity}`;
+
+
+                        return (
+
+                          <tr
+                            key={
+                              `${tier.minQuantity}-${index}`
+                            }
+                            className={`
+                              border-b
+                              border-slate-100
+                              last:border-b-0
+                              transition-colors
+                              ${
+                                isActive
+                                  ? 'bg-teal-50'
+                                  : ''
+                              }
+                            `}
+                          >
+
+                            <td
+                              className={`
+                                px-5
+                                py-3.5
+                                font-medium
+                                ${
+                                  isActive
+                                    ? 'text-teal-800 font-bold'
+                                    : 'text-slate-600'
+                                }
+                              `}
+                            >
+
+                              {quantityLabel}
+
+                              {isActive && (
+
+                                <span
+                                  className="
+                                    ml-2
+                                    text-[10px]
+                                    font-bold
+                                    uppercase
+                                    text-teal-600
+                                  "
+                                >
+
+                                  Current
+
+                                </span>
+
+                              )}
+
+                            </td>
+
+
+                            <td
+                              className={`
+                                px-5
+                                py-3.5
+                                text-right
+                                font-bold
+                                ${
+                                  isActive
+                                    ? 'text-teal-700'
+                                    : 'text-slate-800'
+                                }
+                              `}
+                            >
+
+                              ₹
+                              {
+                                tier.price.toLocaleString(
+                                  'en-IN'
+                                )
+                              }
+
+                            </td>
+
+                          </tr>
+
+                        );
+
+                      }
+                    )}
+
+                  </tbody>
+
+                </table>
+
+              </div>
+
+            </div>
+
+
+            {/* ==================================================
+                CURRENT PRICE INFO
+            ================================================== */}
+
+            <div
+              className="
+                mt-5
+                p-4
+                rounded-xl
+                bg-teal-50
+                border
+                border-teal-100
+              "
+            >
+
+              <div
+                className="
+                  flex
+                  flex-wrap
+                  items-center
+                  justify-between
+                  gap-3
+                "
+              >
+
+                <div>
+
+                  <p
+                    className="
+                      text-xs
+                      text-teal-600
+                      font-semibold
+                    "
+                  >
+
+                    Current Wholesale Price
+
+                  </p>
+
+
+                  <p
+                    className="
+                      mt-1
+                      text-2xl
+                      font-extrabold
+                      text-teal-800
+                    "
+                  >
+
+                    ₹
+                    {
+                      unitPrice.toLocaleString(
+                        'en-IN'
+                      )
+                    }
+
+                    <span
+                      className="
+                        text-sm
+                        font-medium
+                        text-teal-600
+                      "
+                    >
+
+                      {' '}
+                      / piece
+
+                    </span>
+
+                  </p>
+
+                </div>
+
+
+                <div
+                  className="
+                    text-right
+                  "
+                >
+
+                  <p
+                    className="
+                      text-xs
+                      text-slate-500
+                    "
+                  >
+
+                    Quantity
+
+                  </p>
+
+
+                  <p
+                    className="
+                      font-bold
+                      text-slate-800
+                    "
+                  >
+
+                    {quantity}
+
+                  </p>
+
+                </div>
+
+              </div>
+
+            </div>
+
+
+            {/* ==================================================
+                QUANTITY
+            ================================================== */}
+
+            <div
+              className="
+                mt-6
+              "
+            >
+
+              <div
+                className="
+                  flex
+                  items-center
+                  justify-between
+                  mb-2
+                "
+              >
+
+                <label
+                  className="
+                    text-sm
+                    font-bold
+                    text-slate-700
+                  "
+                >
+
+                  Quantity
+
+                </label>
+
+
+                <span
+                  className="
+                    text-xs
+                    text-slate-500
+                  "
+                >
+
+                  MOQ: {minimumQuantity}
+
+                </span>
+
+              </div>
+
+
+              <div
+                className="
+                  flex
+                  items-center
+                  w-full
+                  max-w-xs
+                  h-12
+                  rounded-xl
+                  border
+                  border-slate-200
+                  bg-white
+                  overflow-hidden
+                "
+              >
+
+                <button
+                  type="button"
+                  onClick={
+                    decreaseQuantity
+                  }
+                  disabled={
+                    quantity <=
+                    minimumQuantity
+                  }
+                  className="
+                    w-12
+                    h-full
+                    text-xl
+                    font-bold
+                    text-slate-600
+                    hover:bg-slate-50
+                    disabled:text-slate-300
+                    disabled:cursor-not-allowed
+                  "
+                >
+
+                  −
+
+                </button>
+
+
+                <input
+                  type="number"
+                  min={
+                    minimumQuantity
+                  }
+                  max={
+                    productData.productStock ||
+                    undefined
+                  }
+                  value={
+                    quantity
+                  }
+                  onChange={
+                    handleQuantityInput
+                  }
+                  className="
+                    flex-1
+                    min-w-0
+                    h-full
+                    text-center
+                    font-bold
+                    text-slate-800
+                    outline-none
+                    border-x
+                    border-slate-200
+                  "
+                />
+
+
+                <button
+                  type="button"
+                  onClick={
+                    increaseQuantity
+                  }
+                  disabled={
+                    productData.productStock >
+                      0 &&
+                    quantity >=
+                      productData.productStock
+                  }
+                  className="
+                    w-12
+                    h-full
+                    text-xl
+                    font-bold
+                    text-slate-600
+                    hover:bg-slate-50
+                    disabled:text-slate-300
+                    disabled:cursor-not-allowed
+                  "
+                >
+
+                  +
+
+                </button>
+
+              </div>
+
+            </div>
+
+
+            {/* ==================================================
+                SUBTOTAL
+            ================================================== */}
+
+            <div
+              className="
+                mt-6
+                flex
+                items-center
+                justify-between
+                gap-4
+                p-4
+                rounded-xl
+                bg-white
+                border
+                border-slate-200
+              "
+            >
+
+              <div>
+
+                <p
+                  className="
+                    text-sm
+                    text-slate-500
+                  "
+                >
+
+                  Subtotal
+
+                </p>
+
+
+                <p
+                  className="
+                    text-xs
+                    text-slate-400
+                    mt-1
+                  "
+                >
+
+                  {quantity} × ₹
+                  {
+                    unitPrice.toLocaleString(
+                      'en-IN'
+                    )
+                  }
+
+                </p>
+
+              </div>
+
+
+              <p
+                className="
+                  text-2xl
+                  font-extrabold
+                  text-slate-900
+                "
+              >
+
+                ₹
+                {
+                  subtotal.toLocaleString(
+                    'en-IN'
+                  )
+                }
+
+              </p>
+
+            </div>
+
+
+            {/* ==================================================
+                ACTION BUTTONS
+            ================================================== */}
+
+            <div
+              className="
+                grid
+                grid-cols-1
+                sm:grid-cols-2
+                gap-3
+                mt-5
+              "
+            >
+
+              <button
+                type="button"
+                onClick={
+                  handleAddToCart
+                }
+                disabled={
+                  isOutOfStock
+                }
+                className="
+                  h-12
+                  rounded-xl
+                  bg-teal-600
+                  text-white
+                  font-bold
+                  text-sm
+                  hover:bg-teal-700
+                  disabled:bg-slate-200
+                  disabled:text-slate-400
+                  disabled:cursor-not-allowed
+                  transition-colors
+                "
+              >
+
+                {isOutOfStock
+                  ? 'Out of Stock'
+                  : '🛒 Add to Cart'}
+
+              </button>
+
+
+              <button
+                type="button"
+                onClick={
+                  handleRequestQuote
+                }
+                className="
+                  h-12
+                  rounded-xl
+                  border-2
+                  border-teal-600
+                  text-teal-700
+                  font-bold
+                  text-sm
+                  hover:bg-teal-50
+                  transition-colors
+                "
+              >
+
+                📋 Request Quote
+
+              </button>
+
+            </div>
+
+          </section>
+
+        </div>
 
 
         {/* ==================================================
-            MARKETPLACE
+            PRODUCT INFORMATION TABS
         ================================================== */}
 
         <section
           className="
-            mt-6
+            mt-12
             bg-white
-            rounded-3xl
             border
             border-slate-200
-            p-5
-            sm:p-8
+            rounded-2xl
+            overflow-hidden
           "
         >
 
-          <h2
-            className="
-              text-lg
-              font-bold
-              text-slate-800
-            "
-          >
-
-            Perfect for Online Sellers
-
-          </h2>
-
-
-          <p
-            className="
-              text-sm
-              text-slate-500
-              mt-1
-            "
-          >
-
-            Suitable for businesses selling
-            through major marketplaces.
-
-          </p>
-
+          {/* ==================================================
+              TAB NAVIGATION
+          ================================================== */}
 
           <div
             className="
               flex
-              flex-wrap
-              gap-3
-              mt-5
+              overflow-x-auto
+              border-b
+              border-slate-200
             "
           >
 
-            {marketplaces.map(
-              (name) => (
+            <TabButton
+              active={
+                activeTab ===
+                'details'
+              }
+              onClick={() =>
+                setActiveTab(
+                  'details'
+                )
+              }
+            >
 
-                <span
-                  key={name}
+              Product Details
+
+            </TabButton>
+
+
+            <TabButton
+              active={
+                activeTab ===
+                'specifications'
+              }
+              onClick={() =>
+                setActiveTab(
+                  'specifications'
+                )
+              }
+            >
+
+              Specifications
+
+            </TabButton>
+
+
+            <TabButton
+              active={
+                activeTab ===
+                'shipping'
+              }
+              onClick={() =>
+                setActiveTab(
+                  'shipping'
+                )
+              }
+            >
+
+              Shipping
+
+            </TabButton>
+
+
+            <TabButton
+              active={
+                activeTab ===
+                'returns'
+              }
+              onClick={() =>
+                setActiveTab(
+                  'returns'
+                )
+              }
+            >
+
+              Return Policy
+
+            </TabButton>
+
+          </div>
+
+
+          {/* ==================================================
+              TAB CONTENT
+          ================================================== */}
+
+          <div
+            className="
+              p-5
+              sm:p-7
+            "
+          >
+
+            {activeTab ===
+              'details' && (
+
+              <div>
+
+                <h2
                   className="
-                    px-4
-                    py-2
-                    rounded-full
-                    bg-slate-100
-                    text-slate-700
-                    text-sm
-                    font-semibold
+                    text-xl
+                    font-bold
+                    text-slate-800
                   "
                 >
 
-                  {name}
+                  Product Details
 
-                </span>
+                </h2>
 
-              )
+
+                <p
+                  className="
+                    mt-4
+                    text-sm
+                    text-slate-600
+                    leading-7
+                    whitespace-pre-line
+                  "
+                >
+
+                  {productData.description ||
+                    'Product description is not available.'}
+
+                </p>
+
+              </div>
+
+            )}
+
+
+            {activeTab ===
+              'specifications' && (
+
+              <div>
+
+                <h2
+                  className="
+                    text-xl
+                    font-bold
+                    text-slate-800
+                  "
+                >
+
+                  Specifications
+
+                </h2>
+
+
+                {productData.specifications &&
+                typeof productData.specifications ===
+                  'object' ? (
+
+                  <div
+                    className="
+                      mt-5
+                      overflow-hidden
+                      rounded-xl
+                      border
+                      border-slate-200
+                    "
+                  >
+
+                    {Object.entries(
+                      productData.specifications
+                    ).map(
+                      (
+                        [
+                          key,
+                          value,
+                        ],
+                        index
+                      ) => (
+
+                        <div
+                          key={
+                            key
+                          }
+                          className={`
+                            grid
+                            grid-cols-1
+                            sm:grid-cols-2
+                            ${
+                              index %
+                                2 ===
+                              0
+                                ? 'bg-slate-50'
+                                : 'bg-white'
+                            }
+                          `}
+                        >
+
+                          <div
+                            className="
+                              px-4
+                              py-3
+                              text-sm
+                              font-semibold
+                              text-slate-600
+                            "
+                          >
+
+                            {formatLabel(
+                              key
+                            )}
+
+                          </div>
+
+
+                          <div
+                            className="
+                              px-4
+                              py-3
+                              text-sm
+                              text-slate-800
+                            "
+                          >
+
+                            {String(
+                              value
+                            )}
+
+                          </div>
+
+                        </div>
+
+                      )
+                    )}
+
+                  </div>
+
+                ) : (
+
+                  <p
+                    className="
+                      mt-4
+                      text-sm
+                      text-slate-500
+                    "
+                  >
+
+                    Product specifications
+                    are not available.
+
+                  </p>
+
+                )}
+
+              </div>
+
+            )}
+
+
+            {activeTab ===
+              'shipping' && (
+
+              <div>
+
+                <h2
+                  className="
+                    text-xl
+                    font-bold
+                    text-slate-800
+                  "
+                >
+
+                  Shipping
+
+                </h2>
+
+
+                <div
+                  className="
+                    mt-5
+                    grid
+                    grid-cols-1
+                    sm:grid-cols-3
+                    gap-4
+                  "
+                >
+
+                  <InfoBox
+                    icon="🚚"
+                    title="Business Delivery"
+                    text="Shipping is arranged according to your delivery location and order requirements."
+                  />
+
+
+                  <InfoBox
+                    icon="📦"
+                    title="Bulk Orders"
+                    text="Large orders may be shipped in multiple packages depending on quantity and availability."
+                  />
+
+
+                  <InfoBox
+                    icon="📍"
+                    title="Order Tracking"
+                    text="Tracking information will be available after your order is shipped."
+                  />
+
+                </div>
+
+              </div>
+
+            )}
+
+
+            {activeTab ===
+              'returns' && (
+
+              <div>
+
+                <h2
+                  className="
+                    text-xl
+                    font-bold
+                    text-slate-800
+                  "
+                >
+
+                  Return Policy
+
+                </h2>
+
+
+                <p
+                  className="
+                    mt-4
+                    text-sm
+                    text-slate-600
+                    leading-7
+                  "
+                >
+
+                  Returns and refunds are subject
+                  to the applicable order and
+                  product return policy. Please
+                  check the return conditions before
+                  placing a bulk order.
+
+                </p>
+
+
+                <Link
+                  to="/policies/returns"
+                  className="
+                    inline-flex
+                    mt-5
+                    text-sm
+                    font-bold
+                    text-teal-700
+                    hover:text-teal-800
+                  "
+                >
+
+                  View Full Return Policy →
+
+                </Link>
+
+              </div>
+
             )}
 
           </div>
@@ -2680,213 +2422,74 @@ const ProductDetail = () => {
 
 
         {/* ==================================================
-            RELATED PRODUCTS
+            IMPORTANT NOTICE
         ================================================== */}
 
-        {relatedProducts.length >
-          0 && (
+        <section
+          className="
+            mt-6
+            p-5
+            rounded-2xl
+            bg-amber-50
+            border
+            border-amber-200
+          "
+        >
 
-          <section
+          <div
             className="
-              mt-8
+              flex
+              items-start
+              gap-3
             "
           >
 
-            <div
+            <span
               className="
-                flex
-                items-end
-                justify-between
-                mb-4
+                text-xl
               "
             >
 
-              <div>
+              ⚠️
 
-                <p
-                  className="
-                    text-xs
-                    uppercase
-                    tracking-wider
-                    text-teal-600
-                    font-bold
-                  "
-                >
-
-                  You may also like
-
-                </p>
+            </span>
 
 
-                <h2
-                  className="
-                    text-2xl
-                    font-extrabold
-                    text-slate-900
-                  "
-                >
+            <div>
 
-                  Related Products
-
-                </h2>
-
-              </div>
-
-
-              <Link
-                to="/products"
+              <h3
                 className="
-                  text-sm
-                  font-semibold
-                  text-teal-700
-                  hover:underline
+                  font-bold
+                  text-amber-900
                 "
               >
 
-                View All
+                Important
 
-              </Link>
-
-            </div>
+              </h3>
 
 
-            <div
-              className="
-                grid
-                grid-cols-2
-                md:grid-cols-4
-                gap-4
-              "
-            >
+              <p
+                className="
+                  mt-1
+                  text-sm
+                  text-amber-800
+                  leading-6
+                "
+              >
 
-              {relatedProducts.map(
-                (item) => {
+                Wholesale prices are based on
+                quantity. Increase the quantity
+                above to automatically see the
+                applicable price tier.
 
-                  const itemImage =
-                    item.images?.[0] ||
-                    item.image ||
-                    'https://via.placeholder.com/400x400?text=No+Image';
-
-
-                  const itemPrice =
-                    Number(
-                      item.wholesalePrice ||
-                      item.bulkPrice ||
-                      item.price ||
-                      0
-                    );
-
-
-                  return (
-
-                    <Link
-                      key={
-                        item._id
-                      }
-                      to={`/product/${item._id}`}
-                      className="
-                        bg-white
-                        border
-                        border-slate-200
-                        rounded-2xl
-                        overflow-hidden
-                        hover:shadow-lg
-                        hover:border-teal-300
-                        transition-all
-                      "
-                    >
-
-                      <div
-                        className="
-                          aspect-square
-                          bg-slate-50
-                          overflow-hidden
-                        "
-                      >
-
-                        <img
-                          src={
-                            itemImage
-                          }
-                          alt={
-                            item.name
-                          }
-                          className="
-                            w-full
-                            h-full
-                            object-cover
-                            hover:scale-105
-                            transition-transform
-                          "
-                        />
-
-                      </div>
-
-
-                      <div
-                        className="
-                          p-3
-                        "
-                      >
-
-                        <p
-                          className="
-                            text-xs
-                            text-teal-600
-                            font-semibold
-                          "
-                        >
-
-                          {item.category ||
-                            'Product'}
-
-                        </p>
-
-
-                        <h3
-                          className="
-                            mt-1
-                            font-bold
-                            text-sm
-                            text-slate-800
-                            line-clamp-2
-                          "
-                        >
-
-                          {item.name}
-
-                        </h3>
-
-
-                        <p
-                          className="
-                            mt-2
-                            font-extrabold
-                            text-slate-900
-                          "
-                        >
-
-                          ₹
-                          {itemPrice.toLocaleString(
-                            'en-IN'
-                          )}
-
-                        </p>
-
-                      </div>
-
-                    </Link>
-
-                  );
-
-                }
-              )}
+              </p>
 
             </div>
 
-          </section>
+          </div>
 
-        )}
+        </section>
 
       </main>
 
@@ -2895,6 +2498,137 @@ const ProductDetail = () => {
   );
 
 };
+
+
+// ======================================================
+// TAB BUTTON
+// ======================================================
+
+const TabButton = ({
+  active,
+  onClick,
+  children,
+}) => {
+
+  return (
+
+    <button
+      type="button"
+      onClick={
+        onClick
+      }
+      className={`
+        shrink-0
+        px-5
+        py-4
+        text-sm
+        font-semibold
+        border-b-2
+        transition-colors
+        ${
+          active
+            ? 'border-teal-600 text-teal-700'
+            : 'border-transparent text-slate-500 hover:text-slate-800'
+        }
+      `}
+    >
+
+      {children}
+
+    </button>
+
+  );
+
+};
+
+
+// ======================================================
+// INFO BOX
+// ======================================================
+
+const InfoBox = ({
+  icon,
+  title,
+  text,
+}) => {
+
+  return (
+
+    <div
+      className="
+        p-5
+        rounded-xl
+        bg-slate-50
+        border
+        border-slate-200
+      "
+    >
+
+      <div
+        className="
+          text-2xl
+        "
+      >
+
+        {icon}
+
+      </div>
+
+
+      <h3
+        className="
+          mt-3
+          font-bold
+          text-slate-800
+        "
+      >
+
+        {title}
+
+      </h3>
+
+
+      <p
+        className="
+          mt-2
+          text-xs
+          text-slate-500
+          leading-5
+        "
+      >
+
+        {text}
+
+      </p>
+
+    </div>
+
+  );
+
+};
+
+
+// ======================================================
+// FORMAT SPECIFICATION LABEL
+// ======================================================
+
+const formatLabel =
+  (value) => {
+
+    return String(
+      value
+    )
+      .replace(
+        /([A-Z])/g,
+        ' $1'
+      )
+      .replace(
+        /^./,
+        (character) =>
+          character.toUpperCase()
+      );
+
+  };
 
 
 export default ProductDetail;

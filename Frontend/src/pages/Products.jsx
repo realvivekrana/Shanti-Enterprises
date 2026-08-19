@@ -9,379 +9,18 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 
-import API from '../api/axios';
-
 import {
   useCart,
 } from '../context/CartContext';
 
 
 // ======================================================
-// CATEGORIES
+// API
 // ======================================================
 
-const categories = [
-  'All',
-  'Courier Bags',
-  'Boxes',
-  'Tapes',
-  'Labels',
-  'Paper Shredded',
-];
-
-
-// ======================================================
-// PRODUCT CARD
-// ======================================================
-
-const ProductCard = ({
-  product,
-  addToCart,
-}) => {
-
-  const image =
-    product.images?.[0] ||
-    product.image ||
-    'https://via.placeholder.com/500x500?text=No+Image';
-
-
-  const price =
-    Number(
-      product.price || 0
-    );
-
-
-  const wholesalePrice =
-    Number(
-      product.wholesalePrice ||
-      product.bulkPrice ||
-      price
-    );
-
-
-  const moq =
-    Number(
-      product.moq ||
-      product.minimumOrderQuantity ||
-      1
-    );
-
-
-  const stock =
-    Number(
-      product.stock ||
-      product.countInStock ||
-      0
-    );
-
-
-  const handleAddToCart =
-    () => {
-
-      addToCart({
-        ...product,
-        quantity: moq,
-      });
-
-    };
-
-
-  return (
-
-    <div
-      className="
-        group
-        bg-white
-        border
-        border-slate-200
-        rounded-2xl
-        overflow-hidden
-        hover:border-teal-400
-        hover:shadow-xl
-        transition-all
-        duration-300
-      "
-    >
-
-      {/* ==================================================
-          IMAGE
-      ================================================== */}
-
-      <Link
-        to={`/product/${product._id}`}
-        className="
-          block
-          aspect-square
-          bg-slate-50
-          overflow-hidden
-        "
-      >
-
-        <img
-          src={image}
-          alt={
-            product.name ||
-            'Product'
-          }
-          className="
-            w-full
-            h-full
-            object-cover
-            group-hover:scale-105
-            transition-transform
-            duration-500
-          "
-        />
-
-      </Link>
-
-
-      {/* ==================================================
-          PRODUCT DETAILS
-      ================================================== */}
-
-      <div className="p-4">
-
-        {/* Category */}
-
-        <p
-          className="
-            text-[11px]
-            uppercase
-            tracking-wide
-            font-semibold
-            text-teal-600
-          "
-        >
-
-          {product.category ||
-            'Packaging'}
-
-        </p>
-
-
-        {/* Name */}
-
-        <Link
-          to={`/product/${product._id}`}
-        >
-
-          <h3
-            className="
-              mt-1
-              font-bold
-              text-slate-800
-              line-clamp-2
-              min-h-[48px]
-              hover:text-teal-700
-            "
-          >
-
-            {product.name}
-
-          </h3>
-
-        </Link>
-
-
-        {/* Price */}
-
-        <div
-          className="
-            mt-3
-            flex
-            items-end
-            justify-between
-            gap-2
-          "
-        >
-
-          <div>
-
-            <p
-              className="
-                text-xs
-                text-slate-400
-              "
-            >
-
-              Wholesale Price
-
-            </p>
-
-
-            <p
-              className="
-                text-xl
-                font-extrabold
-                text-slate-900
-              "
-            >
-
-              ₹
-              {wholesalePrice.toLocaleString(
-                'en-IN'
-              )}
-
-            </p>
-
-          </div>
-
-
-          {wholesalePrice <
-            price && (
-
-            <span
-              className="
-                text-[10px]
-                font-bold
-                text-green-700
-                bg-green-50
-                px-2
-                py-1
-                rounded-full
-              "
-            >
-
-              Bulk Saving
-
-            </span>
-
-          )}
-
-        </div>
-
-
-        {/* MOQ / Stock */}
-
-        <div
-          className="
-            grid
-            grid-cols-2
-            gap-2
-            mt-4
-          "
-        >
-
-          <div
-            className="
-              bg-slate-50
-              rounded-lg
-              px-3
-              py-2
-            "
-          >
-
-            <p
-              className="
-                text-[10px]
-                text-slate-400
-              "
-            >
-
-              MOQ
-
-            </p>
-
-
-            <p
-              className="
-                text-sm
-                font-bold
-                text-slate-700
-              "
-            >
-
-              {moq} pcs
-
-            </p>
-
-          </div>
-
-
-          <div
-            className="
-              bg-slate-50
-              rounded-lg
-              px-3
-              py-2
-            "
-          >
-
-            <p
-              className="
-                text-[10px]
-                text-slate-400
-              "
-            >
-
-              Stock
-
-            </p>
-
-
-            <p
-              className={`
-                text-sm
-                font-bold
-                ${
-                  stock > 0
-                    ? 'text-green-700'
-                    : 'text-red-600'
-                }
-              `}
-            >
-
-              {stock > 0
-                ? `${stock} pcs`
-                : 'Out of stock'}
-
-            </p>
-
-          </div>
-
-        </div>
-
-
-        {/* Add Cart */}
-
-        <button
-          type="button"
-          disabled={
-            stock <= 0
-          }
-          onClick={
-            handleAddToCart
-          }
-          className="
-            w-full
-            mt-4
-            py-2.5
-            rounded-xl
-            bg-teal-600
-            text-white
-            font-semibold
-            text-sm
-            hover:bg-teal-700
-            disabled:bg-slate-300
-            disabled:cursor-not-allowed
-            transition-colors
-          "
-        >
-
-          {stock > 0
-            ? `Add ${moq} pcs to Cart`
-            : 'Out of Stock'}
-
-        </button>
-
-      </div>
-
-    </div>
-
-  );
-
-};
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  'http://localhost:5000';
 
 
 // ======================================================
@@ -389,6 +28,21 @@ const ProductCard = ({
 // ======================================================
 
 const Products = () => {
+
+  const {
+    addToCart,
+  } = useCart();
+
+
+  const [
+    searchParams,
+    setSearchParams,
+  ] = useSearchParams();
+
+
+  // ====================================================
+  // STATE
+  // ====================================================
 
   const [
     products,
@@ -409,27 +63,10 @@ const Products = () => {
 
 
   const [
-    searchParams,
-    setSearchParams,
-  ] = useSearchParams();
-
-
-  const {
-    addToCart,
-  } = useCart();
-
-
-  // ====================================================
-  // FILTER STATE
-  // ====================================================
-
-  const [
     search,
     setSearch,
   ] = useState(
-    searchParams.get(
-      'search'
-    ) || ''
+    searchParams.get('search') || ''
   );
 
 
@@ -437,10 +74,14 @@ const Products = () => {
     category,
     setCategory,
   ] = useState(
-    searchParams.get(
-      'category'
-    ) || 'All'
+    searchParams.get('category') || ''
   );
+
+
+  const [
+    brand,
+    setBrand,
+  ] = useState('');
 
 
   const [
@@ -456,21 +97,28 @@ const Products = () => {
 
 
   const [
-    onlyInStock,
-    setOnlyInStock,
-  ] = useState(false);
+    moq,
+    setMoq,
+  ] = useState('');
 
 
   const [
-    onlyWholesale,
-    setOnlyWholesale,
-  ] = useState(false);
+    stock,
+    setStock,
+  ] = useState('');
 
 
   const [
     sort,
     setSort,
-  ] = useState('featured');
+  ] = useState('default'
+  );
+
+
+  const [
+    mobileFiltersOpen,
+    setMobileFiltersOpen,
+  ] = useState(false);
 
 
   // ====================================================
@@ -482,94 +130,57 @@ const Products = () => {
     const fetchProducts =
       async () => {
 
-        setLoading(true);
-        setError('');
-
-
         try {
 
-          const params =
-            new URLSearchParams();
+          setLoading(true);
 
-
-          const urlSearch =
-            searchParams.get(
-              'search'
-            );
-
-
-          const urlCategory =
-            searchParams.get(
-              'category'
-            );
-
-
-          if (urlSearch) {
-
-            params.append(
-              'search',
-              urlSearch
-            );
-
-          }
-
-
-          if (
-            urlCategory &&
-            urlCategory !== 'All'
-          ) {
-
-            params.append(
-              'category',
-              urlCategory
-            );
-
-          }
+          setError('');
 
 
           const response =
-            await API.get(
-              `/products?${params.toString()}`
+            await fetch(
+              `${API_URL}/api/products`
             );
+
+
+          if (!response.ok) {
+
+            throw new Error(
+              'Failed to fetch products'
+            );
+
+          }
 
 
           const data =
-            response.data;
+            await response.json();
 
 
-          if (
+          /*
+           * Backend response ko flexible rakha
+           * gaya hai taaki existing API ke saath
+           * kaam kar sake.
+           */
+
+          const productData =
             Array.isArray(data)
-          ) {
+              ? data
+              : Array.isArray(data.data)
+                ? data.data
+                : Array.isArray(
+                    data.products
+                  )
+                  ? data.products
+                  : Array.isArray(
+                      data.data?.products
+                    )
+                    ? data.data.products
+                    : [];
 
-            setProducts(
-              data
-            );
 
-          } else if (
-            Array.isArray(
-              data?.data
-            )
-          ) {
-
-            setProducts(
-              data.data
-            );
-
-          } else if (
-            Array.isArray(
-              data?.products
-            )
-          ) {
-
-            setProducts(
-              data.products
-            );
-
-          } else {
-
-            setProducts([]);
-
-          }
+          setProducts(
+            productData
+          );
 
         } catch (err) {
 
@@ -580,12 +191,9 @@ const Products = () => {
 
 
           setError(
-            err.response?.data
-              ?.message ||
-            'Failed to load products.'
+            err.message ||
+            'Unable to load products'
           );
-
-          setProducts([]);
 
         } finally {
 
@@ -598,13 +206,490 @@ const Products = () => {
 
     fetchProducts();
 
+  }, []);
+
+
+  // ====================================================
+  // URL SEARCH PARAMS
+  // ====================================================
+
+  useEffect(() => {
+
+    const urlSearch =
+      searchParams.get(
+        'search'
+      ) || '';
+
+
+    const urlCategory =
+      searchParams.get(
+        'category'
+      ) || '';
+
+
+    setSearch(
+      urlSearch
+    );
+
+
+    setCategory(
+      urlCategory
+    );
+
   }, [
     searchParams,
   ]);
 
 
   // ====================================================
-  // SEARCH
+  // NORMALIZE PRODUCT DATA
+  // ====================================================
+
+  const normalizedProducts =
+    useMemo(() => {
+
+      return products.map(
+        (product) => {
+
+          const price =
+            Number(
+              product.price ??
+              product.sellingPrice ??
+              product.salePrice ??
+              0
+            );
+
+
+          const minimumOrderQuantity =
+            Number(
+              product.moq ??
+              product.minimumOrderQuantity ??
+              product.minOrderQuantity ??
+              1
+            );
+
+
+          const stockQuantity =
+            Number(
+              product.stock ??
+              product.countInStock ??
+              product.inventory ??
+              product.quantity ??
+              0
+            );
+
+
+          const productCategory =
+            typeof product.category ===
+            'object'
+              ? product.category?.name
+              : product.category;
+
+
+          const productBrand =
+            typeof product.brand ===
+            'object'
+              ? product.brand?.name
+              : product.brand;
+
+
+          return {
+
+            ...product,
+
+            displayPrice:
+              price,
+
+            displayMOQ:
+              minimumOrderQuantity,
+
+            displayStock:
+              stockQuantity,
+
+            displayCategory:
+              productCategory || '',
+
+            displayBrand:
+              productBrand || '',
+
+          };
+
+        }
+      );
+
+    }, [
+      products,
+    ]);
+
+
+  // ====================================================
+  // CATEGORY OPTIONS
+  // ====================================================
+
+  const categories =
+    useMemo(() => {
+
+      const values =
+        normalizedProducts
+          .map(
+            (product) =>
+              product.displayCategory
+          )
+          .filter(Boolean);
+
+
+      return [
+        ...new Set(
+          values
+        ),
+      ].sort();
+
+    }, [
+      normalizedProducts,
+    ]);
+
+
+  // ====================================================
+  // BRAND OPTIONS
+  // ====================================================
+
+  const brands =
+    useMemo(() => {
+
+      const values =
+        normalizedProducts
+          .map(
+            (product) =>
+              product.displayBrand
+          )
+          .filter(Boolean);
+
+
+      return [
+        ...new Set(
+          values
+        ),
+      ].sort();
+
+    }, [
+      normalizedProducts,
+    ]);
+
+
+  // ====================================================
+  // FILTER PRODUCTS
+  // ====================================================
+
+  const filteredProducts =
+    useMemo(() => {
+
+      let result = [
+        ...normalizedProducts,
+      ];
+
+
+      // ==================================================
+      // SEARCH
+      // ==================================================
+
+      if (search.trim()) {
+
+        const searchValue =
+          search
+            .trim()
+            .toLowerCase();
+
+
+        result =
+          result.filter(
+            (product) => {
+
+              const name =
+                String(
+                  product.name || ''
+                ).toLowerCase();
+
+
+              const description =
+                String(
+                  product.description || ''
+                ).toLowerCase();
+
+
+              const productBrand =
+                String(
+                  product.displayBrand ||
+                  ''
+                ).toLowerCase();
+
+
+              return (
+
+                name.includes(
+                  searchValue
+                ) ||
+
+                description.includes(
+                  searchValue
+                ) ||
+
+                productBrand.includes(
+                  searchValue
+                )
+
+              );
+
+            }
+          );
+
+      }
+
+
+      // ==================================================
+      // CATEGORY
+      // ==================================================
+
+      if (category) {
+
+        result =
+          result.filter(
+            (product) =>
+
+              String(
+                product.displayCategory
+              ).toLowerCase() ===
+              String(
+                category
+              ).toLowerCase()
+
+          );
+
+      }
+
+
+      // ==================================================
+      // BRAND
+      // ==================================================
+
+      if (brand) {
+
+        result =
+          result.filter(
+            (product) =>
+
+              String(
+                product.displayBrand
+              ).toLowerCase() ===
+              String(
+                brand
+              ).toLowerCase()
+
+          );
+
+      }
+
+
+      // ==================================================
+      // MIN PRICE
+      // ==================================================
+
+      if (minPrice !== '') {
+
+        result =
+          result.filter(
+            (product) =>
+              product.displayPrice >=
+              Number(
+                minPrice
+              )
+          );
+
+      }
+
+
+      // ==================================================
+      // MAX PRICE
+      // ==================================================
+
+      if (maxPrice !== '') {
+
+        result =
+          result.filter(
+            (product) =>
+              product.displayPrice <=
+              Number(
+                maxPrice
+              )
+          );
+
+      }
+
+
+      // ==================================================
+      // MOQ
+      // ==================================================
+
+      if (moq) {
+
+        const selectedMOQ =
+          Number(
+            moq
+          );
+
+
+        result =
+          result.filter(
+            (product) => {
+
+              if (
+                selectedMOQ ===
+                500
+              ) {
+
+                return (
+                  product.displayMOQ >=
+                  500
+                );
+
+              }
+
+
+              if (
+                selectedMOQ ===
+                100
+              ) {
+
+                return (
+                  product.displayMOQ >=
+                  100 &&
+                  product.displayMOQ <
+                  500
+                );
+
+              }
+
+
+              return (
+                product.displayMOQ <
+                100
+              );
+
+            }
+          );
+
+      }
+
+
+      // ==================================================
+      // STOCK
+      // ==================================================
+
+      if (stock === 'in-stock') {
+
+        result =
+          result.filter(
+            (product) =>
+              product.displayStock >
+              0
+          );
+
+      }
+
+
+      if (stock === 'out-of-stock') {
+
+        result =
+          result.filter(
+            (product) =>
+              product.displayStock <=
+              0
+          );
+
+      }
+
+
+      // ==================================================
+      // SORT
+      // ==================================================
+
+      if (
+        sort ===
+        'price-low'
+      ) {
+
+        result.sort(
+          (a, b) =>
+            a.displayPrice -
+            b.displayPrice
+        );
+
+      }
+
+
+      if (
+        sort ===
+        'price-high'
+      ) {
+
+        result.sort(
+          (a, b) =>
+            b.displayPrice -
+            a.displayPrice
+        );
+
+      }
+
+
+      if (
+        sort ===
+        'name'
+      ) {
+
+        result.sort(
+          (a, b) =>
+            String(
+              a.name || ''
+            ).localeCompare(
+              String(
+                b.name || ''
+              )
+            )
+        );
+
+      }
+
+
+      if (
+        sort ===
+        'moq-low'
+      ) {
+
+        result.sort(
+          (a, b) =>
+            a.displayMOQ -
+            b.displayMOQ
+        );
+
+      }
+
+
+      return result;
+
+    }, [
+      normalizedProducts,
+      search,
+      category,
+      brand,
+      minPrice,
+      maxPrice,
+      moq,
+      stock,
+      sort,
+    ]);
+
+
+  // ====================================================
+  // UPDATE SEARCH URL
   // ====================================================
 
   const handleSearch =
@@ -613,88 +698,21 @@ const Products = () => {
       event.preventDefault();
 
 
-      const params =
-        new URLSearchParams(
-          searchParams
-        );
+      const params = {};
 
 
-      if (
-        search.trim()
-      ) {
+      if (search.trim()) {
 
-        params.set(
-          'search',
-          search.trim()
-        );
-
-      } else {
-
-        params.delete(
-          'search'
-        );
+        params.search =
+          search.trim();
 
       }
 
 
-      if (
-        category &&
-        category !== 'All'
-      ) {
+      if (category) {
 
-        params.set(
-          'category',
-          category
-        );
-
-      } else {
-
-        params.delete(
-          'category'
-        );
-
-      }
-
-
-      setSearchParams(
-        params
-      );
-
-    };
-
-
-  // ====================================================
-  // CATEGORY
-  // ====================================================
-
-  const handleCategory =
-    (value) => {
-
-      setCategory(
-        value
-      );
-
-
-      const params =
-        new URLSearchParams(
-          searchParams
-        );
-
-
-      if (
-        value === 'All'
-      ) {
-
-        params.delete(
-          'category'
-        );
-
-      } else {
-
-        params.set(
-          'category',
-          value
-        );
+        params.category =
+          category;
 
       }
 
@@ -714,13 +732,20 @@ const Products = () => {
     () => {
 
       setSearch('');
-      setCategory('All');
-      setMinPrice('');
-      setMaxPrice('');
-      setOnlyInStock(false);
-      setOnlyWholesale(false);
-      setSort('featured');
 
+      setCategory('');
+
+      setBrand('');
+
+      setMinPrice('');
+
+      setMaxPrice('');
+
+      setMoq('');
+
+      setStock('');
+
+      setSort('default');
 
       setSearchParams({});
 
@@ -728,338 +753,30 @@ const Products = () => {
 
 
   // ====================================================
-  // FILTER + SORT
+  // ADD TO CART
   // ====================================================
 
-  const filteredProducts =
-    useMemo(() => {
+  const handleAddToCart =
+    (product) => {
 
-      let result =
-        [...products];
+      try {
 
+        addToCart(
+          product,
+          1
+        );
 
-      // ================================================
-      // SEARCH
-      // ================================================
+      } catch (err) {
 
-      if (
-        search.trim()
-      ) {
-
-        const searchValue =
-          search
-            .trim()
-            .toLowerCase();
-
-
-        result =
-          result.filter(
-            (product) => {
-
-              const name =
-                String(
-                  product.name ||
-                  ''
-                ).toLowerCase();
-
-
-              const productCategory =
-                String(
-                  product.category ||
-                  ''
-                ).toLowerCase();
-
-
-              const sku =
-                String(
-                  product.sku ||
-                  ''
-                ).toLowerCase();
-
-
-              return (
-                name.includes(
-                  searchValue
-                ) ||
-                productCategory.includes(
-                  searchValue
-                ) ||
-                sku.includes(
-                  searchValue
-                )
-              );
-
-            }
-          );
-
-      }
-
-
-      // ================================================
-      // PRICE
-      // ================================================
-
-      if (
-        minPrice !== ''
-      ) {
-
-        result =
-          result.filter(
-            (product) => {
-
-              const price =
-                Number(
-                  product.wholesalePrice ||
-                  product.bulkPrice ||
-                  product.price ||
-                  0
-                );
-
-
-              return (
-                price >=
-                Number(
-                  minPrice
-                )
-              );
-
-            }
-          );
-
-      }
-
-
-      if (
-        maxPrice !== ''
-      ) {
-
-        result =
-          result.filter(
-            (product) => {
-
-              const price =
-                Number(
-                  product.wholesalePrice ||
-                  product.bulkPrice ||
-                  product.price ||
-                  0
-                );
-
-
-              return (
-                price <=
-                Number(
-                  maxPrice
-                )
-              );
-
-            }
-          );
-
-      }
-
-
-      // ================================================
-      // STOCK
-      // ================================================
-
-      if (
-        onlyInStock
-      ) {
-
-        result =
-          result.filter(
-            (product) => {
-
-              const stock =
-                Number(
-                  product.stock ||
-                  product.countInStock ||
-                  0
-                );
-
-
-              return stock > 0;
-
-            }
-          );
-
-      }
-
-
-      // ================================================
-      // WHOLESALE
-      // ================================================
-
-      if (
-        onlyWholesale
-      ) {
-
-        result =
-          result.filter(
-            (product) => {
-
-              return Boolean(
-                product.wholesalePrice ||
-                product.bulkPrice ||
-                product.moq ||
-                product.minimumOrderQuantity
-              );
-
-            }
-          );
-
-      }
-
-
-      // ================================================
-      // SORT
-      // ================================================
-
-      if (
-        sort === 'priceLow'
-      ) {
-
-        result.sort(
-          (a, b) => {
-
-            const priceA =
-              Number(
-                a.wholesalePrice ||
-                a.bulkPrice ||
-                a.price ||
-                0
-              );
-
-
-            const priceB =
-              Number(
-                b.wholesalePrice ||
-                b.bulkPrice ||
-                b.price ||
-                0
-              );
-
-
-            return (
-              priceA -
-              priceB
-            );
-
-          }
+        console.error(
+          'Add to cart error:',
+          err
         );
 
       }
 
+    };
 
-      if (
-        sort === 'priceHigh'
-      ) {
-
-        result.sort(
-          (a, b) => {
-
-            const priceA =
-              Number(
-                a.wholesalePrice ||
-                a.bulkPrice ||
-                a.price ||
-                0
-              );
-
-
-            const priceB =
-              Number(
-                b.wholesalePrice ||
-                b.bulkPrice ||
-                b.price ||
-                0
-              );
-
-
-            return (
-              priceB -
-              priceA
-            );
-
-          }
-        );
-
-      }
-
-
-      if (
-        sort === 'newest'
-      ) {
-
-        result.sort(
-          (a, b) =>
-            new Date(
-              b.createdAt || 0
-            ) -
-            new Date(
-              a.createdAt || 0
-            )
-        );
-
-      }
-
-
-      if (
-        sort === 'name'
-      ) {
-
-        result.sort(
-          (a, b) =>
-            String(
-              a.name || ''
-            ).localeCompare(
-              String(
-                b.name || ''
-              )
-            )
-        );
-
-      }
-
-
-      if (
-        sort === 'popular'
-      ) {
-
-        result.sort(
-          (a, b) =>
-            Number(
-              b.totalSold ||
-              b.sold ||
-              0
-            ) -
-            Number(
-              a.totalSold ||
-              a.sold ||
-              0
-            )
-        );
-
-      }
-
-
-      return result;
-
-    }, [
-      products,
-      search,
-      minPrice,
-      maxPrice,
-      onlyInStock,
-      onlyWholesale,
-      sort,
-    ]);
-
-
-  // ====================================================
-  // RENDER
-  // ====================================================
 
   return (
 
@@ -1071,7 +788,7 @@ const Products = () => {
     >
 
       {/* ==================================================
-          HEADER
+          PAGE HEADER
       ================================================== */}
 
       <section
@@ -1088,6 +805,7 @@ const Products = () => {
             mx-auto
             px-4
             py-8
+            sm:py-10
           "
         >
 
@@ -1096,21 +814,23 @@ const Products = () => {
               text-sm
               font-semibold
               text-teal-600
+              uppercase
+              tracking-wider
             "
           >
 
-            Wholesale Marketplace
+            Wholesale Store
 
           </p>
 
 
           <h1
             className="
+              mt-1
               text-3xl
               sm:text-4xl
               font-extrabold
               text-slate-900
-              mt-1
             "
           >
 
@@ -1121,15 +841,14 @@ const Products = () => {
 
           <p
             className="
+              mt-2
               text-sm
               text-slate-500
-              mt-2
-              max-w-2xl
             "
           >
 
-            Find quality packaging products
-            at competitive wholesale prices
+            Browse packaging products
+            and find the right option
             for your business.
 
           </p>
@@ -1140,7 +859,174 @@ const Products = () => {
 
 
       {/* ==================================================
-          MAIN
+          SEARCH BAR
+      ================================================== */}
+
+      <section
+        className="
+          max-w-7xl
+          mx-auto
+          px-4
+          pt-6
+        "
+      >
+
+        <form
+          onSubmit={
+            handleSearch
+          }
+          className="
+            relative
+          "
+        >
+
+          <span
+            className="
+              absolute
+              left-4
+              top-1/2
+              -translate-y-1/2
+              text-slate-400
+            "
+          >
+
+            🔍
+
+          </span>
+
+
+          <input
+            type="text"
+            value={
+              search
+            }
+            onChange={(event) =>
+              setSearch(
+                event.target.value
+              )
+            }
+            placeholder="Search products..."
+            className="
+              w-full
+              h-12
+              pl-11
+              pr-4
+              rounded-xl
+              border
+              border-slate-200
+              bg-white
+              outline-none
+              text-sm
+              focus:border-teal-500
+              focus:ring-4
+              focus:ring-teal-50
+            "
+          />
+
+        </form>
+
+      </section>
+
+
+      {/* ==================================================
+          MOBILE FILTER / SORT
+      ================================================== */}
+
+      <section
+        className="
+          lg:hidden
+          max-w-7xl
+          mx-auto
+          px-4
+          pt-4
+        "
+      >
+
+        <div
+          className="
+            grid
+            grid-cols-2
+            gap-3
+          "
+        >
+
+          <button
+            type="button"
+            onClick={() =>
+              setMobileFiltersOpen(
+                true
+              )
+            }
+            className="
+              h-11
+              rounded-xl
+              bg-white
+              border
+              border-slate-200
+              text-sm
+              font-semibold
+              text-slate-700
+              hover:border-teal-500
+            "
+          >
+
+            ⚙️ Filter
+
+          </button>
+
+
+          <select
+            value={
+              sort
+            }
+            onChange={(event) =>
+              setSort(
+                event.target.value
+              )
+            }
+            className="
+              h-11
+              rounded-xl
+              bg-white
+              border
+              border-slate-200
+              px-3
+              text-sm
+              font-semibold
+              text-slate-700
+              outline-none
+            "
+          >
+
+            <option value="default">
+              Sort
+            </option>
+
+            <option value="price-low">
+              Price: Low to High
+            </option>
+
+            <option value="price-high">
+              Price: High to Low
+            </option>
+
+            <option value="name">
+              Name
+            </option>
+
+            <option value="moq-low">
+              MOQ: Low to High
+            </option>
+
+          </select>
+
+        </div>
+
+      </section>
+
+
+      {/* ==================================================
+          MAIN CONTENT
       ================================================== */}
 
       <main
@@ -1148,461 +1034,111 @@ const Products = () => {
           max-w-7xl
           mx-auto
           px-4
-          py-7
+          py-6
         "
       >
-
-        {/* ==================================================
-            SEARCH
-        ================================================== */}
-
-        <form
-          onSubmit={
-            handleSearch
-          }
-          className="
-            bg-white
-            rounded-2xl
-            border
-            border-slate-200
-            p-4
-            mb-6
-          "
-        >
-
-          <div
-            className="
-              flex
-              flex-col
-              sm:flex-row
-              gap-3
-            "
-          >
-
-            <div
-              className="
-                relative
-                flex-1
-              "
-            >
-
-              <span
-                className="
-                  absolute
-                  left-4
-                  top-1/2
-                  -translate-y-1/2
-                "
-              >
-
-                🔍
-
-              </span>
-
-
-              <input
-                type="text"
-                value={search}
-                onChange={(event) =>
-                  setSearch(
-                    event.target.value
-                  )
-                }
-                placeholder="Search products, SKU, categories..."
-                className="
-                  w-full
-                  h-12
-                  pl-11
-                  pr-4
-                  rounded-xl
-                  bg-slate-50
-                  border
-                  border-slate-200
-                  outline-none
-                  focus:bg-white
-                  focus:border-teal-500
-                  focus:ring-4
-                  focus:ring-teal-50
-                "
-              />
-
-            </div>
-
-
-            <button
-              type="submit"
-              className="
-                h-12
-                px-6
-                rounded-xl
-                bg-teal-600
-                text-white
-                font-semibold
-                hover:bg-teal-700
-                transition-colors
-              "
-            >
-
-              Search
-
-            </button>
-
-          </div>
-
-        </form>
-
-
-        {/* ==================================================
-            CATEGORY TABS
-        ================================================== */}
 
         <div
           className="
             flex
-            gap-2
-            overflow-x-auto
-            pb-2
-            mb-7
-          "
-        >
-
-          {categories.map(
-            (item) => (
-
-              <button
-                key={item}
-                type="button"
-                onClick={() =>
-                  handleCategory(
-                    item
-                  )
-                }
-                className={`
-                  whitespace-nowrap
-                  px-4
-                  py-2.5
-                  rounded-full
-                  text-sm
-                  font-semibold
-                  border
-                  transition-colors
-                  ${
-                    category ===
-                    item
-                      ? 'bg-teal-600 text-white border-teal-600'
-                      : 'bg-white text-slate-600 border-slate-200 hover:border-teal-400 hover:text-teal-700'
-                  }
-                `}
-              >
-
-                {item}
-
-              </button>
-
-            )
-          )}
-
-        </div>
-
-
-        {/* ==================================================
-            CONTENT
-        ================================================== */}
-
-        <div
-          className="
-            grid
-            lg:grid-cols-[250px_1fr]
+            items-start
             gap-6
           "
         >
 
           {/* ==================================================
-              FILTER SIDEBAR
+              DESKTOP FILTER SIDEBAR
           ================================================== */}
 
           <aside
             className="
+              hidden
+              lg:block
+              w-64
+              shrink-0
               bg-white
               border
               border-slate-200
               rounded-2xl
               p-5
-              h-fit
-              lg:sticky
-              lg:top-24
+              sticky
+              top-24
             "
           >
 
-            <div
-              className="
-                flex
-                items-center
-                justify-between
-                mb-5
-              "
-            >
-
-              <h2
-                className="
-                  font-bold
-                  text-slate-800
-                "
-              >
-
-                Filters
-
-              </h2>
-
-
-              <button
-                type="button"
-                onClick={
-                  clearFilters
-                }
-                className="
-                  text-xs
-                  font-semibold
-                  text-teal-700
-                  hover:underline
-                "
-              >
-
-                Clear All
-
-              </button>
-
-            </div>
-
-
-            {/* Price */}
-
-            <div
-              className="
-                pb-5
-                border-b
-                border-slate-100
-              "
-            >
-
-              <h3
-                className="
-                  text-sm
-                  font-bold
-                  text-slate-700
-                  mb-3
-                "
-              >
-
-                Price Range
-
-              </h3>
-
-
-              <div
-                className="
-                  grid
-                  grid-cols-2
-                  gap-2
-                "
-              >
-
-                <input
-                  type="number"
-                  min="0"
-                  value={
-                    minPrice
-                  }
-                  onChange={(event) =>
-                    setMinPrice(
-                      event.target.value
-                    )
-                  }
-                  placeholder="Min ₹"
-                  className="
-                    w-full
-                    h-10
-                    px-3
-                    rounded-lg
-                    border
-                    border-slate-200
-                    bg-slate-50
-                    outline-none
-                    focus:border-teal-500
-                  "
-                />
-
-
-                <input
-                  type="number"
-                  min="0"
-                  value={
-                    maxPrice
-                  }
-                  onChange={(event) =>
-                    setMaxPrice(
-                      event.target.value
-                    )
-                  }
-                  placeholder="Max ₹"
-                  className="
-                    w-full
-                    h-10
-                    px-3
-                    rounded-lg
-                    border
-                    border-slate-200
-                    bg-slate-50
-                    outline-none
-                    focus:border-teal-500
-                  "
-                />
-
-              </div>
-
-            </div>
-
-
-            {/* Availability */}
-
-            <div
-              className="
-                py-5
-                border-b
-                border-slate-100
-              "
-            >
-
-              <h3
-                className="
-                  text-sm
-                  font-bold
-                  text-slate-700
-                  mb-3
-                "
-              >
-
-                Availability
-
-              </h3>
-
-
-              <label
-                className="
-                  flex
-                  items-center
-                  gap-3
-                  cursor-pointer
-                  text-sm
-                  text-slate-600
-                "
-              >
-
-                <input
-                  type="checkbox"
-                  checked={
-                    onlyInStock
-                  }
-                  onChange={(event) =>
-                    setOnlyInStock(
-                      event.target.checked
-                    )
-                  }
-                  className="
-                    w-4
-                    h-4
-                    accent-teal-600
-                  "
-                />
-
-                In Stock Only
-
-              </label>
-
-            </div>
-
-
-            {/* Wholesale */}
-
-            <div
-              className="
-                py-5
-              "
-            >
-
-              <h3
-                className="
-                  text-sm
-                  font-bold
-                  text-slate-700
-                  mb-3
-                "
-              >
-
-                Buying Type
-
-              </h3>
-
-
-              <label
-                className="
-                  flex
-                  items-center
-                  gap-3
-                  cursor-pointer
-                  text-sm
-                  text-slate-600
-                "
-              >
-
-                <input
-                  type="checkbox"
-                  checked={
-                    onlyWholesale
-                  }
-                  onChange={(event) =>
-                    setOnlyWholesale(
-                      event.target.checked
-                    )
-                  }
-                  className="
-                    w-4
-                    h-4
-                    accent-teal-600
-                  "
-                />
-
-                Wholesale Products
-
-              </label>
-
-            </div>
+            <FilterContent
+              categories={
+                categories
+              }
+              brands={
+                brands
+              }
+              category={
+                category
+              }
+              setCategory={
+                setCategory
+              }
+              brand={
+                brand
+              }
+              setBrand={
+                setBrand
+              }
+              minPrice={
+                minPrice
+              }
+              setMinPrice={
+                setMinPrice
+              }
+              maxPrice={
+                maxPrice
+              }
+              setMaxPrice={
+                setMaxPrice
+              }
+              moq={
+                moq
+              }
+              setMoq={
+                setMoq
+              }
+              stock={
+                stock
+              }
+              setStock={
+                setStock
+              }
+              clearFilters={
+                clearFilters
+              }
+            />
 
           </aside>
 
 
           {/* ==================================================
-              PRODUCTS
+              PRODUCT AREA
           ================================================== */}
 
-          <section>
+          <section
+            className="
+              flex-1
+              min-w-0
+            "
+          >
 
-            {/* Top Bar */}
+            {/* ==================================================
+                TOP BAR
+            ================================================== */}
 
             <div
               className="
-                bg-white
-                border
-                border-slate-200
-                rounded-2xl
-                p-4
-                mb-5
-                flex
-                flex-col
-                sm:flex-row
-                sm:items-center
+                hidden
+                lg:flex
+                items-center
                 justify-between
-                gap-3
+                mb-5
               "
             >
 
@@ -1615,13 +1151,12 @@ const Products = () => {
                   "
                 >
 
-                  Showing
+                  Showing{' '}
 
                   <span
                     className="
                       font-bold
                       text-slate-800
-                      mx-1
                     "
                   >
 
@@ -1629,7 +1164,7 @@ const Products = () => {
                       filteredProducts.length
                     }
 
-                  </span>
+                  </span>{' '}
 
                   products
 
@@ -1649,35 +1184,27 @@ const Products = () => {
                 }
                 className="
                   h-10
-                  px-3
                   rounded-lg
                   border
                   border-slate-200
                   bg-white
+                  px-3
                   text-sm
-                  font-medium
+                  text-slate-600
                   outline-none
                   focus:border-teal-500
                 "
               >
 
-                <option value="featured">
-                  Featured
+                <option value="default">
+                  Sort by
                 </option>
 
-                <option value="popular">
-                  Most Popular
-                </option>
-
-                <option value="newest">
-                  Newest
-                </option>
-
-                <option value="priceLow">
+                <option value="price-low">
                   Price: Low to High
                 </option>
 
-                <option value="priceHigh">
+                <option value="price-high">
                   Price: High to Low
                 </option>
 
@@ -1685,45 +1212,88 @@ const Products = () => {
                   Name
                 </option>
 
+                <option value="moq-low">
+                  MOQ: Low to High
+                </option>
+
               </select>
 
             </div>
 
 
-            {/* Loading */}
+            {/* ==================================================
+                MOBILE RESULT COUNT
+            ================================================== */}
+
+            <div
+              className="
+                lg:hidden
+                mb-4
+              "
+            >
+
+              <p
+                className="
+                  text-sm
+                  text-slate-500
+                "
+              >
+
+                <span
+                  className="
+                    font-bold
+                    text-slate-800
+                  "
+                >
+
+                  {
+                    filteredProducts.length
+                  }
+
+                </span>{' '}
+
+                products found
+
+              </p>
+
+            </div>
+
+
+            {/* ==================================================
+                LOADING
+            ================================================== */}
 
             {loading && (
 
               <div
                 className="
                   bg-white
-                  rounded-2xl
                   border
                   border-slate-200
-                  p-12
+                  rounded-2xl
+                  p-10
                   text-center
                 "
               >
 
                 <div
                   className="
-                    w-10
-                    h-10
+                    w-8
+                    h-8
                     mx-auto
-                    rounded-full
                     border-4
-                    border-slate-200
+                    border-teal-100
                     border-t-teal-600
+                    rounded-full
                     animate-spin
                   "
                 />
 
-
                 <p
                   className="
+                    mt-4
                     text-sm
                     text-slate-500
-                    mt-4
                   "
                 >
 
@@ -1736,95 +1306,72 @@ const Products = () => {
             )}
 
 
-            {/* Error */}
+            {/* ==================================================
+                ERROR
+            ================================================== */}
 
             {!loading &&
               error && (
 
-              <div
-                className="
-                  bg-red-50
-                  border
-                  border-red-200
-                  rounded-2xl
-                  p-6
-                  text-red-700
-                "
-              >
-
-                <p
-                  className="
-                    font-semibold
-                  "
-                >
-
-                  Unable to load products
-
-                </p>
-
-
-                <p
-                  className="
-                    text-sm
-                    mt-1
-                  "
-                >
-
-                  {error}
-
-                </p>
-
-              </div>
-
-            )}
-
-
-            {/* Product Grid */}
-
-            {!loading &&
-              !error &&
-              filteredProducts.length >
-                0 && (
-
                 <div
                   className="
-                    grid
-                    grid-cols-2
-                    sm:grid-cols-2
-                    xl:grid-cols-3
-                    gap-4
+                    bg-white
+                    border
+                    border-red-200
+                    rounded-2xl
+                    p-8
+                    text-center
                   "
                 >
 
-                  {filteredProducts.map(
-                    (product) => (
+                  <div
+                    className="
+                      text-3xl
+                    "
+                  >
 
-                      <ProductCard
-                        key={
-                          product._id
-                        }
-                        product={
-                          product
-                        }
-                        addToCart={
-                          addToCart
-                        }
-                      />
+                    ⚠️
 
-                    )
-                  )}
+                  </div>
+
+
+                  <h2
+                    className="
+                      mt-3
+                      font-bold
+                      text-slate-800
+                    "
+                  >
+
+                    Unable to load products
+
+                  </h2>
+
+
+                  <p
+                    className="
+                      mt-2
+                      text-sm
+                      text-slate-500
+                    "
+                  >
+
+                    {error}
+
+                  </p>
 
                 </div>
 
               )}
 
 
-            {/* Empty */}
+            {/* ==================================================
+                EMPTY
+            ================================================== */}
 
             {!loading &&
               !error &&
-              filteredProducts.length ===
-                0 && (
+              filteredProducts.length === 0 && (
 
                 <div
                   className="
@@ -1832,41 +1379,41 @@ const Products = () => {
                     border
                     border-slate-200
                     rounded-2xl
-                    p-12
+                    p-10
                     text-center
                   "
                 >
 
                   <div
                     className="
-                      text-5xl
+                      text-4xl
                     "
                   >
 
-                    📦
+                    🔎
 
                   </div>
 
 
                   <h2
                     className="
+                      mt-4
                       text-xl
                       font-bold
                       text-slate-800
-                      mt-4
                     "
                   >
 
-                    No Products Found
+                    No products found
 
                   </h2>
 
 
                   <p
                     className="
+                      mt-2
                       text-sm
                       text-slate-500
-                      mt-2
                     "
                   >
 
@@ -1885,11 +1432,11 @@ const Products = () => {
                       mt-5
                       px-5
                       py-2.5
-                      rounded-xl
+                      rounded-lg
                       bg-teal-600
                       text-white
-                      font-semibold
                       text-sm
+                      font-semibold
                       hover:bg-teal-700
                     "
                   >
@@ -1902,13 +1449,1118 @@ const Products = () => {
 
               )}
 
+
+            {/* ==================================================
+                PRODUCT GRID
+            ================================================== */}
+
+            {!loading &&
+              !error &&
+              filteredProducts.length > 0 && (
+
+                <div
+                  className="
+                    grid
+                    grid-cols-2
+                    sm:grid-cols-2
+                    xl:grid-cols-3
+                    gap-3
+                    sm:gap-5
+                  "
+                >
+
+                  {filteredProducts.map(
+                    (product) => (
+
+                      <ProductCard
+                        key={
+                          product._id ||
+                          product.id
+                        }
+                        product={
+                          product
+                        }
+                        onAddToCart={
+                          handleAddToCart
+                        }
+                      />
+
+                    )
+                  )}
+
+                </div>
+
+              )}
+
           </section>
 
         </div>
 
       </main>
 
+
+      {/* ==================================================
+          MOBILE FILTER DRAWER
+      ================================================== */}
+
+      {mobileFiltersOpen && (
+
+        <>
+
+          {/* BACKDROP */}
+
+          <div
+            className="
+              fixed
+              inset-0
+              bg-black/40
+              z-[60]
+              lg:hidden
+            "
+            onClick={() =>
+              setMobileFiltersOpen(
+                false
+              )
+            }
+          />
+
+
+          {/* DRAWER */}
+
+          <div
+            className="
+              fixed
+              left-0
+              right-0
+              bottom-0
+              z-[70]
+              bg-white
+              rounded-t-3xl
+              max-h-[85vh]
+              overflow-y-auto
+              lg:hidden
+            "
+          >
+
+            <div
+              className="
+                sticky
+                top-0
+                bg-white
+                border-b
+                border-slate-200
+                px-5
+                py-4
+                flex
+                items-center
+                justify-between
+              "
+            >
+
+              <h2
+                className="
+                  text-lg
+                  font-bold
+                  text-slate-800
+                "
+              >
+
+                Filters
+
+              </h2>
+
+
+              <button
+                type="button"
+                onClick={() =>
+                  setMobileFiltersOpen(
+                    false
+                  )
+                }
+                className="
+                  w-9
+                  h-9
+                  rounded-lg
+                  hover:bg-slate-100
+                  text-xl
+                "
+              >
+
+                ×
+
+              </button>
+
+            </div>
+
+
+            <div
+              className="
+                p-5
+              "
+            >
+
+              <FilterContent
+                categories={
+                  categories
+                }
+                brands={
+                  brands
+                }
+                category={
+                  category
+                }
+                setCategory={
+                  setCategory
+                }
+                brand={
+                  brand
+                }
+                setBrand={
+                  setBrand
+                }
+                minPrice={
+                  minPrice
+                }
+                setMinPrice={
+                  setMinPrice
+                }
+                maxPrice={
+                  maxPrice
+                }
+                setMaxPrice={
+                  setMaxPrice
+                }
+                moq={
+                  moq
+                }
+                setMoq={
+                  setMoq
+                }
+                stock={
+                  stock
+                }
+                setStock={
+                  setStock
+                }
+                clearFilters={
+                  clearFilters
+                }
+              />
+
+
+              <button
+                type="button"
+                onClick={() =>
+                  setMobileFiltersOpen(
+                    false
+                  )
+                }
+                className="
+                  w-full
+                  mt-5
+                  h-11
+                  rounded-xl
+                  bg-teal-600
+                  text-white
+                  text-sm
+                  font-bold
+                  hover:bg-teal-700
+                "
+              >
+
+                Apply Filters
+
+              </button>
+
+            </div>
+
+          </div>
+
+        </>
+
+      )}
+
     </div>
+
+  );
+
+};
+
+
+// ======================================================
+// FILTER CONTENT
+// ======================================================
+
+const FilterContent = ({
+  categories,
+  brands,
+  category,
+  setCategory,
+  brand,
+  setBrand,
+  minPrice,
+  setMinPrice,
+  maxPrice,
+  setMaxPrice,
+  moq,
+  setMoq,
+  stock,
+  setStock,
+  clearFilters,
+}) => {
+
+  return (
+
+    <div>
+
+      {/* ==================================================
+          FILTER HEADER
+      ================================================== */}
+
+      <div
+        className="
+          flex
+          items-center
+          justify-between
+          mb-5
+        "
+      >
+
+        <h2
+          className="
+            text-lg
+            font-bold
+            text-slate-800
+          "
+        >
+
+          Filters
+
+        </h2>
+
+
+        <button
+          type="button"
+          onClick={
+            clearFilters
+          }
+          className="
+            text-xs
+            font-semibold
+            text-teal-700
+            hover:text-teal-800
+          "
+        >
+
+          Clear All
+
+        </button>
+
+      </div>
+
+
+      {/* ==================================================
+          CATEGORY
+      ================================================== */}
+
+      <FilterSection
+        title="Category"
+      >
+
+        <select
+          value={
+            category
+          }
+          onChange={(event) =>
+            setCategory(
+              event.target.value
+            )
+          }
+          className="
+            w-full
+            h-10
+            px-3
+            rounded-lg
+            border
+            border-slate-200
+            bg-white
+            text-sm
+            outline-none
+            focus:border-teal-500
+          "
+        >
+
+          <option value="">
+            All Categories
+          </option>
+
+          {categories.map(
+            (item) => (
+
+              <option
+                key={
+                  item
+                }
+                value={
+                  item
+                }
+              >
+
+                {item}
+
+              </option>
+
+            )
+          )}
+
+        </select>
+
+      </FilterSection>
+
+
+      {/* ==================================================
+          PRICE
+      ================================================== */}
+
+      <FilterSection
+        title="Price"
+      >
+
+        <div
+          className="
+            grid
+            grid-cols-2
+            gap-2
+          "
+        >
+
+          <input
+            type="number"
+            min="0"
+            value={
+              minPrice
+            }
+            onChange={(event) =>
+              setMinPrice(
+                event.target.value
+              )
+            }
+            placeholder="Min ₹"
+            className="
+              w-full
+              h-10
+              px-3
+              rounded-lg
+              border
+              border-slate-200
+              text-sm
+              outline-none
+              focus:border-teal-500
+            "
+          />
+
+
+          <input
+            type="number"
+            min="0"
+            value={
+              maxPrice
+            }
+            onChange={(event) =>
+              setMaxPrice(
+                event.target.value
+              )
+            }
+            placeholder="Max ₹"
+            className="
+              w-full
+              h-10
+              px-3
+              rounded-lg
+              border
+              border-slate-200
+              text-sm
+              outline-none
+              focus:border-teal-500
+            "
+          />
+
+        </div>
+
+      </FilterSection>
+
+
+      {/* ==================================================
+          MOQ
+      ================================================== */}
+
+      <FilterSection
+        title="MOQ"
+      >
+
+        <div
+          className="
+            space-y-2
+          "
+        >
+
+          <label
+            className="
+              flex
+              items-center
+              gap-2
+              text-sm
+              text-slate-600
+              cursor-pointer
+            "
+          >
+
+            <input
+              type="radio"
+              name="moq"
+              value=""
+              checked={
+                moq === ''
+              }
+              onChange={() =>
+                setMoq('')
+              }
+              className="
+                accent-teal-600
+              "
+            />
+
+            Any MOQ
+
+          </label>
+
+
+          <label
+            className="
+              flex
+              items-center
+              gap-2
+              text-sm
+              text-slate-600
+              cursor-pointer
+            "
+          >
+
+            <input
+              type="radio"
+              name="moq"
+              value="100"
+              checked={
+                moq === '100'
+              }
+              onChange={(event) =>
+                setMoq(
+                  event.target.value
+                )
+              }
+              className="
+                accent-teal-600
+              "
+            />
+
+            Below 500
+
+          </label>
+
+
+          <label
+            className="
+              flex
+              items-center
+              gap-2
+              text-sm
+              text-slate-600
+              cursor-pointer
+            "
+          >
+
+            <input
+              type="radio"
+              name="moq"
+              value="500"
+              checked={
+                moq === '500'
+              }
+              onChange={(event) =>
+                setMoq(
+                  event.target.value
+                )
+              }
+              className="
+                accent-teal-600
+              "
+            />
+
+            500+
+
+          </label>
+
+        </div>
+
+      </FilterSection>
+
+
+      {/* ==================================================
+          BRAND
+      ================================================== */}
+
+      <FilterSection
+        title="Brand"
+      >
+
+        {brands.length === 0 ? (
+
+          <p
+            className="
+              text-xs
+              text-slate-400
+            "
+          >
+
+            No brands available
+
+          </p>
+
+        ) : (
+
+          <div
+            className="
+              space-y-2
+              max-h-32
+              overflow-y-auto
+            "
+          >
+
+            {brands.map(
+              (item) => (
+
+                <label
+                  key={
+                    item
+                  }
+                  className="
+                    flex
+                    items-center
+                    gap-2
+                    text-sm
+                    text-slate-600
+                    cursor-pointer
+                  "
+                >
+
+                  <input
+                    type="radio"
+                    name="brand"
+                    value={
+                      item
+                    }
+                    checked={
+                      brand ===
+                      item
+                    }
+                    onChange={(event) =>
+                      setBrand(
+                        event.target.value
+                      )
+                    }
+                    className="
+                      accent-teal-600
+                    "
+                  />
+
+                  {item}
+
+                </label>
+
+              )
+            )}
+
+          </div>
+
+        )}
+
+      </FilterSection>
+
+
+      {/* ==================================================
+          STOCK
+      ================================================== */}
+
+      <FilterSection
+        title="Stock"
+      >
+
+        <div
+          className="
+            space-y-2
+          "
+        >
+
+          <label
+            className="
+              flex
+              items-center
+              gap-2
+              text-sm
+              text-slate-600
+              cursor-pointer
+            "
+          >
+
+            <input
+              type="radio"
+              name="stock"
+              value=""
+              checked={
+                stock === ''
+              }
+              onChange={() =>
+                setStock('')
+              }
+              className="
+                accent-teal-600
+              "
+            />
+
+            All
+
+          </label>
+
+
+          <label
+            className="
+              flex
+              items-center
+              gap-2
+              text-sm
+              text-slate-600
+              cursor-pointer
+            "
+          >
+
+            <input
+              type="radio"
+              name="stock"
+              value="in-stock"
+              checked={
+                stock ===
+                'in-stock'
+              }
+              onChange={(event) =>
+                setStock(
+                  event.target.value
+                )
+              }
+              className="
+                accent-teal-600
+              "
+            />
+
+            In Stock
+
+          </label>
+
+
+          <label
+            className="
+              flex
+              items-center
+              gap-2
+              text-sm
+              text-slate-600
+              cursor-pointer
+            "
+          >
+
+            <input
+              type="radio"
+              name="stock"
+              value="out-of-stock"
+              checked={
+                stock ===
+                'out-of-stock'
+              }
+              onChange={(event) =>
+                setStock(
+                  event.target.value
+                )
+              }
+              className="
+                accent-teal-600
+              "
+            />
+
+            Out of Stock
+
+          </label>
+
+        </div>
+
+      </FilterSection>
+
+    </div>
+
+  );
+
+};
+
+
+// ======================================================
+// FILTER SECTION
+// ======================================================
+
+const FilterSection = ({
+  title,
+  children,
+}) => {
+
+  return (
+
+    <div
+      className="
+        border-t
+        border-slate-100
+        pt-5
+        mt-5
+      "
+    >
+
+      <h3
+        className="
+          text-sm
+          font-bold
+          text-slate-700
+          mb-3
+        "
+      >
+
+        {title}
+
+      </h3>
+
+
+      {children}
+
+    </div>
+
+  );
+
+};
+
+
+// ======================================================
+// PRODUCT CARD
+// ======================================================
+
+const ProductCard = ({
+  product,
+  onAddToCart,
+}) => {
+
+  const productId =
+    product._id ||
+    product.id;
+
+
+  const image =
+    product.image ||
+    product.images?.[0] ||
+    product.thumbnail ||
+    '';
+
+
+  const isOutOfStock =
+    product.displayStock <=
+    0;
+
+
+  return (
+
+    <article
+      className="
+        bg-white
+        border
+        border-slate-200
+        rounded-2xl
+        overflow-hidden
+        group
+        hover:border-teal-300
+        hover:shadow-lg
+        transition-all
+        duration-300
+      "
+    >
+
+      {/* ==================================================
+          IMAGE
+      ================================================== */}
+
+      <Link
+        to={`/product/${productId}`}
+        className="
+          block
+          aspect-square
+          bg-slate-100
+          overflow-hidden
+        "
+      >
+
+        {image ? (
+
+          <img
+            src={image}
+            alt={
+              product.name ||
+              'Product'
+            }
+            className="
+              w-full
+              h-full
+              object-cover
+              group-hover:scale-105
+              transition-transform
+              duration-500
+            "
+          />
+
+        ) : (
+
+          <div
+            className="
+              w-full
+              h-full
+              flex
+              items-center
+              justify-center
+              text-4xl
+              text-slate-300
+            "
+          >
+
+            📦
+
+          </div>
+
+        )}
+
+      </Link>
+
+
+      {/* ==================================================
+          CONTENT
+      ================================================== */}
+
+      <div
+        className="
+          p-3
+          sm:p-4
+        "
+      >
+
+        {/* Brand */}
+
+        {product.displayBrand && (
+
+          <p
+            className="
+              text-[10px]
+              sm:text-xs
+              font-semibold
+              uppercase
+              tracking-wide
+              text-teal-600
+            "
+          >
+
+            {product.displayBrand}
+
+          </p>
+
+        )}
+
+
+        {/* Name */}
+
+        <Link
+          to={`/product/${productId}`}
+          className="
+            block
+            mt-1
+            font-bold
+            text-sm
+            sm:text-base
+            text-slate-800
+            line-clamp-2
+            hover:text-teal-700
+          "
+        >
+
+          {product.name ||
+            'Unnamed Product'}
+
+        </Link>
+
+
+        {/* Price */}
+
+        <div
+          className="
+            mt-3
+            flex
+            items-baseline
+            gap-1
+          "
+        >
+
+          <span
+            className="
+              text-lg
+              sm:text-xl
+              font-extrabold
+              text-slate-900
+            "
+          >
+
+            ₹
+            {
+              product.displayPrice.toLocaleString(
+                'en-IN'
+              )
+            }
+
+          </span>
+
+
+          {product.mrp &&
+            Number(
+              product.mrp
+            ) >
+            product.displayPrice && (
+
+              <span
+                className="
+                  text-xs
+                  text-slate-400
+                  line-through
+                "
+              >
+
+                ₹
+                {Number(
+                  product.mrp
+                ).toLocaleString(
+                  'en-IN'
+                )}
+
+              </span>
+
+            )}
+
+        </div>
+
+
+        {/* MOQ */}
+
+        <div
+          className="
+            mt-2
+            flex
+            items-center
+            justify-between
+            gap-2
+          "
+        >
+
+          <span
+            className="
+              text-xs
+              sm:text-sm
+              text-slate-500
+            "
+          >
+
+            MOQ:{' '}
+
+            <strong
+              className="
+                text-slate-700
+              "
+            >
+
+              {product.displayMOQ}
+
+            </strong>
+
+          </span>
+
+
+          {/* STOCK */}
+
+          <span
+            className={`
+              text-[10px]
+              sm:text-xs
+              font-semibold
+              ${
+                isOutOfStock
+                  ? 'text-red-500'
+                  : 'text-emerald-600'
+              }
+            `}
+          >
+
+            {isOutOfStock
+              ? 'Out of Stock'
+              : 'In Stock'}
+
+          </span>
+
+        </div>
+
+
+        {/* Add Cart */}
+
+        <button
+          type="button"
+          disabled={
+            isOutOfStock
+          }
+          onClick={() =>
+            onAddToCart(
+              product
+            )
+          }
+          className={`
+            w-full
+            mt-4
+            h-10
+            rounded-lg
+            text-xs
+            sm:text-sm
+            font-bold
+            transition-colors
+            ${
+              isOutOfStock
+                ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                : 'bg-teal-600 text-white hover:bg-teal-700'
+            }
+          `}
+        >
+
+          {isOutOfStock
+            ? 'Out of Stock'
+            : 'Add to Cart'}
+
+        </button>
+
+      </div>
+
+    </article>
 
   );
 

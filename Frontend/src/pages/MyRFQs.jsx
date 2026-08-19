@@ -3,314 +3,1118 @@ import {
   useState,
 } from 'react';
 
-import API from '../api/axios';
+import {
+  useLocation,
+  useNavigate,
+} from 'react-router-dom';
 
-const MyRFQs = () => {
-  const [rfqs, setRFQs] =
-    useState([]);
 
-  const [loading, setLoading] =
-    useState(true);
+// ======================================================
+// API
+// ======================================================
 
-  const [error, setError] =
-    useState('');
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  'http://localhost:5000';
 
-  const fetchRFQs =
-    async () => {
-      try {
-        const { data } =
-          await API.get(
-            '/rfqs/my'
-          );
 
-        setRFQs(
-          data.data || []
-        );
-      } catch (err) {
-        setError(
-          err.response?.data
-            ?.message ||
-            'Failed to load RFQs'
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
+// ======================================================
+// RFQ PAGE
+// ======================================================
+
+const RFQ = () => {
+
+  const navigate =
+    useNavigate();
+
+  const location =
+    useLocation();
+
+
+  // ====================================================
+  // STATE
+  // ====================================================
+
+  const [
+    products,
+    setProducts,
+  ] = useState([]);
+
+
+  const [
+    loadingProducts,
+    setLoadingProducts,
+  ] = useState(true);
+
+
+  const [
+    submitting,
+    setSubmitting,
+  ] = useState(false);
+
+
+  const [
+    error,
+    setError,
+  ] = useState('');
+
+
+  const [
+    success,
+    setSuccess,
+  ] = useState('');
+
+
+  const [
+    product,
+    setProduct,
+  ] = useState(
+    location.state?.productId ||
+    ''
+  );
+
+
+  const [
+    quantity,
+    setQuantity,
+  ] = useState(
+    location.state?.quantity ||
+    ''
+  );
+
+
+  const [
+    targetPrice,
+    setTargetPrice,
+  ] = useState(
+    location.state?.unitPrice ||
+    ''
+  );
+
+
+  const [
+    expectedDelivery,
+    setExpectedDelivery,
+  ] = useState('');
+
+
+  const [
+    message,
+    setMessage,
+  ] = useState('');
+
+
+  // ====================================================
+  // FETCH PRODUCTS
+  // ====================================================
 
   useEffect(() => {
-    fetchRFQs();
+
+    const fetchProducts =
+      async () => {
+
+        try {
+
+          setLoadingProducts(true);
+
+
+          const response =
+            await fetch(
+              `${API_URL}/api/products`
+            );
+
+
+          if (!response.ok) {
+
+            throw new Error(
+              'Unable to load products'
+            );
+
+          }
+
+
+          const data =
+            await response.json();
+
+
+          const productData =
+            Array.isArray(data)
+              ? data
+              : Array.isArray(data.data)
+                ? data.data
+                : Array.isArray(
+                    data.products
+                  )
+                  ? data.products
+                  : Array.isArray(
+                      data.data?.products
+                    )
+                    ? data.data.products
+                    : [];
+
+
+          setProducts(
+            productData
+          );
+
+        } catch (err) {
+
+          console.error(
+            'RFQ products error:',
+            err
+          );
+
+
+          setError(
+            err.message ||
+            'Unable to load products'
+          );
+
+        } finally {
+
+          setLoadingProducts(false);
+
+        }
+
+      };
+
+
+    fetchProducts();
+
   }, []);
 
-  // ==============================
-  // ACCEPT
-  // ==============================
 
-  const handleAccept =
-    async (id) => {
-      try {
-        await API.put(
-          `/rfqs/${id}/accept`
+  // ====================================================
+  // PRODUCT CHANGE
+  // ====================================================
+
+  const handleProductChange =
+    (event) => {
+
+      const productId =
+        event.target.value;
+
+
+      setProduct(
+        productId
+      );
+
+
+      /*
+       * Product select karne par
+       * uski current price ko target
+       * price ke liye prefill kar dete hain.
+       */
+
+      const selectedProduct =
+        products.find(
+          (item) =>
+            String(
+              item._id ||
+              item.id
+            ) ===
+            String(
+              productId
+            )
         );
 
-        fetchRFQs();
-      } catch (err) {
-        setError(
-          err.response?.data
-            ?.message ||
-            'Failed to accept quotation'
+
+      if (
+        selectedProduct
+      ) {
+
+        const price =
+          selectedProduct.price ??
+          selectedProduct.sellingPrice ??
+          selectedProduct.salePrice ??
+          '';
+
+
+        setTargetPrice(
+          price
         );
+
       }
+
     };
 
-  // ==============================
-  // REJECT
-  // ==============================
 
-  const handleReject =
-    async (id) => {
-      try {
-        await API.put(
-          `/rfqs/${id}/reject`
-        );
+  // ====================================================
+  // SUBMIT RFQ
+  // ====================================================
 
-        fetchRFQs();
-      } catch (err) {
+  const handleSubmit =
+    async (event) => {
+
+      event.preventDefault();
+
+
+      setError('');
+
+      setSuccess('');
+
+
+      // ==================================================
+      // VALIDATION
+      // ==================================================
+
+      if (!product) {
+
         setError(
-          err.response?.data
-            ?.message ||
-            'Failed to reject quotation'
+          'Please select a product.'
         );
+
+        return;
+
       }
+
+
+      if (
+        !quantity ||
+        Number(quantity) <= 0
+      ) {
+
+        setError(
+          'Please enter a valid quantity.'
+        );
+
+        return;
+
+      }
+
+
+      if (
+        !targetPrice ||
+        Number(targetPrice) < 0
+      ) {
+
+        setError(
+          'Please enter a valid target price.'
+        );
+
+        return;
+
+      }
+
+
+      // ==================================================
+      // AUTH
+      // ==================================================
+
+      const userInfo =
+        localStorage.getItem(
+          'userInfo'
+        );
+
+
+      if (!userInfo) {
+
+        navigate(
+          '/login',
+          {
+            state: {
+              from: '/rfq',
+            },
+          }
+        );
+
+        return;
+
+      }
+
+
+      let token = '';
+
+
+      try {
+
+        const parsedUser =
+          JSON.parse(
+            userInfo
+          );
+
+
+        token =
+          parsedUser.token ||
+          parsedUser.accessToken ||
+          '';
+
+      } catch {
+
+        setError(
+          'Please login again.'
+        );
+
+        return;
+
+      }
+
+
+      if (!token) {
+
+        setError(
+          'Authentication token not found. Please login again.'
+        );
+
+        return;
+
+      }
+
+
+      // ==================================================
+      // SUBMIT
+      // ==================================================
+
+      try {
+
+        setSubmitting(true);
+
+
+        const response =
+          await fetch(
+            `${API_URL}/api/rfqs`,
+            {
+              method: 'POST',
+
+              headers: {
+                'Content-Type':
+                  'application/json',
+
+                Authorization:
+                  `Bearer ${token}`,
+              },
+
+              body: JSON.stringify({
+
+                product,
+
+                quantity:
+                  Number(
+                    quantity
+                  ),
+
+                targetPrice:
+                  Number(
+                    targetPrice
+                  ),
+
+                expectedDelivery:
+                  expectedDelivery ||
+                  null,
+
+                message:
+                  message.trim(),
+
+              }),
+
+            }
+          );
+
+
+        const data =
+          await response.json();
+
+
+        if (!response.ok) {
+
+          throw new Error(
+            data?.message ||
+            data?.error ||
+            'Failed to submit RFQ'
+          );
+
+        }
+
+
+        setSuccess(
+          'Your quotation request has been submitted successfully.'
+        );
+
+
+        // ==================================================
+        // RESET FORM
+        // ==================================================
+
+        setQuantity('');
+
+        setTargetPrice('');
+
+        setExpectedDelivery('');
+
+        setMessage('');
+
+
+      } catch (err) {
+
+        console.error(
+          'RFQ submit error:',
+          err
+        );
+
+
+        setError(
+          err.message ||
+          'Unable to submit RFQ.'
+        );
+
+      } finally {
+
+        setSubmitting(false);
+
+      }
+
     };
 
-  if (loading) {
-    return (
-      <div className="max-w-5xl mx-auto px-4 py-10">
-        Loading RFQs...
-      </div>
-    );
-  }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-10">
-      <h1 className="text-2xl font-bold text-slate-800">
-        My RFQs
-      </h1>
 
-      <p className="text-slate-500 mt-1">
-        Track your quotation requests
-        and admin offers.
-      </p>
+    <div
+      className="
+        min-h-screen
+        bg-slate-50
+      "
+    >
 
-      {error && (
-        <div className="mt-5 bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 text-sm">
-          {error}
+      {/* ==================================================
+          HEADER
+      ================================================== */}
+
+      <section
+        className="
+          bg-white
+          border-b
+          border-slate-200
+        "
+      >
+
+        <div
+          className="
+            max-w-4xl
+            mx-auto
+            px-4
+            py-8
+            sm:py-10
+          "
+        >
+
+          <p
+            className="
+              text-sm
+              font-semibold
+              uppercase
+              tracking-wider
+              text-teal-600
+            "
+          >
+
+            Wholesale Enquiry
+
+          </p>
+
+
+          <h1
+            className="
+              mt-1
+              text-3xl
+              sm:text-4xl
+              font-extrabold
+              text-slate-900
+            "
+          >
+
+            Request For Quotation
+
+          </h1>
+
+
+          <p
+            className="
+              mt-2
+              text-sm
+              text-slate-500
+            "
+          >
+
+            Tell us what you need and our
+            team will provide a quotation.
+
+          </p>
+
         </div>
-      )}
 
-      {rfqs.length === 0 ? (
-        <div className="mt-8 bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-500">
-          You have not submitted any
-          RFQ yet.
-        </div>
-      ) : (
-        <div className="mt-8 space-y-5">
-          {rfqs.map(
-            (rfq) => {
-              const item =
-                rfq.items?.[0];
+      </section>
 
-              const statusClasses = {
-                pending:
-                  'bg-amber-50 text-amber-700',
-                quoted:
-                  'bg-blue-50 text-blue-700',
-                accepted:
-                  'bg-emerald-50 text-emerald-700',
-                rejected:
-                  'bg-red-50 text-red-700',
-                expired:
-                  'bg-slate-100 text-slate-600',
-                cancelled:
-                  'bg-slate-100 text-slate-600',
-              };
 
-              return (
-                <div
-                  key={
-                    rfq._id
-                  }
-                  className="bg-white border border-slate-200 rounded-xl p-6"
-                >
-                  <div className="flex justify-between gap-4">
-                    <div>
-                      <h2 className="font-semibold text-lg text-slate-800">
-                        {
-                          item?.productName
-                        }
-                      </h2>
+      {/* ==================================================
+          FORM
+      ================================================== */}
 
-                      <p className="text-sm text-slate-500 mt-1">
-                        Quantity:{' '}
-                        {
-                          item?.quantity
-                        }{' '}
-                        pieces
-                      </p>
+      <main
+        className="
+          max-w-4xl
+          mx-auto
+          px-4
+          py-8
+        "
+      >
 
-                      {item?.expectedPrice !==
-                        null &&
-                        item?.expectedPrice !==
-                          undefined && (
-                          <p className="text-sm text-slate-500">
-                            Expected Price: ₹
-                            {Number(
-                              item.expectedPrice
-                            ).toFixed(
-                              2
-                            )}
-                            {' / piece'}
-                          </p>
-                        )}
-                    </div>
+        <div
+          className="
+            bg-white
+            border
+            border-slate-200
+            rounded-2xl
+            shadow-sm
+            p-5
+            sm:p-8
+          "
+        >
 
-                    <span
-                      className={`h-fit px-3 py-1 rounded-full text-xs font-semibold capitalize ${
-                        statusClasses[
-                          rfq.status
-                        ] ||
-                        'bg-slate-100 text-slate-600'
-                      }`}
-                    >
-                      {
-                        rfq.status
-                      }
-                    </span>
-                  </div>
+          {/* ==================================================
+              SUCCESS
+          ================================================== */}
 
-                  {/* CUSTOMER MESSAGE */}
+          {success && (
 
-                  {rfq.message && (
-                    <div className="mt-4 bg-slate-50 rounded-lg p-4">
-                      <p className="text-xs text-slate-500">
-                        Your Requirement
-                      </p>
+            <div
+              className="
+                mb-6
+                p-4
+                rounded-xl
+                bg-emerald-50
+                border
+                border-emerald-200
+                text-sm
+                text-emerald-800
+              "
+            >
 
-                      <p className="text-sm text-slate-700 mt-1">
-                        {
-                          rfq.message
-                        }
-                      </p>
-                    </div>
-                  )}
+              <div
+                className="
+                  flex
+                  gap-3
+                  items-start
+                "
+              >
 
-                  {/* ADMIN QUOTE */}
+                <span>
+                  ✅
+                </span>
 
-                  {rfq.status ===
-                    'quoted' ||
-                  rfq.status ===
-                    'accepted' ||
-                  rfq.status ===
-                    'rejected' ? (
-                    <div className="mt-4 bg-teal-50 border border-teal-200 rounded-lg p-4">
-                      <p className="text-sm font-semibold text-teal-900">
-                        Admin Quotation
-                      </p>
 
-                      <p className="text-2xl font-bold text-teal-900 mt-2">
-                        ₹
-                        {Number(
-                          item?.quotedPrice ||
-                            0
-                        ).toFixed(
-                          2
-                        )}
-                        <span className="text-sm font-normal">
-                          {' / piece'}
-                        </span>
-                      </p>
+                <div>
 
-                      <p className="text-sm text-teal-800 mt-1">
-                        Total: ₹
-                        {Number(
-                          rfq.quotedTotal ||
-                            0
-                        ).toFixed(
-                          2
-                        )}
-                      </p>
+                  <p
+                    className="
+                      font-bold
+                    "
+                  >
 
-                      {rfq.adminMessage && (
-                        <p className="text-sm text-teal-800 mt-3">
-                          {
-                            rfq.adminMessage
-                          }
-                        </p>
-                      )}
+                    RFQ Submitted
 
-                      {rfq.quotationValidUntil && (
-                        <p className="text-xs text-teal-700 mt-3">
-                          Valid until:{' '}
-                          {new Date(
-                            rfq.quotationValidUntil
-                          ).toLocaleDateString()}
-                        </p>
-                      )}
-                    </div>
-                  ) : null}
+                  </p>
 
-                  {/* ACTIONS */}
 
-                  {rfq.status ===
-                    'quoted' && (
-                    <div className="flex gap-3 mt-5">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          handleAccept(
-                            rfq._id
-                          )
-                        }
-                        className="bg-emerald-600 text-white px-5 py-2 rounded-lg hover:bg-emerald-700 text-sm font-medium"
-                      >
-                        Accept Quote
-                      </button>
+                  <p
+                    className="
+                      mt-1
+                    "
+                  >
 
-                      <button
-                        type="button"
-                        onClick={() =>
-                          handleReject(
-                            rfq._id
-                          )
-                        }
-                        className="bg-white border border-red-300 text-red-600 px-5 py-2 rounded-lg hover:bg-red-50 text-sm font-medium"
-                      >
-                        Reject
-                      </button>
-                    </div>
-                  )}
+                    {success}
 
-                  {rfq.status ===
-                    'accepted' && (
-                    <div className="mt-5 bg-emerald-50 text-emerald-700 rounded-lg px-4 py-3 text-sm font-medium">
-                      Quotation accepted.
-                    </div>
-                  )}
+                  </p>
 
-                  {rfq.status ===
-                    'rejected' && (
-                    <div className="mt-5 bg-red-50 text-red-700 rounded-lg px-4 py-3 text-sm font-medium">
-                      Quotation rejected.
-                    </div>
-                  )}
                 </div>
-              );
-            }
+
+              </div>
+
+            </div>
+
           )}
+
+
+          {/* ==================================================
+              ERROR
+          ================================================== */}
+
+          {error && (
+
+            <div
+              className="
+                mb-6
+                p-4
+                rounded-xl
+                bg-red-50
+                border
+                border-red-200
+                text-sm
+                text-red-700
+              "
+            >
+
+              ⚠️ {error}
+
+            </div>
+
+          )}
+
+
+          <form
+            onSubmit={
+              handleSubmit
+            }
+            className="
+              space-y-6
+            "
+          >
+
+            {/* ==================================================
+                PRODUCT
+            ================================================== */}
+
+            <div>
+
+              <label
+                htmlFor="rfq-product"
+                className="
+                  block
+                  mb-2
+                  text-sm
+                  font-bold
+                  text-slate-700
+                "
+              >
+
+                Product
+
+                <span
+                  className="
+                    text-red-500
+                  "
+                >
+
+                  *
+
+                </span>
+
+              </label>
+
+
+              <select
+                id="rfq-product"
+                value={
+                  product
+                }
+                onChange={
+                  handleProductChange
+                }
+                disabled={
+                  loadingProducts
+                }
+                className="
+                  w-full
+                  h-12
+                  px-4
+                  rounded-xl
+                  border
+                  border-slate-200
+                  bg-white
+                  text-sm
+                  text-slate-700
+                  outline-none
+                  focus:border-teal-500
+                  focus:ring-4
+                  focus:ring-teal-50
+                "
+              >
+
+                <option value="">
+
+                  {loadingProducts
+                    ? 'Loading products...'
+                    : 'Select Product'}
+
+                </option>
+
+
+                {products.map(
+                  (item) => (
+
+                    <option
+                      key={
+                        item._id ||
+                        item.id
+                      }
+                      value={
+                        item._id ||
+                        item.id
+                      }
+                    >
+
+                      {item.name}
+
+                    </option>
+
+                  )
+                )}
+
+              </select>
+
+            </div>
+
+
+            {/* ==================================================
+                QUANTITY
+            ================================================== */}
+
+            <div>
+
+              <label
+                htmlFor="rfq-quantity"
+                className="
+                  block
+                  mb-2
+                  text-sm
+                  font-bold
+                  text-slate-700
+                "
+              >
+
+                Quantity
+
+                <span
+                  className="
+                    text-red-500
+                  "
+                >
+
+                  *
+
+                </span>
+
+              </label>
+
+
+              <input
+                id="rfq-quantity"
+                type="number"
+                min="1"
+                value={
+                  quantity
+                }
+                onChange={(event) =>
+                  setQuantity(
+                    event.target.value
+                  )
+                }
+                placeholder="e.g. 2000"
+                className="
+                  w-full
+                  h-12
+                  px-4
+                  rounded-xl
+                  border
+                  border-slate-200
+                  text-sm
+                  outline-none
+                  focus:border-teal-500
+                  focus:ring-4
+                  focus:ring-teal-50
+                "
+              />
+
+            </div>
+
+
+            {/* ==================================================
+                TARGET PRICE
+            ================================================== */}
+
+            <div>
+
+              <label
+                htmlFor="rfq-price"
+                className="
+                  block
+                  mb-2
+                  text-sm
+                  font-bold
+                  text-slate-700
+                "
+              >
+
+                Target Price
+
+                <span
+                  className="
+                    text-red-500
+                  "
+                >
+
+                  *
+
+                </span>
+
+              </label>
+
+
+              <div
+                className="
+                  relative
+                "
+              >
+
+                <span
+                  className="
+                    absolute
+                    left-4
+                    top-1/2
+                    -translate-y-1/2
+                    text-slate-500
+                    font-semibold
+                  "
+                >
+
+                  ₹
+
+                </span>
+
+
+                <input
+                  id="rfq-price"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={
+                    targetPrice
+                  }
+                  onChange={(event) =>
+                    setTargetPrice(
+                      event.target.value
+                    )
+                  }
+                  placeholder="e.g. 320"
+                  className="
+                    w-full
+                    h-12
+                    pl-9
+                    pr-4
+                    rounded-xl
+                    border
+                    border-slate-200
+                    text-sm
+                    outline-none
+                    focus:border-teal-500
+                    focus:ring-4
+                    focus:ring-teal-50
+                  "
+                />
+
+              </div>
+
+
+              <p
+                className="
+                  mt-2
+                  text-xs
+                  text-slate-400
+                "
+              >
+
+                Enter the price you are
+                expecting per piece.
+
+              </p>
+
+            </div>
+
+
+            {/* ==================================================
+                EXPECTED DELIVERY
+            ================================================== */}
+
+            <div>
+
+              <label
+                htmlFor="rfq-delivery"
+                className="
+                  block
+                  mb-2
+                  text-sm
+                  font-bold
+                  text-slate-700
+                "
+              >
+
+                Expected Delivery
+
+              </label>
+
+
+              <input
+                id="rfq-delivery"
+                type="date"
+                value={
+                  expectedDelivery
+                }
+                onChange={(event) =>
+                  setExpectedDelivery(
+                    event.target.value
+                  )
+                }
+                min={
+                  new Date()
+                    .toISOString()
+                    .split('T')[0]
+                }
+                className="
+                  w-full
+                  h-12
+                  px-4
+                  rounded-xl
+                  border
+                  border-slate-200
+                  text-sm
+                  text-slate-700
+                  outline-none
+                  focus:border-teal-500
+                  focus:ring-4
+                  focus:ring-teal-50
+                "
+              />
+
+            </div>
+
+
+            {/* ==================================================
+                MESSAGE
+            ================================================== */}
+
+            <div>
+
+              <label
+                htmlFor="rfq-message"
+                className="
+                  block
+                  mb-2
+                  text-sm
+                  font-bold
+                  text-slate-700
+                "
+              >
+
+                Message
+
+              </label>
+
+
+              <textarea
+                id="rfq-message"
+                rows="5"
+                value={
+                  message
+                }
+                onChange={(event) =>
+                  setMessage(
+                    event.target.value
+                  )
+                }
+                placeholder="Tell us about your requirements..."
+                className="
+                  w-full
+                  px-4
+                  py-3
+                  rounded-xl
+                  border
+                  border-slate-200
+                  text-sm
+                  resize-none
+                  outline-none
+                  focus:border-teal-500
+                  focus:ring-4
+                  focus:ring-teal-50
+                "
+              />
+
+            </div>
+
+
+            {/* ==================================================
+                SUBMIT
+            ================================================== */}
+
+            <button
+              type="submit"
+              disabled={
+                submitting ||
+                loadingProducts
+              }
+              className="
+                w-full
+                h-12
+                rounded-xl
+                bg-teal-600
+                text-white
+                text-sm
+                font-bold
+                hover:bg-teal-700
+                disabled:bg-slate-300
+                disabled:cursor-not-allowed
+                transition-colors
+              "
+            >
+
+              {submitting
+                ? 'Submitting...'
+                : 'Submit RFQ'}
+
+            </button>
+
+          </form>
+
         </div>
-      )}
+
+
+        {/* ==================================================
+            SIMPLE INFO
+        ================================================== */}
+
+        <div
+          className="
+            mt-5
+            p-4
+            rounded-xl
+            bg-teal-50
+            border
+            border-teal-100
+          "
+        >
+
+          <p
+            className="
+              text-xs
+              sm:text-sm
+              text-teal-800
+              leading-6
+            "
+          >
+
+            💡 For large quantities, our team
+            can provide a customized wholesale
+            quotation based on your requirements.
+
+          </p>
+
+        </div>
+
+      </main>
+
     </div>
+
   );
+
 };
 
-export default MyRFQs;
+
+export default RFQ;
