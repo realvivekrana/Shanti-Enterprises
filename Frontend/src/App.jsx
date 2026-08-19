@@ -29,6 +29,7 @@ import OrderSuccess from './pages/OrderSuccess';
 import OrderTracking from './pages/OrderTracking';
 import BulkOrderUpload from './pages/BulkOrderUpload';
 import ReturnRequest from './pages/ReturnRequest';
+import CustomerDashboard from './pages/CustomerDashboard';
 
 // ======================================================
 // AUTH
@@ -117,6 +118,17 @@ function App() {
                 path="/"
                 element={
                   <Home />
+                }
+              />
+
+              {/* ==================================================
+                  CUSTOMER DASHBOARD
+              ================================================== */}
+
+              <Route
+                path="/dashboard"
+                element={
+                  <CustomerDashboard />
                 }
               />
 
@@ -328,13 +340,9 @@ function App() {
               <Route
                 path="/admin/dashboard"
                 element={
-
                   <AdminRoute>
-
                     <AdminDashboard />
-
                   </AdminRoute>
-
                 }
               />
 
@@ -345,13 +353,9 @@ function App() {
               <Route
                 path="/admin/products"
                 element={
-
                   <AdminRoute>
-
                     <AdminProducts />
-
                   </AdminRoute>
-
                 }
               />
 
@@ -362,13 +366,9 @@ function App() {
               <Route
                 path="/admin/products/new"
                 element={
-
                   <AdminRoute>
-
                     <AdminProductForm />
-
                   </AdminRoute>
-
                 }
               />
 
@@ -379,13 +379,9 @@ function App() {
               <Route
                 path="/admin/products/:id/edit"
                 element={
-
                   <AdminRoute>
-
                     <AdminProductForm />
-
                   </AdminRoute>
-
                 }
               />
 
@@ -396,13 +392,9 @@ function App() {
               <Route
                 path="/admin/shipping"
                 element={
-
                   <AdminRoute>
-
                     <AdminShipping />
-
                   </AdminRoute>
-
                 }
               />
 
