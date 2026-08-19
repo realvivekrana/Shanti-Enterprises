@@ -14,7 +14,6 @@ import AdminRoute from './components/AdminRoute';
 import DiscountPopup from './components/DiscountPopup';
 import PolicyPage from './components/PolicyPage';
 
-
 // ======================================================
 // PUBLIC PAGES
 // ======================================================
@@ -27,8 +26,8 @@ import ProductDetail from './pages/ProductDetail';
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import OrderSuccess from './pages/OrderSuccess';
+import OrderTracking from './pages/OrderTracking';
 import BulkOrderUpload from './pages/BulkOrderUpload';
-
 
 // ======================================================
 // AUTH
@@ -37,16 +36,13 @@ import BulkOrderUpload from './pages/BulkOrderUpload';
 import Login from './pages/Login';
 import Register from './pages/Register';
 
-
 // ======================================================
 // RFQ
 // ======================================================
 
-import RFQ from './pages/RFQ';
 import CreateRFQ from './pages/CreateRFQ';
 import MyRFQs from './pages/MyRFQs';
 import MyQuotations from './pages/MyQuotations';
-
 
 // ======================================================
 // CUSTOMER ORDERS
@@ -54,20 +50,17 @@ import MyQuotations from './pages/MyQuotations';
 
 import Orders from './pages/Orders';
 
-
 // ======================================================
 // WISHLIST
 // ======================================================
 
 import MyWishlist from './pages/MyWishlist';
 
-
 // ======================================================
 // NOTIFICATIONS
 // ======================================================
 
 import Notifications from './pages/Notifications';
-
 
 // ======================================================
 // ADMIN
@@ -77,33 +70,23 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminProducts from './pages/admin/AdminProducts';
 import AdminProductForm from './pages/admin/AdminProductForm';
 
-
 // ======================================================
 // ADMIN SHIPPING
 // ======================================================
 
 import AdminShipping from './pages/admin/AdminShipping';
 
-
 // ======================================================
 // APP
 // ======================================================
 
 function App() {
-
   return (
-
     <CartProvider>
 
       <BrowserRouter>
 
-        <div
-          className="
-            flex
-            flex-col
-            min-h-screen
-          "
-        >
+        <div className="flex flex-col min-h-screen">
 
           {/* ==================================================
               NAVBAR
@@ -111,26 +94,19 @@ function App() {
 
           <Navbar />
 
-
           {/* ==================================================
               DISCOUNT POPUP
           ================================================== */}
 
           <DiscountPopup />
 
-
           {/* ==================================================
               MAIN
           ================================================== */}
 
-          <main
-            className="
-              flex-grow
-            "
-          >
+          <main className="flex-grow">
 
             <Routes>
-
 
               {/* ==================================================
                   HOME
@@ -143,7 +119,6 @@ function App() {
                 }
               />
 
-
               {/* ==================================================
                   PRODUCTS
               ================================================== */}
@@ -154,7 +129,6 @@ function App() {
                   <Products />
                 }
               />
-
 
               {/* ==================================================
                   CATEGORIES
@@ -167,7 +141,6 @@ function App() {
                 }
               />
 
-
               {/* ==================================================
                   ABOUT
               ================================================== */}
@@ -178,7 +151,6 @@ function App() {
                   <About />
                 }
               />
-
 
               {/* ==================================================
                   PRODUCT DETAILS
@@ -191,7 +163,6 @@ function App() {
                 }
               />
 
-
               {/* ==================================================
                   CART
               ================================================== */}
@@ -202,7 +173,6 @@ function App() {
                   <Cart />
                 }
               />
-
 
               {/* ==================================================
                   CHECKOUT
@@ -215,7 +185,6 @@ function App() {
                 }
               />
 
-
               {/* ==================================================
                   ORDER SUCCESS
               ================================================== */}
@@ -227,6 +196,16 @@ function App() {
                 }
               />
 
+              {/* ==================================================
+                  ORDER TRACKING
+              ================================================== */}
+
+              <Route
+                path="/order-tracking/:id"
+                element={
+                  <OrderTracking />
+                }
+              />
 
               {/* ==================================================
                   BULK ORDER
@@ -239,7 +218,6 @@ function App() {
                 }
               />
 
-
               {/* ==================================================
                   AUTH
               ================================================== */}
@@ -251,14 +229,12 @@ function App() {
                 }
               />
 
-
               <Route
                 path="/register"
                 element={
                   <Register />
                 }
               />
-
 
               {/* ==================================================
                   POLICIES
@@ -271,21 +247,8 @@ function App() {
                 }
               />
 
-
               {/* ==================================================
-                  RFQ - NEW SIMPLE CUSTOMER PAGE
-              ================================================== */}
-
-              <Route
-                path="/rfq"
-                element={
-                  <RFQ />
-                }
-              />
-
-
-              {/* ==================================================
-                  RFQ - PRODUCT SPECIFIC
+                  RFQ
               ================================================== */}
 
               <Route
@@ -295,18 +258,12 @@ function App() {
                 }
               />
 
-
-              {/* ==================================================
-                  MY RFQs
-              ================================================== */}
-
               <Route
                 path="/my-rfqs"
                 element={
                   <MyRFQs />
                 }
               />
-
 
               {/* ==================================================
                   QUOTATIONS
@@ -319,7 +276,6 @@ function App() {
                 }
               />
 
-
               {/* ==================================================
                   ORDERS
               ================================================== */}
@@ -330,7 +286,6 @@ function App() {
                   <Orders />
                 }
               />
-
 
               {/* ==================================================
                   WISHLIST
@@ -343,7 +298,6 @@ function App() {
                 }
               />
 
-
               {/* ==================================================
                   NOTIFICATIONS
               ================================================== */}
@@ -354,7 +308,6 @@ function App() {
                   <Notifications />
                 }
               />
-
 
               {/* ==================================================
                   ADMIN DASHBOARD
@@ -373,7 +326,6 @@ function App() {
                 }
               />
 
-
               {/* ==================================================
                   ADMIN PRODUCTS
               ================================================== */}
@@ -390,7 +342,6 @@ function App() {
 
                 }
               />
-
 
               {/* ==================================================
                   ADMIN CREATE PRODUCT
@@ -409,7 +360,6 @@ function App() {
                 }
               />
 
-
               {/* ==================================================
                   ADMIN EDIT PRODUCT
               ================================================== */}
@@ -426,7 +376,6 @@ function App() {
 
                 }
               />
-
 
               {/* ==================================================
                   ADMIN SHIPPING
@@ -445,11 +394,9 @@ function App() {
                 }
               />
 
-
             </Routes>
 
           </main>
-
 
           {/* ==================================================
               FOOTER
@@ -462,10 +409,7 @@ function App() {
       </BrowserRouter>
 
     </CartProvider>
-
   );
-
 }
-
 
 export default App;
