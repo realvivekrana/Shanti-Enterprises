@@ -24,6 +24,7 @@ import ProductDetail from './pages/ProductDetail';
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import OrderSuccess from './pages/OrderSuccess';
+import BulkOrderUpload from './pages/BulkOrderUpload';
 
 
 // ======================================================
@@ -144,6 +145,18 @@ function App() {
                 path="/order-success/:id"
                 element={
                   <OrderSuccess />
+                }
+              />
+
+
+              {/* ==================================================
+                  BULK ORDER UPLOAD
+              ================================================== */}
+
+              <Route
+                path="/bulk-order-upload"
+                element={
+                  <BulkOrderUpload />
                 }
               />
 
@@ -324,7 +337,9 @@ function App() {
       </BrowserRouter>
 
     </CartProvider>
+
   );
+
 }
 
 

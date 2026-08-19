@@ -1,11 +1,23 @@
-const asyncHandler = require('../utils/asyncHandler');
-const ApiError = require('../utils/ApiError');
-const ApiResponse = require('../utils/ApiResponse');
+const asyncHandler =
+  require('../utils/asyncHandler');
 
-const Order = require('../models/Order');
-const Product = require('../models/Product');
+const ApiError =
+  require('../utils/ApiError');
 
-const sendEmail = require('../utils/sendEmail');
+const ApiResponse =
+  require('../utils/ApiResponse');
+
+const Order =
+  require('../models/Order');
+
+const Product =
+  require('../models/Product');
+
+const razorpay =
+  require('../config/razorpay');
+
+const sendEmail =
+  require('../utils/sendEmail');
 
 const {
   orderConfirmationTemplate,
@@ -20,411 +32,475 @@ const {
 // CREATE ORDER
 // ======================================================
 
-const createOrder = asyncHandler(
-  async (req, res) => {
+const createOrder =
+  asyncHandler(
+    async (req, res) => {
 
-    const {
-      orderItems,
-      shippingAddress,
-      paymentMethod,
-    } = req.body;
-
-
-    // ==================================================
-    // VALIDATION
-    // ==================================================
-
-    if (
-      !Array.isArray(orderItems) ||
-      orderItems.length === 0
-    ) {
-      throw new ApiError(
-        400,
-        'No order items'
-      );
-    }
+      const {
+        orderItems,
+        shippingAddress,
+        paymentMethod,
+      } = req.body;
 
 
-    if (!shippingAddress) {
-      throw new ApiError(
-        400,
-        'Shipping address is required'
-      );
-    }
+      // ==================================================
+      // VALIDATION
+      // ==================================================
 
+      if (
+        !Array.isArray(orderItems) ||
+        orderItems.length === 0
+      ) {
 
-    if (!paymentMethod) {
-      throw new ApiError(
-        400,
-        'Payment method is required'
-      );
-    }
-
-
-    // ==================================================
-    // VARIABLES
-    // ==================================================
-
-    const validatedOrderItems = [];
-
-    let calculatedItemsPrice = 0;
-
-
-    // ==================================================
-    // VALIDATE PRODUCTS
-    // ==================================================
-
-    for (
-      const item of orderItems
-    ) {
-
-      if (!item.product) {
         throw new ApiError(
           400,
-          'Product ID is required'
+          'No order items'
         );
+
       }
-
-
-      const quantity =
-        Number(item.quantity);
 
 
       if (
-        !Number.isInteger(quantity) ||
-        quantity < 1
+        !shippingAddress
       ) {
+
         throw new ApiError(
           400,
-          'Quantity must be a positive whole number'
+          'Shipping address is required'
         );
+
       }
-
-
-      // ----------------------------------------------
-      // GET LATEST PRODUCT
-      // ----------------------------------------------
-
-      const product =
-        await Product.findById(
-          item.product
-        );
-
-
-      if (!product) {
-        throw new ApiError(
-          404,
-          'Product not found'
-        );
-      }
-
-
-      // =================================================
-      // MOQ
-      // =================================================
-
-      const moq =
-        Number(product.moq || 1);
 
 
       if (
-        quantity < moq
+        !paymentMethod
       ) {
+
         throw new ApiError(
           400,
-          `${product.name} requires a minimum order of ${moq} pieces`
+          'Payment method is required'
         );
+
       }
 
 
-      // =================================================
-      // STOCK
-      // =================================================
+      // ==================================================
+      // VARIABLES
+      // ==================================================
 
-      const stock =
-        Number(product.stock || 0);
+      const validatedOrderItems = [];
+
+      let calculatedItemsPrice =
+        0;
+
+
+      // ==================================================
+      // VALIDATE PRODUCTS
+      // ==================================================
+
+      for (
+        const item of orderItems
+      ) {
+
+        if (
+          !item.product
+        ) {
+
+          throw new ApiError(
+            400,
+            'Product ID is required'
+          );
+
+        }
+
+
+        const quantity =
+          Number(
+            item.quantity
+          );
+
+
+        if (
+          !Number.isInteger(
+            quantity
+          ) ||
+          quantity < 1
+        ) {
+
+          throw new ApiError(
+            400,
+            'Quantity must be a positive whole number'
+          );
+
+        }
+
+
+        // ----------------------------------------------
+        // GET LATEST PRODUCT
+        // ----------------------------------------------
+
+        const product =
+          await Product.findById(
+            item.product
+          );
+
+
+        if (
+          !product
+        ) {
+
+          throw new ApiError(
+            404,
+            'Product not found'
+          );
+
+        }
+
+
+        // =================================================
+        // MOQ
+        // =================================================
+
+        const moq =
+          Number(
+            product.moq ||
+            1
+          );
+
+
+        if (
+          quantity < moq
+        ) {
+
+          throw new ApiError(
+            400,
+            `${product.name} requires a minimum order of ${moq} pieces`
+          );
+
+        }
+
+
+        // =================================================
+        // STOCK
+        // =================================================
+
+        const stock =
+          Number(
+            product.stock ||
+            0
+          );
+
+
+        if (
+          quantity > stock
+        ) {
+
+          throw new ApiError(
+            400,
+            `Only ${stock} pieces of ${product.name} are available`
+          );
+
+        }
+
+
+        // =================================================
+        // WHOLESALE PRICE
+        // =================================================
+
+        let pricing;
+
+
+        try {
+
+          pricing =
+            getWholesaleUnitPrice(
+              product,
+              quantity
+            );
+
+        } catch (error) {
+
+          throw new ApiError(
+            400,
+            error.message
+          );
+
+        }
+
+
+        const unitPrice =
+          Number(
+            pricing.unitPrice
+          );
+
+
+        const itemTotal =
+          unitPrice *
+          quantity;
+
+
+        calculatedItemsPrice +=
+          itemTotal;
+
+
+        // =================================================
+        // SAVE VALIDATED ITEM
+        // =================================================
+
+        validatedOrderItems.push({
+
+          product:
+            product._id,
+
+          name:
+            product.name,
+
+          quantity,
+
+          price:
+            unitPrice,
+
+        });
+
+      }
+
+
+      // ==================================================
+      // SHIPPING
+      // ==================================================
+
+      const shippingPrice =
+        Number(
+          req.body.shippingPrice ||
+          0
+        );
 
 
       if (
-        quantity > stock
+        !Number.isFinite(
+          shippingPrice
+        ) ||
+        shippingPrice < 0
       ) {
+
         throw new ApiError(
           400,
-          `Only ${stock} pieces of ${product.name} are available`
+          'Invalid shipping price'
         );
+
       }
 
 
-      // =================================================
-      // WHOLESALE PRICE
-      // =================================================
+      // ==================================================
+      // TOTAL
+      // ==================================================
 
-      let pricing;
+      const totalPrice =
+        calculatedItemsPrice +
+        shippingPrice;
 
+
+      // ==================================================
+      // CREATE ORDER
+      // ==================================================
+
+      const order =
+        new Order({
+
+          user:
+            req.user._id,
+
+          orderItems:
+            validatedOrderItems,
+
+          shippingAddress,
+
+          paymentMethod,
+
+          itemsPrice:
+            calculatedItemsPrice,
+
+          shippingPrice,
+
+          totalPrice,
+
+        });
+
+
+      const createdOrder =
+        await order.save();
+
+
+      // ==================================================
+      // EMAIL
+      // ==================================================
 
       try {
 
-        pricing =
-          getWholesaleUnitPrice(
-            product,
-            quantity
-          );
+        await sendEmail({
+
+          to:
+            req.user.email,
+
+          subject:
+            'Order Confirmation - Shanti Enterprises',
+
+          html:
+            orderConfirmationTemplate(
+              createdOrder,
+              req.user.name
+            ),
+
+        });
 
       } catch (error) {
 
-        throw new ApiError(
-          400,
+        console.error(
+          'Order email failed:',
           error.message
         );
+
       }
 
 
-      const unitPrice =
-        Number(
-          pricing.unitPrice
-        );
+      // ==================================================
+      // RESPONSE
+      // ==================================================
 
+      res.status(201).json(
 
-      const itemTotal =
-        unitPrice *
-        quantity;
+        new ApiResponse(
 
+          201,
 
-      calculatedItemsPrice +=
-        itemTotal;
+          createdOrder,
 
+          'Order created successfully'
 
-      // =================================================
-      // SAVE VALIDATED ITEM
-      // =================================================
+        )
 
-      validatedOrderItems.push({
-
-        product:
-          product._id,
-
-        name:
-          product.name,
-
-        quantity,
-
-        price:
-          unitPrice,
-
-      });
-    }
-
-
-    // ==================================================
-    // SHIPPING
-    // ==================================================
-
-    const shippingPrice =
-      Number(
-        req.body.shippingPrice || 0
       );
 
-
-    if (
-      !Number.isFinite(
-        shippingPrice
-      ) ||
-      shippingPrice < 0
-    ) {
-      throw new ApiError(
-        400,
-        'Invalid shipping price'
-      );
     }
-
-
-    // ==================================================
-    // TOTAL
-    // ==================================================
-
-    const totalPrice =
-      calculatedItemsPrice +
-      shippingPrice;
-
-
-    // ==================================================
-    // CREATE ORDER
-    // ==================================================
-
-    const order =
-      new Order({
-
-        user:
-          req.user._id,
-
-        orderItems:
-          validatedOrderItems,
-
-        shippingAddress,
-
-        paymentMethod,
-
-        itemsPrice:
-          calculatedItemsPrice,
-
-        shippingPrice,
-
-        totalPrice,
-
-      });
-
-
-    const createdOrder =
-      await order.save();
-
-
-    // ==================================================
-    // EMAIL
-    // ==================================================
-
-    try {
-
-      await sendEmail({
-
-        to:
-          req.user.email,
-
-        subject:
-          'Order Confirmation - Shanti Enterprises',
-
-        html:
-          orderConfirmationTemplate(
-            createdOrder,
-            req.user.name
-          ),
-
-      });
-
-    } catch (error) {
-
-      console.error(
-        'Order email failed:',
-        error.message
-      );
-    }
-
-
-    // ==================================================
-    // RESPONSE
-    // ==================================================
-
-    res.status(201).json(
-
-      new ApiResponse(
-        201,
-
-        createdOrder,
-
-        'Order created successfully'
-      )
-
-    );
-  }
-);
+  );
 
 
 // ======================================================
 // GET MY ORDERS
 // ======================================================
 
-const getMyOrders = asyncHandler(
-  async (req, res) => {
+const getMyOrders =
+  asyncHandler(
+    async (req, res) => {
 
-    const orders =
-      await Order.find({
+      const orders =
+        await Order.find({
 
-        user:
-          req.user._id,
+          user:
+            req.user._id,
 
-      })
-        .sort({
-          createdAt: -1,
-        });
+        })
+          .sort({
+
+            createdAt:
+              -1,
+
+          });
 
 
-    res.status(200).json(
+      res.status(200).json(
 
-      new ApiResponse(
-        200,
+        new ApiResponse(
 
-        orders,
+          200,
 
-        'Your orders fetched'
-      )
+          orders,
 
-    );
-  }
-);
+          'Your orders fetched'
+
+        )
+
+      );
+
+    }
+  );
 
 
 // ======================================================
 // GET ORDER BY ID
 // ======================================================
 
-const getOrderById = asyncHandler(
-  async (req, res) => {
+const getOrderById =
+  asyncHandler(
+    async (req, res) => {
 
-    const order =
-      await Order.findById(
-        req.params.id
-      ).populate(
-        'user',
-        'name email businessName'
+      const order =
+        await Order.findById(
+          req.params.id
+        ).populate(
+
+          'user',
+
+          'name email businessName'
+
+        );
+
+
+      if (
+        !order
+      ) {
+
+        throw new ApiError(
+          404,
+          'Order not found'
+        );
+
+      }
+
+
+      // ==================================================
+      // AUTHORIZATION
+      // ==================================================
+
+      const isOwner =
+        order.user._id.toString() ===
+        req.user._id.toString();
+
+
+      const isAdmin =
+        req.user.role ===
+        'admin';
+
+
+      if (
+        !isOwner &&
+        !isAdmin
+      ) {
+
+        throw new ApiError(
+          403,
+          'Not authorized to view this order'
+        );
+
+      }
+
+
+      res.status(200).json(
+
+        new ApiResponse(
+
+          200,
+
+          order,
+
+          'Order fetched'
+
+        )
+
       );
 
-
-    if (!order) {
-
-      throw new ApiError(
-        404,
-        'Order not found'
-      );
     }
-
-
-    // ==================================================
-    // AUTHORIZATION
-    // ==================================================
-
-    const isOwner =
-      order.user._id.toString() ===
-      req.user._id.toString();
-
-
-    const isAdmin =
-      req.user.role === 'admin';
-
-
-    if (
-      !isOwner &&
-      !isAdmin
-    ) {
-
-      throw new ApiError(
-        403,
-        'Not authorized to view this order'
-      );
-    }
-
-
-    res.status(200).json(
-
-      new ApiResponse(
-        200,
-
-        order,
-
-        'Order fetched'
-      )
-
-    );
-  }
-);
+  );
 
 
 // ======================================================
@@ -441,31 +517,245 @@ const updateOrderToPaid =
         );
 
 
-      if (!order) {
+      if (
+        !order
+      ) {
 
         throw new ApiError(
           404,
           'Order not found'
         );
+
       }
 
 
-      order.isPaid = true;
+      // ==================================================
+      // ONLY THE ORDER OWNER OR ADMIN
+      // ==================================================
+
+      const isOwner =
+        order.user.toString() ===
+        req.user._id.toString();
+
+
+      const isAdmin =
+        req.user.role ===
+        'admin';
+
+
+      if (
+        !isOwner &&
+        !isAdmin
+      ) {
+
+        throw new ApiError(
+          403,
+          'You are not authorized to update this order payment'
+        );
+
+      }
+
+
+      // ==================================================
+      // RAZORPAY PAYMENT VERIFICATION
+      // ==================================================
+
+      const razorpayPaymentId =
+        req.body.id;
+
+
+      if (
+        !razorpayPaymentId
+      ) {
+
+        throw new ApiError(
+          400,
+          'Verified Razorpay payment ID is required'
+        );
+
+      }
+
+
+      let razorpayPayment;
+
+
+      try {
+
+        razorpayPayment =
+          await razorpay.payments.fetch(
+            razorpayPaymentId
+          );
+
+      } catch (error) {
+
+        throw new ApiError(
+          400,
+          'Unable to verify payment with Razorpay'
+        );
+
+      }
+
+
+      // ==================================================
+      // CAPTURED CHECK
+      // ==================================================
+
+      if (
+        razorpayPayment?.status !==
+        'captured'
+      ) {
+
+        throw new ApiError(
+          400,
+          'Razorpay payment is not captured'
+        );
+
+      }
+
+
+      // ==================================================
+      // GET RAZORPAY ORDER ID
+      // ==================================================
+
+      const razorpayOrderId =
+        razorpayPayment?.order_id;
+
+
+      if (
+        !razorpayOrderId
+      ) {
+
+        throw new ApiError(
+          400,
+          'Razorpay order ID was not found for this payment'
+        );
+
+      }
+
+
+      // ==================================================
+      // FETCH RAZORPAY ORDER
+      // ==================================================
+
+      let razorpayOrder;
+
+
+      try {
+
+        razorpayOrder =
+          await razorpay.orders.fetch(
+            razorpayOrderId
+          );
+
+      } catch (error) {
+
+        throw new ApiError(
+          400,
+          'Unable to verify Razorpay order'
+        );
+
+      }
+
+
+      // ==================================================
+      // PAYMENT CUSTOMER CHECK
+      // ==================================================
+
+      const paymentCustomerId =
+        razorpayOrder?.notes?.customerId;
+
+
+      if (
+        !paymentCustomerId ||
+        paymentCustomerId !==
+          order.user.toString()
+      ) {
+
+        throw new ApiError(
+          403,
+          'This payment does not belong to this order customer'
+        );
+
+      }
+
+
+      // ==================================================
+      // PAYMENT AMOUNT CHECK
+      // ==================================================
+
+      const expectedAmount =
+        Math.round(
+
+          Number(
+            order.totalPrice
+          ) *
+          100
+
+        );
+
+
+      if (
+        Number(
+          razorpayPayment.amount
+        ) !==
+        expectedAmount
+      ) {
+
+        throw new ApiError(
+          400,
+          'Payment amount does not match the order total'
+        );
+
+      }
+
+
+      // ==================================================
+      // ALREADY PAID
+      // ==================================================
+
+      if (
+        order.isPaid
+      ) {
+
+        return res.status(200).json(
+
+          new ApiResponse(
+
+            200,
+
+            order,
+
+            'Order is already marked as paid'
+
+          )
+
+        );
+
+      }
+
+
+      // ==================================================
+      // MARK PAID
+      // ==================================================
+
+      order.isPaid =
+        true;
+
 
       order.paidAt =
-        Date.now();
+        new Date();
 
 
       order.paymentResult = {
 
         id:
-          req.body.id || '',
+          razorpayPaymentId,
 
         status:
-          req.body.status || '',
+          'success',
 
         updateTime:
-          req.body.updateTime || '',
+          new Date().toISOString(),
 
       };
 
@@ -477,14 +767,17 @@ const updateOrderToPaid =
       res.status(200).json(
 
         new ApiResponse(
+
           200,
 
           updatedOrder,
 
           'Order marked as paid'
+
         )
 
       );
+
     }
   );
 
@@ -499,26 +792,34 @@ const getAllOrders =
 
       const orders =
         await Order.find({})
+
           .populate(
             'user',
             'name email businessName'
           )
+
           .sort({
-            createdAt: -1,
+
+            createdAt:
+              -1,
+
           });
 
 
       res.status(200).json(
 
         new ApiResponse(
+
           200,
 
           orders,
 
           'All orders fetched'
+
         )
 
       );
+
     }
   );
 
@@ -537,12 +838,15 @@ const updateOrderStatus =
         );
 
 
-      if (!order) {
+      if (
+        !order
+      ) {
 
         throw new ApiError(
           404,
           'Order not found'
         );
+
       }
 
 
@@ -552,6 +856,7 @@ const updateOrderStatus =
 
         order.orderStatus =
           req.body.orderStatus;
+
       }
 
 
@@ -560,12 +865,19 @@ const updateOrderStatus =
         undefined
       ) {
 
-        if (!order.shipment) {
-          order.shipment = {};
+        if (
+          !order.shipment
+        ) {
+
+          order.shipment =
+            {};
+
         }
+
 
         order.shipment.trackingId =
           req.body.trackingId;
+
       }
 
 
@@ -576,14 +888,17 @@ const updateOrderStatus =
       res.status(200).json(
 
         new ApiResponse(
+
           200,
 
           updatedOrder,
 
           'Order status updated'
+
         )
 
       );
+
     }
   );
 
@@ -622,12 +937,15 @@ const reorderOrder =
         );
 
 
-      if (!order) {
+      if (
+        !order
+      ) {
 
         throw new ApiError(
           404,
           'Order not found'
         );
+
       }
 
 
@@ -641,7 +959,8 @@ const reorderOrder =
 
 
       const isAdmin =
-        req.user.role === 'admin';
+        req.user.role ===
+        'admin';
 
 
       if (
@@ -653,6 +972,7 @@ const reorderOrder =
           403,
           'You are not authorized to reorder this order'
         );
+
       }
 
 
@@ -670,7 +990,8 @@ const reorderOrder =
       // =================================================
 
       for (
-        const oldItem of order.orderItems
+        const oldItem
+        of order.orderItems
       ) {
 
         // -----------------------------------------------
@@ -681,7 +1002,9 @@ const reorderOrder =
           oldItem.product;
 
 
-        if (!productId) {
+        if (
+          !productId
+        ) {
 
           unavailableItems.push({
 
@@ -698,6 +1021,7 @@ const reorderOrder =
           });
 
           continue;
+
         }
 
 
@@ -715,7 +1039,9 @@ const reorderOrder =
         // PRODUCT DELETED
         // -----------------------------------------------
 
-        if (!product) {
+        if (
+          !product
+        ) {
 
           unavailableItems.push({
 
@@ -735,6 +1061,7 @@ const reorderOrder =
           });
 
           continue;
+
         }
 
 
@@ -754,7 +1081,8 @@ const reorderOrder =
 
         const moq =
           Number(
-            product.moq || 1
+            product.moq ||
+            1
           );
 
 
@@ -764,7 +1092,8 @@ const reorderOrder =
 
         const stock =
           Number(
-            product.stock || 0
+            product.stock ||
+            0
           );
 
 
@@ -795,6 +1124,7 @@ const reorderOrder =
           });
 
           continue;
+
         }
 
 
@@ -825,6 +1155,7 @@ const reorderOrder =
           });
 
           continue;
+
         }
 
 
@@ -861,6 +1192,7 @@ const reorderOrder =
           });
 
           continue;
+
         }
 
 
@@ -901,7 +1233,8 @@ const reorderOrder =
 
           gst:
             Number(
-              product.gst || 0
+              product.gst ||
+              0
             ),
 
           wholesalePricing:
@@ -913,6 +1246,7 @@ const reorderOrder =
             null,
 
         });
+
       }
 
 
@@ -921,7 +1255,8 @@ const reorderOrder =
       // ==================================================
 
       if (
-        reorderItems.length === 0
+        reorderItems.length ===
+        0
       ) {
 
         return res.status(200).json(
@@ -935,7 +1270,8 @@ const reorderOrder =
               orderId:
                 order._id,
 
-              reorderItems: [],
+              reorderItems:
+                [],
 
               unavailableItems,
 
@@ -949,6 +1285,7 @@ const reorderOrder =
           )
 
         );
+
       }
 
 
@@ -984,6 +1321,7 @@ const reorderOrder =
         )
 
       );
+
     }
   );
 

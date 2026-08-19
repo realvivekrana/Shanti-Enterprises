@@ -26,6 +26,7 @@ const {
 const {
   protect,
   admin,
+  authorizeRoles,
 } = require('../middleware/authMiddleware');
 
 
@@ -92,6 +93,10 @@ router.get(
 router.get(
   '/me/dashboard',
   protect,
+  authorizeRoles(
+    'supplier',
+    'admin'
+  ),
   getSupplierDashboard
 );
 
@@ -101,6 +106,10 @@ router.get(
 router.get(
   '/me/products',
   protect,
+  authorizeRoles(
+    'supplier',
+    'admin'
+  ),
   getMyProducts
 );
 
@@ -110,8 +119,13 @@ router.get(
 router.get(
   '/me/orders',
   protect,
+  authorizeRoles(
+    'supplier',
+    'admin'
+  ),
   getMyOrders
 );
 
 
-module.exports = router;
+module.exports =
+  router;

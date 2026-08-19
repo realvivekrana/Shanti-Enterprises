@@ -1,7 +1,15 @@
-import { Link, useNavigate } from 'react-router-dom';
-import { useCart } from '../context/CartContext';
+import {
+  Link,
+  useNavigate,
+} from 'react-router-dom';
+
+import {
+  useCart,
+} from '../context/CartContext';
+
 
 const categoryLinks = [
+
   {
     label: 'Home',
     category: '',
@@ -26,13 +34,16 @@ const categoryLinks = [
     label: 'Paper Shredded',
     category: 'Paper Shredded',
   },
+
 ];
+
 
 const Navbar = () => {
 
   const {
     cartCount,
   } = useCart();
+
 
   const navigate =
     useNavigate();
@@ -46,6 +57,7 @@ const Navbar = () => {
     localStorage.getItem(
       'userInfo'
     );
+
 
   const user =
     userInfo
@@ -63,9 +75,12 @@ const Navbar = () => {
       'userInfo'
     );
 
+
     navigate('/');
 
+
     window.location.reload();
+
   };
 
 
@@ -82,6 +97,7 @@ const Navbar = () => {
         ? `/?category=${category}`
         : '/'
     );
+
   };
 
 
@@ -89,11 +105,13 @@ const Navbar = () => {
 
     <nav className="bg-white border-b border-slate-200 sticky top-0 z-50">
 
+
       {/* ==================================================
           MAIN NAVBAR
       ================================================== */}
 
       <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+
 
         {/* ==================================================
             LOGO
@@ -105,11 +123,16 @@ const Navbar = () => {
         >
 
           <div className="w-9 h-9 bg-teal-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">
+
             S
+
           </div>
 
+
           <span className="text-lg font-bold text-slate-800">
+
             Shanti Enterprises
+
           </span>
 
         </Link>
@@ -120,6 +143,7 @@ const Navbar = () => {
         ================================================== */}
 
         <div className="flex items-center gap-5">
+
 
           {/* ==================================================
               USER
@@ -142,7 +166,9 @@ const Navbar = () => {
                 }
                 className="text-slate-600 hover:text-teal-600 font-medium transition-colors"
               >
+
                 Logout
+
               </button>
 
             </div>
@@ -153,10 +179,31 @@ const Navbar = () => {
               to="/login"
               className="text-sm font-medium text-slate-600 hover:text-teal-600 transition-colors"
             >
+
               Login
+
             </Link>
 
           )}
+
+
+          {/* ==================================================
+              BULK ORDER
+          ================================================== */}
+
+          <Link
+            to="/bulk-order-upload"
+            className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg bg-teal-50 text-teal-700 hover:bg-teal-100 font-medium transition-colors"
+            title="Bulk Order Upload"
+          >
+
+            📊
+
+            <span>
+              Bulk Order
+            </span>
+
+          </Link>
 
 
           {/* ==================================================
@@ -231,11 +278,27 @@ const Navbar = () => {
                 }
                 className="py-3 whitespace-nowrap hover:text-teal-600 transition-colors"
               >
+
                 {label}
+
               </button>
 
             )
           )}
+
+
+          {/* ==================================================
+              BULK ORDER MOBILE / MENU LINK
+          ================================================== */}
+
+          <Link
+            to="/bulk-order-upload"
+            className="sm:hidden py-3 whitespace-nowrap hover:text-teal-600 transition-colors"
+          >
+
+            📊 Bulk Order
+
+          </Link>
 
 
           {/* ==================================================
@@ -248,7 +311,9 @@ const Navbar = () => {
               to="/orders"
               className="py-3 whitespace-nowrap hover:text-teal-600 transition-colors"
             >
+
               📦 My Orders
+
             </Link>
 
           )}
@@ -264,7 +329,9 @@ const Navbar = () => {
               to="/wishlist"
               className="py-3 whitespace-nowrap hover:text-teal-600 transition-colors"
             >
+
               ❤️ Wishlist
+
             </Link>
 
           )}
@@ -280,7 +347,9 @@ const Navbar = () => {
               to="/admin/dashboard"
               className="py-3 whitespace-nowrap font-semibold text-teal-600 hover:text-teal-700 transition-colors"
             >
+
               👨‍💼 Admin
+
             </Link>
 
           )}
@@ -296,7 +365,9 @@ const Navbar = () => {
             }
             className="py-3 whitespace-nowrap hover:text-teal-600 transition-colors"
           >
+
             More
+
           </button>
 
         </div>
@@ -306,6 +377,7 @@ const Navbar = () => {
     </nav>
 
   );
+
 };
 
 

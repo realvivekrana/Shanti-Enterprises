@@ -4,28 +4,129 @@ const API = axios.create({
   baseURL: 'http://localhost:5000/api',
 });
 
-API.interceptors.request.use((config) => {
-  const userInfo = localStorage.getItem('userInfo');
-  if (userInfo) {
-    const { token } = JSON.parse(userInfo);
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+// ======================================================
+// ATTACH AUTH TOKEN
+// ======================================================
 
-// Response interceptor — agar backend ApiResponse wrapper format mein bheje
-// ({ success, data, message }), to seedha andar wala 'data' nikal ke de do,
-// taaki frontend ka existing code (jo direct array/object expect karta hai) na tootey.
-API.interceptors.response.use((response) => {
-  if (
-    response.data &&
-    typeof response.data === 'object' &&
-    'success' in response.data &&
-    'data' in response.data
-  ) {
-    response.data = response.data.data;
+API.interceptors.request.use(
+  (config) => {
+
+    const userInfo =
+      localStorage.getItem('userInfo');
+
+    if (userInfo) {
+
+      try {
+
+        const user =
+          JSON.parse(userInfo);
+
+        if (user?.token) {
+
+          config.headers.Authorization =
+            `Bearer ${user.token}`;
+
+        }
+
+      } catch (error) {
+
+        console.error(
+          'Invalid userInfo in localStorage:',
+          error
+        );
+
+      }
+
+    }
+
+    return config;
+
+  },
+  (error) => {
+
+    return Promise.reject(error);
+
   }
-  return response;
-});
+);
+
+
+// ======================================================
+// RESPONSE INTERCEPTOR
+// ======================================================
+
+API.interceptors.response.use(
+
+  (response) => {
+
+    const responseData =
+      response.data;
+
+
+    // ==================================================
+    // UNWRAP STANDARD API RESPONSE
+    // ==================================================
+    //
+    // Backend response:
+    //
+    // {
+    //   success: true,
+    //   data: [...]
+    // }
+    //
+    // Frontend ko directly:
+    //
+    // [...]
+    //
+    // chahiye.
+    //
+
+    if (
+      responseData &&
+      typeof responseData === 'object' &&
+      !Array.isArray(responseData) &&
+      Object.prototype.hasOwnProperty.call(
+        responseData,
+        'success'
+      ) &&
+      Object.prototype.hasOwnProperty.call(
+        responseData,
+        'data'
+      )
+    ) {
+
+      response.data =
+        responseData.data;
+
+    }
+
+    return response;
+
+  },
+
+
+  // ==================================================
+  // RESPONSE ERROR
+  // ==================================================
+
+  (error) => {
+
+    if (
+      error.response?.status === 401
+    ) {
+
+      console.warn(
+        'Unauthorized request.'
+      );
+
+    }
+
+    return Promise.reject(
+      error
+    );
+
+  }
+
+);
+
 
 export default API;
