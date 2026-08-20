@@ -48,6 +48,23 @@ API.interceptors.request.use(
 
 API.interceptors.response.use(
   (response) => {
+    // ===================================================
+    // UNWRAP STANDARDIZED BACKEND RESPONSE
+    // ===================================================
+    // Backend controllers return { success, data, message }.
+    // Agar ye format mile, to response.data ko seedha
+    // andar wale 'data' se replace kar do, taaki
+    // frontend pages seedha array/object expect kar sakein.
+
+    if (
+      response.data &&
+      typeof response.data === 'object' &&
+      'success' in response.data &&
+      'data' in response.data
+    ) {
+      response.data = response.data.data;
+    }
+
     return response;
   },
 
@@ -69,20 +86,11 @@ API.interceptors.response.use(
       if (
         currentPath.startsWith('/admin')
       ) {
-        localStorage.removeItem(
-          'userInfo'
-        );
+        localStorage.removeItem('userInfo');
+        localStorage.removeItem('token');
+        localStorage.removeItem('adminToken');
 
-        localStorage.removeItem(
-          'token'
-        );
-
-        localStorage.removeItem(
-          'adminToken'
-        );
-
-        window.location.href =
-          '/admin/login';
+        window.location.href = '/admin/login';
       }
 
       // ===============================================
@@ -90,20 +98,11 @@ API.interceptors.response.use(
       // ===============================================
 
       else {
-        localStorage.removeItem(
-          'userInfo'
-        );
+        localStorage.removeItem('userInfo');
+        localStorage.removeItem('token');
+        localStorage.removeItem('adminToken');
 
-        localStorage.removeItem(
-          'token'
-        );
-
-        localStorage.removeItem(
-          'adminToken'
-        );
-
-        window.location.href =
-          '/login';
+        window.location.href = '/login';
       }
     }
 
