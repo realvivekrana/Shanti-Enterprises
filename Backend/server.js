@@ -428,7 +428,7 @@ app.use(
 
 
 // ======================================================
-// DASHBOARD
+// EXISTING DASHBOARD
 // ======================================================
 
 app.use(
@@ -437,6 +437,32 @@ app.use(
 
   require(
     './routes/dashboardRoutes'
+  )
+
+);
+
+
+// ======================================================
+// NEW ADMIN DASHBOARD
+// ======================================================
+//
+// This route is used by the new professional
+// e-commerce admin dashboard.
+//
+// GET /api/admin-dashboard
+//
+// It uses:
+// Backend/controllers/adminDashboardController.js
+// Backend/routes/adminDashboardRoutes.js
+//
+// ======================================================
+
+app.use(
+
+  '/api/admin-dashboard',
+
+  require(
+    './routes/adminDashboardRoutes'
   )
 
 );

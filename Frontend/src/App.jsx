@@ -1,9 +1,15 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+} from 'react-router-dom';
 
 import { CartProvider } from './context/CartContext';
+import { AuthProvider } from './context/AuthContext';
 
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import AdminRoute from './components/AdminRoute';
 
 import Home from './pages/Home';
 import Products from './pages/Products';
@@ -21,172 +27,289 @@ import CustomerDashboard from './pages/CustomerDashboard';
 
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminDashboard from './pages/admin/AdminDashboard';
-import AdminRoute from './components/AdminRoute';
 
 import RFQ from './pages/RFQ';
 
+
+// ======================================================
+// 404 PAGE
+// ======================================================
+
 const NotFoundPage = () => {
   return (
-    <div className="min-h-[60vh] flex items-center justify-center px-4">
+    <div
+      className="
+        min-h-[60vh]
+        flex
+        items-center
+        justify-center
+        px-4
+      "
+    >
       <div className="text-center">
-        <h1 className="text-5xl font-bold text-slate-900">
+
+        <h1
+          className="
+            text-6xl
+            font-extrabold
+            tracking-tight
+            text-slate-900
+          "
+        >
           404
         </h1>
 
-        <p className="text-slate-500 mt-3">
+        <p
+          className="
+            mt-3
+            text-base
+            text-slate-500
+          "
+        >
           Page not found.
         </p>
 
         <a
           href="/"
-          className="inline-block mt-5 px-5 py-2.5 bg-teal-600 text-white rounded-lg font-semibold hover:bg-teal-700 transition"
+          className="
+            inline-flex
+            items-center
+            justify-center
+            mt-6
+            rounded-xl
+            bg-teal-600
+            px-6
+            py-3
+            text-sm
+            font-semibold
+            text-white
+            transition
+            hover:bg-teal-700
+          "
         >
           Go Home
         </a>
+
       </div>
     </div>
   );
 };
 
+
+// ======================================================
+// APP
+// ======================================================
+
 const App = () => {
   return (
-    <CartProvider>
-      <BrowserRouter>
-        <Navbar />
+    <AuthProvider>
 
-        <Routes>
-          {/* =========================
-              HOME
-          ========================== */}
+      <CartProvider>
 
-          <Route
-            path="/"
-            element={<Home />}
-          />
+        <BrowserRouter>
 
-          {/* =========================
-              PRODUCTS
-          ========================== */}
+          {/* ==================================================
+              PUBLIC NAVBAR
+          ================================================== */}
 
-          <Route
-            path="/products"
-            element={<Products />}
-          />
+          <Navbar />
 
-          <Route
-            path="/products/:id"
-            element={<ProductDetail />}
-          />
 
-          {/* =========================
-              CART
-          ========================== */}
+          {/* ==================================================
+              APPLICATION ROUTES
+          ================================================== */}
 
-          <Route
-            path="/cart"
-            element={<Cart />}
-          />
+          <Routes>
 
-          {/* =========================
-              CHECKOUT
-          ========================== */}
+            {/* ==================================================
+                HOME
+            ================================================== */}
 
-          <Route
-            path="/checkout"
-            element={<Checkout />}
-          />
+            <Route
+              path="/"
+              element={
+                <Home />
+              }
+            />
 
-          {/* =========================
-              ORDER SUCCESS
-          ========================== */}
 
-          <Route
-            path="/order-success/:id"
-            element={<OrderSuccess />}
-          />
+            {/* ==================================================
+                PRODUCTS
+            ================================================== */}
 
-          {/* =========================
-              OTHER PUBLIC PAGES
-          ========================== */}
+            <Route
+              path="/products"
+              element={
+                <Products />
+              }
+            />
 
-          <Route
-            path="/about"
-            element={<About />}
-          />
 
-          <Route
-            path="/contact"
-            element={<Contact />}
-          />
+            <Route
+              path="/products/:id"
+              element={
+                <ProductDetail />
+              }
+            />
 
-          {/* =========================
-              AUTH
-          ========================== */}
 
-          <Route
-            path="/login"
-            element={<Login />}
-          />
+            {/* ==================================================
+                CART
+            ================================================== */}
 
-          <Route
-            path="/register"
-            element={<Register />}
-          />
+            <Route
+              path="/cart"
+              element={
+                <Cart />
+              }
+            />
 
-          {/* =========================
-              CUSTOMER DASHBOARD
-          ========================== */}
 
-          <Route
-            path="/dashboard"
-            element={<CustomerDashboard />}
-          />
+            {/* ==================================================
+                CHECKOUT
+            ================================================== */}
 
-          {/* =========================
-              RFQ
-          ========================== */}
+            <Route
+              path="/checkout"
+              element={
+                <Checkout />
+              }
+            />
 
-          <Route
-            path="/rfq"
-            element={<RFQ />}
-          />
 
-          {/* =========================
-              ADMIN LOGIN
-          ========================== */}
+            {/* ==================================================
+                ORDER SUCCESS
+            ================================================== */}
 
-          <Route
-            path="/admin/login"
-            element={<AdminLogin />}
-          />
+            <Route
+              path="/order-success/:id"
+              element={
+                <OrderSuccess />
+              }
+            />
 
-          {/* =========================
-              ADMIN DASHBOARD
-          ========================== */}
 
-          <Route
-            path="/admin/dashboard"
-            element={
-              <AdminRoute>
-                <AdminDashboard />
-              </AdminRoute>
-            }
-          />
+            {/* ==================================================
+                ABOUT
+            ================================================== */}
 
-          {/* =========================
-              404
-          ========================== */}
+            <Route
+              path="/about"
+              element={
+                <About />
+              }
+            />
 
-          <Route
-            path="*"
-            element={<NotFoundPage />}
-          />
-        </Routes>
 
-        <Footer />
-      </BrowserRouter>
-    </CartProvider>
+            {/* ==================================================
+                CONTACT
+            ================================================== */}
+
+            <Route
+              path="/contact"
+              element={
+                <Contact />
+              }
+            />
+
+
+            {/* ==================================================
+                CUSTOMER AUTH
+            ================================================== */}
+
+            <Route
+              path="/login"
+              element={
+                <Login />
+              }
+            />
+
+
+            <Route
+              path="/register"
+              element={
+                <Register />
+              }
+            />
+
+
+            {/* ==================================================
+                CUSTOMER DASHBOARD
+            ================================================== */}
+
+            <Route
+              path="/dashboard"
+              element={
+                <CustomerDashboard />
+              }
+            />
+
+
+            {/* ==================================================
+                RFQ
+            ================================================== */}
+
+            <Route
+              path="/rfq"
+              element={
+                <RFQ />
+              }
+            />
+
+
+            {/* ==================================================
+                ADMIN LOGIN
+            ================================================== */}
+
+            <Route
+              path="/admin/login"
+              element={
+                <AdminLogin />
+              }
+            />
+
+
+            {/* ==================================================
+                ADMIN DASHBOARD
+            ================================================== */}
+
+            <Route
+              path="/admin/dashboard"
+              element={
+                <AdminRoute>
+                  <AdminDashboard />
+                </AdminRoute>
+              }
+            />
+
+
+            {/* ==================================================
+                404
+            ================================================== */}
+
+            <Route
+              path="*"
+              element={
+                <NotFoundPage />
+              }
+            />
+
+          </Routes>
+
+
+          {/* ==================================================
+              PUBLIC FOOTER
+          ================================================== */}
+
+          <Footer />
+
+        </BrowserRouter>
+
+      </CartProvider>
+
+    </AuthProvider>
   );
 };
+
 
 export default App;
