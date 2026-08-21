@@ -2,6 +2,7 @@ import {
   BrowserRouter,
   Routes,
   Route,
+  Navigate,
 } from 'react-router-dom';
 
 import { CartProvider } from './context/CartContext';
@@ -10,6 +11,7 @@ import { AuthProvider } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import AdminRoute from './components/AdminRoute';
+import AdminLayout from './components/admin/AdminLayout';
 
 import Home from './pages/Home';
 import Products from './pages/Products';
@@ -27,6 +29,7 @@ import CustomerDashboard from './pages/CustomerDashboard';
 
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminOrders from './pages/admin/AdminOrders';
 
 import RFQ from './pages/RFQ';
 
@@ -97,6 +100,109 @@ const NotFoundPage = () => {
 
 
 // ======================================================
+// ADMIN PLACEHOLDER
+// ======================================================
+//
+// Temporary component for admin sections whose individual
+// pages are not connected yet.
+//
+// IMPORTANT:
+// AdminLayout will remain visible.
+// Sidebar/header will NOT disappear.
+//
+// ======================================================
+
+const AdminSectionPlaceholder = ({
+  title,
+}) => {
+  return (
+    <div
+      className="
+        p-6
+        lg:p-8
+      "
+    >
+
+      <div
+        className="
+          rounded-2xl
+          border
+          border-slate-200
+          bg-white
+          p-8
+          shadow-sm
+        "
+      >
+
+        <div
+          className="
+            flex
+            items-center
+            gap-4
+          "
+        >
+
+          <div
+            className="
+              flex
+              h-12
+              w-12
+              shrink-0
+              items-center
+              justify-center
+              rounded-xl
+              bg-teal-50
+              text-teal-600
+            "
+          >
+
+            <span
+              className="
+                text-xl
+                font-bold
+              "
+            >
+              {title?.charAt(0)?.toUpperCase() || 'A'}
+            </span>
+
+          </div>
+
+
+          <div>
+
+            <h1
+              className="
+                text-xl
+                font-bold
+                text-slate-900
+              "
+            >
+              {title}
+            </h1>
+
+            <p
+              className="
+                mt-1
+                text-sm
+                text-slate-500
+              "
+            >
+              This admin section is ready to be
+              connected with the real backend data.
+            </p>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  );
+};
+
+
+// ======================================================
 // APP
 // ======================================================
 
@@ -109,106 +215,100 @@ const App = () => {
         <BrowserRouter>
 
           {/* ==================================================
-              PUBLIC NAVBAR
-          ================================================== */}
-
-          <Navbar />
-
-
-          {/* ==================================================
               APPLICATION ROUTES
           ================================================== */}
 
           <Routes>
 
             {/* ==================================================
-                HOME
+                PUBLIC WEBSITE
             ================================================== */}
 
             <Route
               path="/"
               element={
-                <Home />
+                <>
+                  <Navbar />
+                  <Home />
+                  <Footer />
+                </>
               }
             />
-
-
-            {/* ==================================================
-                PRODUCTS
-            ================================================== */}
 
             <Route
               path="/products"
               element={
-                <Products />
+                <>
+                  <Navbar />
+                  <Products />
+                  <Footer />
+                </>
               }
             />
-
 
             <Route
               path="/products/:id"
               element={
-                <ProductDetail />
+                <>
+                  <Navbar />
+                  <ProductDetail />
+                  <Footer />
+                </>
               }
             />
-
-
-            {/* ==================================================
-                CART
-            ================================================== */}
 
             <Route
               path="/cart"
               element={
-                <Cart />
+                <>
+                  <Navbar />
+                  <Cart />
+                  <Footer />
+                </>
               }
             />
-
-
-            {/* ==================================================
-                CHECKOUT
-            ================================================== */}
 
             <Route
               path="/checkout"
               element={
-                <Checkout />
+                <>
+                  <Navbar />
+                  <Checkout />
+                  <Footer />
+                </>
               }
             />
-
-
-            {/* ==================================================
-                ORDER SUCCESS
-            ================================================== */}
 
             <Route
               path="/order-success/:id"
               element={
-                <OrderSuccess />
+                <>
+                  <Navbar />
+                  <OrderSuccess />
+                  <Footer />
+                </>
               }
             />
-
-
-            {/* ==================================================
-                ABOUT
-            ================================================== */}
 
             <Route
               path="/about"
               element={
-                <About />
+                <>
+                  <Navbar />
+                  <About />
+                  <Footer />
+                </>
               }
             />
-
-
-            {/* ==================================================
-                CONTACT
-            ================================================== */}
 
             <Route
               path="/contact"
               element={
-                <Contact />
+                <>
+                  <Navbar />
+                  <Contact />
+                  <Footer />
+                </>
               }
             />
 
@@ -220,15 +320,22 @@ const App = () => {
             <Route
               path="/login"
               element={
-                <Login />
+                <>
+                  <Navbar />
+                  <Login />
+                  <Footer />
+                </>
               }
             />
-
 
             <Route
               path="/register"
               element={
-                <Register />
+                <>
+                  <Navbar />
+                  <Register />
+                  <Footer />
+                </>
               }
             />
 
@@ -240,7 +347,11 @@ const App = () => {
             <Route
               path="/dashboard"
               element={
-                <CustomerDashboard />
+                <>
+                  <Navbar />
+                  <CustomerDashboard />
+                  <Footer />
+                </>
               }
             />
 
@@ -252,7 +363,11 @@ const App = () => {
             <Route
               path="/rfq"
               element={
-                <RFQ />
+                <>
+                  <Navbar />
+                  <RFQ />
+                  <Footer />
+                </>
               }
             />
 
@@ -270,38 +385,264 @@ const App = () => {
 
 
             {/* ==================================================
-                ADMIN DASHBOARD
+                ADMIN APPLICATION
+            ==================================================
+            
+                AdminLayout parent hai.
+
+                Iska matlab:
+
+                /admin/dashboard
+                /admin/orders
+                /admin/products
+                /admin/customers
+                /admin/inventory
+                /admin/suppliers
+                /admin/shipments
+                /admin/quotations
+                /admin/invoices
+                /admin/returns
+                /admin/coupons
+                /admin/settings
+
+                sab AdminLayout ke andar render honge.
+
+                Sidebar aur header common rahenge.
             ================================================== */}
 
             <Route
-              path="/admin/dashboard"
+              path="/admin"
               element={
                 <AdminRoute>
-                  <AdminDashboard />
+                  <AdminLayout />
                 </AdminRoute>
               }
-            />
+            >
+
+              {/* ==================================================
+                  ADMIN DEFAULT
+                  /admin
+              ================================================== */}
+
+              <Route
+                index
+                element={
+                  <Navigate
+                    to="/admin/dashboard"
+                    replace
+                  />
+                }
+              />
+
+
+              {/* ==================================================
+                  ADMIN DASHBOARD
+                  /admin/dashboard
+              ================================================== */}
+
+              <Route
+                path="dashboard"
+                element={
+                  <AdminDashboard />
+                }
+              />
+
+
+              {/* ==================================================
+                  ADMIN ORDERS
+                  /admin/orders
+              ================================================== */}
+
+              <Route
+                path="orders"
+                element={
+                  <AdminOrders />
+                }
+              />
+
+
+              {/* ==================================================
+                  ADMIN PRODUCTS
+                  /admin/products
+              ================================================== */}
+
+              <Route
+                path="products"
+                element={
+                  <AdminSectionPlaceholder
+                    title="Products"
+                  />
+                }
+              />
+
+
+              {/* ==================================================
+                  ADMIN CUSTOMERS
+                  /admin/customers
+              ================================================== */}
+
+              <Route
+                path="customers"
+                element={
+                  <AdminSectionPlaceholder
+                    title="Customers"
+                  />
+                }
+              />
+
+
+              {/* ==================================================
+                  ADMIN INVENTORY
+                  /admin/inventory
+              ================================================== */}
+
+              <Route
+                path="inventory"
+                element={
+                  <AdminSectionPlaceholder
+                    title="Inventory"
+                  />
+                }
+              />
+
+
+              {/* ==================================================
+                  ADMIN SUPPLIERS
+                  /admin/suppliers
+              ================================================== */}
+
+              <Route
+                path="suppliers"
+                element={
+                  <AdminSectionPlaceholder
+                    title="Suppliers"
+                  />
+                }
+              />
+
+
+              {/* ==================================================
+                  ADMIN SHIPMENTS
+                  /admin/shipments
+              ================================================== */}
+
+              <Route
+                path="shipments"
+                element={
+                  <AdminSectionPlaceholder
+                    title="Shipments"
+                  />
+                }
+              />
+
+
+              {/* ==================================================
+                  ADMIN QUOTATIONS
+                  /admin/quotations
+              ================================================== */}
+
+              <Route
+                path="quotations"
+                element={
+                  <AdminSectionPlaceholder
+                    title="Quotations"
+                  />
+                }
+              />
+
+
+              {/* ==================================================
+                  ADMIN INVOICES
+                  /admin/invoices
+              ================================================== */}
+
+              <Route
+                path="invoices"
+                element={
+                  <AdminSectionPlaceholder
+                    title="Invoices"
+                  />
+                }
+              />
+
+
+              {/* ==================================================
+                  ADMIN RETURNS & REFUNDS
+                  /admin/returns
+              ================================================== */}
+
+              <Route
+                path="returns"
+                element={
+                  <AdminSectionPlaceholder
+                    title="Returns & Refunds"
+                  />
+                }
+              />
+
+
+              {/* ==================================================
+                  ADMIN COUPONS
+                  /admin/coupons
+              ================================================== */}
+
+              <Route
+                path="coupons"
+                element={
+                  <AdminSectionPlaceholder
+                    title="Coupons"
+                  />
+                }
+              />
+
+
+              {/* ==================================================
+                  ADMIN SETTINGS
+                  /admin/settings
+              ================================================== */}
+
+              <Route
+                path="settings"
+                element={
+                  <AdminSectionPlaceholder
+                    title="Settings"
+                  />
+                }
+              />
+
+
+              {/* ==================================================
+                  UNKNOWN ADMIN SECTION
+              ================================================== */}
+
+              <Route
+                path="*"
+                element={
+                  <AdminSectionPlaceholder
+                    title="Admin Section"
+                  />
+                }
+              />
+
+            </Route>
 
 
             {/* ==================================================
-                404
+                GLOBAL 404
             ================================================== */}
 
             <Route
               path="*"
               element={
-                <NotFoundPage />
+                <>
+                  <Navbar />
+                  <NotFoundPage />
+                  <Footer />
+                </>
               }
             />
 
           </Routes>
-
-
-          {/* ==================================================
-              PUBLIC FOOTER
-          ================================================== */}
-
-          <Footer />
 
         </BrowserRouter>
 

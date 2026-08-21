@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 
 import {
   FaBars,
@@ -1156,13 +1157,9 @@ function AdminDashboard() {
             </button>
 
 
-            <button
-              type="button"
-              onClick={() =>
-                toast.info(
-                  'Orders section will be connected next.'
-                )
-              }
+            <Link
+              to="/admin/orders"
+              onClick={() => setSidebarOpen(false)}
               className="
                 flex
                 w-full
@@ -1180,7 +1177,7 @@ function AdminDashboard() {
             >
               <FaClipboardList />
               Orders
-            </button>
+            </Link>
 
 
             <button
@@ -2520,22 +2517,51 @@ function AdminDashboard() {
                   action={
                     <div
                       className="
-                        hidden
+                        flex
                         items-center
                         gap-2
-                        rounded-lg
-                        bg-slate-50
-                        px-3
-                        py-2
-                        text-xs
-                        text-slate-500
-                        sm:flex
                       "
                     >
-                      <FaClipboardList />
-                      {recentOrders.length}
-                      {' '}
-                      recent
+                      <div
+                        className="
+                          hidden
+                          items-center
+                          gap-2
+                          rounded-lg
+                          bg-slate-50
+                          px-3
+                          py-2
+                          text-xs
+                          text-slate-500
+                          sm:flex
+                        "
+                      >
+                        <FaClipboardList />
+                        {recentOrders.length}
+                        {' '}
+                        recent
+                      </div>
+
+                      <Link
+                        to="/admin/orders"
+                        className="
+                          inline-flex
+                          items-center
+                          gap-2
+                          rounded-lg
+                          bg-teal-50
+                          px-3
+                          py-2
+                          text-xs
+                          font-semibold
+                          text-teal-700
+                          transition
+                          hover:bg-teal-100
+                        "
+                      >
+                        View All
+                        <FaChevronRight className="text-[10px]" />
+                      </Link>
                     </div>
                   }
                 />
@@ -2719,7 +2745,8 @@ function AdminDashboard() {
                           return (
                             <tr
                               key={
-                                order?._id
+                                order?._id ||
+                                order?.id
                               }
                               className="
                                 border-b
