@@ -12,6 +12,15 @@ const bulkOrderUpload =
     '../middleware/bulkOrderUploadMiddleware'
   );
 
+// Pehle yahan 'protect' nahi tha — koi bhi bina login
+// ke bulk order file upload/parse kar sakta tha.
+// Yeh feature customer ke liye hai, isliye login zaroori hai.
+const {
+  protect,
+} = require(
+  '../middleware/authMiddleware'
+);
+
 
 const router =
   express.Router();
@@ -24,6 +33,8 @@ const router =
 router.post(
 
   '/upload',
+
+  protect,
 
   bulkOrderUpload.single(
     'file'

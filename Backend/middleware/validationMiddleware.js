@@ -76,14 +76,23 @@ const validateRegister = [
   body('password')
     .isString()
     .isLength({
-      min: 8,
+      // Controller (authController.js) bhi 6 enforce karta hai,
+      // isliye yahan bhi 6 rakha hai taaki dono jagah match ho
+      // aur genuine users register hote waqt block na ho.
+      min: 6,
       max: 128,
     })
     .withMessage(
-      'Password must be between 8 and 128 characters.'
+      'Password must be at least 6 characters.'
     ),
 
+  // Optional: authController.js mein bhi ye optional hain,
+  // isliye validation ko bhi optional rakha hai warna
+  // bina phone/businessName ke register fail ho jayega.
   body('phone')
+    .optional({
+      values: 'falsy',
+    })
     .trim()
     .isLength({
       min: 10,
@@ -94,6 +103,9 @@ const validateRegister = [
     ),
 
   body('businessName')
+    .optional({
+      values: 'falsy',
+    })
     .trim()
     .isLength({
       min: 2,

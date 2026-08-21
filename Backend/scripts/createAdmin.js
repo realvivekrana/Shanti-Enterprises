@@ -4,8 +4,13 @@ require('dotenv').config();
 
 const User = require('../models/User');
 
-const ADMIN_EMAIL = 'Admin@test.com';
-const ADMIN_PASSWORD = '123456';
+// Pehle yahan email/password directly code mein
+// hardcoded the ("Admin@test.com" / "123456") — koi bhi
+// jo iss repo/code ko dekh sakta tha, admin password jaanta tha.
+// Ab dono .env se aayenge, taaki real/production admin
+// credentials kabhi code mein na dikhein.
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
 const createAdmin = async () => {
   try {
@@ -16,6 +21,25 @@ const createAdmin = async () => {
     if (!process.env.MONGO_URI) {
       throw new Error(
         'MONGO_URI is missing from Backend/.env'
+      );
+    }
+
+    // ================================================
+    // CHECK ADMIN CREDENTIALS
+    // ================================================
+
+    if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
+      throw new Error(
+        'ADMIN_EMAIL and ADMIN_PASSWORD are missing from Backend/.env. ' +
+        'Add these before running this script, e.g.\n' +
+        'ADMIN_EMAIL=admin@yourdomain.com\n' +
+        'ADMIN_PASSWORD=SomeStrongPassword123'
+      );
+    }
+
+    if (ADMIN_PASSWORD.length < 8) {
+      throw new Error(
+        'ADMIN_PASSWORD is too weak. Use at least 8 characters.'
       );
     }
 
@@ -126,10 +150,10 @@ const createAdmin = async () => {
       '======================================'
     );
     console.log(
-      'Email    : Admin@test.com'
+      `Email    : ${ADMIN_EMAIL}`
     );
     console.log(
-      'Password : 123456'
+      'Password : (jo .env mein set kiya tha)'
     );
     console.log(
       'Role     : admin'
