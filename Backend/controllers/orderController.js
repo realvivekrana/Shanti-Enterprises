@@ -332,31 +332,56 @@ const createOrder =
 
 
       // ==================================================
-      // EMAIL
+      // SEND ORDER CONFIRMATION EMAIL
       // ==================================================
 
       try {
 
-        await sendEmail({
+        const emailResult =
+          await sendEmail({
 
-          to:
-            req.user.email,
+            to:
+              req.user.email,
 
-          subject:
-            'Order Confirmation - Shanti Enterprises',
+            subject:
+              `Order Confirmed #${createdOrder._id} - Shanti Enterprises`,
 
-          html:
-            orderConfirmationTemplate(
-              createdOrder,
-              req.user.name
-            ),
+            text:
+              `Hi ${req.user.name || 'Customer'}, your order ${createdOrder._id} has been confirmed. Your total order value is ₹${Number(createdOrder.totalPrice || 0).toLocaleString('en-IN')}. Thank you for shopping with Shanti Enterprises.`,
 
-        });
+            html:
+              orderConfirmationTemplate(
+                createdOrder,
+                req.user.name
+              ),
+
+          });
+
+
+        if (
+          !emailResult ||
+          emailResult.success === false
+        ) {
+
+          console.error(
+            'Order confirmation email was not sent:',
+            emailResult?.error ||
+            'Unknown email error'
+          );
+
+        } else {
+
+          console.log(
+            `Order confirmation email sent to ${req.user.email}`
+          );
+
+        }
 
       } catch (error) {
 
+        // Email failure must NOT cancel the order.
         console.error(
-          'Order email failed:',
+          'Order confirmation email failed:',
           error.message
         );
 
@@ -597,145 +622,55 @@ const updateOrderToPaid =
 
 
       // ==================================================
-      // CAPTURED CHECK
+      // PAYMENT STATUS
       // ==================================================
 
       if (
-        razorpayPayment?.status !==
+        razorpayPayment.status !==
         'captured'
       ) {
 
         throw new ApiError(
           400,
-          'Razorpay payment is not captured'
+          `Payment is not captured. Current status: ${razorpayPayment.status}`
         );
 
       }
 
 
       // ==================================================
-      // GET RAZORPAY ORDER ID
-      // ==================================================
-
-      const razorpayOrderId =
-        razorpayPayment?.order_id;
-
-
-      if (
-        !razorpayOrderId
-      ) {
-
-        throw new ApiError(
-          400,
-          'Razorpay order ID was not found for this payment'
-        );
-
-      }
-
-
-      // ==================================================
-      // FETCH RAZORPAY ORDER
-      // ==================================================
-
-      let razorpayOrder;
-
-
-      try {
-
-        razorpayOrder =
-          await razorpay.orders.fetch(
-            razorpayOrderId
-          );
-
-      } catch (error) {
-
-        throw new ApiError(
-          400,
-          'Unable to verify Razorpay order'
-        );
-
-      }
-
-
-      // ==================================================
-      // PAYMENT CUSTOMER CHECK
-      // ==================================================
-
-      const paymentCustomerId =
-        razorpayOrder?.notes?.customerId;
-
-
-      if (
-        !paymentCustomerId ||
-        paymentCustomerId !==
-          order.user.toString()
-      ) {
-
-        throw new ApiError(
-          403,
-          'This payment does not belong to this order customer'
-        );
-
-      }
-
-
-      // ==================================================
-      // PAYMENT AMOUNT CHECK
+      // VERIFY PAYMENT AMOUNT
       // ==================================================
 
       const expectedAmount =
         Math.round(
-
           Number(
             order.totalPrice
-          ) *
-          100
+          ) * 100
+        );
 
+
+      const paidAmount =
+        Number(
+          razorpayPayment.amount
         );
 
 
       if (
-        Number(
-          razorpayPayment.amount
-        ) !==
+        paidAmount !==
         expectedAmount
       ) {
 
         throw new ApiError(
           400,
-          'Payment amount does not match the order total'
+          'Payment amount does not match order amount'
         );
 
       }
 
 
       // ==================================================
-      // ALREADY PAID
-      // ==================================================
-
-      if (
-        order.isPaid
-      ) {
-
-        return res.status(200).json(
-
-          new ApiResponse(
-
-            200,
-
-            order,
-
-            'Order is already marked as paid'
-
-          )
-
-        );
-
-      }
-
-
-      // ==================================================
-      // MARK PAID
+      // UPDATE PAYMENT
       // ==================================================
 
       order.isPaid =

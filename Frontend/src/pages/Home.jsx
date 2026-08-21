@@ -280,7 +280,7 @@ const ProductCard = ({
   return (
 
     <Link
-      to={`/product/${product._id}`}
+      to={`/products/${product._id}`}
       className="
         group
         bg-white
