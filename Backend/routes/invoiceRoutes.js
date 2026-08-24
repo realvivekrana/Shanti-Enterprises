@@ -1,36 +1,71 @@
-const express = require('express');
+// ============================================================
+// SHANTI ENTERPRISES
+// Invoice Routes
+// Phase 5 - Operations
+// ============================================================
 
-const router =
-  express.Router();
-
-const {
-  getOrCreateInvoice,
-  downloadInvoicePDF,
-} = require('../controllers/invoiceController');
+const express = require("express");
 
 const {
+  body,
+} = require("express-validator");
+
+const {
+  createInvoice,
+  getMyInvoice,
+  getInvoiceByOrder,
+  getMyInvoices,
+} = require("../controllers/invoiceController");
+
+const {
   protect,
-} = require('../middleware/authMiddleware');
+} = require("../middleware/authMiddleware");
 
-// ==============================
-// GET / CREATE INVOICE
-// ==============================
+const validate = require("../middleware/validate");
 
+const router = express.Router();
+
+// ============================================================
+// VALIDATION
+// ============================================================
+
+const createInvoiceValidation = [
+  body("orderId")
+    .notEmpty()
+    .withMessage(
+      "Order ID is required"
+    ),
+];
+
+// ============================================================
+// PROTECTED ROUTES
+// ============================================================
+
+router.use(protect);
+
+// GET /api/invoices
 router.get(
-  '/:orderId',
-  protect,
-  getOrCreateInvoice
+  "/",
+  getMyInvoices
 );
 
-// ==============================
-// DOWNLOAD PDF
-// ==============================
-
+// GET /api/invoices/order/:orderId
 router.get(
-  '/:orderId/download',
-  protect,
-  downloadInvoicePDF
+  "/order/:orderId",
+  getInvoiceByOrder
 );
 
-module.exports =
-  router;
+// GET /api/invoices/:id
+router.get(
+  "/:id",
+  getMyInvoice
+);
+
+// POST /api/invoices
+router.post(
+  "/",
+  validate(createInvoiceValidation),
+  createInvoice
+);
+
+module.exports = router;

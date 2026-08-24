@@ -1,319 +1,168 @@
-const asyncHandler =
-  require('../utils/asyncHandler');
+// ============================================================
+// SHANTI ENTERPRISES
+// Notification Controller
+// Phase 3 - Customer Portal
+// ============================================================
 
-const ApiError =
-  require('../utils/ApiError');
+const Notification = require("../models/Notification");
 
-const ApiResponse =
-  require('../utils/ApiResponse');
-
-const Notification =
-  require('../models/Notification');
-
-
-// ======================================================
+// ============================================================
 // GET MY NOTIFICATIONS
-// ======================================================
+// ============================================================
 
-const getMyNotifications =
-  asyncHandler(
-    async (req, res) => {
+const getMyNotifications = async (
+  req,
+  res,
+  next
+) => {
+  try {
+    const {
+      page = 1,
+      limit = 20,
+      unreadOnly = "false",
+    } = req.query;
 
-      const notifications =
-        await Notification.find({
+    const currentPage = Math.max(
+      Number(page) || 1,
+      1
+    );
 
-          user:
-            req.user._id,
+    const perPage = Math.min(
+      Math.max(Number(limit) || 20, 1),
+      50
+    );
 
+    const filter = {
+      user: req.user.id,
+    };
+
+    if (unreadOnly === "true") {
+      filter.isRead = false;
+    }
+
+    const skip =
+      (currentPage - 1) * perPage;
+
+    const [
+      notifications,
+      totalNotifications,
+      unreadCount,
+    ] = await Promise.all([
+      Notification.find(filter)
+        .sort({
+          createdAt: -1,
         })
-
-          .populate(
-            'order',
-            '_id orderNumber orderStatus'
-          )
-
-          .sort({
-
-            createdAt:
-              -1,
-
-          })
-
-          .limit(100);
-
-
-      res.status(200).json(
-
-        new ApiResponse(
-
-          200,
-
-          notifications,
-
-          'Notifications fetched successfully'
-
-        )
-
-      );
-
-    }
-  );
-
-
-// ======================================================
-// GET UNREAD COUNT
-// ======================================================
-
-const getUnreadCount =
-  asyncHandler(
-    async (req, res) => {
-
-      const count =
-        await Notification.countDocuments({
-
-          user:
-            req.user._id,
-
-          read:
-            false,
-
-        });
-
-
-      res.status(200).json(
-
-        new ApiResponse(
-
-          200,
-
-          {
-
-            count,
-
-          },
-
-          'Unread notification count fetched'
-
-        )
-
-      );
-
-    }
-  );
-
-
-// ======================================================
-// MARK ONE AS READ
-// ======================================================
-
-const markNotificationAsRead =
-  asyncHandler(
-    async (req, res) => {
-
-      const notification =
-        await Notification.findOne({
-
-          _id:
-            req.params.id,
-
-          user:
-            req.user._id,
-
-        });
-
-
-      if (
-        !notification
-      ) {
-
-        throw new ApiError(
-          404,
-          'Notification not found'
-        );
-
-      }
-
-
-      notification.read =
-        true;
-
-
-      notification.readAt =
-        new Date();
-
-
-      await notification.save();
-
-
-      res.status(200).json(
-
-        new ApiResponse(
-
-          200,
-
-          notification,
-
-          'Notification marked as read'
-
-        )
-
-      );
-
-    }
-  );
-
-
-// ======================================================
-// MARK ALL AS READ
-// ======================================================
-
-const markAllNotificationsAsRead =
-  asyncHandler(
-    async (req, res) => {
-
-      await Notification.updateMany(
-
-        {
-
-          user:
-            req.user._id,
-
-          read:
-            false,
-
-        },
-
-        {
-
-          $set: {
-
-            read:
-              true,
-
-            readAt:
-              new Date(),
-
-          },
-
-        }
-
-      );
-
-
-      res.status(200).json(
-
-        new ApiResponse(
-
-          200,
-
-          null,
-
-          'All notifications marked as read'
-
-        )
-
-      );
-
-    }
-  );
-
-
-// ======================================================
-// DELETE ONE NOTIFICATION
-// ======================================================
-
-const deleteNotification =
-  asyncHandler(
-    async (req, res) => {
-
-      const notification =
-        await Notification.findOneAndDelete({
-
-          _id:
-            req.params.id,
-
-          user:
-            req.user._id,
-
-        });
-
-
-      if (
-        !notification
-      ) {
-
-        throw new ApiError(
-          404,
-          'Notification not found'
-        );
-
-      }
-
-
-      res.status(200).json(
-
-        new ApiResponse(
-
-          200,
-
-          null,
-
-          'Notification deleted successfully'
-
-        )
-
-      );
-
-    }
-  );
-
-
-// ======================================================
-// DELETE ALL NOTIFICATIONS
-// ======================================================
-
-const deleteAllNotifications =
-  asyncHandler(
-    async (req, res) => {
-
-      await Notification.deleteMany({
-
-        user:
-          req.user._id,
-
+        .skip(skip)
+        .limit(perPage),
+
+      Notification.countDocuments(filter),
+
+      Notification.countDocuments({
+        user: req.user.id,
+        isRead: false,
+      }),
+    ]);
+
+    const totalPages = Math.ceil(
+      totalNotifications / perPage
+    );
+
+    res.status(200).json({
+      success: true,
+
+      count: notifications.length,
+
+      unreadCount,
+
+      pagination: {
+        page: currentPage,
+        limit: perPage,
+        totalNotifications,
+        totalPages,
+      },
+
+      notifications,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ============================================================
+// MARK ONE NOTIFICATION AS READ
+// ============================================================
+
+const markNotificationAsRead = async (
+  req,
+  res,
+  next
+) => {
+  try {
+    const notification =
+      await Notification.findOne({
+        _id: req.params.id,
+        user: req.user.id,
       });
 
-
-      res.status(200).json(
-
-        new ApiResponse(
-
-          200,
-
-          null,
-
-          'All notifications deleted successfully'
-
-        )
-
+    if (!notification) {
+      const error = new Error(
+        "Notification not found"
       );
 
-    }
-  );
+      error.statusCode = 404;
 
+      return next(error);
+    }
+
+    notification.isRead = true;
+
+    await notification.save();
+
+    res.status(200).json({
+      success: true,
+      message:
+        "Notification marked as read",
+      notification,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ============================================================
+// MARK ALL AS READ
+// ============================================================
+
+const markAllNotificationsAsRead = async (
+  req,
+  res,
+  next
+) => {
+  try {
+    await Notification.updateMany(
+      {
+        user: req.user.id,
+        isRead: false,
+      },
+      {
+        $set: {
+          isRead: true,
+        },
+      }
+    );
+
+    res.status(200).json({
+      success: true,
+      message:
+        "All notifications marked as read",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
 module.exports = {
-
   getMyNotifications,
-
-  getUnreadCount,
-
   markNotificationAsRead,
-
   markAllNotificationsAsRead,
-
-  deleteNotification,
-
-  deleteAllNotifications,
-
 };

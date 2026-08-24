@@ -1,61 +1,52 @@
-const express =
-  require('express');
+// ============================================================
+// SHANTI ENTERPRISES
+// Wishlist Routes
+// Phase 3 - Customer Portal
+// ============================================================
 
-const router =
-  express.Router();
+const express = require("express");
 
 const {
-  getMyWishlist,
+  getWishlist,
   addToWishlist,
   removeFromWishlist,
-  checkWishlist,
-} =
-  require('../controllers/wishlistController');
+  clearWishlist,
+} = require("../controllers/wishlistController");
 
 const {
   protect,
-} =
-  require('../middleware/authMiddleware');
+} = require("../middleware/authMiddleware");
 
-// ==============================
-// GET MY WISHLIST
-// ==============================
+const router = express.Router();
 
+// ============================================================
+// PROTECTED ROUTES
+// ============================================================
+
+router.use(protect);
+
+// GET /api/wishlist
 router.get(
-  '/',
-  protect,
-  getMyWishlist
+  "/",
+  getWishlist
 );
 
-// ==============================
-// CHECK PRODUCT
-// ==============================
-
-router.get(
-  '/check/:productId',
-  protect,
-  checkWishlist
-);
-
-// ==============================
-// ADD PRODUCT
-// ==============================
-
+// POST /api/wishlist
 router.post(
-  '/:productId',
-  protect,
+  "/",
   addToWishlist
 );
 
-// ==============================
-// REMOVE PRODUCT
-// ==============================
-
+// DELETE /api/wishlist/:productId
 router.delete(
-  '/:productId',
-  protect,
+  "/:productId",
   removeFromWishlist
 );
 
-module.exports =
-  router;
+// DELETE /api/wishlist
+router.delete(
+  "/",
+  clearWishlist
+);
+
+module.exports = router;

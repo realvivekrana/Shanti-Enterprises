@@ -1,1276 +1,382 @@
-const crypto = require('crypto');
+// ============================================================
+// SHANTI ENTERPRISES
+// Payment Controller
+// Phase 5 - Operations
+// ============================================================
 
-const asyncHandler =
-  require('../utils/asyncHandler');
+const crypto = require("crypto");
 
-const ApiError =
-  require('../utils/ApiError');
+const Payment = require("../models/Payment");
+const Order = require("../models/Order");
 
-const ApiResponse =
-  require('../utils/ApiResponse');
+// ============================================================
+// RAZORPAY
+// ============================================================
 
-const razorpay =
-  require('../config/razorpay');
+let Razorpay;
 
-const Payment =
-  require('../models/Payment');
+try {
+  Razorpay = require("razorpay");
+} catch (error) {
+  Razorpay = null;
+}
 
-const CustomerCredit =
-  require('../models/CustomerCredit');
-
-const CreditTransaction =
-  require('../models/CreditTransaction');
-
-const Order =
-  require('../models/Order');
-
-// ==============================
+// ============================================================
 // CREATE RAZORPAY ORDER
-// ==============================
+// ============================================================
 
-const createOrder =
-  asyncHandler(async (req, res) => {
-
-    const {
-      amount,
-    } = req.body;
-
-
-    const paymentAmount =
-      Number(amount);
-
-
-    if (
-      !Number.isFinite(
-        paymentAmount
-      ) ||
-      paymentAmount <= 0
-    ) {
-
-      throw new ApiError(
-        400,
-        'Valid payment amount is required'
+const createPaymentOrder = async (
+  req,
+  res,
+  next
+) => {
+  try {
+    if (!Razorpay) {
+      const error = new Error(
+        "Razorpay package is not installed"
       );
 
+      error.statusCode = 500;
+
+      return next(error);
     }
 
-
-    // Razorpay amount must be in paise
-
-    const amountInPaise =
-      Math.round(
-        paymentAmount * 100
+    if (
+      !process.env.RAZORPAY_KEY_ID ||
+      !process.env.RAZORPAY_KEY_SECRET
+    ) {
+      const error = new Error(
+        "Razorpay configuration is missing"
       );
 
+      error.statusCode = 500;
 
-    const options = {
+      return next(error);
+    }
 
-      amount:
-        amountInPaise,
+    const {
+      orderId,
+    } = req.body;
 
-      currency:
-        'INR',
+    if (!orderId) {
+      const error = new Error(
+        "Order ID is required"
+      );
 
-      receipt:
-        `receipt_${Date.now()}`,
+      error.statusCode = 400;
 
-      notes: {
+      return next(error);
+    }
 
-        customerId:
-          req.user._id.toString(),
+    const order =
+      await Order.findOne({
+        _id: orderId,
+        user: req.user.id,
+      });
 
-      },
+    if (!order) {
+      const error = new Error(
+        "Order not found"
+      );
 
-    };
+      error.statusCode = 404;
 
+      return next(error);
+    }
+
+    if (
+      order.paymentStatus === "paid"
+    ) {
+      const error = new Error(
+        "Order has already been paid"
+      );
+
+      error.statusCode = 400;
+
+      return next(error);
+    }
+
+    const amount = Number(
+      order.totalAmount
+    );
+
+    if (
+      !Number.isFinite(amount) ||
+      amount <= 0
+    ) {
+      const error = new Error(
+        "Invalid order amount"
+      );
+
+      error.statusCode = 400;
+
+      return next(error);
+    }
+
+    const razorpay =
+      new Razorpay({
+        key_id:
+          process.env.RAZORPAY_KEY_ID,
+
+        key_secret:
+          process.env.RAZORPAY_KEY_SECRET,
+      });
 
     const razorpayOrder =
-      await razorpay.orders.create(
-        options
-      );
+      await razorpay.orders.create({
+        amount: Math.round(
+          amount * 100
+        ),
 
+        currency: "INR",
 
-    res.status(200).json({
+        receipt:
+          `order_${order._id}`,
 
-      success:
-        true,
+        notes: {
+          orderId:
+            order._id.toString(),
 
-      id:
-        razorpayOrder.id,
+          userId:
+            req.user.id.toString(),
+        },
+      });
 
-      amount:
-        razorpayOrder.amount,
+    await Payment.findOneAndUpdate(
+      {
+        order: order._id,
+      },
+      {
+        $set: {
+          user: req.user.id,
 
-      currency:
-        razorpayOrder.currency,
+          amount,
 
-      receipt:
-        razorpayOrder.receipt,
+          currency: "INR",
 
+          provider: "razorpay",
+
+          razorpayOrderId:
+            razorpayOrder.id,
+
+          status: "created",
+        },
+      },
+      {
+        upsert: true,
+
+        new: true,
+
+        setDefaultsOnInsert: true,
+      }
+    );
+
+    res.status(201).json({
+      success: true,
+
+      message:
+        "Payment order created successfully",
+
+      payment: {
+        razorpayOrderId:
+          razorpayOrder.id,
+
+        amount,
+
+        amountInPaise:
+          razorpayOrder.amount,
+
+        currency:
+          razorpayOrder.currency,
+
+        keyId:
+          process.env.RAZORPAY_KEY_ID,
+      },
     });
+  } catch (error) {
+    next(error);
+  }
+};
 
-  });
-
-
-// ==============================
+// ============================================================
 // VERIFY RAZORPAY PAYMENT
-// ==============================
+// ============================================================
 
-const verifyPayment =
-  asyncHandler(async (req, res) => {
-
+const verifyPayment = async (
+  req,
+  res,
+  next
+) => {
+  try {
     const {
-
-      razorpay_order_id,
-
-      razorpay_payment_id,
-
-      razorpay_signature,
-
+      razorpayOrderId,
+      razorpayPaymentId,
+      razorpaySignature,
     } = req.body;
 
-
     if (
-      !razorpay_order_id ||
-      !razorpay_payment_id ||
-      !razorpay_signature
+      !razorpayOrderId ||
+      !razorpayPaymentId ||
+      !razorpaySignature
     ) {
-
-      throw new ApiError(
-        400,
-        'Incomplete Razorpay payment details'
+      const error = new Error(
+        "Payment verification data is incomplete"
       );
 
+      error.statusCode = 400;
+
+      return next(error);
     }
 
+    const payment =
+      await Payment.findOne({
+        razorpayOrderId,
+        user: req.user.id,
+      });
 
-    // ==============================
-    // CREATE SIGNATURE
-    // ==============================
+    if (!payment) {
+      const error = new Error(
+        "Payment record not found"
+      );
+
+      error.statusCode = 404;
+
+      return next(error);
+    }
 
     const generatedSignature =
       crypto
         .createHmac(
-          'sha256',
+          "sha256",
           process.env.RAZORPAY_KEY_SECRET
         )
         .update(
-          `${razorpay_order_id}|${razorpay_payment_id}`
+          `${razorpayOrderId}|${razorpayPaymentId}`
         )
-        .digest('hex');
-
-
-    // ==============================
-    // TIMING-SAFE SIGNATURE CHECK
-    // ==============================
-
-    let signaturesMatch =
-      false;
-
-
-    try {
-
-      const expectedBuffer =
-        Buffer.from(
-          generatedSignature,
-          'hex'
-        );
-
-
-      const receivedBuffer =
-        Buffer.from(
-          razorpay_signature,
-          'hex'
-        );
-
-
-      if (
-        expectedBuffer.length ===
-        receivedBuffer.length
-      ) {
-
-        signaturesMatch =
-          crypto.timingSafeEqual(
-            expectedBuffer,
-            receivedBuffer
-          );
-
-      }
-
-    } catch (error) {
-
-      signaturesMatch =
-        false;
-
-    }
-
+        .digest("hex");
 
     if (
-      !signaturesMatch
+      generatedSignature !==
+      razorpaySignature
     ) {
+      payment.status = "failed";
 
-      throw new ApiError(
-        400,
-        'Payment verification failed'
+      payment.failedAt =
+        new Date();
+
+      payment.failureReason =
+        "Invalid payment signature";
+
+      await payment.save();
+
+      const error = new Error(
+        "Payment verification failed"
       );
 
+      error.statusCode = 400;
+
+      return next(error);
     }
 
+    payment.razorpayPaymentId =
+      razorpayPaymentId;
 
-    // ==============================
-    // VERIFY RAZORPAY ORDER OWNER
-    // ==============================
+    payment.razorpaySignature =
+      razorpaySignature;
 
-    let razorpayOrder;
+    payment.status = "paid";
 
+    payment.paidAt =
+      new Date();
 
-    try {
+    payment.failureReason = "";
 
-      razorpayOrder =
-        await razorpay.orders.fetch(
-          razorpay_order_id
-        );
+    await payment.save();
 
-    } catch (error) {
+    const order =
+      await Order.findOne({
+        _id: payment.order,
+        user: req.user.id,
+      });
 
-      throw new ApiError(
-        400,
-        'Unable to verify Razorpay order'
-      );
+    if (order) {
+      order.paymentStatus = "paid";
 
+      await order.save();
     }
-
-
-    const customerId =
-      razorpayOrder?.notes?.customerId;
-
-
-    if (
-      !customerId ||
-      customerId !==
-        req.user._id.toString()
-    ) {
-
-      throw new ApiError(
-        403,
-        'This payment does not belong to the authenticated customer'
-      );
-
-    }
-
-
-    // ==============================
-    // VERIFY PAYMENT FROM RAZORPAY
-    // ==============================
-
-    let razorpayPayment;
-
-
-    try {
-
-      razorpayPayment =
-        await razorpay.payments.fetch(
-          razorpay_payment_id
-        );
-
-    } catch (error) {
-
-      throw new ApiError(
-        400,
-        'Unable to verify Razorpay payment'
-      );
-
-    }
-
-
-    // ==============================
-    // PAYMENT → ORDER CHECK
-    // ==============================
-
-    if (
-      razorpayPayment?.order_id !==
-      razorpay_order_id
-    ) {
-
-      throw new ApiError(
-        400,
-        'Payment does not belong to the Razorpay order'
-      );
-
-    }
-
-
-    // ==============================
-    // CAPTURED CHECK
-    // ==============================
-
-    if (
-      razorpayPayment?.status !==
-      'captured'
-    ) {
-
-      throw new ApiError(
-        400,
-        `Payment is not captured. Current status: ${
-          razorpayPayment?.status ||
-          'unknown'
-        }`
-      );
-
-    }
-
-
-    // ==============================
-    // SUCCESS
-    // ==============================
 
     res.status(200).json({
-
-      success:
-        true,
+      success: true,
 
       message:
-        'Payment verified successfully',
+        "Payment verified successfully",
 
-      razorpay_order_id,
+      payment: {
+        id: payment._id,
 
-      razorpay_payment_id,
+        orderId:
+          payment.order,
 
-      amount:
-        razorpayPayment.amount,
+        razorpayOrderId:
+          payment.razorpayOrderId,
 
-      currency:
-        razorpayPayment.currency,
-
-      status:
-        razorpayPayment.status,
-
-    });
-
-  });
-
-
-// ==============================
-// CREATE PAYMENT RECORD
-// ==============================
-
-const createPayment =
-  asyncHandler(async (req, res) => {
-
-    const {
-
-      orderId,
-
-      amount,
-
-      method,
-
-      gateway,
-
-      transactionId,
-
-    } = req.body;
-
-
-    if (!orderId) {
-
-      throw new ApiError(
-        400,
-        'Order ID is required'
-      );
-
-    }
-
-
-    const order =
-      await Order.findById(
-        orderId
-      );
-
-
-    if (!order) {
-
-      throw new ApiError(
-        404,
-        'Order not found'
-      );
-
-    }
-
-
-    // ==============================
-    // CUSTOMER CHECK
-    // ==============================
-
-    if (
-      order.user.toString() !==
-      req.user._id.toString()
-    ) {
-
-      throw new ApiError(
-        403,
-        'You are not authorized for this order'
-      );
-
-    }
-
-
-    // ==============================
-    // AMOUNT
-    // ==============================
-
-    const paymentAmount =
-      Number(amount);
-
-
-    if (
-      !Number.isFinite(
-        paymentAmount
-      ) ||
-      paymentAmount <= 0
-    ) {
-
-      throw new ApiError(
-        400,
-        'Payment amount must be greater than zero'
-      );
-
-    }
-
-
-    // Payment cannot exceed order total
-
-    if (
-      paymentAmount >
-      Number(order.totalPrice)
-    ) {
-
-      throw new ApiError(
-        400,
-        'Payment amount cannot exceed the order total'
-      );
-
-    }
-
-
-    // Already paid order
-
-    if (
-      order.isPaid
-    ) {
-
-      throw new ApiError(
-        400,
-        'This order is already paid'
-      );
-
-    }
-
-
-    // ==============================
-    // PAYMENT METHOD
-    // ==============================
-
-    const allowedMethods = [
-
-      'upi',
-
-      'card',
-
-      'netbanking',
-
-      'wallet',
-
-      'cod',
-
-      'partial',
-
-      'credit',
-
-      'razorpay',
-
-    ];
-
-
-    if (
-      !allowedMethods.includes(
-        method
-      )
-    ) {
-
-      throw new ApiError(
-        400,
-        'Invalid payment method'
-      );
-
-    }
-
-
-    // ==============================
-    // CREATE PAYMENT
-    // ==============================
-
-    const payment =
-      await Payment.create({
-
-        customer:
-          req.user._id,
-
-        order:
-          order._id,
-
-        amount:
-          paymentAmount,
-
-        method,
-
-        gateway:
-          gateway ||
-          (
-            method === 'credit'
-              ? 'credit'
-              : method === 'cod'
-                ? 'cod'
-                : 'razorpay'
-          ),
-
-        transactionId:
-          transactionId ||
-          null,
+        razorpayPaymentId:
+          payment.razorpayPaymentId,
 
         status:
-          method === 'cod'
-            ? 'pending'
-            : 'processing',
-
-      });
-
-
-    res.status(201).json(
-
-      new ApiResponse(
-
-        201,
-
-        payment,
-
-        'Payment record created successfully'
-
-      )
-
-    );
-
-  });
-
-
-// ==============================
-// USE CREDIT
-// ==============================
-
-const useCredit =
-  asyncHandler(async (req, res) => {
-
-    const {
-
-      orderId,
-
-      amount,
-
-    } = req.body;
-
-
-    if (!orderId) {
-
-      throw new ApiError(
-        400,
-        'Order ID is required'
-      );
-
-    }
-
-
-    const creditAmount =
-      Number(amount);
-
-
-    if (
-      !Number.isFinite(
-        creditAmount
-      ) ||
-      creditAmount <= 0
-    ) {
-
-      throw new ApiError(
-        400,
-        'Credit amount must be greater than zero'
-      );
-
-    }
-
-
-    // ==============================
-    // GET CREDIT ACCOUNT
-    // ==============================
-
-    const credit =
-      await CustomerCredit.findOne({
-
-        customer:
-          req.user._id,
-
-      });
-
-
-    if (!credit) {
-
-      throw new ApiError(
-        404,
-        'Credit account not found'
-      );
-
-    }
-
-
-    if (
-      credit.status !==
-      'active'
-    ) {
-
-      throw new ApiError(
-        400,
-        'Your credit account is not active'
-      );
-
-    }
-
-
-    // ==============================
-    // AVAILABLE CREDIT
-    // ==============================
-
-    const availableCredit =
-      Math.max(
-
-        credit.creditLimit -
-          credit.usedCredit,
-
-        0
-
-      );
-
-
-    if (
-      creditAmount >
-      availableCredit
-    ) {
-
-      throw new ApiError(
-        400,
-        `Credit limit exceeded. Available credit: ₹${availableCredit}`
-      );
-
-    }
-
-
-    // ==============================
-    // ORDER
-    // ==============================
-
-    const order =
-      await Order.findById(
-        orderId
-      );
-
-
-    if (!order) {
-
-      throw new ApiError(
-        404,
-        'Order not found'
-      );
-
-    }
-
-
-    if (
-      order.user.toString() !==
-      req.user._id.toString()
-    ) {
-
-      throw new ApiError(
-        403,
-        'You are not authorized for this order'
-      );
-
-    }
-
-
-    // Credit cannot exceed order total
-
-    if (
-      creditAmount >
-      Number(order.totalPrice)
-    ) {
-
-      throw new ApiError(
-        400,
-        'Credit amount cannot exceed the order total'
-      );
-
-    }
-
-
-    if (
-      order.isPaid
-    ) {
-
-      throw new ApiError(
-        400,
-        'This order is already paid'
-      );
-
-    }
-
-
-    // ==============================
-    // UPDATE CREDIT
-    // ==============================
-
-    credit.usedCredit +=
-      creditAmount;
-
-    credit.dueAmount +=
-      creditAmount;
-
-    credit.totalCreditUsed +=
-      creditAmount;
-
-
-    const dueDate =
-      new Date();
-
-
-    dueDate.setDate(
-
-      dueDate.getDate() +
-        credit.creditPeriodDays
-
-    );
-
-
-    await credit.save();
-
-
-    // ==============================
-    // PAYMENT RECORD
-    // ==============================
-
-    const payment =
-      await Payment.create({
-
-        customer:
-          req.user._id,
-
-        order:
-          order._id,
-
-        amount:
-          creditAmount,
-
-        method:
-          'credit',
-
-        gateway:
-          'credit',
-
-        status:
-          'success',
+          payment.status,
 
         paidAt:
-          new Date(),
-
-      });
-
-
-    // ==============================
-    // CREDIT TRANSACTION
-    // ==============================
-
-    await CreditTransaction.create({
-
-      customer:
-        req.user._id,
-
-      order:
-        order._id,
-
-      type:
-        'credit_used',
-
-      amount:
-        creditAmount,
-
-      balanceAfter:
-        credit.usedCredit,
-
-      description:
-        'Credit used for order',
-
-      payment:
-        payment._id,
-
-      dueDate,
-
+          payment.paidAt,
+      },
     });
+  } catch (error) {
+    next(error);
+  }
+};
 
+// ============================================================
+// GET MY PAYMENT
+// ============================================================
 
-    res.status(200).json(
+const getMyPayment = async (
+  req,
+  res,
+  next
+) => {
+  try {
+    const payment =
+      await Payment.findOne({
+        order: req.params.orderId,
 
-      new ApiResponse(
+        user: req.user.id,
+      }).populate(
+        "order",
+        "orderNumber totalAmount paymentStatus status"
+      );
 
-        200,
+    if (!payment) {
+      const error = new Error(
+        "Payment not found"
+      );
 
-        {
+      error.statusCode = 404;
 
-          payment,
-
-          credit,
-
-          dueDate,
-
-        },
-
-        'Credit applied successfully'
-
-      )
-
-    );
-
-  });
-
-
-// ==============================
-// GET MY CREDIT
-// ==============================
-
-const getMyCredit =
-  asyncHandler(async (req, res) => {
-
-    let credit =
-      await CustomerCredit.findOne({
-
-        customer:
-          req.user._id,
-
-      });
-
-
-    if (!credit) {
-
-      credit =
-        await CustomerCredit.create({
-
-          customer:
-            req.user._id,
-
-        });
-
+      return next(error);
     }
 
-
-    const availableCredit =
-      Math.max(
-
-        credit.creditLimit -
-          credit.usedCredit,
-
-        0
-
-      );
-
-
-    res.status(200).json(
-
-      new ApiResponse(
-
-        200,
-
-        {
-
-          ...credit.toObject(),
-
-          availableCredit,
-
-        },
-
-        'Credit information fetched'
-
-      )
-
-    );
-
-  });
-
-
-// ==============================
-// GET CREDIT HISTORY
-// ==============================
-
-const getCreditHistory =
-  asyncHandler(async (req, res) => {
-
-    const history =
-      await CreditTransaction.find({
-
-        customer:
-          req.user._id,
-
-      })
-
-        .populate(
-          'order',
-          '_id'
-        )
-
-        .populate(
-          'payment',
-          'amount method status transactionId'
-        )
-
-        .sort({
-          createdAt: -1,
-        });
-
-
-    res.status(200).json(
-
-      new ApiResponse(
-
-        200,
-
-        history,
-
-        'Credit history fetched'
-
-      )
-
-    );
-
-  });
-
-
-// ==============================
-// ADMIN: UPDATE CREDIT
-// ==============================
-
-const updateCustomerCredit =
-  asyncHandler(async (req, res) => {
-
-    const {
-
-      customerId,
-
-      creditLimit,
-
-      creditPeriodDays,
-
-      status,
-
-    } = req.body;
-
-
-    if (!customerId) {
-
-      throw new ApiError(
-        400,
-        'Customer ID is required'
-      );
-
-    }
-
-
-    const limit =
-      Number(
-        creditLimit
-      );
-
-
-    const period =
-      Number(
-        creditPeriodDays
-      );
-
-
-    if (
-      !Number.isFinite(
-        limit
-      ) ||
-      limit < 0
-    ) {
-
-      throw new ApiError(
-        400,
-        'Invalid credit limit'
-      );
-
-    }
-
-
-    if (
-      !Number.isInteger(
-        period
-      ) ||
-      period < 0
-    ) {
-
-      throw new ApiError(
-        400,
-        'Invalid credit period'
-      );
-
-    }
-
-
-    let credit =
-      await CustomerCredit.findOne({
-
-        customer:
-          customerId,
-
-      });
-
-
-    if (!credit) {
-
-      credit =
-        new CustomerCredit({
-
-          customer:
-            customerId,
-
-        });
-
-    }
-
-
-    credit.creditLimit =
-      limit;
-
-
-    credit.creditPeriodDays =
-      period;
-
-
-    if (status) {
-
-      credit.status =
-        status;
-
-    }
-
-
-    await credit.save();
-
-
-    res.status(200).json(
-
-      new ApiResponse(
-
-        200,
-
-        credit,
-
-        'Customer credit updated successfully'
-
-      )
-
-    );
-
-  });
-
-
-// ==============================
-// ADMIN: RECORD CREDIT PAYMENT
-// ==============================
-
-const recordCreditPayment =
-  asyncHandler(async (req, res) => {
-
-    const {
-
-      customerId,
-
-      orderId,
-
-      amount,
-
-      description,
-
-    } = req.body;
-
-
-    const paymentAmount =
-      Number(amount);
-
-
-    if (
-      !customerId ||
-      !Number.isFinite(
-        paymentAmount
-      ) ||
-      paymentAmount <= 0
-    ) {
-
-      throw new ApiError(
-        400,
-        'Customer ID and valid payment amount are required'
-      );
-
-    }
-
-
-    const credit =
-      await CustomerCredit.findOne({
-
-        customer:
-          customerId,
-
-      });
-
-
-    if (!credit) {
-
-      throw new ApiError(
-        404,
-        'Credit account not found'
-      );
-
-    }
-
-
-    if (
-      paymentAmount >
-      credit.dueAmount
-    ) {
-
-      throw new ApiError(
-        400,
-        'Payment cannot be greater than due amount'
-      );
-
-    }
-
-
-    // ==============================
-    // UPDATE CREDIT
-    // ==============================
-
-    credit.usedCredit =
-      Math.max(
-
-        credit.usedCredit -
-          paymentAmount,
-
-        0
-
-      );
-
-
-    credit.dueAmount =
-      Math.max(
-
-        credit.dueAmount -
-          paymentAmount,
-
-        0
-
-      );
-
-
-    credit.totalPaid +=
-      paymentAmount;
-
-
-    credit.lastPaymentAt =
-      new Date();
-
-
-    await credit.save();
-
-
-    // ==============================
-    // TRANSACTION
-    // ==============================
-
-    const transaction =
-      await CreditTransaction.create({
-
-        customer:
-          customerId,
-
-        order:
-          orderId ||
-          null,
-
-        type:
-          'payment',
-
-        amount:
-          paymentAmount,
-
-        balanceAfter:
-          credit.usedCredit,
-
-        description:
-          description ||
-          'Credit payment received',
-
-      });
-
-
-    res.status(200).json(
-
-      new ApiResponse(
-
-        200,
-
-        {
-
-          credit,
-
-          transaction,
-
-        },
-
-        'Credit payment recorded successfully'
-
-      )
-
-    );
-
-  });
-
-
-// ==============================
-// EXPORT
-// ==============================
+    res.status(200).json({
+      success: true,
+
+      payment,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
 module.exports = {
-
-  createOrder,
-
+  createPaymentOrder,
   verifyPayment,
-
-  createPayment,
-
-  useCredit,
-
-  getMyCredit,
-
-  getCreditHistory,
-
-  updateCustomerCredit,
-
-  recordCreditPayment,
-
+  getMyPayment,
 };

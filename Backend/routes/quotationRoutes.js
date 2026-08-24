@@ -1,110 +1,52 @@
-const express = require('express');
+// ============================================================
+// SHANTI ENTERPRISES
+// Quotation Routes
+// Phase 4 - Wholesale
+// ============================================================
+
+const express = require("express");
 
 const {
-  createQuotation,
   getMyQuotations,
-  getSupplierQuotations,
   getQuotationById,
-  counterOffer,
   acceptQuotation,
   rejectQuotation,
-} = require('../controllers/quotationController');
+} = require("../controllers/quotationController");
 
 const {
   protect,
-  admin,
-  authorizeRoles,
-} = require('../middleware/authMiddleware');
+} = require("../middleware/authMiddleware");
 
-const router =
-  express.Router();
+const router = express.Router();
 
-// ==============================
-// CUSTOMER
-// ==============================
+// ============================================================
+// PROTECTED ROUTES
+// ============================================================
 
-// Get customer's quotations
+router.use(protect);
 
+// GET /api/quotations
 router.get(
-  '/my',
-  protect,
+  "/",
   getMyQuotations
 );
 
-
-// Accept quotation
-
-router.put(
-  '/:id/accept',
-  protect,
-  acceptQuotation
-);
-
-
-// Reject quotation
-
-router.put(
-  '/:id/reject',
-  protect,
-  rejectQuotation
-);
-
-
-// ==============================
-// SUPPLIER / ADMIN
-// ==============================
-
-// Supplier/Admin creates quotation
-
-router.post(
-  '/',
-  protect,
-  authorizeRoles(
-    'supplier',
-    'admin'
-  ),
-  createQuotation
-);
-
-
-// Supplier quotations
-
+// GET /api/quotations/:id
 router.get(
-  '/supplier',
-  protect,
-  authorizeRoles(
-    'supplier',
-    'admin'
-  ),
-  getSupplierQuotations
-);
-
-
-// ==============================
-// NEGOTIATION
-// ==============================
-
-// Customer or supplier counter offer
-
-router.put(
-  '/:id/counter',
-  protect,
-  counterOffer
-);
-
-
-// ==============================
-// COMMON
-// ==============================
-
-// Get quotation by ID
-
-router.get(
-  '/:id',
-  protect,
+  "/:id",
   getQuotationById
 );
 
+// PATCH /api/quotations/:id/accept
+router.patch(
+  "/:id/accept",
+  acceptQuotation
+);
 
-module.exports =
-  router;
+// PATCH /api/quotations/:id/reject
+router.patch(
+  "/:id/reject",
+  rejectQuotation
+);
+
+module.exports = router;

@@ -1,132 +1,96 @@
-const asyncHandler = require('../utils/asyncHandler');
-const ApiError = require('../utils/ApiError');
-const ApiResponse = require('../utils/ApiResponse');
+// ============================================================
+// SHANTI ENTERPRISES
+// Admin Dashboard Controller
+// Phase 6 - Admin
+// ============================================================
 
-const Product = require('../models/Product');
-const Order = require('../models/Order');
-const User = require('../models/User');
+const User = require("../models/User");
+const Product = require("../models/Product");
+const Order = require("../models/Order");
+const RFQ = require("../models/RFQ");
+const Quotation = require("../models/Quotation");
+const Shipment = require("../models/Shipment");
+const ReturnRequest = require("../models/ReturnRequest");
 
+// ============================================================
+// ADMIN DASHBOARD
+// ============================================================
 
-// ======================================================
-// ADMIN DASHBOARD OVERVIEW
-// ======================================================
-
-const getAdminDashboardOverview = asyncHandler(
-  async (req, res) => {
-
-    // ==================================================
-    // BASIC COUNTS
-    // ==================================================
-
+const getAdminDashboard = async (
+  req,
+  res,
+  next
+) => {
+  try {
     const [
+      totalCustomers,
       totalProducts,
       totalOrders,
-      totalCustomers,
-    ] = await Promise.all([
-      Product.countDocuments({}),
-      Order.countDocuments({}),
-      User.countDocuments({
-        role: {
-          $ne: 'admin',
-        },
-      }),
-    ]);
-
-
-    // ==================================================
-    // ORDER STATUS COUNTS
-    // ==================================================
-
-    const [
       pendingOrders,
-      processingOrders,
-      packedOrders,
-      shippedOrders,
-      deliveredOrders,
-      cancelledOrders,
+      totalRFQs,
+      pendingRFQs,
+      totalQuotations,
+      pendingQuotations,
+      totalShipments,
+      pendingReturns,
     ] = await Promise.all([
-      Order.countDocuments({
-        orderStatus: 'Pending',
+      User.countDocuments({
+        role: "customer",
       }),
 
-      Order.countDocuments({
-        orderStatus: 'Processing',
-      }),
+      Product.countDocuments(),
+
+      Order.countDocuments(),
 
       Order.countDocuments({
-        orderStatus: 'Packed',
-      }),
-
-      Order.countDocuments({
-        orderStatus: 'Shipped',
-      }),
-
-      Order.countDocuments({
-        orderStatus: 'Delivered',
-      }),
-
-      Order.countDocuments({
-        orderStatus: 'Cancelled',
-      }),
-    ]);
-
-
-    // ==================================================
-    // LOW STOCK
-    // ==================================================
-
-    const lowStockProducts =
-      await Product.find({
-        $expr: {
-          $lte: [
-            '$stock',
-            {
-              $multiply: [
-                {
-                  $ifNull: [
-                    '$moq',
-                    1,
-                  ],
-                },
-                2,
-              ],
-            },
+        status: {
+          $in: [
+            "pending",
+            "processing",
           ],
         },
-      })
-        .select(
-          'name sku stock moq price images'
-        )
-        .sort({
-          stock: 1,
-        })
-        .limit(10)
-        .lean();
+      }),
 
+      RFQ.countDocuments(),
 
-    // ==================================================
-    // OUT OF STOCK
-    // ==================================================
-
-    const outOfStockProducts =
-      await Product.countDocuments({
-        stock: {
-          $lte: 0,
+      RFQ.countDocuments({
+        status: {
+          $in: [
+            "pending",
+            "reviewing",
+          ],
         },
-      });
+      }),
 
+      Quotation.countDocuments(),
 
-    // ==================================================
-    // SALES
-    // ==================================================
+      Quotation.countDocuments({
+        status: "sent",
+      }),
 
-    const salesResult =
+      Shipment.countDocuments(),
+
+      ReturnRequest.countDocuments({
+        status: {
+          $in: [
+            "requested",
+            "approved",
+            "picked_up",
+            "received",
+          ],
+        },
+      }),
+    ]);
+
+    // ========================================================
+    // ORDER REVENUE
+    // ========================================================
+
+    const revenueResult =
       await Order.aggregate([
         {
           $match: {
-            orderStatus: {
-              $ne: 'Cancelled',
-            },
+            paymentStatus: "paid",
           },
         },
 
@@ -134,255 +98,111 @@ const getAdminDashboardOverview = asyncHandler(
           $group: {
             _id: null,
 
-            totalSales: {
-              $sum: {
-                $ifNull: [
-                  '$totalPrice',
-                  0,
-                ],
-              },
-            },
-
-            totalItems: {
-              $sum: {
-                $reduce: {
-                  input: {
-                    $ifNull: [
-                      '$orderItems',
-                      [],
-                    ],
-                  },
-
-                  initialValue: 0,
-
-                  in: {
-                    $add: [
-                      '$$value',
-
-                      {
-                        $ifNull: [
-                          '$$this.quantity',
-                          0,
-                        ],
-                      },
-                    ],
-                  },
-                },
-              },
+            totalRevenue: {
+              $sum: "$totalAmount",
             },
           },
         },
       ]);
 
-
-    const totalSales =
-      Number(
-        salesResult?.[0]?.totalSales ||
-        0
-      );
-
-
-    const totalItemsSold =
-      Number(
-        salesResult?.[0]?.totalItems ||
-        0
-      );
-
-
-    // ==================================================
-    // AVERAGE ORDER VALUE
-    // ==================================================
-
-    const averageOrderValue =
-      totalOrders > 0
-        ? totalSales / totalOrders
+    const totalRevenue =
+      revenueResult.length > 0
+        ? Number(
+            revenueResult[0]
+              .totalRevenue || 0
+          )
         : 0;
 
-
-    // ==================================================
+    // ========================================================
     // RECENT ORDERS
-    // ==================================================
+    // ========================================================
 
     const recentOrders =
-      await Order.find({})
+      await Order.find()
         .populate(
-          'user',
-          'name email businessName'
+          "user",
+          "name email phone"
         )
         .sort({
           createdAt: -1,
         })
-        .limit(10)
-        .lean();
-
-
-    // ==================================================
-    // TOP PRODUCTS
-    // ==================================================
-
-    const topProducts =
-      await Order.aggregate([
-        {
-          $match: {
-            orderStatus: {
-              $ne: 'Cancelled',
-            },
-          },
-        },
-
-        {
-          $unwind: '$orderItems',
-        },
-
-        {
-          $group: {
-            _id:
-              '$orderItems.product',
-
-            name: {
-              $first:
-                '$orderItems.name',
-            },
-
-            quantity: {
-              $sum:
-                '$orderItems.quantity',
-            },
-
-            revenue: {
-              $sum: {
-                $multiply: [
-                  {
-                    $ifNull: [
-                      '$orderItems.price',
-                      0,
-                    ],
-                  },
-
-                  {
-                    $ifNull: [
-                      '$orderItems.quantity',
-                      0,
-                    ],
-                  },
-                ],
-              },
-            },
-          },
-        },
-
-        {
-          $sort: {
-            revenue: -1,
-          },
-        },
-
-        {
-          $limit: 10,
-        },
-      ]);
-
-
-    // ==================================================
-    // RECENT CUSTOMERS
-    // ==================================================
-
-    const recentCustomers =
-      await User.find({
-        role: {
-          $ne: 'admin',
-        },
-      })
+        .limit(5)
         .select(
-          'name email businessName createdAt'
+          "orderNumber user totalAmount status paymentStatus createdAt"
+        );
+
+    // ========================================================
+    // RECENT RFQs
+    // ========================================================
+
+    const recentRFQs =
+      await RFQ.find()
+        .populate(
+          "user",
+          "name email phone"
         )
         .sort({
           createdAt: -1,
         })
-        .limit(8)
-        .lean();
+        .limit(5)
+        .select(
+          "rfqNumber user status items createdAt"
+        );
 
-
-    // ==================================================
-    // DASHBOARD RESPONSE
-    // ==================================================
-
-    const dashboardData = {
-
-      summary: {
-
-        totalSales,
-
-        totalOrders,
-
-        totalCustomers,
-
-        totalProducts,
-
-        totalItemsSold,
-
-        averageOrderValue,
-
-        outOfStockProducts,
-
-      },
-
-
-      orders: {
-
-        pending:
-          pendingOrders,
-
-        processing:
-          processingOrders,
-
-        packed:
-          packedOrders,
-
-        shipped:
-          shippedOrders,
-
-        delivered:
-          deliveredOrders,
-
-        cancelled:
-          cancelledOrders,
-
-      },
-
-
-      lowStockProducts,
-
-      recentOrders,
-
-      topProducts,
-
-      recentCustomers,
-
-    };
-
-
-    // ==================================================
+    // ========================================================
     // RESPONSE
-    // ==================================================
+    // ========================================================
 
-    return res.status(200).json(
+    res.status(200).json({
+      success: true,
 
-      new ApiResponse(
-        200,
-        dashboardData,
-        'Admin dashboard data fetched successfully'
-      )
+      dashboard: {
+        customers: {
+          total: totalCustomers,
+        },
 
-    );
+        products: {
+          total: totalProducts,
+        },
+
+        orders: {
+          total: totalOrders,
+          pending: pendingOrders,
+        },
+
+        rfqs: {
+          total: totalRFQs,
+          pending: pendingRFQs,
+        },
+
+        quotations: {
+          total: totalQuotations,
+          pending: pendingQuotations,
+        },
+
+        shipments: {
+          total: totalShipments,
+        },
+
+        returns: {
+          pending: pendingReturns,
+        },
+
+        revenue: {
+          total: totalRevenue,
+          currency: "INR",
+        },
+
+        recentOrders,
+
+        recentRFQs,
+      },
+    });
+  } catch (error) {
+    next(error);
   }
-);
-
-
-// ======================================================
-// EXPORT
-// ======================================================
+};
 
 module.exports = {
-  getAdminDashboardOverview,
+  getAdminDashboard,
 };

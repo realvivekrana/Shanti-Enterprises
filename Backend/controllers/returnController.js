@@ -1,1084 +1,479 @@
-const asyncHandler =
-  require('../utils/asyncHandler');
+// ============================================================
+// SHANTI ENTERPRISES
+// Return Controller
+// Phase 5 - Operations
+// ============================================================
 
-const ApiError =
-  require('../utils/ApiError');
+const ReturnRequest = require("../models/ReturnRequest");
+const Order = require("../models/Order");
 
-const ApiResponse =
-  require('../utils/ApiResponse');
+// ============================================================
+// GENERATE RETURN NUMBER
+// ============================================================
 
-const ReturnRequest =
-  require('../models/ReturnRequest');
+const generateReturnNumber = () => {
+  const timestamp = Date.now();
 
-const Order =
-  require('../models/Order');
+  const random = Math.floor(
+    1000 + Math.random() * 9000
+  );
 
-const Product =
-  require('../models/Product');
+  return `RET-${timestamp}-${random}`;
+};
 
-
-// ======================================================
-// NOTIFICATION SERVICE
-// ======================================================
-
-const {
-
-  sendReturnUpdate,
-
-  sendRefundUpdate,
-
-} = require(
-  '../services/notificationService'
-);
-
-
-// ======================================================
+// ============================================================
 // CREATE RETURN REQUEST
-// ======================================================
+// ============================================================
 
-const createReturnRequest =
-  asyncHandler(
-    async (req, res) => {
+const createReturnRequest = async (
+  req,
+  res,
+  next
+) => {
+  try {
+    const {
+      orderId,
+      items,
+      reason,
+      description = "",
+    } = req.body;
 
-      const {
-        orderId,
-        reason,
-        description,
-        items,
-        images,
-      } = req.body;
+    if (!orderId) {
+      const error = new Error(
+        "Order ID is required"
+      );
 
+      error.statusCode = 400;
 
-      // ==================================================
-      // ORDER ID
-      // ==================================================
+      return next(error);
+    }
 
-      if (
-        !orderId
-      ) {
+    if (
+      !Array.isArray(items) ||
+      items.length === 0
+    ) {
+      const error = new Error(
+        "At least one return item is required"
+      );
 
-        throw new ApiError(
-          400,
-          'Order ID is required'
+      error.statusCode = 400;
+
+      return next(error);
+    }
+
+    if (
+      !reason ||
+      !String(reason).trim()
+    ) {
+      const error = new Error(
+        "Return reason is required"
+      );
+
+      error.statusCode = 400;
+
+      return next(error);
+    }
+
+    const order =
+      await Order.findOne({
+        _id: orderId,
+        user: req.user.id,
+      }).populate(
+        "items.product",
+        "name"
+      );
+
+    if (!order) {
+      const error = new Error(
+        "Order not found"
+      );
+
+      error.statusCode = 404;
+
+      return next(error);
+    }
+
+    // --------------------------------------------------------
+    // CHECK ORDER STATUS
+    // --------------------------------------------------------
+
+    if (
+      [
+        "cancelled",
+        "returned",
+      ].includes(order.status)
+    ) {
+      const error = new Error(
+        "Return cannot be requested for this order"
+      );
+
+      error.statusCode = 400;
+
+      return next(error);
+    }
+
+    // --------------------------------------------------------
+    // PREVENT DUPLICATE ACTIVE RETURN
+    // --------------------------------------------------------
+
+    const existingReturn =
+      await ReturnRequest.findOne({
+        order: order._id,
+        user: req.user.id,
+        status: {
+          $in: [
+            "requested",
+            "approved",
+            "picked_up",
+            "received",
+          ],
+        },
+      });
+
+    if (existingReturn) {
+      const error = new Error(
+        "An active return request already exists for this order"
+      );
+
+      error.statusCode = 400;
+
+      return next(error);
+    }
+
+    // --------------------------------------------------------
+    // PREPARE RETURN ITEMS
+    // --------------------------------------------------------
+
+    const returnItems = [];
+
+    for (const item of items) {
+      if (!item.productId) {
+        const error = new Error(
+          "Product ID is required for every return item"
         );
 
+        error.statusCode = 400;
+
+        return next(error);
       }
 
-
-      // ==================================================
-      // FIND ORDER
-      // ==================================================
-
-      const order =
-        await Order.findById(
-          orderId
-        );
-
+      const quantity =
+        Number(item.quantity);
 
       if (
-        !order
+        !Number.isInteger(quantity) ||
+        quantity < 1
       ) {
-
-        throw new ApiError(
-          404,
-          'Order not found'
+        const error = new Error(
+          "Return quantity must be a positive whole number"
         );
 
+        error.statusCode = 400;
+
+        return next(error);
       }
 
+      const orderItem =
+        order.items.find(
+          (orderItem) =>
+            (
+              orderItem.product?._id ||
+              orderItem.product
+            ).toString() ===
+            item.productId.toString()
+        );
 
-      // ==================================================
-      // ORDER OWNER
-      // ==================================================
+      if (!orderItem) {
+        const error = new Error(
+          "Product does not belong to this order"
+        );
+
+        error.statusCode = 400;
+
+        return next(error);
+      }
 
       if (
-        order.user.toString() !==
-        req.user._id.toString()
+        quantity >
+        Number(orderItem.quantity)
       ) {
-
-        throw new ApiError(
-          403,
-          'You are not authorized to request return for this order'
+        const error = new Error(
+          `Return quantity cannot exceed ordered quantity for ${
+            orderItem.product?.name ||
+            orderItem.productName ||
+            "product"
+          }`
         );
 
+        error.statusCode = 400;
+
+        return next(error);
       }
 
+      returnItems.push({
+        product:
+          orderItem.product?._id ||
+          orderItem.product ||
+          null,
 
-      // ==================================================
-      // ORDER STATUS
-      // ==================================================
+        productName:
+          orderItem.productName ||
+          orderItem.name ||
+          orderItem.product?.name ||
+          "Product",
 
-      if (
-        order.orderStatus !==
-        'Delivered'
-      ) {
+        quantity,
 
-        throw new ApiError(
-          400,
-          'Return can only be requested after delivery'
-        );
-
-      }
-
-
-      // ==================================================
-      // EXISTING RETURN
-      // ==================================================
-
-      const existingRequest =
-        await ReturnRequest.findOne({
-
-          order:
-            orderId,
-
-          user:
-            req.user._id,
-
-          status: {
-
-            $nin: [
-
-              'Rejected',
-
-              'Cancelled',
-
-            ],
-
-          },
-
-        });
-
-
-      if (
-        existingRequest
-      ) {
-
-        throw new ApiError(
-          400,
-          'A return request already exists for this order'
-        );
-
-      }
-
-
-      // ==================================================
-      // VALIDATION
-      // ==================================================
-
-      if (
-        !reason
-      ) {
-
-        throw new ApiError(
-          400,
-          'Return reason is required'
-        );
-
-      }
-
-
-      // ==================================================
-      // CREATE RETURN REQUEST
-      // ==================================================
-
-      const returnRequest =
-        await ReturnRequest.create({
-
-          order:
-            orderId,
-
-          user:
-            req.user._id,
-
+        reason:
+          item.reason ||
           reason,
-
-          description:
-            description ||
-            '',
-
-          items:
-            items ||
-            [],
-
-          images:
-            images ||
-            [],
-
-          status:
-            'Requested',
-
-        });
-
-
-      // ==================================================
-      // NOTIFICATION
-      // ==================================================
-
-      try {
-
-        await sendReturnUpdate({
-
-          userId:
-            req.user._id,
-
-          orderId:
-            order._id,
-
-          returnRequestId:
-            returnRequest._id,
-
-          status:
-            'Requested',
-
-        });
-
-      } catch (error) {
-
-        console.error(
-          'Return notification failed:',
-          error.message
-        );
-
-      }
-
-
-      // ==================================================
-      // RESPONSE
-      // ==================================================
-
-      res.status(201).json(
-
-        new ApiResponse(
-
-          201,
-
-          returnRequest,
-
-          'Return/refund request submitted'
-
-        )
-
-      );
-
+      });
     }
-  );
 
+    // --------------------------------------------------------
+    // CREATE RETURN
+    // --------------------------------------------------------
 
-// ======================================================
-// GET MY RETURN REQUESTS
-// ======================================================
+    const returnRequest =
+      await ReturnRequest.create({
+        returnNumber:
+          generateReturnNumber(),
 
-const getMyReturnRequests =
-  asyncHandler(
-    async (req, res) => {
+        order: order._id,
 
-      const requests =
-        await ReturnRequest.find({
+        user: req.user.id,
 
-          user:
-            req.user._id,
+        items: returnItems,
 
+        reason:
+          String(reason).trim(),
+
+        description:
+          String(description).trim(),
+
+        status: "requested",
+
+        requestedAt: new Date(),
+      });
+
+    res.status(201).json({
+      success: true,
+
+      message:
+        "Return request submitted successfully",
+
+      returnRequest,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ============================================================
+// GET MY RETURNS
+// ============================================================
+
+const getMyReturns = async (
+  req,
+  res,
+  next
+) => {
+  try {
+    const {
+      page = 1,
+      limit = 10,
+      status = "",
+    } = req.query;
+
+    const currentPage = Math.max(
+      Number(page) || 1,
+      1
+    );
+
+    const perPage = Math.min(
+      Math.max(
+        Number(limit) || 10,
+        1
+      ),
+      50
+    );
+
+    const filter = {
+      user: req.user.id,
+    };
+
+    if (status.trim()) {
+      filter.status = status.trim();
+    }
+
+    const skip =
+      (currentPage - 1) *
+      perPage;
+
+    const [
+      returns,
+      totalReturns,
+    ] = await Promise.all([
+      ReturnRequest.find(filter)
+        .populate(
+          "order",
+          "orderNumber status totalAmount"
+        )
+        .sort({
+          createdAt: -1,
         })
+        .skip(skip)
+        .limit(perPage),
 
-          .populate(
+      ReturnRequest.countDocuments(
+        filter
+      ),
+    ]);
 
-            'order',
+    const totalPages = Math.ceil(
+      totalReturns / perPage
+    );
 
-            'orderItems totalPrice orderStatus createdAt'
+    res.status(200).json({
+      success: true,
 
-          )
+      count: returns.length,
 
-          .sort({
+      pagination: {
+        page: currentPage,
+        limit: perPage,
+        totalReturns,
+        totalPages,
+      },
 
-            createdAt:
-              -1,
+      returns,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
-          });
+// ============================================================
+// GET RETURN BY ID
+// ============================================================
 
-
-      res.status(200).json(
-
-        new ApiResponse(
-
-          200,
-
-          requests,
-
-          'Return requests fetched successfully'
-
+const getReturnById = async (
+  req,
+  res,
+  next
+) => {
+  try {
+    const returnRequest =
+      await ReturnRequest.findOne({
+        _id: req.params.id,
+        user: req.user.id,
+      })
+        .populate(
+          "order",
+          "orderNumber status paymentStatus totalAmount createdAt"
         )
+        .populate(
+          "items.product",
+          "name slug image"
+        );
 
+    if (!returnRequest) {
+      const error = new Error(
+        "Return request not found"
       );
 
+      error.statusCode = 404;
+
+      return next(error);
     }
-  );
 
+    res.status(200).json({
+      success: true,
 
-// ======================================================
-// GET ALL RETURN REQUESTS
-// ======================================================
+      returnRequest,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
-const getAllReturnRequests =
-  asyncHandler(
-    async (req, res) => {
+// ============================================================
+// CANCEL RETURN REQUEST
+// ============================================================
 
-      const requests =
-        await ReturnRequest.find({})
+const cancelReturnRequest = async (
+  req,
+  res,
+  next
+) => {
+  try {
+    const returnRequest =
+      await ReturnRequest.findOne({
+        _id: req.params.id,
+        user: req.user.id,
+      });
 
-          .populate(
-
-            'user',
-
-            'name email phone businessName'
-
-          )
-
-          .populate(
-
-            'order',
-
-            'orderItems totalPrice orderStatus'
-
-          )
-
-          .sort({
-
-            createdAt:
-              -1,
-
-          });
-
-
-      res.status(200).json(
-
-        new ApiResponse(
-
-          200,
-
-          requests,
-
-          'All return requests fetched'
-
-        )
-
+    if (!returnRequest) {
+      const error = new Error(
+        "Return request not found"
       );
 
+      error.statusCode = 404;
+
+      return next(error);
     }
-  );
 
-
-// ======================================================
-// UPDATE RETURN STATUS
-// ======================================================
-
-const updateReturnStatus =
-  asyncHandler(
-    async (req, res) => {
-
-      const {
-        status,
-        adminNote,
-      } = req.body;
-
-
-      // ==================================================
-      // VALID STATUSES
-      // ==================================================
-
-      const validStatuses = [
-
-        'Requested',
-
-        'Under Review',
-
-        'Approved',
-
-        'Rejected',
-
-        'Pickup Scheduled',
-
-        'Picked Up',
-
-        'Inspection',
-
-        'Refund Pending',
-
-        'Refunded',
-
-        'Cancelled',
-
-      ];
-
-
-      if (
-        !validStatuses.includes(
-          status
-        )
-      ) {
-
-        throw new ApiError(
-
-          400,
-
-          `Status must be one of: ${
-            validStatuses.join(', ')
-          }`
-
-        );
-
-      }
-
-
-      // ==================================================
-      // FIND REQUEST
-      // ==================================================
-
-      const request =
-        await ReturnRequest.findById(
-          req.params.id
-        );
-
-
-      if (
-        !request
-      ) {
-
-        throw new ApiError(
-          404,
-          'Return request not found'
-        );
-
-      }
-
-
-      // ==================================================
-      // UPDATE
-      // ==================================================
-
-      request.status =
-        status;
-
-
-      if (
-        adminNote !==
-        undefined
-      ) {
-
-        request.adminNote =
-          adminNote;
-
-      }
-
-
-      // ==================================================
-      // REFUND PENDING
-      // ==================================================
-
-      if (
-        status ===
-        'Refund Pending'
-      ) {
-
-        request.refund.status =
-          'pending';
-
-      }
-
-
-      // ==================================================
-      // REFUNDED
-      // ==================================================
-
-      if (
-        status ===
-        'Refunded'
-      ) {
-
-        request.refund.status =
-          'completed';
-
-        request.refund.refundedAt =
-          new Date();
-
-      }
-
-
-      await request.save();
-
-
-      // ==================================================
-      // NOTIFICATION
-      // ==================================================
-
-      try {
-
-        if (
-          status ===
-          'Refunded'
-        ) {
-
-          await sendRefundUpdate({
-
-            userId:
-              request.user,
-
-            orderId:
-              request.order,
-
-            amount:
-              request.refund?.amount ||
-              request.approvedRefundAmount ||
-              0,
-
-            status:
-              'Completed',
-
-          });
-
-        } else {
-
-          await sendReturnUpdate({
-
-            userId:
-              request.user,
-
-            orderId:
-              request.order,
-
-            returnRequestId:
-              request._id,
-
-            status,
-
-          });
-
-        }
-
-      } catch (error) {
-
-        console.error(
-
-          'Return/refund notification failed:',
-
-          error.message
-
-        );
-
-      }
-
-
-      // ==================================================
-      // RESPONSE
-      // ==================================================
-
-      res.status(200).json(
-
-        new ApiResponse(
-
-          200,
-
-          request,
-
-          'Return request status updated'
-
-        )
-
+    if (
+      ![
+        "requested",
+      ].includes(
+        returnRequest.status
+      )
+    ) {
+      const error = new Error(
+        "This return request can no longer be cancelled"
       );
 
+      error.statusCode = 400;
+
+      return next(error);
     }
-  );
 
+    returnRequest.status =
+      "cancelled";
 
-// ======================================================
-// UPDATE PICKUP DETAILS
-// ======================================================
+    returnRequest.cancelledAt =
+      new Date();
 
-const updatePickupDetails =
-  asyncHandler(
-    async (req, res) => {
+    await returnRequest.save();
 
-      const {
+    res.status(200).json({
+      success: true,
 
-        pickupDate,
+      message:
+        "Return request cancelled successfully",
 
-        pickupAgent,
+      returnRequest: {
+        id: returnRequest._id,
 
-        pickupTrackingId,
-
-        pickupNote,
-
-      } = req.body;
-
-
-      // ==================================================
-      // FIND REQUEST
-      // ==================================================
-
-      const request =
-        await ReturnRequest.findById(
-          req.params.id
-        );
-
-
-      if (
-        !request
-      ) {
-
-        throw new ApiError(
-          404,
-          'Return request not found'
-        );
-
-      }
-
-
-      // ==================================================
-      // PICKUP DETAILS
-      // ==================================================
-
-      request.pickup = {
-
-        ...(request.pickup?.toObject?.() ||
-          request.pickup ||
-          {}),
-
-        pickupDate:
-          pickupDate ||
-          request.pickup?.pickupDate ||
-          null,
-
-        pickupAgent:
-          pickupAgent ||
-          request.pickup?.pickupAgent ||
-          null,
-
-        trackingId:
-          pickupTrackingId ||
-          request.pickup?.trackingId ||
-          null,
-
-        note:
-          pickupNote ||
-          request.pickup?.note ||
-          '',
-
-      };
-
-
-      // ==================================================
-      // STATUS
-      // ==================================================
-
-      request.status =
-        'Pickup Scheduled';
-
-
-      await request.save();
-
-
-      // ==================================================
-      // NOTIFICATION
-      // ==================================================
-
-      try {
-
-        await sendReturnUpdate({
-
-          userId:
-            request.user,
-
-          orderId:
-            request.order,
-
-          returnRequestId:
-            request._id,
-
-          status:
-            'Pickup Scheduled',
-
-        });
-
-      } catch (error) {
-
-        console.error(
-
-          'Pickup notification failed:',
-
-          error.message
-
-        );
-
-      }
-
-
-      // ==================================================
-      // RESPONSE
-      // ==================================================
-
-      res.status(200).json(
-
-        new ApiResponse(
-
-          200,
-
-          request,
-
-          'Reverse pickup details updated'
-
-        )
-
-      );
-
-    }
-  );
-
-
-// ======================================================
-// UPDATE INSPECTION
-// ======================================================
-
-const updateInspection =
-  asyncHandler(
-    async (req, res) => {
-
-      const {
-
-        result,
-
-        note,
-
-      } = req.body;
-
-
-      // ==================================================
-      // VALIDATION
-      // ==================================================
-
-      const validResults = [
-
-        'Passed',
-
-        'Failed',
-
-        'Pending',
-
-      ];
-
-
-      if (
-        result &&
-        !validResults.includes(
-          result
-        )
-      ) {
-
-        throw new ApiError(
-
-          400,
-
-          `Inspection result must be one of: ${
-            validResults.join(', ')
-          }`
-
-        );
-
-      }
-
-
-      // ==================================================
-      // FIND REQUEST
-      // ==================================================
-
-      const request =
-        await ReturnRequest.findById(
-          req.params.id
-        );
-
-
-      if (
-        !request
-      ) {
-
-        throw new ApiError(
-          404,
-          'Return request not found'
-        );
-
-      }
-
-
-      // ==================================================
-      // INSPECTION
-      // ==================================================
-
-      request.inspection = {
-
-        ...(request.inspection?.toObject?.() ||
-          request.inspection ||
-          {}),
-
-        result:
-          result ||
-          request.inspection?.result ||
-          'Pending',
-
-        note:
-          note ||
-          request.inspection?.note ||
-          '',
-
-        inspectedAt:
-          new Date(),
-
-      };
-
-
-      // ==================================================
-      // STATUS
-      // ==================================================
-
-      request.status =
-        'Inspection';
-
-
-      await request.save();
-
-
-      // ==================================================
-      // NOTIFICATION
-      // ==================================================
-
-      try {
-
-        await sendReturnUpdate({
-
-          userId:
-            request.user,
-
-          orderId:
-            request.order,
-
-          returnRequestId:
-            request._id,
-
-          status:
-            'Inspection',
-
-        });
-
-      } catch (error) {
-
-        console.error(
-
-          'Inspection notification failed:',
-
-          error.message
-
-        );
-
-      }
-
-
-      // ==================================================
-      // RESPONSE
-      // ==================================================
-
-      res.status(200).json(
-
-        new ApiResponse(
-
-          200,
-
-          request,
-
-          'Product inspection updated'
-
-        )
-
-      );
-
-    }
-  );
-
-
-// ======================================================
-// PROCESS REFUND
-// ======================================================
-
-const processRefund =
-  asyncHandler(
-    async (req, res) => {
-
-      const {
-
-        amount,
-
-        transactionId,
-
-        note,
-
-      } = req.body;
-
-
-      // ==================================================
-      // FIND REQUEST
-      // ==================================================
-
-      const request =
-        await ReturnRequest.findById(
-          req.params.id
-        );
-
-
-      if (
-        !request
-      ) {
-
-        throw new ApiError(
-          404,
-          'Return request not found'
-        );
-
-      }
-
-
-      // ==================================================
-      // REFUND AMOUNT
-      // ==================================================
-
-      const refundAmount =
-        Number(
-          amount
-        );
-
-
-      if (
-        !Number.isFinite(
-          refundAmount
-        ) ||
-        refundAmount <= 0
-      ) {
-
-        throw new ApiError(
-          400,
-          'Valid refund amount is required'
-        );
-
-      }
-
-
-      // ==================================================
-      // UPDATE REFUND
-      // ==================================================
-
-      request.refund = {
-
-        ...(request.refund?.toObject?.() ||
-          request.refund ||
-          {}),
-
-        amount:
-          refundAmount,
+        returnNumber:
+          returnRequest.returnNumber,
 
         status:
-          'completed',
+          returnRequest.status,
 
-        transactionId:
-          transactionId ||
-          null,
-
-        note:
-          note ||
-          '',
-
-        refundedAt:
-          new Date(),
-
-      };
-
-
-      request.status =
-        'Refunded';
-
-
-      await request.save();
-
-
-      // ==================================================
-      // NOTIFICATION
-      // ======================================================
-
-      try {
-
-        await sendRefundUpdate({
-
-          userId:
-            request.user,
-
-          orderId:
-            request.order,
-
-          amount:
-            refundAmount,
-
-          status:
-            'Completed',
-
-        });
-
-      } catch (error) {
-
-        console.error(
-
-          'Refund notification failed:',
-
-          error.message
-
-        );
-
-      }
-
-
-      // ==================================================
-      // RESPONSE
-      // ==================================================
-
-      res.status(200).json(
-
-        new ApiResponse(
-
-          200,
-
-          request,
-
-          'Refund processed successfully'
-
-        )
-
-      );
-
-    }
-  );
-
-
-// ======================================================
-// EXPORTS
-// ======================================================
+        cancelledAt:
+          returnRequest.cancelledAt,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
 module.exports = {
-
   createReturnRequest,
-
-  getMyReturnRequests,
-
-  getAllReturnRequests,
-
-  updateReturnStatus,
-
-  updatePickupDetails,
-
-  updateInspection,
-
-  processRefund,
-
+  getMyReturns,
+  getReturnById,
+  cancelReturnRequest,
 };

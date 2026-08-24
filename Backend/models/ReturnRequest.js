@@ -1,377 +1,160 @@
-const mongoose = require('mongoose');
+// ============================================================
+// SHANTI ENTERPRISES
+// Return Request Model
+// Phase 5 - Operations
+// ============================================================
 
-// ==============================
+const mongoose = require("mongoose");
+
+// ============================================================
 // RETURN ITEM
-// ==============================
+// ============================================================
 
-const returnItemSchema =
-  new mongoose.Schema(
-    {
-      product: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Product',
-        required: true,
-      },
-
-      name: {
-        type: String,
-        required: true,
-      },
-
-      orderedQuantity: {
-        type: Number,
-        required: true,
-        min: 1,
-      },
-
-      returnQuantity: {
-        type: Number,
-        required: true,
-        min: 1,
-      },
-
-      price: {
-        type: Number,
-        required: true,
-        min: 0,
-      },
+const returnItemSchema = new mongoose.Schema(
+  {
+    product: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Product",
+      default: null,
     },
-    {
-      _id: false,
-    }
-  );
 
-// ==============================
-// STATUS HISTORY
-// ==============================
-
-const statusHistorySchema =
-  new mongoose.Schema(
-    {
-      status: {
-        type: String,
-        required: true,
-      },
-
-      note: {
-        type: String,
-        default: '',
-      },
-
-      updatedBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        default: null,
-      },
-
-      timestamp: {
-        type: Date,
-        default: Date.now,
-      },
+    productName: {
+      type: String,
+      required: true,
+      trim: true,
     },
-    {
-      _id: false,
-    }
-  );
 
-// ==============================
+    quantity: {
+      type: Number,
+      required: true,
+      min: 1,
+    },
+
+    reason: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 500,
+    },
+  },
+  {
+    _id: false,
+  }
+);
+
+// ============================================================
 // RETURN REQUEST SCHEMA
-// ==============================
+// ============================================================
 
-const returnRequestSchema =
-  new mongoose.Schema(
-    {
-      // ==============================
-      // ORDER
-      // ==============================
+const returnRequestSchema = new mongoose.Schema(
+  {
+    returnNumber: {
+      type: String,
+      required: true,
+      unique: true,
+      index: true,
+    },
 
-      order: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Order',
-        required: true,
-      },
+    order: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Order",
+      required: true,
+      index: true,
+    },
 
-      // ==============================
-      // CUSTOMER
-      // ==============================
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
 
-      user: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true,
-      },
+    items: {
+      type: [returnItemSchema],
+      required: true,
 
-      // ==============================
-      // RETURN TYPE
-      // ==============================
+      validate: {
+        validator: (items) =>
+          items.length > 0,
 
-      type: {
-        type: String,
-
-        enum: [
-          'return',
-          'refund',
-        ],
-
-        required: true,
-      },
-
-      // ==============================
-      // RETURN REASON
-      // ==============================
-
-      reason: {
-        type: String,
-
-        enum: [
-          'Damaged',
-          'Wrong Product',
-          'Quantity Mismatch',
-          'Defective',
-          'Quality Issue',
-          'Other',
-        ],
-
-        required: true,
-      },
-
-      // ==============================
-      // CUSTOMER DESCRIPTION
-      // ==============================
-
-      description: {
-        type: String,
-        default: '',
-        maxlength: 3000,
-      },
-
-      // ==============================
-      // RETURN ITEMS
-      // ==============================
-
-      items: {
-        type: [
-          returnItemSchema,
-        ],
-
-        default: [],
-      },
-
-      // ==============================
-      // REQUESTED REFUND
-      // ==============================
-
-      requestedRefundAmount: {
-        type: Number,
-        default: 0,
-        min: 0,
-      },
-
-      // ==============================
-      // APPROVED REFUND
-      // ==============================
-
-      approvedRefundAmount: {
-        type: Number,
-        default: 0,
-        min: 0,
-      },
-
-      // ==============================
-      // STATUS
-      // ==============================
-
-      status: {
-        type: String,
-
-        enum: [
-          'Requested',
-          'Under Review',
-          'Approved',
-          'Rejected',
-          'Pickup Scheduled',
-          'Picked Up',
-          'Received',
-          'Inspection',
-          'Refund Pending',
-          'Refunded',
-          'Cancelled',
-        ],
-
-        default: 'Requested',
-      },
-
-      // ==============================
-      // ADMIN NOTE
-      // ==============================
-
-      adminNote: {
-        type: String,
-        default: '',
-      },
-
-      // ==============================
-      // INSPECTION
-      // ==============================
-
-      inspectionStatus: {
-        type: String,
-
-        enum: [
-          'Pending',
-          'Passed',
-          'Failed',
-        ],
-
-        default: 'Pending',
-      },
-
-      inspectionNote: {
-        type: String,
-        default: '',
-      },
-
-      inspectedAt: {
-        type: Date,
-        default: null,
-      },
-
-      inspectedBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        default: null,
-      },
-
-      // ==============================
-      // REVERSE PICKUP
-      // ==============================
-
-      pickup: {
-        carrier: {
-          type: String,
-          default: '',
-        },
-
-        trackingId: {
-          type: String,
-          default: '',
-        },
-
-        trackingUrl: {
-          type: String,
-          default: '',
-        },
-
-        scheduledDate: {
-          type: Date,
-          default: null,
-        },
-
-        pickedUpAt: {
-          type: Date,
-          default: null,
-        },
-      },
-
-      // ==============================
-      // REFUND
-      // ==============================
-
-      refund: {
-        amount: {
-          type: Number,
-          default: 0,
-          min: 0,
-        },
-
-        method: {
-          type: String,
-
-          enum: [
-            'original_payment',
-            'bank_transfer',
-            'upi',
-            'credit',
-            'manual',
-          ],
-
-          default: null,
-        },
-
-        transactionId: {
-          type: String,
-          default: '',
-        },
-
-        status: {
-          type: String,
-
-          enum: [
-            'Pending',
-            'Processing',
-            'Completed',
-            'Failed',
-          ],
-
-          default: 'Pending',
-        },
-
-        processedAt: {
-          type: Date,
-          default: null,
-        },
-      },
-
-      // ==============================
-      // EVIDENCE / IMAGES
-      // ==============================
-
-      evidenceImages: {
-        type: [
-          String,
-        ],
-
-        default: [],
-      },
-
-      // ==============================
-      // STATUS HISTORY
-      // ==============================
-
-      statusHistory: {
-        type: [
-          statusHistorySchema,
-        ],
-
-        default: [],
+        message:
+          "Return request must contain at least one item",
       },
     },
 
-    {
-      timestamps: true,
-    }
-  );
+    reason: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 1000,
+    },
 
-// ==============================
-// INDEXES
-// ==============================
+    description: {
+      type: String,
+      default: "",
+      trim: true,
+      maxlength: 2000,
+    },
 
-returnRequestSchema.index({
-  user: 1,
-  createdAt: -1,
-});
+    status: {
+      type: String,
+      enum: [
+        "requested",
+        "approved",
+        "rejected",
+        "picked_up",
+        "received",
+        "refunded",
+        "cancelled",
+      ],
+      default: "requested",
+      index: true,
+    },
 
-returnRequestSchema.index({
-  order: 1,
-});
+    refundAmount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
 
-returnRequestSchema.index({
-  status: 1,
-  createdAt: -1,
-});
+    requestedAt: {
+      type: Date,
+      default: Date.now,
+    },
 
-module.exports =
-  mongoose.model(
-    'ReturnRequest',
-    returnRequestSchema
-  );
+    approvedAt: {
+      type: Date,
+      default: null,
+    },
+
+    rejectedAt: {
+      type: Date,
+      default: null,
+    },
+
+    receivedAt: {
+      type: Date,
+      default: null,
+    },
+
+    refundedAt: {
+      type: Date,
+      default: null,
+    },
+
+    cancelledAt: {
+      type: Date,
+      default: null,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+const ReturnRequest = mongoose.model(
+  "ReturnRequest",
+  returnRequestSchema
+);
+
+module.exports = ReturnRequest;

@@ -1,110 +1,85 @@
-const express = require('express');
+// ============================================================
+// SHANTI ENTERPRISES
+// Payment Routes
+// Phase 5 - Operations
+// ============================================================
+
+const express = require("express");
 
 const {
-  createOrder,
+  body,
+} = require("express-validator");
+
+const {
+  createPaymentOrder,
   verifyPayment,
-  createPayment,
-  useCredit,
-  getMyCredit,
-  getCreditHistory,
-  updateCustomerCredit,
-  recordCreditPayment,
-} = require('../controllers/paymentController');
+  getMyPayment,
+} = require("../controllers/paymentController");
 
 const {
   protect,
-  admin,
-} = require('../middleware/authMiddleware');
+} = require("../middleware/authMiddleware");
 
-const {
-  paymentRateLimiter,
-} = require('../middleware/securityMiddleware');
+const validate = require("../middleware/validate");
 
-const router =
-  express.Router();
+const router = express.Router();
 
-// ==============================
-// RAZORPAY
-// ==============================
+// ============================================================
+// VALIDATION
+// ============================================================
 
-// Create Razorpay order
+const createPaymentValidation = [
+  body("orderId")
+    .notEmpty()
+    .withMessage(
+      "Order ID is required"
+    ),
+];
 
+const verifyPaymentValidation = [
+  body("razorpayOrderId")
+    .notEmpty()
+    .withMessage(
+      "Razorpay order ID is required"
+    ),
+
+  body("razorpayPaymentId")
+    .notEmpty()
+    .withMessage(
+      "Razorpay payment ID is required"
+    ),
+
+  body("razorpaySignature")
+    .notEmpty()
+    .withMessage(
+      "Razorpay signature is required"
+    ),
+];
+
+// ============================================================
+// PROTECTED ROUTES
+// ============================================================
+
+router.use(protect);
+
+// POST /api/payments/create-order
 router.post(
-  '/create-order',
-  protect,
-  paymentRateLimiter,
-  createOrder
+  "/create-order",
+  validate(createPaymentValidation),
+  createPaymentOrder
 );
 
-
-// Verify Razorpay payment
-
+// POST /api/payments/verify
 router.post(
-  '/verify',
-  protect,
-  paymentRateLimiter,
+  "/verify",
+  validate(verifyPaymentValidation),
   verifyPayment
 );
 
-
-// ==============================
-// PAYMENT RECORD
-// ==============================
-
-router.post(
-  '/',
-  protect,
-  paymentRateLimiter,
-  createPayment
-);
-
-
-// ==============================
-// CREDIT / PAY LATER
-// ==============================
-
-router.post(
-  '/credit/use',
-  protect,
-  paymentRateLimiter,
-  useCredit
-);
-
-
+// GET /api/payments/order/:orderId
 router.get(
-  '/credit/my',
-  protect,
-  getMyCredit
+  "/order/:orderId",
+  getMyPayment
 );
 
-
-router.get(
-  '/credit/history',
-  protect,
-  getCreditHistory
-);
-
-
-// ==============================
-// ADMIN CREDIT MANAGEMENT
-// ==============================
-
-router.put(
-  '/credit/customer',
-  protect,
-  admin,
-  updateCustomerCredit
-);
-
-
-router.post(
-  '/credit/payment',
-  protect,
-  admin,
-  paymentRateLimiter,
-  recordCreditPayment
-);
-
-
-module.exports =
-  router;
+module.exports = router;

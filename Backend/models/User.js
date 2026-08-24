@@ -1,154 +1,51 @@
-const mongoose = require('mongoose');
+// ============================================================
+// SHANTI ENTERPRISES
+// User Model
+// Phase 1 - Foundation
+// ============================================================
 
-// ======================================================
-// USER SCHEMA
-// ======================================================
+const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema(
   {
-    // ====================================================
-    // NAME
-    // ====================================================
-
     name: {
       type: String,
-      required: [true, 'Name is required'],
+      required: [true, "Name is required"],
       trim: true,
-      minlength: 2,
-      maxlength: 100,
+      minlength: [2, "Name must be at least 2 characters"],
+      maxlength: [80, "Name cannot exceed 80 characters"],
     },
-
-    // ====================================================
-    // EMAIL
-    // ====================================================
 
     email: {
       type: String,
-      required: [true, 'Email is required'],
+      required: [true, "Email is required"],
       unique: true,
       lowercase: true,
       trim: true,
     },
 
-    // ====================================================
-    // PASSWORD
-    // ====================================================
+    phone: {
+      type: String,
+      trim: true,
+      default: "",
+    },
 
     password: {
       type: String,
-      required: [true, 'Password is required'],
-      minlength: 6,
+      required: [true, "Password is required"],
+      minlength: [6, "Password must be at least 6 characters"],
       select: false,
     },
 
-    // ====================================================
-    // PHONE
-    // OPTIONAL DURING REGISTRATION
-    // ====================================================
-
-    phone: {
-      type: String,
-      default: '',
-      trim: true,
-    },
-
-    // ====================================================
-    // BUSINESS NAME
-    // OPTIONAL DURING REGISTRATION
-    // ====================================================
-
-    businessName: {
-      type: String,
-      default: '',
-      trim: true,
-    },
-
-    // ====================================================
-    // ROLE
-    // ====================================================
-
     role: {
       type: String,
-      enum: [
-        'customer',
-        'admin',
-      ],
-      default: 'customer',
+      enum: ["customer", "admin"],
+      default: "customer",
     },
 
-    // ====================================================
-    // ACCOUNT STATUS
-    // ====================================================
-
-    blocked: {
+    isActive: {
       type: Boolean,
-      default: false,
-    },
-
-    // ====================================================
-    // PROFILE IMAGE
-    // ====================================================
-
-    avatar: {
-      type: String,
-      default: '',
-    },
-
-    // ====================================================
-    // BUSINESS DETAILS
-    // OPTIONAL
-    // ====================================================
-
-    gstNumber: {
-      type: String,
-      default: '',
-      trim: true,
-    },
-
-    // ====================================================
-    // ADDRESS
-    // OPTIONAL
-    // ====================================================
-
-    address: {
-      street: {
-        type: String,
-        default: '',
-        trim: true,
-      },
-
-      city: {
-        type: String,
-        default: '',
-        trim: true,
-      },
-
-      state: {
-        type: String,
-        default: '',
-        trim: true,
-      },
-
-      pincode: {
-        type: String,
-        default: '',
-        trim: true,
-      },
-
-      country: {
-        type: String,
-        default: 'India',
-        trim: true,
-      },
-    },
-
-    // ====================================================
-    // LAST LOGIN
-    // ====================================================
-
-    lastLogin: {
-      type: Date,
-      default: null,
+      default: true,
     },
   },
   {
@@ -156,35 +53,6 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-// ======================================================
-// EMAIL INDEX
-// ======================================================
-
-userSchema.index({
-  email: 1,
-});
-
-// ======================================================
-// REMOVE PASSWORD WHEN CONVERTING TO JSON
-// ======================================================
-
-userSchema.methods.toJSON = function () {
-  const user =
-    this.toObject();
-
-  delete user.password;
-
-  return user;
-};
-
-// ======================================================
-// EXPORT MODEL
-// ======================================================
-
-const User =
-  mongoose.model(
-    'User',
-    userSchema
-  );
+const User = mongoose.model("User", userSchema);
 
 module.exports = User;

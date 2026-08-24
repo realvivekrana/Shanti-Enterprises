@@ -1,897 +1,251 @@
-const asyncHandler = require('../utils/asyncHandler');
-const ApiError = require('../utils/ApiError');
-const ApiResponse = require('../utils/ApiResponse');
+// ============================================================
+// SHANTI ENTERPRISES
+// Authentication Controller
+// Phase 1 - Foundation
+// ============================================================
 
-const User = require('../models/User');
+const jwt = require("jsonwebtoken");
 
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+const User = require("../models/User");
 
-// ======================================================
-// GENERATE JWT TOKEN
-// ======================================================
+const {
+  hashPassword,
+  comparePassword,
+} = require("../utils/password");
 
-const generateToken = (userId) => {
+// ============================================================
+// CREATE JWT
+// ============================================================
+
+const createToken = (userId) => {
   return jwt.sign(
     {
-      id: userId,
+      userId,
     },
     process.env.JWT_SECRET,
     {
-      expiresIn:
-        process.env.JWT_EXPIRE || '7d',
+      expiresIn: "7d",
     }
   );
 };
 
-// ======================================================
-// REMOVE PASSWORD FROM USER OBJECT
-// ======================================================
+// ============================================================
+// SET AUTH COOKIE
+// ============================================================
 
-const sanitizeUser = (user) => {
-  const userObject = user.toObject
-    ? user.toObject()
-    : { ...user };
-
-  delete userObject.password;
-
-  return userObject;
+const setAuthCookie = (res, token) => {
+  res.cookie("token", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite:
+      process.env.NODE_ENV === "production"
+        ? "none"
+        : "lax",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
 };
 
-// ======================================================
-// CUSTOMER REGISTER
-// POST /api/auth/register
-// ======================================================
+// ============================================================
+// REGISTER
+// ============================================================
 
-const registerUser = asyncHandler(
-  async (req, res) => {
+const register = async (req, res, next) => {
+  try {
     const {
       name,
       email,
-      password,
       phone,
-      businessName,
+      password,
     } = req.body;
 
-    // ==================================================
-    // BASIC VALIDATION
-    // ==================================================
+    const normalizedEmail = email
+      .trim()
+      .toLowerCase();
 
-    if (
-      !name ||
-      !email ||
-      !password
-    ) {
-      throw new ApiError(
-        400,
-        'Name, email and password are required'
-      );
-    }
-
-    // ==================================================
-    // NAME VALIDATION
-    // ==================================================
-
-    if (name.trim().length < 2) {
-      throw new ApiError(
-        400,
-        'Name must contain at least 2 characters'
-      );
-    }
-
-    // ==================================================
-    // EMAIL
-    // ==================================================
-
-    const normalizedEmail =
-      email.trim().toLowerCase();
-
-    const emailRegex =
-      /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (
-      !emailRegex.test(
-        normalizedEmail
-      )
-    ) {
-      throw new ApiError(
-        400,
-        'Please enter a valid email address'
-      );
-    }
-
-    // ==================================================
-    // PASSWORD
-    // ==================================================
-
-    if (password.length < 6) {
-      throw new ApiError(
-        400,
-        'Password must be at least 6 characters'
-      );
-    }
-
-    // ==================================================
-    // CHECK EXISTING USER
-    // ==================================================
-
-    const existingUser =
-      await User.findOne({
-        email: normalizedEmail,
-      });
+    const existingUser = await User.findOne({
+      email: normalizedEmail,
+    });
 
     if (existingUser) {
-      throw new ApiError(
-        409,
-        'User with this email already exists'
+      const error = new Error(
+        "An account with this email already exists"
       );
+
+      error.statusCode = 409;
+
+      return next(error);
     }
 
-    // ==================================================
-    // HASH PASSWORD
-    // ==================================================
-
     const hashedPassword =
-      await bcrypt.hash(
-        password,
-        10
-      );
+      await hashPassword(password);
 
-    // ==================================================
-    // CREATE CUSTOMER
-    // ==================================================
+    const user = await User.create({
+      name: name.trim(),
+      email: normalizedEmail,
+      phone: phone ? phone.trim() : "",
+      password: hashedPassword,
+    });
 
-    const user =
-      await User.create({
-        name:
-          name.trim(),
+    const token = createToken(user._id);
 
-        email:
-          normalizedEmail,
+    setAuthCookie(res, token);
 
-        password:
-          hashedPassword,
-
-        // Optional
-        phone:
-          phone
-            ? phone.trim()
-            : '',
-
-        // Optional
-        businessName:
-          businessName
-            ? businessName.trim()
-            : '',
-
-        // IMPORTANT
-        role: 'customer',
-      });
-
-    // ==================================================
-    // TOKEN
-    // ==================================================
-
-    const token =
-      generateToken(
-        user._id
-      );
-
-    // ==================================================
-    // RESPONSE
-    // ==================================================
-
-    const safeUser =
-      sanitizeUser(user);
-
-    res.status(201).json(
-      new ApiResponse(
-        201,
-        {
-          user: safeUser,
-          token,
-        },
-        'Registration successful'
-      )
-    );
+    res.status(201).json({
+      success: true,
+      message: "Account created successfully",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    next(error);
   }
-);
+};
 
-// ======================================================
-// CUSTOMER LOGIN
-// POST /api/auth/login
-// ======================================================
+// ============================================================
+// LOGIN
+// ============================================================
 
-const loginUser = asyncHandler(
-  async (req, res) => {
+const login = async (req, res, next) => {
+  try {
     const {
       email,
       password,
     } = req.body;
 
-    // ==================================================
-    // VALIDATION
-    // ==================================================
+    const normalizedEmail = email
+      .trim()
+      .toLowerCase();
 
-    if (
-      !email ||
-      !password
-    ) {
-      throw new ApiError(
-        400,
-        'Email and password are required'
-      );
-    }
-
-    // ==================================================
-    // FIND USER
-    // ==================================================
-
-    const normalizedEmail =
-      email.trim().toLowerCase();
-
-    const user =
-      await User.findOne({
-        email:
-          normalizedEmail,
-      }).select(
-        '+password'
-      );
+    const user = await User.findOne({
+      email: normalizedEmail,
+    }).select("+password");
 
     if (!user) {
-      throw new ApiError(
-        401,
-        'Invalid email or password'
+      const error = new Error(
+        "Invalid email or password"
       );
+
+      error.statusCode = 401;
+
+      return next(error);
     }
 
-    // ==================================================
-    // CUSTOMER LOGIN ONLY
-    // ==================================================
-
-    if (
-      user.role === 'admin'
-    ) {
-      throw new ApiError(
-        403,
-        'Please use Admin Login for administrator accounts'
+    if (!user.isActive) {
+      const error = new Error(
+        "Your account has been deactivated"
       );
+
+      error.statusCode = 403;
+
+      return next(error);
     }
 
-    // ==================================================
-    // PASSWORD
-    // ==================================================
-
-    const isPasswordCorrect =
-      await bcrypt.compare(
+    const passwordMatched =
+      await comparePassword(
         password,
         user.password
       );
 
-    if (!isPasswordCorrect) {
-      throw new ApiError(
-        401,
-        'Invalid email or password'
+    if (!passwordMatched) {
+      const error = new Error(
+        "Invalid email or password"
       );
+
+      error.statusCode = 401;
+
+      return next(error);
     }
 
-    // ==================================================
-    // BLOCKED
-    // ==================================================
+    const token = createToken(user._id);
 
-    if (
-      user.blocked === true
-    ) {
-      throw new ApiError(
-        403,
-        'Your account has been blocked. Please contact support.'
-      );
-    }
+    setAuthCookie(res, token);
 
-    // ==================================================
-    // TOKEN
-    // ==================================================
-
-    const token =
-      generateToken(
-        user._id
-      );
-
-    // ==================================================
-    // RESPONSE
-    // ==================================================
-
-    const safeUser =
-      sanitizeUser(user);
-
-    res.status(200).json(
-      new ApiResponse(
-        200,
-        {
-          user: safeUser,
-          token,
-        },
-        'Login successful'
-      )
-    );
+    res.status(200).json({
+      success: true,
+      message: "Login successful",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    next(error);
   }
-);
+};
 
-// ======================================================
-// ADMIN REGISTER
-// POST /api/auth/admin/register
-// ======================================================
-
-const registerAdmin = asyncHandler(
-  async (req, res) => {
-    const {
-      name,
-      email,
-      password,
-      adminCode,
-    } = req.body;
-
-    // ==================================================
-    // BASIC VALIDATION
-    // ==================================================
-
-    if (
-      !name ||
-      !email ||
-      !password ||
-      !adminCode
-    ) {
-      throw new ApiError(
-        400,
-        'Name, email, password and admin code are required'
-      );
-    }
-
-    // ==================================================
-    // ADMIN REGISTRATION CODE
-    // ==================================================
-
-    if (
-      !process.env.ADMIN_REGISTER_CODE
-    ) {
-      throw new ApiError(
-        500,
-        'Admin registration is not configured'
-      );
-    }
-
-    if (
-      adminCode !==
-      process.env.ADMIN_REGISTER_CODE
-    ) {
-      throw new ApiError(
-        403,
-        'Invalid admin registration code'
-      );
-    }
-
-    // ==================================================
-    // NAME
-    // ==================================================
-
-    if (
-      name.trim().length < 2
-    ) {
-      throw new ApiError(
-        400,
-        'Name must contain at least 2 characters'
-      );
-    }
-
-    // ==================================================
-    // EMAIL
-    // ==================================================
-
-    const normalizedEmail =
-      email.trim().toLowerCase();
-
-    const emailRegex =
-      /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (
-      !emailRegex.test(
-        normalizedEmail
-      )
-    ) {
-      throw new ApiError(
-        400,
-        'Please enter a valid email address'
-      );
-    }
-
-    // ==================================================
-    // PASSWORD
-    // ==================================================
-
-    if (
-      password.length < 6
-    ) {
-      throw new ApiError(
-        400,
-        'Password must be at least 6 characters'
-      );
-    }
-
-    // ==================================================
-    // CHECK EXISTING ACCOUNT
-    // ==================================================
-
-    const existingUser =
-      await User.findOne({
-        email:
-          normalizedEmail,
-      });
-
-    if (existingUser) {
-      throw new ApiError(
-        409,
-        'An account with this email already exists'
-      );
-    }
-
-    // ==================================================
-    // HASH PASSWORD
-    // ==================================================
-
-    const hashedPassword =
-      await bcrypt.hash(
-        password,
-        10
-      );
-
-    // ==================================================
-    // CREATE ADMIN
-    // ==================================================
-
-    const admin =
-      await User.create({
-        name:
-          name.trim(),
-
-        email:
-          normalizedEmail,
-
-        password:
-          hashedPassword,
-
-        phone: '',
-
-        businessName:
-          'Shanti Enterprises',
-
-        // IMPORTANT
-        role: 'admin',
-
-        blocked: false,
-      });
-
-    // ==================================================
-    // TOKEN
-    // ==================================================
-
-    const token =
-      generateToken(
-        admin._id
-      );
-
-    // ==================================================
-    // RESPONSE
-    // ==================================================
-
-    const safeAdmin =
-      sanitizeUser(admin);
-
-    res.status(201).json(
-      new ApiResponse(
-        201,
-        {
-          user: safeAdmin,
-          token,
-        },
-        'Admin account created successfully'
-      )
-    );
-  }
-);
-
-// ======================================================
-// ADMIN LOGIN
-// POST /api/auth/admin/login
-// ======================================================
-
-const loginAdmin = asyncHandler(
-  async (req, res) => {
-    const {
-      email,
-      password,
-    } = req.body;
-
-    // ==================================================
-    // VALIDATION
-    // ==================================================
-
-    if (
-      !email ||
-      !password
-    ) {
-      throw new ApiError(
-        400,
-        'Email and password are required'
-      );
-    }
-
-    // ==================================================
-    // FIND ADMIN
-    // ==================================================
-
-    const normalizedEmail =
-      email.trim().toLowerCase();
-
-    const admin =
-      await User.findOne({
-        email:
-          normalizedEmail,
-        role: 'admin',
-      }).select(
-        '+password'
-      );
-
-    if (!admin) {
-      throw new ApiError(
-        401,
-        'Invalid admin email or password'
-      );
-    }
-
-    // ==================================================
-    // BLOCKED
-    // ==================================================
-
-    if (
-      admin.blocked === true
-    ) {
-      throw new ApiError(
-        403,
-        'This admin account has been blocked'
-      );
-    }
-
-    // ==================================================
-    // PASSWORD
-    // ==================================================
-
-    const isPasswordCorrect =
-      await bcrypt.compare(
-        password,
-        admin.password
-      );
-
-    if (!isPasswordCorrect) {
-      throw new ApiError(
-        401,
-        'Invalid admin email or password'
-      );
-    }
-
-    // ==================================================
-    // TOKEN
-    // ==================================================
-
-    const token =
-      generateToken(
-        admin._id
-      );
-
-    // ==================================================
-    // RESPONSE
-    // ==================================================
-
-    const safeAdmin =
-      sanitizeUser(admin);
-
-    res.status(200).json(
-      new ApiResponse(
-        200,
-        {
-          user: safeAdmin,
-          token,
-        },
-        'Admin login successful'
-      )
-    );
-  }
-);
-
-// ======================================================
-// GET CURRENT USER
-// GET /api/auth/me
-// ======================================================
-
-const getCurrentUser =
-  asyncHandler(
-    async (req, res) => {
-      const user =
-        await User.findById(
-          req.user._id
-        ).select(
-          '-password'
-        );
-
-      if (!user) {
-        throw new ApiError(
-          404,
-          'User not found'
-        );
-      }
-
-      res.status(200).json(
-        new ApiResponse(
-          200,
-          user,
-          'User profile fetched'
-        )
-      );
-    }
-  );
-
-// ======================================================
-// UPDATE PROFILE
-// PUT /api/auth/profile
-// ======================================================
-
-const updateProfile =
-  asyncHandler(
-    async (req, res) => {
-      const {
-        name,
-        phone,
-        businessName,
-        email,
-      } = req.body;
-
-      const user =
-        await User.findById(
-          req.user._id
-        );
-
-      if (!user) {
-        throw new ApiError(
-          404,
-          'User not found'
-        );
-      }
-
-      // ==================================================
-      // NAME
-      // ==================================================
-
-      if (
-        name !== undefined
-      ) {
-        if (
-          !name.trim() ||
-          name.trim().length < 2
-        ) {
-          throw new ApiError(
-            400,
-            'Name must contain at least 2 characters'
-          );
-        }
-
-        user.name =
-          name.trim();
-      }
-
-      // ==================================================
-      // PHONE
-      // ==================================================
-
-      if (
-        phone !== undefined
-      ) {
-        user.phone =
-          phone.trim();
-      }
-
-      // ==================================================
-      // BUSINESS NAME
-      // ==================================================
-
-      if (
-        businessName !==
-        undefined
-      ) {
-        user.businessName =
-          businessName.trim();
-      }
-
-      // ==================================================
-      // EMAIL
-      // ==================================================
-
-      if (
-        email !== undefined
-      ) {
-        const normalizedEmail =
-          email
-            .trim()
-            .toLowerCase();
-
-        const emailRegex =
-          /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-        if (
-          !emailRegex.test(
-            normalizedEmail
-          )
-        ) {
-          throw new ApiError(
-            400,
-            'Please enter a valid email address'
-          );
-        }
-
-        const emailExists =
-          await User.findOne({
-            email:
-              normalizedEmail,
-            _id: {
-              $ne:
-                user._id,
-            },
-          });
-
-        if (
-          emailExists
-        ) {
-          throw new ApiError(
-            409,
-            'Email is already in use'
-          );
-        }
-
-        user.email =
-          normalizedEmail;
-      }
-
-      // ==================================================
-      // SAVE
-      // ==================================================
-
-      const updatedUser =
-        await user.save();
-
-      // ==================================================
-      // RESPONSE
-      // ==================================================
-
-      res.status(200).json(
-        new ApiResponse(
-          200,
-          sanitizeUser(
-            updatedUser
-          ),
-          'Profile updated successfully'
-        )
-      );
-    }
-  );
-
-// ======================================================
-// CHANGE PASSWORD
-// PUT /api/auth/change-password
-// ======================================================
-
-const changePassword =
-  asyncHandler(
-    async (req, res) => {
-      const {
-        currentPassword,
-        newPassword,
-      } = req.body;
-
-      if (
-        !currentPassword ||
-        !newPassword
-      ) {
-        throw new ApiError(
-          400,
-          'Current password and new password are required'
-        );
-      }
-
-      if (
-        newPassword.length < 6
-      ) {
-        throw new ApiError(
-          400,
-          'New password must be at least 6 characters'
-        );
-      }
-
-      const user =
-        await User.findById(
-          req.user._id
-        ).select(
-          '+password'
-        );
-
-      if (!user) {
-        throw new ApiError(
-          404,
-          'User not found'
-        );
-      }
-
-      const passwordMatched =
-        await bcrypt.compare(
-          currentPassword,
-          user.password
-        );
-
-      if (
-        !passwordMatched
-      ) {
-        throw new ApiError(
-          401,
-          'Current password is incorrect'
-        );
-      }
-
-      user.password =
-        await bcrypt.hash(
-          newPassword,
-          10
-        );
-
-      await user.save();
-
-      res.status(200).json(
-        new ApiResponse(
-          200,
-          null,
-          'Password changed successfully'
-        )
-      );
-    }
-  );
-
-// ======================================================
+// ============================================================
 // LOGOUT
-// POST /api/auth/logout
-// ======================================================
+// ============================================================
 
-const logoutUser =
-  asyncHandler(
-    async (req, res) => {
-      res.status(200).json(
-        new ApiResponse(
-          200,
-          null,
-          'Logout successful'
-        )
+const logout = (req, res) => {
+  res.cookie("token", "", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite:
+      process.env.NODE_ENV === "production"
+        ? "none"
+        : "lax",
+    expires: new Date(0),
+  });
+
+  res.status(200).json({
+    success: true,
+    message: "Logout successful",
+  });
+};
+
+// ============================================================
+// CURRENT USER
+// ============================================================
+
+const getCurrentUser = async (
+  req,
+  res,
+  next
+) => {
+  try {
+    const user = await User.findById(
+      req.user.id
+    );
+
+    if (!user) {
+      const error = new Error(
+        "User not found"
       );
-    }
-  );
 
-// ======================================================
-// EXPORTS
-// ======================================================
+      error.statusCode = 404;
+
+      return next(error);
+    }
+
+    res.status(200).json({
+      success: true,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        isActive: user.isActive,
+        createdAt: user.createdAt,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
 module.exports = {
-  registerUser,
-  loginUser,
-
-  registerAdmin,
-  loginAdmin,
-
+  register,
+  login,
+  logout,
   getCurrentUser,
-  updateProfile,
-  changePassword,
-  logoutUser,
 };

@@ -1,36 +1,47 @@
-const express = require('express');
+// ============================================================
+// SHANTI ENTERPRISES
+// Admin Dashboard Routes
+// Phase 6 - Admin
+// ============================================================
 
-const router =
-  express.Router();
+const express = require("express");
 
 const {
-  getAdminDashboardOverview,
+  getAdminDashboard,
 } = require(
-  '../controllers/adminDashboardController'
+  "../controllers/adminDashboardController"
 );
 
 const {
   protect,
 } = require(
-  '../middleware/authMiddleware'
+  "../middleware/authMiddleware"
 );
 
+const {
+  adminOnly,
+} = require(
+  "../middleware/adminMiddleware"
+);
 
-// ======================================================
-// ADMIN DASHBOARD OVERVIEW
-// ======================================================
-//
-// GET /api/admin-dashboard
-//
-// Protected route.
-// Admin authentication middleware will be added here.
-// ======================================================
+const router = express.Router();
 
+// ============================================================
+// ADMIN PROTECTION
+// ============================================================
+
+router.use(protect);
+
+router.use(adminOnly);
+
+// ============================================================
+// GET ADMIN DASHBOARD
+// ============================================================
+
+// GET /api/admin/dashboard
 router.get(
-  '/',
-  protect,
-  getAdminDashboardOverview
+  "/",
+  getAdminDashboard
 );
-
 
 module.exports = router;

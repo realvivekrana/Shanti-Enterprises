@@ -1,52 +1,53 @@
-const ApiError = require('../utils/ApiError');
+// ============================================================
+// SHANTI ENTERPRISES
+// Centralized Error Handling Middleware
+// Phase 1 - Foundation
+// ============================================================
 
-// 404 - route not found
 const notFound = (req, res, next) => {
-  const error = new ApiError(404, `Route not found: ${req.originalUrl}`);
+  const error = new Error(
+    `Route not found: ${req.method} ${req.originalUrl}`
+  );
+
+  error.statusCode = 404;
+
   next(error);
 };
 
-// Global error handler - sab errors yahan aakar ek jaisa response denge
 const errorHandler = (err, req, res, next) => {
-  let statusCode = err.statusCode || 500;
-  let message = err.message || 'Internal Server Error';
+  console.error("");
+  console.error("================================================");
+  console.error("              API ERROR");
+  console.error("================================================");
+  console.error(`Method  : ${req.method}`);
+  console.error(`Route   : ${req.originalUrl}`);
+  console.error(`Message : ${err.message}`);
 
-  // Mongoose bad ObjectId
-  if (err.name === 'CastError') {
-    statusCode = 404;
-    message = 'Resource not found';
+  if (err.details) {
+    console.error("Details :", err.details);
   }
 
-  // Mongoose duplicate key (e.g. email already exists)
-  if (err.code === 11000) {
-    statusCode = 400;
-    message = `Duplicate value for field: ${Object.keys(err.keyValue)}`;
-  }
+  console.error("================================================");
+  console.error("");
 
-  // Mongoose validation error
-  if (err.name === 'ValidationError') {
-    statusCode = 400;
-    message = Object.values(err.errors).map((val) => val.message).join(', ');
-  }
+  const statusCode = err.statusCode || 500;
 
-  // JWT errors
-  if (err.name === 'JsonWebTokenError') {
-    statusCode = 401;
-    message = 'Invalid token';
-  }
-  if (err.name === 'TokenExpiredError') {
-    statusCode = 401;
-    message = 'Token expired';
-  }
-
-  console.error(`[Error] ${req.method} ${req.originalUrl} - ${message}`);
-
-  res.status(statusCode).json({
+  const response = {
     success: false,
-    message,
-    errors: err.errors || [],
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
-  });
+    message:
+      statusCode === 500
+        ? "Internal server error"
+        : err.message,
+  };
+
+  if (err.details) {
+    response.errors = err.details;
+  }
+
+  res.status(statusCode).json(response);
 };
 
-module.exports = { notFound, errorHandler };
+module.exports = {
+  notFound,
+  errorHandler,
+};

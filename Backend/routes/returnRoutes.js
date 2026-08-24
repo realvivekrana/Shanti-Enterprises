@@ -1,162 +1,92 @@
-const express =
-  require('express');
+// ============================================================
+// SHANTI ENTERPRISES
+// Return Routes
+// Phase 5 - Operations
+// ============================================================
 
-const router =
-  express.Router();
-
-
-// ======================================================
-// CONTROLLERS
-// ======================================================
+const express = require("express");
 
 const {
+  body,
+} = require("express-validator");
 
+const {
   createReturnRequest,
-
-  getMyReturnRequests,
-
-  getAllReturnRequests,
-
-  updateReturnStatus,
-
-  updatePickupDetails,
-
-  updateInspection,
-
-  processRefund,
-
-} = require(
-  '../controllers/returnController'
-);
-
-
-// ======================================================
-// AUTH
-// ======================================================
+  getMyReturns,
+  getReturnById,
+  cancelReturnRequest,
+} = require("../controllers/returnController");
 
 const {
-
   protect,
+} = require("../middleware/authMiddleware");
 
-  admin,
+const validate = require("../middleware/validate");
 
-} = require(
-  '../middleware/authMiddleware'
+const router = express.Router();
+
+// ============================================================
+// VALIDATION
+// ============================================================
+
+const createReturnValidation = [
+  body("orderId")
+    .notEmpty()
+    .withMessage(
+      "Order ID is required"
+    ),
+
+  body("items")
+    .isArray({
+      min: 1,
+    })
+    .withMessage(
+      "At least one return item is required"
+    ),
+
+  body("reason")
+    .notEmpty()
+    .withMessage(
+      "Return reason is required"
+    ),
+
+  body("description")
+    .optional()
+    .isString()
+    .withMessage(
+      "Description must be text"
+    ),
+];
+
+// ============================================================
+// PROTECTED ROUTES
+// ============================================================
+
+router.use(protect);
+
+// GET /api/returns
+router.get(
+  "/",
+  getMyReturns
 );
 
+// GET /api/returns/:id
+router.get(
+  "/:id",
+  getReturnById
+);
 
-// ======================================================
-// CUSTOMER
-// ======================================================
-
-// Create return / refund request
-
+// POST /api/returns
 router.post(
-
-  '/:orderId',
-
-  protect,
-
+  "/",
+  validate(createReturnValidation),
   createReturnRequest
-
 );
 
-
-// Get customer's return requests
-
-router.get(
-
-  '/mine',
-
-  protect,
-
-  getMyReturnRequests
-
-);
-
-
-// ======================================================
-// ADMIN
-// ======================================================
-
-// Get all return requests
-
-router.get(
-
-  '/',
-
-  protect,
-
-  admin,
-
-  getAllReturnRequests
-
-);
-
-
-// Update return status
-
+// PATCH /api/returns/:id/cancel
 router.patch(
-
-  '/:id',
-
-  protect,
-
-  admin,
-
-  updateReturnStatus
-
+  "/:id/cancel",
+  cancelReturnRequest
 );
 
-
-// Update reverse pickup details
-
-router.patch(
-
-  '/:id/pickup',
-
-  protect,
-
-  admin,
-
-  updatePickupDetails
-
-);
-
-
-// Update product inspection
-
-router.patch(
-
-  '/:id/inspection',
-
-  protect,
-
-  admin,
-
-  updateInspection
-
-);
-
-
-// Process refund
-
-router.patch(
-
-  '/:id/refund',
-
-  protect,
-
-  admin,
-
-  processRefund
-
-);
-
-
-// ======================================================
-// EXPORT
-// ======================================================
-
-module.exports =
-  router;
+module.exports = router;

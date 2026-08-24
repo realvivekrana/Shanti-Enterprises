@@ -1,66 +1,22 @@
-const express = require('express');
+// ============================================================
+// SHANTI ENTERPRISES
+// Product Routes
+// Phase 2 - Shopping
+// ============================================================
+
+const express = require("express");
 
 const {
   getProducts,
   getProductById,
-  calculateWholesalePrice,
-  createProduct,
-  updateProduct,
-  deleteProduct,
-} = require('../controllers/productController');
+} = require("../controllers/productController");
 
-const {
-  protect,
-  admin,
-} = require('../middleware/authMiddleware');
+const router = express.Router();
 
-const router =
-  express.Router();
+// GET /api/products
+router.get("/", getProducts);
 
-// ==============================
-// PUBLIC PRODUCT ROUTES
-// ==============================
-
-router.get(
-  '/',
-  getProducts
-);
-
-// IMPORTANT:
-// Keep this BEFORE /:id
-router.get(
-  '/:id/wholesale-price',
-  calculateWholesalePrice
-);
-
-router.get(
-  '/:id',
-  getProductById
-);
-
-// ==============================
-// ADMIN PRODUCT ROUTES
-// ==============================
-
-router.post(
-  '/',
-  protect,
-  admin,
-  createProduct
-);
-
-router.put(
-  '/:id',
-  protect,
-  admin,
-  updateProduct
-);
-
-router.delete(
-  '/:id',
-  protect,
-  admin,
-  deleteProduct
-);
+// GET /api/products/:id
+router.get("/:id", getProductById);
 
 module.exports = router;

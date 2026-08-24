@@ -1,80 +1,80 @@
-const express = require('express');
+// ============================================================
+// SHANTI ENTERPRISES
+// RFQ Routes
+// Phase 4 - Wholesale
+// ============================================================
+
+const express = require("express");
+
+const {
+  body,
+} = require("express-validator");
 
 const {
   createRFQ,
   getMyRFQs,
   getRFQById,
-  getAllRFQs,
-  quoteRFQ,
-  acceptRFQ,
-  rejectRFQ,
-} = require('../controllers/rfqController');
+  cancelRFQ,
+} = require("../controllers/rfqController");
 
 const {
   protect,
-  admin,
-} = require('../middleware/authMiddleware');
+} = require("../middleware/authMiddleware");
 
-const router =
-  express.Router();
+const validate = require("../middleware/validate");
 
-// ==============================
-// CUSTOMER ROUTES
-// ==============================
+const router = express.Router();
 
-// Create RFQ
-router.post(
-  '/',
-  protect,
-  createRFQ
-);
+// ============================================================
+// VALIDATION
+// ============================================================
 
-// My RFQs
+const createRFQValidation = [
+  body("items")
+    .isArray({
+      min: 1,
+    })
+    .withMessage(
+      "At least one RFQ item is required"
+    ),
+
+  body("message")
+    .optional()
+    .isString()
+    .withMessage(
+      "Message must be text"
+    ),
+];
+
+// ============================================================
+// PROTECTED ROUTES
+// ============================================================
+
+router.use(protect);
+
+// GET /api/rfqs
 router.get(
-  '/my',
-  protect,
+  "/",
   getMyRFQs
 );
 
-// Get single RFQ
+// GET /api/rfqs/:id
 router.get(
-  '/:id',
-  protect,
+  "/:id",
   getRFQById
 );
 
-// Accept quotation
-router.put(
-  '/:id/accept',
-  protect,
-  acceptRFQ
+// POST /api/rfqs
+router.post(
+  "/",
+  validate(createRFQValidation),
+  createRFQ
 );
 
-// Reject quotation
-router.put(
-  '/:id/reject',
-  protect,
-  rejectRFQ
-);
-
-// ==============================
-// ADMIN ROUTES
-// ==============================
-
-// Get all RFQs
-router.get(
-  '/',
-  protect,
-  admin,
-  getAllRFQs
-);
-
-// Send quotation
-router.put(
-  '/:id/quote',
-  protect,
-  admin,
-  quoteRFQ
+// PATCH /api/rfqs/:id/cancel
+router.patch(
+  "/:id/cancel",
+  cancelRFQ
 );
 
 module.exports = router;

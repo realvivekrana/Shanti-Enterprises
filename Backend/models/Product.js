@@ -1,13 +1,17 @@
-const mongoose = require('mongoose');
+// ============================================================
+// SHANTI ENTERPRISES
+// Product Model
+// Phase 4 - Wholesale Pricing
+// ============================================================
 
+const mongoose = require("mongoose");
 
-// ======================================================
-// WHOLESALE PRICE SCHEMA
-// ======================================================
+// ============================================================
+// WHOLESALE PRICE TIER
+// ============================================================
 
-const wholesalePriceSchema =
+const wholesalePriceTierSchema =
   new mongoose.Schema(
-
     {
       minQuantity: {
         type: Number,
@@ -15,560 +19,109 @@ const wholesalePriceSchema =
         min: 1,
       },
 
-      maxQuantity: {
-        type: Number,
-        default: null,
-        min: 1,
-      },
-
       price: {
         type: Number,
         required: true,
         min: 0,
       },
     },
-
     {
       _id: false,
     }
-
   );
 
-
-// ======================================================
-// DIMENSIONS SCHEMA
-// ======================================================
-
-const dimensionsSchema =
-  new mongoose.Schema(
-
-    {
-      length: {
-        type: Number,
-        default: 0,
-        min: 0,
-      },
-
-      width: {
-        type: Number,
-        default: 0,
-        min: 0,
-      },
-
-      height: {
-        type: Number,
-        default: 0,
-        min: 0,
-      },
-
-      unit: {
-        type: String,
-
-        enum: [
-          'cm',
-          'mm',
-          'inch',
-        ],
-
-        default: 'cm',
-      },
-    },
-
-    {
-      _id: false,
-    }
-
-  );
-
-
-// ======================================================
+// ============================================================
 // PRODUCT SCHEMA
-// ======================================================
-
-const productSchema =
-  new mongoose.Schema(
-
-    {
-
-      // ==================================================
-      // BASIC PRODUCT INFORMATION
-      // ==================================================
-
-      name: {
-        type: String,
-        required: true,
-        trim: true,
-      },
-
-
-      description: {
-        type: String,
-        required: true,
-        trim: true,
-      },
-
-
-      category: {
-        type: String,
-
-        required: true,
-
-        enum: [
-
-          'Courier Bags',
-
-          'Boxes',
-
-          'Tapes',
-
-          'Labels',
-
-          'Paper Shredded',
-
-          'Others',
-
-        ],
-      },
-
-
-      brand: {
-        type: String,
-        trim: true,
-        default: '',
-      },
-
-
-      sku: {
-        type: String,
-
-        required: true,
-
-        unique: true,
-
-        uppercase: true,
-
-        trim: true,
-      },
-
-
-      // ==================================================
-      // SELLING PRICE
-      // ==================================================
-
-      price: {
-        type: Number,
-
-        required: true,
-
-        min: 0,
-      },
-
-
-      // ==================================================
-      // COST PRICE
-      // ==================================================
-      //
-      // Business ko product kitne mein pada.
-      //
-      // Profit calculation:
-      //
-      // Profit =
-      // Selling Revenue - Product Cost
-      //
-      // Example:
-      //
-      // Selling = ₹100
-      // Cost     = ₹70
-      // Profit   = ₹30
-      //
-      // ==================================================
-
-      costPrice: {
-        type: Number,
-
-        default: 0,
-
-        min: 0,
-      },
-
-
-      // ==================================================
-      // MOQ
-      // ==================================================
-
-      moq: {
-        type: Number,
-
-        required: true,
-
-        min: 1,
-
-        default: 1,
-      },
-
-
-      // ==================================================
-      // STOCK
-      // ==================================================
-
-      stock: {
-        type: Number,
-
-        required: true,
-
-        min: 0,
-
-        default: 0,
-      },
-
-
-      lowStockThreshold: {
-        type: Number,
-
-        default: 10,
-
-        min: 0,
-      },
-
-
-      // ==================================================
-      // WHOLESALE PRICING
-      // ==================================================
-
-      wholesalePricing: {
-        type: [
-          wholesalePriceSchema,
-        ],
-
-        default: [],
-      },
-
-
-      // ==================================================
-      // GST
-      // ==================================================
-
-      gst: {
-        type: Number,
-
-        default: 0,
-
-        min: 0,
-
-        max: 100,
-      },
-
-
-      // ==================================================
-      // PRODUCT IMAGES
-      // ==================================================
-
-      images: [
-
-        {
-          type: String,
-
-          trim: true,
-        },
-
-      ],
-
-
-      // ==================================================
-      // PRODUCT SPECIFICATIONS
-      // ==================================================
-
-      specifications: {
-
-        type: Map,
-
-        of: String,
-
-        default: {},
-      },
-
-
-      // ==================================================
-      // WEIGHT
-      // ==================================================
-
-      weight: {
-
-        value: {
-
-          type: Number,
-
-          default: 0,
-
-          min: 0,
-        },
-
-        unit: {
-
-          type: String,
-
-          enum: [
-            'g',
-            'kg',
-          ],
-
-          default: 'kg',
-        },
-
-      },
-
-
-      // ==================================================
-      // DIMENSIONS
-      // ==================================================
-
-      dimensions: {
-
-        type: dimensionsSchema,
-
-        default: () => ({}),
-
-      },
-
-
-      // ==================================================
-      // LOCATION
-      // ==================================================
-
-      location: {
-
-        type: String,
-
-        trim: true,
-
-        default: '',
-      },
-
-
-      // ==================================================
-      // DELIVERY TIME
-      // ==================================================
-
-      deliveryTimeDays: {
-
-        type: Number,
-
-        min: 0,
-
-        default: 7,
-      },
-
-
-      // ==================================================
-      // PRODUCT FLAGS
-      // ==================================================
-
-      isBestSeller: {
-
-        type: Boolean,
-
-        default: false,
-      },
-
-
-      // ==================================================
-      // REVIEWS
-      // ==================================================
-
-      averageRating: {
-
-        type: Number,
-
-        default: 0,
-
-        min: 0,
-
-        max: 5,
-      },
-
-
-      numReviews: {
-
-        type: Number,
-
-        default: 0,
-
-        min: 0,
-      },
-
+// ============================================================
+
+const productSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 200,
     },
 
-    {
-      timestamps: true,
-    }
-
-  );
-
-
-// ======================================================
-// VALIDATE WHOLESALE PRICE TIERS
-// ======================================================
-
-productSchema
-  .path('wholesalePricing')
-  .validate(
-
-    function (tiers) {
-
-      if (
-        !tiers ||
-        tiers.length === 0
-      ) {
-
-        return true;
-
-      }
-
-
-      const sortedTiers =
-        [...tiers].sort(
-
-          (a, b) =>
-            a.minQuantity -
-            b.minQuantity
-
-        );
-
-
-      for (
-        let i = 0;
-        i < sortedTiers.length;
-        i++
-      ) {
-
-        const current =
-          sortedTiers[i];
-
-
-        // ==================================================
-        // MAX QUANTITY VALIDATION
-        // ==================================================
-
-        if (
-
-          current.maxQuantity !== null &&
-
-          current.maxQuantity <
-            current.minQuantity
-
-        ) {
-
-          return false;
-
-        }
-
-
-        // ==================================================
-        // OVERLAPPING TIER VALIDATION
-        // ==================================================
-
-        if (
-          i <
-          sortedTiers.length - 1
-        ) {
-
-          const next =
-            sortedTiers[i + 1];
-
-
-          if (
-
-            current.maxQuantity !== null &&
-
-            current.maxQuantity >=
-              next.minQuantity
-
-          ) {
-
-            return false;
-
-          }
-
-        }
-
-      }
-
-
-      return true;
-
+    slug: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+      index: true,
     },
 
-    'Wholesale pricing tiers cannot overlap or contain invalid quantities.'
+    description: {
+      type: String,
+      default: "",
+      trim: true,
+    },
 
-  );
+    image: {
+      type: String,
+      default: "",
+      trim: true,
+    },
 
+    price: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
 
-// ======================================================
-// SKU & BRAND NORMALIZATION
-// ======================================================
+    unit: {
+      type: String,
+      default: "piece",
+      trim: true,
+    },
 
-productSchema.pre(
-  'validate',
+    stock: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
 
-  function (next) {
+    // ========================================================
+    // WHOLESALE SETTINGS
+    // ========================================================
 
-    // ==================================================
-    // SKU
-    // ==================================================
+    moq: {
+      type: Number,
+      default: 1,
+      min: 1,
+    },
 
-    if (
-      this.sku
-    ) {
+    isWholesale: {
+      type: Boolean,
+      default: true,
+    },
 
-      this.sku =
-        this.sku
-          .trim()
-          .toUpperCase();
+    wholesalePriceTiers: {
+      type: [wholesalePriceTierSchema],
+      default: [],
+    },
 
-    }
+    category: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Category",
+      default: null,
+    },
 
-
-    // ==================================================
-    // BRAND
-    // ==================================================
-
-    if (
-      this.brand
-    ) {
-
-      this.brand =
-        this.brand.trim();
-
-    }
-
-
-    // ==================================================
-    // LOCATION
-    // ==================================================
-
-    if (
-      this.location
-    ) {
-
-      this.location =
-        this.location.trim();
-
-    }
-
-
-    next();
-
+    isActive: {
+      type: Boolean,
+      default: true,
+      index: true,
+    },
+  },
+  {
+    timestamps: true,
   }
-
 );
 
+const Product = mongoose.model(
+  "Product",
+  productSchema
+);
 
-// ======================================================
-// EXPORT MODEL
-// ======================================================
-
-module.exports =
-  mongoose.model(
-    'Product',
-    productSchema
-  );
+module.exports = Product;

@@ -1,339 +1,85 @@
-const express =
-  require('express');
+// ============================================================
+// SHANTI ENTERPRISES
+// Shipment Routes
+// Phase 5 - Operations
+// ============================================================
 
-const router =
-  express.Router();
-
-
-// ======================================================
-// CONTROLLER
-// ======================================================
+const express = require("express");
 
 const {
+  body,
+} = require("express-validator");
 
-  // Existing
-  updateShipment,
-  updateShipmentStatus,
+const {
+  getMyShipments,
+  getShipmentById,
   trackShipment,
-
-  // Shiprocket
-  createShiprocketShipment,
-  assignShiprocketAWB,
-  pickupShiprocketShipment,
-  trackShiprocketShipment,
-  generateShiprocketLabel,
-  generateShiprocketInvoice,
-  cancelShiprocketShipment,
-
-} = require(
-  '../controllers/shipmentController'
-);
-
-
-// ======================================================
-// AUTH
-// ======================================================
+  createShipment,
+} = require("../controllers/shipmentController");
 
 const {
-
   protect,
-  admin,
+} = require("../middleware/authMiddleware");
 
-} = require(
-  '../middleware/authMiddleware'
-);
+const validate = require("../middleware/validate");
 
+const router = express.Router();
 
-// ======================================================
-// EXISTING SHIPMENT ROUTES
-// ======================================================
+// ============================================================
+// VALIDATION
+// ============================================================
 
+const createShipmentValidation = [
+  body("orderId")
+    .notEmpty()
+    .withMessage(
+      "Order ID is required"
+    ),
 
-// ======================================================
-// UPDATE SHIPMENT DETAILS
-// ======================================================
-//
-// PUT
-// /api/shipments/:orderId
-//
-// Admin:
-// carrier
-// tracking ID
-// tracking URL
-// estimated delivery
-//
-// ======================================================
+  body("carrier")
+    .optional()
+    .isString()
+    .withMessage(
+      "Carrier must be text"
+    ),
 
-router.put(
+  body("trackingNumber")
+    .optional()
+    .isString()
+    .withMessage(
+      "Tracking number must be text"
+    ),
+];
 
-  '/:orderId',
+// ============================================================
+// PROTECTED ROUTES
+// ============================================================
 
-  protect,
+router.use(protect);
 
-  admin,
-
-  updateShipment
-
-);
-
-
-// ======================================================
-// UPDATE SHIPMENT STATUS
-// ======================================================
-//
-// PATCH
-// /api/shipments/:orderId/status
-//
-// ======================================================
-
-router.patch(
-
-  '/:orderId/status',
-
-  protect,
-
-  admin,
-
-  updateShipmentStatus
-
-);
-
-
-// ======================================================
-// TRACK SHIPMENT
-// ======================================================
-//
-// GET
-// /api/shipments/:orderId/track
-//
-// Customer:
-// Own order
-//
-// Admin:
-// Any order
-//
-// ======================================================
-
+// GET /api/shipments
 router.get(
+  "/",
+  getMyShipments
+);
 
-  '/:orderId/track',
-
-  protect,
-
+// GET /api/shipments/:id/track
+router.get(
+  "/:id/track",
   trackShipment
-
 );
 
-
-// ======================================================
-// SHIPROCKET
-// ======================================================
-
-
-// ======================================================
-// CREATE SHIPROCKET ORDER
-// ======================================================
-//
-// POST
-// /api/shipments/:orderId/shiprocket/create
-//
-// Flow:
-//
-// Order
-//   ↓
-// Shiprocket
-//   ↓
-// Shiprocket Order ID
-//   ↓
-// Shipment ID
-//   ↓
-// MongoDB
-//
-// Admin only
-//
-// ======================================================
-
-router.post(
-
-  '/:orderId/shiprocket/create',
-
-  protect,
-
-  admin,
-
-  createShiprocketShipment
-
-);
-
-
-// ======================================================
-// ASSIGN AWB
-// ======================================================
-//
-// POST
-// /api/shipments/:orderId/shiprocket/awb
-//
-// Optional body:
-//
-// {
-//   "courierId": 123
-// }
-//
-// If courierId is not provided,
-// Shiprocket can select courier
-// according to its rules.
-//
-// Admin only
-//
-// ======================================================
-
-router.post(
-
-  '/:orderId/shiprocket/awb',
-
-  protect,
-
-  admin,
-
-  assignShiprocketAWB
-
-);
-
-
-// ======================================================
-// REQUEST PICKUP
-// ======================================================
-//
-// POST
-// /api/shipments/:orderId/shiprocket/pickup
-//
-// Optional body:
-//
-// {
-//   "pickupDate": "2026-08-20"
-// }
-//
-// Admin only
-//
-// ======================================================
-
-router.post(
-
-  '/:orderId/shiprocket/pickup',
-
-  protect,
-
-  admin,
-
-  pickupShiprocketShipment
-
-);
-
-
-// ======================================================
-// LIVE TRACKING
-// ======================================================
-//
-// GET
-// /api/shipments/:orderId/shiprocket/track
-//
-// Customer:
-// Own order
-//
-// Admin:
-// Any order
-//
-// Shiprocket se live tracking
-// fetch karega.
-//
-// ======================================================
-
+// GET /api/shipments/:id
 router.get(
-
-  '/:orderId/shiprocket/track',
-
-  protect,
-
-  trackShiprocketShipment
-
+  "/:id",
+  getShipmentById
 );
 
-
-// ======================================================
-// SHIPPING LABEL
-// ======================================================
-//
-// POST
-// /api/shipments/:orderId/shiprocket/label
-//
-// Admin only
-//
-// ======================================================
-
+// POST /api/shipments
 router.post(
-
-  '/:orderId/shiprocket/label',
-
-  protect,
-
-  admin,
-
-  generateShiprocketLabel
-
+  "/",
+  validate(createShipmentValidation),
+  createShipment
 );
 
-
-// ======================================================
-// SHIPPING INVOICE
-// ======================================================
-//
-// POST
-// /api/shipments/:orderId/shiprocket/invoice
-//
-// Admin only
-//
-// ======================================================
-
-router.post(
-
-  '/:orderId/shiprocket/invoice',
-
-  protect,
-
-  admin,
-
-  generateShiprocketInvoice
-
-);
-
-
-// ======================================================
-// CANCEL SHIPROCKET SHIPMENT
-// ======================================================
-//
-// DELETE
-// /api/shipments/:orderId/shiprocket
-//
-// Admin only
-//
-// ======================================================
-
-router.delete(
-
-  '/:orderId/shiprocket',
-
-  protect,
-
-  admin,
-
-  cancelShiprocketShipment
-
-);
-
-
-// ======================================================
-// EXPORT
-// ======================================================
-
-module.exports =
-  router;
+module.exports = router;

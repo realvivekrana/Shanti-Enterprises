@@ -1,293 +1,158 @@
-const mongoose = require('mongoose');
+// ============================================================
+// SHANTI ENTERPRISES
+// Quotation Model
+// Phase 4 - Wholesale
+// ============================================================
 
-// ==============================
-// QUOTATION PRODUCT SCHEMA
-// ==============================
+const mongoose = require("mongoose");
 
-const quotationProductSchema =
-  new mongoose.Schema(
-    {
-      product: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Product',
-        required: true,
-      },
+// ============================================================
+// QUOTATION ITEM
+// ============================================================
 
-      productName: {
-        type: String,
-        required: true,
-        trim: true,
-      },
-
-      quantity: {
-        type: Number,
-        required: true,
-        min: 1,
-      },
-
-      offeredPrice: {
-        type: Number,
-        required: true,
-        min: 0,
-      },
-
-      finalPrice: {
-        type: Number,
-        default: null,
-        min: 0,
-      },
-
-      totalAmount: {
-        type: Number,
-        default: null,
-        min: 0,
-      },
+const quotationItemSchema = new mongoose.Schema(
+  {
+    product: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Product",
+      required: true,
     },
-    {
-      _id: false,
-    }
-  );
 
-// ==============================
-// NEGOTIATION HISTORY
-// ==============================
-
-const negotiationSchema =
-  new mongoose.Schema(
-    {
-      offeredBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true,
-      },
-
-      offeredByRole: {
-        type: String,
-        enum: [
-          'customer',
-          'admin',
-          'staff',
-          'supplier',
-        ],
-        required: true,
-      },
-
-      price: {
-        type: Number,
-        required: true,
-        min: 0,
-      },
-
-      message: {
-        type: String,
-        trim: true,
-        maxlength: 2000,
-        default: '',
-      },
-
-      createdAt: {
-        type: Date,
-        default: Date.now,
-      },
+    productName: {
+      type: String,
+      required: true,
+      trim: true,
     },
-    {
-      _id: true,
-    }
-  );
 
-// ==============================
+    quantity: {
+      type: Number,
+      required: true,
+      min: 1,
+    },
+
+    unit: {
+      type: String,
+      default: "piece",
+      trim: true,
+    },
+
+    unitPrice: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+
+    totalPrice: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+  },
+  {
+    _id: false,
+  }
+);
+
+// ============================================================
 // QUOTATION SCHEMA
-// ==============================
+// ============================================================
 
-const quotationSchema =
-  new mongoose.Schema(
-    {
-      // ==============================
-      // RFQ REFERENCE
-      // ==============================
+const quotationSchema = new mongoose.Schema(
+  {
+    quotationNumber: {
+      type: String,
+      required: true,
+      unique: true,
+      index: true,
+    },
 
-      rfqId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'RFQ',
-        default: null,
-      },
+    rfq: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "RFQ",
+      required: true,
+      index: true,
+    },
 
-      // ==============================
-      // CUSTOMER
-      // ==============================
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
 
-      customerId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true,
-      },
+    items: {
+      type: [quotationItemSchema],
+      required: true,
 
-      // ==============================
-      // SUPPLIER
-      // ==============================
+      validate: {
+        validator: (items) =>
+          items.length > 0,
 
-      supplierId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true,
-      },
-
-      // ==============================
-      // PRODUCTS
-      // ==============================
-
-      products: {
-        type: [quotationProductSchema],
-
-        required: true,
-
-        validate: {
-          validator: function (
-            products
-          ) {
-            return (
-              Array.isArray(
-                products
-              ) &&
-              products.length > 0
-            );
-          },
-
-          message:
-            'At least one product is required',
-        },
-      },
-
-      // ==============================
-      // TOTAL QUANTITY
-      // ==============================
-
-      quantity: {
-        type: Number,
-        required: true,
-        min: 1,
-      },
-
-      // ==============================
-      // OFFERED PRICE
-      // ==============================
-
-      offeredPrice: {
-        type: Number,
-        required: true,
-        min: 0,
-      },
-
-      // ==============================
-      // FINAL PRICE
-      // ==============================
-
-      finalPrice: {
-        type: Number,
-        default: null,
-        min: 0,
-      },
-
-      // ==============================
-      // TOTAL QUOTATION VALUE
-      // ==============================
-
-      totalAmount: {
-        type: Number,
-        default: null,
-        min: 0,
-      },
-
-      // ==============================
-      // STATUS
-      // ==============================
-
-      status: {
-        type: String,
-
-        enum: [
-          'draft',
-          'offered',
-          'negotiating',
-          'accepted',
-          'rejected',
-          'expired',
-          'cancelled',
-        ],
-
-        default: 'offered',
-      },
-
-      // ==============================
-      // NEGOTIATION HISTORY
-      // ==============================
-
-      negotiationHistory: {
-        type: [
-          negotiationSchema,
-        ],
-
-        default: [],
-      },
-
-      // ==============================
-      // EXPIRY
-      // ==============================
-
-      expiryDate: {
-        type: Date,
-        required: true,
-      },
-
-      // ==============================
-      // ACCEPTED / REJECTED
-      // ==============================
-
-      respondedAt: {
-        type: Date,
-        default: null,
-      },
-
-      acceptedAt: {
-        type: Date,
-        default: null,
-      },
-
-      rejectedAt: {
-        type: Date,
-        default: null,
+        message:
+          "Quotation must contain at least one item",
       },
     },
-    {
-      timestamps: true,
-    }
-  );
 
-// ==============================
-// INDEXES
-// ==============================
+    subtotal: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
 
-quotationSchema.index({
-  customerId: 1,
-  createdAt: -1,
-});
+    totalAmount: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
 
-quotationSchema.index({
-  supplierId: 1,
-  createdAt: -1,
-});
+    note: {
+      type: String,
+      default: "",
+      trim: true,
+      maxlength: 1000,
+    },
 
-quotationSchema.index({
-  status: 1,
-  createdAt: -1,
-});
+    validUntil: {
+      type: Date,
+      default: null,
+    },
 
-quotationSchema.index({
-  rfqId: 1,
-});
+    status: {
+      type: String,
+      enum: [
+        "pending",
+        "sent",
+        "accepted",
+        "rejected",
+        "expired",
+      ],
+      default: "pending",
+      index: true,
+    },
 
-module.exports =
-  mongoose.model(
-    'Quotation',
-    quotationSchema
-  );
+    sentAt: {
+      type: Date,
+      default: null,
+    },
+
+    acceptedAt: {
+      type: Date,
+      default: null,
+    },
+
+    rejectedAt: {
+      type: Date,
+      default: null,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+const Quotation = mongoose.model(
+  "Quotation",
+  quotationSchema
+);
+
+module.exports = Quotation;

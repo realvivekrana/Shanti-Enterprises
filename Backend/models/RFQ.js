@@ -1,199 +1,135 @@
-const mongoose = require('mongoose');
+// ============================================================
+// SHANTI ENTERPRISES
+// RFQ Model
+// Phase 4 - Wholesale
+// ============================================================
 
-// ==============================
-// RFQ ITEM SCHEMA
-// ==============================
+const mongoose = require("mongoose");
 
-const rfqItemSchema =
-  new mongoose.Schema(
-    {
-      product: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Product',
-        required: true,
-      },
+// ============================================================
+// RFQ ITEM
+// ============================================================
 
-      productName: {
-        type: String,
-        required: true,
-        trim: true,
-      },
-
-      quantity: {
-        type: Number,
-        required: true,
-        min: 1,
-      },
-
-      expectedPrice: {
-        type: Number,
-        min: 0,
-        default: null,
-      },
-
-      quotedPrice: {
-        type: Number,
-        min: 0,
-        default: null,
-      },
-
-      quotedTotal: {
-        type: Number,
-        min: 0,
-        default: null,
-      },
+const rfqItemSchema = new mongoose.Schema(
+  {
+    product: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Product",
+      required: true,
     },
-    {
-      _id: false,
-    }
-  );
 
-// ==============================
+    productName: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    quantity: {
+      type: Number,
+      required: true,
+      min: 1,
+    },
+
+    unit: {
+      type: String,
+      default: "piece",
+      trim: true,
+    },
+
+    note: {
+      type: String,
+      default: "",
+      trim: true,
+      maxlength: 500,
+    },
+  },
+  {
+    _id: false,
+  }
+);
+
+// ============================================================
 // RFQ SCHEMA
-// ==============================
+// ============================================================
 
-const rfqSchema =
-  new mongoose.Schema(
-    {
-      // ==============================
-      // CUSTOMER
-      // ==============================
+const rfqSchema = new mongoose.Schema(
+  {
+    rfqNumber: {
+      type: String,
+      required: true,
+      unique: true,
+      index: true,
+    },
 
-      customer: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true,
-      },
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
 
-      // ==============================
-      // RFQ ITEM
-      // ==============================
+    items: {
+      type: [rfqItemSchema],
+      required: true,
 
-      items: {
-        type: [rfqItemSchema],
-        required: true,
-        validate: {
-          validator: function (items) {
-            return (
-              Array.isArray(items) &&
-              items.length > 0
-            );
-          },
+      validate: {
+        validator: (items) =>
+          items.length > 0,
 
-          message:
-            'At least one product is required',
-        },
-      },
-
-      // ==============================
-      // CUSTOMER MESSAGE
-      // ==============================
-
-      message: {
-        type: String,
-        trim: true,
-        maxlength: 2000,
-        default: '',
-      },
-
-      // ==============================
-      // ADMIN MESSAGE
-      // ==============================
-
-      adminMessage: {
-        type: String,
-        trim: true,
-        maxlength: 2000,
-        default: '',
-      },
-
-      // ==============================
-      // STATUS
-      // ==============================
-
-      status: {
-        type: String,
-
-        enum: [
-          'pending',
-          'quoted',
-          'accepted',
-          'rejected',
-          'expired',
-          'cancelled',
-        ],
-
-        default: 'pending',
-      },
-
-      // ==============================
-      // QUOTATION
-      // ==============================
-
-      quotationValidUntil: {
-        type: Date,
-        default: null,
-      },
-
-      // ==============================
-      // CUSTOMER RESPONSE
-      // ==============================
-
-      customerResponseAt: {
-        type: Date,
-        default: null,
-      },
-
-      // ==============================
-      // ADMIN
-      // ==============================
-
-      quotedBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        default: null,
-      },
-
-      quotedAt: {
-        type: Date,
-        default: null,
-      },
-
-      // ==============================
-      // TOTALS
-      // ==============================
-
-      totalQuantity: {
-        type: Number,
-        default: 0,
-      },
-
-      quotedTotal: {
-        type: Number,
-        default: null,
+        message:
+          "RFQ must contain at least one item",
       },
     },
-    {
-      timestamps: true,
-    }
-  );
 
-// ==============================
-// INDEXES
-// ==============================
+    message: {
+      type: String,
+      default: "",
+      trim: true,
+      maxlength: 1000,
+    },
 
-rfqSchema.index({
-  customer: 1,
-  createdAt: -1,
-});
+    status: {
+      type: String,
+      enum: [
+        "pending",
+        "reviewing",
+        "quoted",
+        "accepted",
+        "rejected",
+        "cancelled",
+      ],
+      default: "pending",
+      index: true,
+    },
 
-rfqSchema.index({
-  status: 1,
-  createdAt: -1,
-});
+    reviewedAt: {
+      type: Date,
+      default: null,
+    },
 
-module.exports =
-  mongoose.model(
-    'RFQ',
-    rfqSchema
-  );
+    quotedAt: {
+      type: Date,
+      default: null,
+    },
+
+    acceptedAt: {
+      type: Date,
+      default: null,
+    },
+
+    cancelledAt: {
+      type: Date,
+      default: null,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+const RFQ = mongoose.model(
+  "RFQ",
+  rfqSchema
+);
+
+module.exports = RFQ;

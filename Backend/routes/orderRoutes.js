@@ -1,110 +1,108 @@
-const express = require('express');
+// ============================================================
+// SHANTI ENTERPRISES
+// Order Routes
+// Phase 3 - Customer Portal
+// ============================================================
 
-const router = express.Router();
+const express = require("express");
+
+const {
+  body,
+} = require("express-validator");
 
 const {
   createOrder,
   getMyOrders,
   getOrderById,
-  updateOrderToPaid,
-  getAllOrders,
-  updateOrderStatus,
-  reorderOrder,
-} = require('../controllers/orderController');
+} = require("../controllers/orderController");
 
 const {
   protect,
-  admin,
-} = require('../middleware/authMiddleware');
+} = require("../middleware/authMiddleware");
 
+const validate = require("../middleware/validate");
 
-// ======================================================
-// CREATE ORDER
-// ======================================================
+const router = express.Router();
 
-router.post(
-  '/',
-  protect,
-  createOrder
-);
+// ============================================================
+// CHECKOUT VALIDATION
+// ============================================================
 
+const checkoutValidation = [
+  body("name")
+    .trim()
+    .notEmpty()
+    .withMessage(
+      "Name is required"
+    ),
 
-// ======================================================
-// MY ORDERS
-// ======================================================
+  body("phone")
+    .trim()
+    .notEmpty()
+    .withMessage(
+      "Phone is required"
+    ),
 
+  body("addressLine1")
+    .trim()
+    .notEmpty()
+    .withMessage(
+      "Address is required"
+    ),
+
+  body("city")
+    .trim()
+    .notEmpty()
+    .withMessage(
+      "City is required"
+    ),
+
+  body("state")
+    .trim()
+    .notEmpty()
+    .withMessage(
+      "State is required"
+    ),
+
+  body("postalCode")
+    .trim()
+    .notEmpty()
+    .withMessage(
+      "Postal code is required"
+    ),
+];
+
+// ============================================================
+// ALL ORDER ROUTES REQUIRE LOGIN
+// ============================================================
+
+router.use(protect);
+
+// ============================================================
+// CUSTOMER ORDERS
+// ============================================================
+
+// GET /api/orders
 router.get(
-  '/myorders',
-  protect,
+  "/",
   getMyOrders
 );
 
-
-// ======================================================
-// ADMIN - ALL ORDERS
-// ======================================================
-
+// GET /api/orders/:id
 router.get(
-  '/',
-  protect,
-  admin,
-  getAllOrders
-);
-
-
-// ======================================================
-// GET ORDER BY ID
-// ======================================================
-
-router.get(
-  '/:id',
-  protect,
+  "/:id",
   getOrderById
 );
 
+// ============================================================
+// CHECKOUT
+// ============================================================
 
-// ======================================================
-// MARK ORDER AS PAID
-// ======================================================
-
-router.put(
-  '/:id/pay',
-  protect,
-  updateOrderToPaid
-);
-
-
-// ======================================================
-// ADMIN - UPDATE ORDER STATUS
-// ======================================================
-
-router.put(
-  '/:id/status',
-  protect,
-  admin,
-  updateOrderStatus
-);
-
-
-// ======================================================
-// REORDER
-// ======================================================
-// Customer previous order ko reorder kar sakta hai.
-//
-// POST /api/orders/:id/reorder
-//
-// Backend current:
-// - stock
-// - MOQ
-// - wholesale price
-// check karega.
-// ======================================================
-
+// POST /api/orders
 router.post(
-  '/:id/reorder',
-  protect,
-  reorderOrder
+  "/",
+  validate(checkoutValidation),
+  createOrder
 );
-
 
 module.exports = router;

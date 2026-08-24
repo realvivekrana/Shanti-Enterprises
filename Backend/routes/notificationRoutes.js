@@ -1,94 +1,45 @@
-const express =
-  require('express');
+// ============================================================
+// SHANTI ENTERPRISES
+// Notification Routes
+// Phase 3 - Customer Portal
+// ============================================================
 
-const router =
-  express.Router();
+const express = require("express");
 
 const {
   getMyNotifications,
-  getUnreadCount,
   markNotificationAsRead,
   markAllNotificationsAsRead,
-  deleteNotification,
-  deleteAllNotifications,
-} =
-  require(
-    '../controllers/notificationController'
-  );
+} = require("../controllers/notificationController");
 
 const {
   protect,
-} =
-  require(
-    '../middleware/authMiddleware'
-  );
+} = require("../middleware/authMiddleware");
 
+const router = express.Router();
 
-// ======================================================
-// GET MY NOTIFICATIONS
-// ======================================================
+// ============================================================
+// ALL NOTIFICATION ROUTES REQUIRE LOGIN
+// ============================================================
 
+router.use(protect);
+
+// GET /api/notifications
 router.get(
-  '/',
-  protect,
+  "/",
   getMyNotifications
 );
 
-
-// ======================================================
-// UNREAD COUNT
-// ======================================================
-
-router.get(
-  '/unread-count',
-  protect,
-  getUnreadCount
-);
-
-
-// ======================================================
-// MARK ALL READ
-// ======================================================
-
-router.put(
-  '/read-all',
-  protect,
+// PATCH /api/notifications/read-all
+router.patch(
+  "/read-all",
   markAllNotificationsAsRead
 );
 
-
-// ======================================================
-// DELETE ALL
-// ======================================================
-
-router.delete(
-  '/all',
-  protect,
-  deleteAllNotifications
-);
-
-
-// ======================================================
-// MARK ONE READ
-// ======================================================
-
-router.put(
-  '/:id/read',
-  protect,
+// PATCH /api/notifications/:id/read
+router.patch(
+  "/:id/read",
   markNotificationAsRead
 );
 
-
-// ======================================================
-// DELETE ONE
-// ======================================================
-
-router.delete(
-  '/:id',
-  protect,
-  deleteNotification
-);
-
-
-module.exports =
-  router;
+module.exports = router;

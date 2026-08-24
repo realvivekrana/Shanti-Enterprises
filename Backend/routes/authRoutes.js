@@ -1,65 +1,105 @@
-const express = require('express');
+// ============================================================
+// SHANTI ENTERPRISES
+// Authentication Routes
+// Phase 1 - Foundation
+// ============================================================
+
+const express = require("express");
+
+const {
+  body,
+} = require("express-validator");
+
+const {
+  register,
+  login,
+  logout,
+  getCurrentUser,
+} = require("../controllers/authController");
+
+const {
+  protect,
+} = require("../middleware/authMiddleware");
+
+const validate = require("../middleware/validate");
 
 const router = express.Router();
 
-const {
-  registerUser,
-  loginUser,
-  registerAdmin,
-  loginAdmin,
-} = require('../controllers/authController');
+// ============================================================
+// REGISTER VALIDATION
+// ============================================================
 
-// authRateLimiter pehle securityMiddleware.js mein bana hua tha
-// lekin kahin bhi use nahi ho raha tha, isliye brute-force
-// protection actually kaam hi nahi kar raha tha. Ab yahan wire kiya.
-const {
-  authRateLimiter,
-} = require('../middleware/securityMiddleware');
+const registerValidation = [
+  body("name")
+    .trim()
+    .notEmpty()
+    .withMessage("Name is required")
+    .isLength({ min: 2, max: 80 })
+    .withMessage("Name must be between 2 and 80 characters"),
 
-// validateRegister/validateLogin bhi pehle se bane the
-// lekin routes mein kabhi attach hi nahi kiye gaye the.
-const {
-  validateRegister,
-  validateLogin,
-} = require('../middleware/validationMiddleware');
+  body("email")
+    .trim()
+    .notEmpty()
+    .withMessage("Email is required")
+    .isEmail()
+    .withMessage("Please provide a valid email"),
 
-// ======================================================
-// CUSTOMER AUTH
-// ======================================================
+  body("phone")
+    .optional()
+    .trim()
+    .isLength({ min: 10, max: 15 })
+    .withMessage("Phone number must be between 10 and 15 characters"),
 
-// Customer Register
+  body("password")
+    .notEmpty()
+    .withMessage("Password is required")
+    .isLength({ min: 6 })
+    .withMessage("Password must be at least 6 characters"),
+];
+
+// ============================================================
+// LOGIN VALIDATION
+// ============================================================
+
+const loginValidation = [
+  body("email")
+    .trim()
+    .notEmpty()
+    .withMessage("Email is required")
+    .isEmail()
+    .withMessage("Please provide a valid email"),
+
+  body("password")
+    .notEmpty()
+    .withMessage("Password is required"),
+];
+
+// ============================================================
+// PUBLIC ROUTES
+// ============================================================
+
 router.post(
-  '/register',
-  authRateLimiter,
-  validateRegister,
-  registerUser
+  "/register",
+  validate(registerValidation),
+  register
 );
 
-// Customer Login
 router.post(
-  '/login',
-  authRateLimiter,
-  validateLogin,
-  loginUser
+  "/login",
+  validate(loginValidation),
+  login
 );
 
-// ======================================================
-// ADMIN AUTH
-// ======================================================
+router.post("/logout", logout);
 
-// Admin Register
-// (ADMIN_REGISTER_CODE brute-force na ho isliye rate limiter zaroori hai)
-router.post(
-  '/admin/register',
-  authRateLimiter,
-  registerAdmin
-);
+// ============================================================
+// PROTECTED ROUTES
+// ============================================================
 
-// Admin Login
-router.post(
-  '/admin/login',
-  authRateLimiter,
-  loginAdmin
+router.get(
+  "/me",
+  protect,
+  getCurrentUser
 );
 
 module.exports = router;

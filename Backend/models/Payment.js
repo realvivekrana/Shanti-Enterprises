@@ -1,288 +1,116 @@
-const mongoose = require('mongoose');
+// ============================================================
+// SHANTI ENTERPRISES
+// Payment Model
+// Phase 5 - Operations
+// ============================================================
 
-// ==============================
-// PAYMENT SCHEMA
-// ==============================
+const mongoose = require("mongoose");
 
 const paymentSchema = new mongoose.Schema(
   {
-
-    // ==============================
-    // CUSTOMER
-    // ==============================
-
-    customer: {
-
-      type:
-        mongoose.Schema.Types.ObjectId,
-
-      ref:
-        'User',
-
-      required:
-        true,
-
-    },
-
-
-    // ==============================
-    // ORDER
-    // ==============================
-
     order: {
-
-      type:
-        mongoose.Schema.Types.ObjectId,
-
-      ref:
-        'Order',
-
-      required:
-        true,
-
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Order",
+      required: true,
+      unique: true,
+      index: true,
     },
 
-
-    // ==============================
-    // PAYMENT AMOUNT
-    // ==============================
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
 
     amount: {
-
-      type:
-        Number,
-
-      required:
-        true,
-
-      min:
-        0,
-
+      type: Number,
+      required: true,
+      min: 0,
     },
 
-
-    // ==============================
-    // PAYMENT METHOD
-    // ==============================
-
-    method: {
-
-      type:
-        String,
-
-      enum: [
-
-        'razorpay',
-
-        'upi',
-
-        'card',
-
-        'netbanking',
-
-        'wallet',
-
-        'cod',
-
-        'partial',
-
-        'credit',
-
-      ],
-
-      required:
-        true,
-
+    currency: {
+      type: String,
+      default: "INR",
+      uppercase: true,
+      trim: true,
     },
 
-
-    // ==============================
-    // PAYMENT STATUS
-    // ==============================
-
-    status: {
-
-      type:
-        String,
-
-      enum: [
-
-        'pending',
-
-        'processing',
-
-        'success',
-
-        'failed',
-
-        'refunded',
-
-        'partially_refunded',
-
-      ],
-
-      default:
-        'pending',
-
+    provider: {
+      type: String,
+      enum: ["razorpay"],
+      default: "razorpay",
     },
-
-
-    // ==============================
-    // GATEWAY
-    // ==============================
-
-    gateway: {
-
-      type:
-        String,
-
-      enum: [
-
-        'razorpay',
-
-        'cod',
-
-        'credit',
-
-        'manual',
-
-      ],
-
-      default:
-        'razorpay',
-
-    },
-
-
-    // ==============================
-    // RAZORPAY DETAILS
-    // ==============================
 
     razorpayOrderId: {
-
-      type:
-        String,
-
-      default:
-        null,
-
+      type: String,
+      default: "",
+      trim: true,
+      index: true,
     },
-
 
     razorpayPaymentId: {
-
-      type:
-        String,
-
-      default:
-        null,
-
+      type: String,
+      default: "",
+      trim: true,
+      index: true,
     },
-
 
     razorpaySignature: {
-
-      type:
-        String,
-
-      default:
-        null,
-
+      type: String,
+      default: "",
+      trim: true,
     },
 
-
-    // ==============================
-    // TRANSACTION ID
-    // ==============================
-
-    transactionId: {
-
-      type:
-        String,
-
-      default:
-        null,
-
+    status: {
+      type: String,
+      enum: [
+        "created",
+        "pending",
+        "paid",
+        "failed",
+        "refunded",
+      ],
+      default: "created",
+      index: true,
     },
-
-
-    // ==============================
-    // FAILURE
-    // ==============================
-
-    failureReason: {
-
-      type:
-        String,
-
-      default:
-        null,
-
-    },
-
-
-    // ==============================
-    // PAYMENT DATE
-    // ==============================
 
     paidAt: {
-
-      type:
-        Date,
-
-      default:
-        null,
-
+      type: Date,
+      default: null,
     },
 
+    failedAt: {
+      type: Date,
+      default: null,
+    },
+
+    failureReason: {
+      type: String,
+      default: "",
+      trim: true,
+      maxlength: 500,
+    },
+
+    refundAmount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    refundedAt: {
+      type: Date,
+      default: null,
+    },
   },
-
   {
-
-    timestamps:
-      true,
-
+    timestamps: true,
   }
-
 );
 
+const Payment = mongoose.model(
+  "Payment",
+  paymentSchema
+);
 
-// ==============================
-// INDEXES
-// ==============================
-
-paymentSchema.index({
-
-  customer:
-    1,
-
-  createdAt:
-    -1,
-
-});
-
-
-paymentSchema.index({
-
-  order:
-    1,
-
-  createdAt:
-    -1,
-
-});
-
-
-paymentSchema.index({
-
-  transactionId:
-    1,
-
-});
-
-
-module.exports =
-  mongoose.model(
-    'Payment',
-    paymentSchema
-  );
+module.exports = Payment;

@@ -1,331 +1,209 @@
-const mongoose = require('mongoose');
+// ============================================================
+// SHANTI ENTERPRISES
+// Invoice Model
+// Phase 5 - Operations
+// ============================================================
 
-// ==============================
+const mongoose = require("mongoose");
+
+// ============================================================
 // INVOICE ITEM
-// ==============================
+// ============================================================
 
-const invoiceItemSchema =
-  new mongoose.Schema(
-    {
-      product: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Product',
-        required: true,
-      },
+const invoiceItemSchema = new mongoose.Schema(
+  {
+    product: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Product",
+      default: null,
+    },
 
-      name: {
-        type: String,
-        required: true,
-      },
+    productName: {
+      type: String,
+      required: true,
+      trim: true,
+    },
 
-      sku: {
-        type: String,
-        default: '',
-      },
+    quantity: {
+      type: Number,
+      required: true,
+      min: 1,
+    },
 
-      quantity: {
-        type: Number,
-        required: true,
-        min: 1,
-      },
+    unit: {
+      type: String,
+      default: "piece",
+      trim: true,
+    },
 
-      rate: {
-        type: Number,
-        required: true,
-        min: 0,
-      },
+    unitPrice: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
 
-      discount: {
-        type: Number,
-        default: 0,
-        min: 0,
-      },
+    totalPrice: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+  },
+  {
+    _id: false,
+  }
+);
 
-      taxableAmount: {
-        type: Number,
-        required: true,
-        min: 0,
-      },
+// ============================================================
+// INVOICE SCHEMA
+// ============================================================
 
-      gstRate: {
-        type: Number,
-        default: 0,
-        min: 0,
-        max: 100,
-      },
+const invoiceSchema = new mongoose.Schema(
+  {
+    invoiceNumber: {
+      type: String,
+      required: true,
+      unique: true,
+      index: true,
+    },
 
-      cgstRate: {
-        type: Number,
-        default: 0,
-      },
+    order: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Order",
+      required: true,
+      unique: true,
+      index: true,
+    },
 
-      cgstAmount: {
-        type: Number,
-        default: 0,
-      },
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
 
-      sgstRate: {
-        type: Number,
-        default: 0,
-      },
+    items: {
+      type: [invoiceItemSchema],
+      required: true,
 
-      sgstAmount: {
-        type: Number,
-        default: 0,
-      },
+      validate: {
+        validator: (items) =>
+          items.length > 0,
 
-      igstRate: {
-        type: Number,
-        default: 0,
-      },
-
-      igstAmount: {
-        type: Number,
-        default: 0,
-      },
-
-      totalAmount: {
-        type: Number,
-        required: true,
-        min: 0,
+        message:
+          "Invoice must contain at least one item",
       },
     },
-    {
-      _id: false,
-    }
-  );
 
-// ==============================
-// ADDRESS SNAPSHOT
-// ==============================
+    subtotal: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
 
-const addressSchema =
-  new mongoose.Schema(
-    {
-      addressLine1: {
+    shippingAmount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    taxAmount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    discountAmount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    totalAmount: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+
+    currency: {
+      type: String,
+      default: "INR",
+      uppercase: true,
+      trim: true,
+    },
+
+    status: {
+      type: String,
+      enum: [
+        "issued",
+        "paid",
+        "cancelled",
+      ],
+      default: "issued",
+      index: true,
+    },
+
+    issuedAt: {
+      type: Date,
+      default: Date.now,
+    },
+
+    paidAt: {
+      type: Date,
+      default: null,
+    },
+
+    billingAddress: {
+      name: {
         type: String,
-        default: '',
-      },
-
-      addressLine2: {
-        type: String,
-        default: '',
-      },
-
-      street: {
-        type: String,
-        default: '',
-      },
-
-      city: {
-        type: String,
-        default: '',
-      },
-
-      state: {
-        type: String,
-        default: '',
-      },
-
-      pincode: {
-        type: String,
-        default: '',
-      },
-
-      country: {
-        type: String,
-        default: 'India',
+        default: "",
+        trim: true,
       },
 
       phone: {
         type: String,
-        default: '',
+        default: "",
+        trim: true,
+      },
+
+      address: {
+        type: String,
+        default: "",
+        trim: true,
+      },
+
+      city: {
+        type: String,
+        default: "",
+        trim: true,
+      },
+
+      state: {
+        type: String,
+        default: "",
+        trim: true,
+      },
+
+      postalCode: {
+        type: String,
+        default: "",
+        trim: true,
+      },
+
+      country: {
+        type: String,
+        default: "India",
+        trim: true,
       },
     },
-    {
-      _id: false,
-    }
-  );
+  },
+  {
+    timestamps: true,
+  }
+);
 
-// ==============================
-// INVOICE SCHEMA
-// ==============================
+const Invoice = mongoose.model(
+  "Invoice",
+  invoiceSchema
+);
 
-const invoiceSchema =
-  new mongoose.Schema(
-    {
-      invoiceNumber: {
-        type: String,
-        required: true,
-        unique: true,
-      },
-
-      invoiceDate: {
-        type: Date,
-        default: Date.now,
-      },
-
-      order: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Order',
-        required: true,
-        unique: true,
-      },
-
-      customer: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true,
-      },
-
-      // ==============================
-      // SELLER SNAPSHOT
-      // ==============================
-
-      seller: {
-        name: {
-          type: String,
-          required: true,
-        },
-
-        address: {
-          type: addressSchema,
-          default: () => ({}),
-        },
-
-        gstin: {
-          type: String,
-          default: '',
-        },
-
-        phone: {
-          type: String,
-          default: '',
-        },
-
-        email: {
-          type: String,
-          default: '',
-        },
-      },
-
-      // ==============================
-      // BUYER SNAPSHOT
-      // ==============================
-
-      buyer: {
-        name: {
-          type: String,
-          required: true,
-        },
-
-        businessName: {
-          type: String,
-          default: '',
-        },
-
-        gstin: {
-          type: String,
-          default: '',
-        },
-
-        address: {
-          type: addressSchema,
-          default: () => ({}),
-        },
-
-        phone: {
-          type: String,
-          default: '',
-        },
-
-        email: {
-          type: String,
-          default: '',
-        },
-      },
-
-      // ==============================
-      // ITEMS
-      // ==============================
-
-      items: {
-        type: [
-          invoiceItemSchema,
-        ],
-
-        default: [],
-      },
-
-      // ==============================
-      // TOTALS
-      // ==============================
-
-      subtotal: {
-        type: Number,
-        default: 0,
-      },
-
-      totalDiscount: {
-        type: Number,
-        default: 0,
-      },
-
-      taxableAmount: {
-        type: Number,
-        default: 0,
-      },
-
-      totalCGST: {
-        type: Number,
-        default: 0,
-      },
-
-      totalSGST: {
-        type: Number,
-        default: 0,
-      },
-
-      totalIGST: {
-        type: Number,
-        default: 0,
-      },
-
-      shippingAmount: {
-        type: Number,
-        default: 0,
-      },
-
-      grandTotal: {
-        type: Number,
-        default: 0,
-      },
-
-      taxType: {
-        type: String,
-
-        enum: [
-          'CGST_SGST',
-          'IGST',
-          'NONE',
-        ],
-
-        default: 'NONE',
-      },
-
-      paymentMethod: {
-        type: String,
-        default: '',
-      },
-    },
-
-    {
-      timestamps: true,
-    }
-  );
-
-module.exports =
-  mongoose.model(
-    'Invoice',
-    invoiceSchema
-  );
+module.exports = Invoice;

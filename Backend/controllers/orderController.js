@@ -1,1284 +1,344 @@
-const asyncHandler =
-  require('../utils/asyncHandler');
-
-const ApiError =
-  require('../utils/ApiError');
-
-const ApiResponse =
-  require('../utils/ApiResponse');
-
-const Order =
-  require('../models/Order');
-
-const Product =
-  require('../models/Product');
-
-const razorpay =
-  require('../config/razorpay');
-
-const sendEmail =
-  require('../utils/sendEmail');
-
-const {
-  orderConfirmationTemplate,
-} = require('../utils/emailTemplates');
-
-const {
-  getWholesaleUnitPrice,
-} = require('../utils/wholesalePricing');
-
-
-// ======================================================
-// CREATE ORDER
-// ======================================================
-
-const createOrder =
-  asyncHandler(
-    async (req, res) => {
-
-      const {
-        orderItems,
-        shippingAddress,
-        paymentMethod,
-      } = req.body;
-
-
-      // ==================================================
-      // VALIDATION
-      // ==================================================
-
-      if (
-        !Array.isArray(orderItems) ||
-        orderItems.length === 0
-      ) {
-
-        throw new ApiError(
-          400,
-          'No order items'
-        );
-
-      }
-
-
-      if (
-        !shippingAddress
-      ) {
-
-        throw new ApiError(
-          400,
-          'Shipping address is required'
-        );
-
-      }
-
-
-      if (
-        !paymentMethod
-      ) {
-
-        throw new ApiError(
-          400,
-          'Payment method is required'
-        );
-
-      }
-
-
-      // ==================================================
-      // VARIABLES
-      // ==================================================
-
-      const validatedOrderItems = [];
-
-      let calculatedItemsPrice =
-        0;
-
-
-      // ==================================================
-      // VALIDATE PRODUCTS
-      // ==================================================
-
-      for (
-        const item of orderItems
-      ) {
-
-        if (
-          !item.product
-        ) {
-
-          throw new ApiError(
-            400,
-            'Product ID is required'
-          );
-
-        }
-
-
-        const quantity =
-          Number(
-            item.quantity
-          );
-
-
-        if (
-          !Number.isInteger(
-            quantity
-          ) ||
-          quantity < 1
-        ) {
-
-          throw new ApiError(
-            400,
-            'Quantity must be a positive whole number'
-          );
-
-        }
-
-
-        // ----------------------------------------------
-        // GET LATEST PRODUCT
-        // ----------------------------------------------
-
-        const product =
-          await Product.findById(
-            item.product
-          );
-
-
-        if (
-          !product
-        ) {
-
-          throw new ApiError(
-            404,
-            'Product not found'
-          );
-
-        }
-
-
-        // =================================================
-        // MOQ
-        // =================================================
-
-        const moq =
-          Number(
-            product.moq ||
-            1
-          );
-
-
-        if (
-          quantity < moq
-        ) {
-
-          throw new ApiError(
-            400,
-            `${product.name} requires a minimum order of ${moq} pieces`
-          );
-
-        }
-
-
-        // =================================================
-        // STOCK
-        // =================================================
-
-        const stock =
-          Number(
-            product.stock ||
-            0
-          );
-
-
-        if (
-          quantity > stock
-        ) {
-
-          throw new ApiError(
-            400,
-            `Only ${stock} pieces of ${product.name} are available`
-          );
-
-        }
-
-
-        // =================================================
-        // WHOLESALE PRICE
-        // =================================================
-
-        let pricing;
-
-
-        try {
-
-          pricing =
-            getWholesaleUnitPrice(
-              product,
-              quantity
-            );
-
-        } catch (error) {
-
-          throw new ApiError(
-            400,
-            error.message
-          );
-
-        }
-
-
-        const unitPrice =
-          Number(
-            pricing.unitPrice
-          );
-
-
-        const itemTotal =
-          unitPrice *
-          quantity;
-
-
-        calculatedItemsPrice +=
-          itemTotal;
-
-
-        // =================================================
-        // SAVE VALIDATED ITEM
-        // =================================================
-
-        validatedOrderItems.push({
-
-          product:
-            product._id,
-
-          name:
-            product.name,
-
-          quantity,
-
-          price:
-            unitPrice,
-
-        });
-
-      }
-
-
-      // ==================================================
-      // SHIPPING
-      // ==================================================
-
-      const shippingPrice =
-        Number(
-          req.body.shippingPrice ||
-          0
-        );
-
-
-      if (
-        !Number.isFinite(
-          shippingPrice
-        ) ||
-        shippingPrice < 0
-      ) {
-
-        throw new ApiError(
-          400,
-          'Invalid shipping price'
-        );
-
-      }
-
-
-      // ==================================================
-      // TOTAL
-      // ==================================================
-
-      const totalPrice =
-        calculatedItemsPrice +
-        shippingPrice;
-
-
-      // ==================================================
-      // CREATE ORDER
-      // ==================================================
-
-      const order =
-        new Order({
-
-          user:
-            req.user._id,
-
-          orderItems:
-            validatedOrderItems,
-
-          shippingAddress,
-
-          paymentMethod,
-
-          itemsPrice:
-            calculatedItemsPrice,
-
-          shippingPrice,
-
-          totalPrice,
-
-        });
-
-
-      const createdOrder =
-        await order.save();
-
-
-      // ==================================================
-      // SEND ORDER CONFIRMATION EMAIL
-      // ==================================================
-
-      try {
-
-        const emailResult =
-          await sendEmail({
-
-            to:
-              req.user.email,
-
-            subject:
-              `Order Confirmed #${createdOrder._id} - Shanti Enterprises`,
-
-            text:
-              `Hi ${req.user.name || 'Customer'}, your order ${createdOrder._id} has been confirmed. Your total order value is ₹${Number(createdOrder.totalPrice || 0).toLocaleString('en-IN')}. Thank you for shopping with Shanti Enterprises.`,
-
-            html:
-              orderConfirmationTemplate(
-                createdOrder,
-                req.user.name
-              ),
-
-          });
-
-
-        if (
-          !emailResult ||
-          emailResult.success === false
-        ) {
-
-          console.error(
-            'Order confirmation email was not sent:',
-            emailResult?.error ||
-            'Unknown email error'
-          );
-
-        } else {
-
-          console.log(
-            `Order confirmation email sent to ${req.user.email}`
-          );
-
-        }
-
-      } catch (error) {
-
-        // Email failure must NOT cancel the order.
-        console.error(
-          'Order confirmation email failed:',
-          error.message
-        );
-
-      }
-
-
-      // ==================================================
-      // RESPONSE
-      // ==================================================
-
-      res.status(201).json(
-
-        new ApiResponse(
-
-          201,
-
-          createdOrder,
-
-          'Order created successfully'
-
-        )
-
-      );
-
-    }
+// ============================================================
+// SHANTI ENTERPRISES
+// Order Controller
+// Phase 3 - Customer Portal
+// ============================================================
+
+const Cart = require("../models/Cart");
+const Order = require("../models/Order");
+const Product = require("../models/Product");
+
+// ============================================================
+// GENERATE ORDER NUMBER
+// ============================================================
+
+const generateOrderNumber = () => {
+  const timestamp = Date.now();
+
+  const random = Math.floor(
+    1000 + Math.random() * 9000
   );
 
+  return `SE-${timestamp}-${random}`;
+};
 
-// ======================================================
-// GET MY ORDERS
-// ======================================================
+// ============================================================
+// CREATE ORDER FROM CART
+// ============================================================
 
-const getMyOrders =
-  asyncHandler(
-    async (req, res) => {
+const createOrder = async (req, res, next) => {
+  try {
+    const {
+      name,
+      phone,
+      addressLine1,
+      addressLine2 = "",
+      city,
+      state,
+      postalCode,
+      country = "India",
+    } = req.body;
 
-      const orders =
-        await Order.find({
-
-          user:
-            req.user._id,
-
-        })
-          .sort({
-
-            createdAt:
-              -1,
-
-          });
-
-
-      res.status(200).json(
-
-        new ApiResponse(
-
-          200,
-
-          orders,
-
-          'Your orders fetched'
-
-        )
-
+    if (
+      !name ||
+      !phone ||
+      !addressLine1 ||
+      !city ||
+      !state ||
+      !postalCode
+    ) {
+      const error = new Error(
+        "Complete shipping address is required"
       );
 
+      error.statusCode = 400;
+
+      return next(error);
     }
-  );
 
+    const cart = await Cart.findOne({
+      user: req.user.id,
+    });
 
-// ======================================================
-// GET ORDER BY ID
-// ======================================================
-
-const getOrderById =
-  asyncHandler(
-    async (req, res) => {
-
-      const order =
-        await Order.findById(
-          req.params.id
-        ).populate(
-
-          'user',
-
-          'name email businessName'
-
-        );
-
-
-      if (
-        !order
-      ) {
-
-        throw new ApiError(
-          404,
-          'Order not found'
-        );
-
-      }
-
-
-      // ==================================================
-      // AUTHORIZATION
-      // ==================================================
-
-      const isOwner =
-        order.user._id.toString() ===
-        req.user._id.toString();
-
-
-      const isAdmin =
-        req.user.role ===
-        'admin';
-
-
-      if (
-        !isOwner &&
-        !isAdmin
-      ) {
-
-        throw new ApiError(
-          403,
-          'Not authorized to view this order'
-        );
-
-      }
-
-
-      res.status(200).json(
-
-        new ApiResponse(
-
-          200,
-
-          order,
-
-          'Order fetched'
-
-        )
-
+    if (!cart || cart.items.length === 0) {
+      const error = new Error(
+        "Your cart is empty"
       );
 
+      error.statusCode = 400;
+
+      return next(error);
     }
-  );
 
-
-// ======================================================
-// UPDATE ORDER TO PAID
-// ======================================================
-
-const updateOrderToPaid =
-  asyncHandler(
-    async (req, res) => {
-
-      const order =
-        await Order.findById(
-          req.params.id
-        );
-
-
-      if (
-        !order
-      ) {
-
-        throw new ApiError(
-          404,
-          'Order not found'
-        );
-
-      }
-
-
-      // ==================================================
-      // ONLY THE ORDER OWNER OR ADMIN
-      // ==================================================
-
-      const isOwner =
-        order.user.toString() ===
-        req.user._id.toString();
-
-
-      const isAdmin =
-        req.user.role ===
-        'admin';
-
-
-      if (
-        !isOwner &&
-        !isAdmin
-      ) {
-
-        throw new ApiError(
-          403,
-          'You are not authorized to update this order payment'
-        );
-
-      }
-
-
-      // ==================================================
-      // RAZORPAY PAYMENT VERIFICATION
-      // ==================================================
-
-      const razorpayPaymentId =
-        req.body.id;
-
-
-      if (
-        !razorpayPaymentId
-      ) {
-
-        throw new ApiError(
-          400,
-          'Verified Razorpay payment ID is required'
-        );
-
-      }
-
-
-      let razorpayPayment;
-
-
-      try {
-
-        razorpayPayment =
-          await razorpay.payments.fetch(
-            razorpayPaymentId
-          );
-
-      } catch (error) {
-
-        throw new ApiError(
-          400,
-          'Unable to verify payment with Razorpay'
-        );
-
-      }
-
-
-      // ==================================================
-      // PAYMENT STATUS
-      // ==================================================
-
-      if (
-        razorpayPayment.status !==
-        'captured'
-      ) {
-
-        throw new ApiError(
-          400,
-          `Payment is not captured. Current status: ${razorpayPayment.status}`
-        );
-
-      }
-
-
-      // ==================================================
-      // VERIFY PAYMENT AMOUNT
-      // ==================================================
-
-      const expectedAmount =
-        Math.round(
-          Number(
-            order.totalPrice
-          ) * 100
-        );
-
-
-      const paidAmount =
-        Number(
-          razorpayPayment.amount
-        );
-
-
-      if (
-        paidAmount !==
-        expectedAmount
-      ) {
-
-        throw new ApiError(
-          400,
-          'Payment amount does not match order amount'
-        );
-
-      }
-
-
-      // ==================================================
-      // UPDATE PAYMENT
-      // ==================================================
-
-      order.isPaid =
-        true;
-
-
-      order.paidAt =
-        new Date();
-
-
-      order.paymentResult = {
-
-        id:
-          razorpayPaymentId,
-
-        status:
-          'success',
-
-        updateTime:
-          new Date().toISOString(),
-
-      };
-
-
-      const updatedOrder =
-        await order.save();
-
-
-      res.status(200).json(
-
-        new ApiResponse(
-
-          200,
-
-          updatedOrder,
-
-          'Order marked as paid'
-
-        )
-
+    const productIds = cart.items.map(
+      (item) => item.product
+    );
+
+    const products = await Product.find({
+      _id: {
+        $in: productIds,
+      },
+      isActive: true,
+    });
+
+    if (
+      products.length !== cart.items.length
+    ) {
+      const error = new Error(
+        "One or more products in your cart are no longer available"
       );
 
+      error.statusCode = 400;
+
+      return next(error);
     }
-  );
 
+    const orderItems = [];
 
-// ======================================================
-// GET ALL ORDERS - ADMIN
-// ======================================================
+    let subtotal = 0;
 
-const getAllOrders =
-  asyncHandler(
-    async (req, res) => {
-
-      const orders =
-        await Order.find({})
-
-          .populate(
-            'user',
-            'name email businessName'
-          )
-
-          .sort({
-
-            createdAt:
-              -1,
-
-          });
-
-
-      res.status(200).json(
-
-        new ApiResponse(
-
-          200,
-
-          orders,
-
-          'All orders fetched'
-
-        )
-
+    for (const cartItem of cart.items) {
+      const product = products.find(
+        (item) =>
+          item._id.toString() ===
+          cartItem.product.toString()
       );
 
+      if (!product) {
+        const error = new Error(
+          "Product not found"
+        );
+
+        error.statusCode = 404;
+
+        return next(error);
+      }
+
+      if (
+        cartItem.quantity >
+        product.stock
+      ) {
+        const error = new Error(
+          `Insufficient stock for ${product.name}`
+        );
+
+        error.statusCode = 400;
+
+        return next(error);
+      }
+
+      const itemSubtotal =
+        product.price *
+        cartItem.quantity;
+
+      subtotal += itemSubtotal;
+
+      orderItems.push({
+        product: product._id,
+        name: product.name,
+        image: product.image,
+        quantity: cartItem.quantity,
+        price: product.price,
+        unit: product.unit,
+      });
     }
-  );
 
-
-// ======================================================
-// UPDATE ORDER STATUS - ADMIN
-// ======================================================
-
-const updateOrderStatus =
-  asyncHandler(
-    async (req, res) => {
-
-      const order =
-        await Order.findById(
-          req.params.id
-        );
-
-
-      if (
-        !order
-      ) {
-
-        throw new ApiError(
-          404,
-          'Order not found'
-        );
-
-      }
-
-
-      if (
-        req.body.orderStatus
-      ) {
-
-        order.orderStatus =
-          req.body.orderStatus;
-
-      }
-
-
-      if (
-        req.body.trackingId !==
-        undefined
-      ) {
-
-        if (
-          !order.shipment
-        ) {
-
-          order.shipment =
-            {};
-
-        }
-
-
-        order.shipment.trackingId =
-          req.body.trackingId;
-
-      }
-
-
-      const updatedOrder =
-        await order.save();
-
-
-      res.status(200).json(
-
-        new ApiResponse(
-
-          200,
-
-          updatedOrder,
-
-          'Order status updated'
-
-        )
-
-      );
-
-    }
-  );
-
-
-// ======================================================
-// REORDER PREVIOUS ORDER
-// ======================================================
-//
-// POST /api/orders/:id/reorder
-//
-// Customer previous order ko dobara cart me
-// add karne ke liye current product information
-// check ki jaati hai.
-//
-// Checks:
-// 1. Order exists
-// 2. User owns order
-// 3. Product still exists
-// 4. Product stock available hai
-// 5. MOQ valid hai
-// 6. Current wholesale price calculate hota hai
-//
-// ======================================================
-
-const reorderOrder =
-  asyncHandler(
-    async (req, res) => {
-
-      // =================================================
-      // GET ORIGINAL ORDER
-      // =================================================
-
-      const order =
-        await Order.findById(
-          req.params.id
-        );
-
-
-      if (
-        !order
-      ) {
-
-        throw new ApiError(
-          404,
-          'Order not found'
-        );
-
-      }
-
-
-      // =================================================
-      // CHECK ORDER OWNER
-      // =================================================
-
-      const isOwner =
-        order.user.toString() ===
-        req.user._id.toString();
-
-
-      const isAdmin =
-        req.user.role ===
-        'admin';
-
-
-      if (
-        !isOwner &&
-        !isAdmin
-      ) {
-
-        throw new ApiError(
-          403,
-          'You are not authorized to reorder this order'
-        );
-
-      }
-
-
-      // =================================================
-      // RESULT ARRAYS
-      // =================================================
-
-      const reorderItems = [];
-
-      const unavailableItems = [];
-
-
-      // =================================================
-      // CHECK EACH OLD ORDER ITEM
-      // =================================================
-
-      for (
-        const oldItem
-        of order.orderItems
-      ) {
-
-        // -----------------------------------------------
-        // PRODUCT ID
-        // -----------------------------------------------
-
-        const productId =
-          oldItem.product;
-
-
-        if (
-          !productId
-        ) {
-
-          unavailableItems.push({
-
-            name:
-              oldItem.name ||
-              'Unknown Product',
-
-            quantity:
-              oldItem.quantity,
-
-            reason:
-              'Product ID missing',
-
-          });
-
-          continue;
-
-        }
-
-
-        // -----------------------------------------------
-        // GET CURRENT PRODUCT
-        // -----------------------------------------------
-
-        const product =
-          await Product.findById(
-            productId
-          );
-
-
-        // -----------------------------------------------
-        // PRODUCT DELETED
-        // -----------------------------------------------
-
-        if (
-          !product
-        ) {
-
-          unavailableItems.push({
-
-            product:
-              productId,
-
-            name:
-              oldItem.name ||
-              'Unknown Product',
-
-            quantity:
-              oldItem.quantity,
-
-            reason:
-              'Product is no longer available',
-
-          });
-
-          continue;
-
-        }
-
-
-        // =================================================
-        // OLD QUANTITY
-        // =================================================
-
-        const quantity =
-          Number(
-            oldItem.quantity
-          );
-
-
-        // =================================================
-        // CURRENT MOQ
-        // =================================================
-
-        const moq =
-          Number(
-            product.moq ||
-            1
-          );
-
-
-        // =================================================
-        // CURRENT STOCK
-        // =================================================
-
-        const stock =
-          Number(
-            product.stock ||
-            0
-          );
-
-
-        // -----------------------------------------------
-        // STOCK CHECK
-        // -----------------------------------------------
-
-        if (
-          stock < quantity
-        ) {
-
-          unavailableItems.push({
-
-            product:
-              product._id,
-
-            name:
-              product.name,
-
-            quantity,
-
-            availableStock:
-              stock,
-
-            reason:
-              `Only ${stock} pieces are currently available`,
-
-          });
-
-          continue;
-
-        }
-
-
-        // -----------------------------------------------
-        // MOQ CHECK
-        // -----------------------------------------------
-
-        if (
-          quantity < moq
-        ) {
-
-          unavailableItems.push({
-
-            product:
-              product._id,
-
-            name:
-              product.name,
-
-            quantity,
-
-            currentMOQ:
-              moq,
-
-            reason:
-              `Current minimum order quantity is ${moq}`,
-
-          });
-
-          continue;
-
-        }
-
-
-        // =================================================
-        // CURRENT WHOLESALE PRICE
-        // =================================================
-
-        let pricing;
-
-
-        try {
-
-          pricing =
-            getWholesaleUnitPrice(
-              product,
-              quantity
-            );
-
-        } catch (error) {
-
-          unavailableItems.push({
-
-            product:
-              product._id,
-
-            name:
-              product.name,
-
-            quantity,
-
-            reason:
-              error.message,
-
-          });
-
-          continue;
-
-        }
-
-
-        const unitPrice =
-          Number(
-            pricing.unitPrice
-          );
-
-
-        // =================================================
-        // ADD TO REORDER ITEMS
-        // =================================================
-
-        reorderItems.push({
-
-          product:
-            product._id,
-
-          name:
-            product.name,
-
-          quantity,
-
-          price:
-            unitPrice,
-
-          image:
-            product.images?.[0] ||
-            '',
-
-          images:
-            product.images ||
-            [],
-
-          moq,
-
-          stock,
-
-          gst:
-            Number(
-              product.gst ||
-              0
-            ),
-
-          wholesalePricing:
-            product.wholesalePricing ||
-            [],
-
-          matchedTier:
-            pricing.matchedTier ||
-            null,
-
-        });
-
-      }
-
-
-      // ==================================================
-      // NO AVAILABLE PRODUCTS
-      // ==================================================
-
-      if (
-        reorderItems.length ===
-        0
-      ) {
-
-        return res.status(200).json(
-
-          new ApiResponse(
-
-            200,
-
-            {
-
-              orderId:
-                order._id,
-
-              reorderItems:
-                [],
-
-              unavailableItems,
-
-              canReorder:
-                false,
-
-            },
-
-            'No products are currently available for reorder'
-
-          )
-
-        );
-
-      }
-
-
-      // ==================================================
-      // SUCCESS RESPONSE
-      // ==================================================
-
-      res.status(200).json(
-
-        new ApiResponse(
-
-          200,
-
-          {
-
-            orderId:
-              order._id,
-
-            reorderItems,
-
-            unavailableItems,
-
-            canReorder:
-              true,
-
-            totalItems:
-              reorderItems.length,
-
+    const order = await Order.create({
+      orderNumber: generateOrderNumber(),
+
+      user: req.user.id,
+
+      items: orderItems,
+
+      shippingAddress: {
+        name: name.trim(),
+        phone: phone.trim(),
+        addressLine1:
+          addressLine1.trim(),
+        addressLine2:
+          addressLine2.trim(),
+        city: city.trim(),
+        state: state.trim(),
+        postalCode:
+          postalCode.trim(),
+        country: country.trim(),
+      },
+
+      subtotal,
+
+      totalAmount: subtotal,
+
+      paymentStatus: "pending",
+
+      orderStatus: "pending",
+    });
+
+    for (const cartItem of cart.items) {
+      await Product.findByIdAndUpdate(
+        cartItem.product,
+        {
+          $inc: {
+            stock: -cartItem.quantity,
           },
+        }
+      );
+    }
 
-          'Reorder items prepared successfully'
+    cart.items = [];
 
+    await cart.save();
+
+    res.status(201).json({
+      success: true,
+      message:
+        "Order created successfully",
+
+      order: {
+        id: order._id,
+        orderNumber:
+          order.orderNumber,
+        subtotal:
+          order.subtotal,
+        totalAmount:
+          order.totalAmount,
+        paymentStatus:
+          order.paymentStatus,
+        orderStatus:
+          order.orderStatus,
+        shippingAddress:
+          order.shippingAddress,
+        items: order.items,
+        createdAt:
+          order.createdAt,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ============================================================
+// GET CUSTOMER ORDERS
+// ============================================================
+
+const getMyOrders = async (
+  req,
+  res,
+  next
+) => {
+  try {
+    const {
+      page = 1,
+      limit = 10,
+      status = "",
+    } = req.query;
+
+    const currentPage = Math.max(
+      Number(page) || 1,
+      1
+    );
+
+    const perPage = Math.min(
+      Math.max(
+        Number(limit) || 10,
+        1
+      ),
+      50
+    );
+
+    const filter = {
+      user: req.user.id,
+    };
+
+    if (status.trim()) {
+      filter.orderStatus =
+        status.trim();
+    }
+
+    const skip =
+      (currentPage - 1) *
+      perPage;
+
+    const [
+      orders,
+      totalOrders,
+    ] = await Promise.all([
+      Order.find(filter)
+        .select(
+          "orderNumber items subtotal totalAmount paymentStatus orderStatus createdAt"
         )
+        .sort({
+          createdAt: -1,
+        })
+        .skip(skip)
+        .limit(perPage),
 
+      Order.countDocuments(filter),
+    ]);
+
+    const totalPages = Math.ceil(
+      totalOrders / perPage
+    );
+
+    res.status(200).json({
+      success: true,
+
+      count: orders.length,
+
+      pagination: {
+        page: currentPage,
+        limit: perPage,
+        totalOrders,
+        totalPages,
+      },
+
+      orders,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ============================================================
+// GET ORDER DETAILS
+// ============================================================
+
+const getOrderById = async (
+  req,
+  res,
+  next
+) => {
+  try {
+    const order =
+      await Order.findOne({
+        _id: req.params.id,
+        user: req.user.id,
+      }).populate(
+        "items.product",
+        "name slug image price unit"
       );
 
+    if (!order) {
+      const error = new Error(
+        "Order not found"
+      );
+
+      error.statusCode = 404;
+
+      return next(error);
     }
-  );
 
-
-// ======================================================
-// EXPORT
-// ======================================================
+    res.status(200).json({
+      success: true,
+      order,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
 module.exports = {
-
   createOrder,
-
   getMyOrders,
-
   getOrderById,
-
-  updateOrderToPaid,
-
-  getAllOrders,
-
-  updateOrderStatus,
-
-  reorderOrder,
-
 };
