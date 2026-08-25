@@ -1,7 +1,7 @@
 // ============================================================
 // SHANTI ENTERPRISES
-// Admin Dashboard Page
-// Frontend Phase 5 - Admin
+// Admin Analytics Page
+// Frontend Phase 5 - Analytics
 // ============================================================
 
 import {
@@ -15,21 +15,29 @@ import {
 
 import {
   getAdminDashboardStats,
+  getAdminSalesAnalytics,
 } from "../../api/adminDashboardApi";
 
 import Loading from "../../components/common/Loading";
 
 import ErrorMessage from "../../components/common/ErrorMessage";
 
+import EmptyState from "../../components/common/EmptyState";
+
 // ============================================================
-// ADMIN DASHBOARD
+// ADMIN ANALYTICS PAGE
 // ============================================================
 
-function AdminDashboardPage() {
+function AdminAnalyticsPage() {
   const [
     stats,
     setStats,
   ] = useState(null);
+
+  const [
+    sales,
+    setSales,
+  ] = useState([]);
 
   const [
     loading,
@@ -42,38 +50,81 @@ function AdminDashboardPage() {
   ] = useState("");
 
   // ==========================================================
-  // LOAD DASHBOARD
+  // LOAD ANALYTICS
   // ==========================================================
 
-  const loadDashboard =
+  const loadAnalytics =
     async () => {
       try {
         setLoading(true);
         setError("");
 
-        const response =
-          await getAdminDashboardStats();
+        const [
+          dashboardResponse,
+          salesResponse,
+        ] = await Promise.all([
+          getAdminDashboardStats(),
+          getAdminSalesAnalytics({
+            period: "30d",
+          }),
+        ]);
 
-        const data =
-          response?.stats ||
-          response?.data?.stats ||
-          response?.data ||
-          response;
+        const dashboardData =
+          dashboardResponse?.stats ||
+          dashboardResponse?.data?.stats ||
+          dashboardResponse?.data ||
+          dashboardResponse;
+
+        let salesData = [];
+
+        if (
+          Array.isArray(
+            salesResponse
+          )
+        ) {
+          salesData =
+            salesResponse;
+        } else if (
+          Array.isArray(
+            salesResponse?.sales
+          )
+        ) {
+          salesData =
+            salesResponse.sales;
+        } else if (
+          Array.isArray(
+            salesResponse?.data
+          )
+        ) {
+          salesData =
+            salesResponse.data;
+        } else if (
+          Array.isArray(
+            salesResponse?.data?.sales
+          )
+        ) {
+          salesData =
+            salesResponse.data.sales;
+        }
 
         setStats(
-          data
+          dashboardData
+        );
+
+        setSales(
+          salesData
         );
       } catch (err) {
         console.error(
-          "Admin dashboard error:",
+          "Admin analytics error:",
           err
         );
 
         setError(
           err.response?.data
             ?.message ||
-          err.message ||
-          "Unable to load admin dashboard."
+            err.message ||
+            "Unable to load analytics."
         );
       } finally {
         setLoading(false);
@@ -85,11 +136,23 @@ function AdminDashboardPage() {
   // ==========================================================
 
   useEffect(() => {
-    loadDashboard();
+    loadAnalytics();
   }, []);
 
   // ==========================================================
-  // NUMBER HELPER
+  // LOADING
+  // ==========================================================
+
+  if (loading) {
+    return (
+      <Loading
+        message="Loading analytics..."
+      />
+    );
+  }
+
+  // ==========================================================
+  // HELPERS
   // ==========================================================
 
   const getNumber = (
@@ -118,22 +181,6 @@ function AdminDashboardPage() {
 
     return 0;
   };
-
-  // ==========================================================
-  // LOADING
-  // ==========================================================
-
-  if (loading) {
-    return (
-      <Loading
-        message="Loading admin dashboard..."
-      />
-    );
-  }
-
-  // ==========================================================
-  // STATS
-  // ==========================================================
 
   const totalUsers =
     getNumber(
@@ -198,13 +245,17 @@ function AdminDashboardPage() {
 
       <div>
 
+        <Link to="/admin">
+          ← Admin Dashboard
+        </Link>
+
         <h1>
-          Admin Dashboard
+          Analytics
         </h1>
 
         <p>
-          Welcome to Shanti
-          Enterprises Admin Panel.
+          Monitor your store
+          performance and sales.
         </p>
 
       </div>
@@ -217,7 +268,7 @@ function AdminDashboardPage() {
         <ErrorMessage
           message={error}
           onRetry={
-            loadDashboard
+            loadAnalytics
           }
         />
       )}
@@ -229,14 +280,14 @@ function AdminDashboardPage() {
       <button
         type="button"
         onClick={
-          loadDashboard
+          loadAnalytics
         }
       >
-        Refresh Dashboard
+        Refresh Analytics
       </button>
 
       {/* ====================================================
-          STATISTICS
+          OVERVIEW
           ==================================================== */}
 
       <div>
@@ -253,10 +304,6 @@ function AdminDashboardPage() {
             )}
           </p>
 
-          <Link to="/admin/users">
-            Manage Users →
-          </Link>
-
         </article>
 
         <article>
@@ -270,10 +317,6 @@ function AdminDashboardPage() {
               "en-IN"
             )}
           </p>
-
-          <Link to="/admin/products">
-            Manage Products →
-          </Link>
 
         </article>
 
@@ -289,10 +332,6 @@ function AdminDashboardPage() {
             )}
           </p>
 
-          <Link to="/admin/orders">
-            Manage Orders →
-          </Link>
-
         </article>
 
         <article>
@@ -306,10 +345,6 @@ function AdminDashboardPage() {
               "en-IN"
             )}
           </p>
-
-          <Link to="/admin/categories">
-            Manage Categories →
-          </Link>
 
         </article>
 
@@ -340,64 +375,103 @@ function AdminDashboardPage() {
           Order Overview
         </h2>
 
-        <div>
+        <p>
+          Pending Orders:{" "}
+          {pendingOrders}
+        </p>
 
-          <p>
-            Pending:{" "}
-            {pendingOrders}
-          </p>
+        <p>
+          Delivered Orders:{" "}
+          {deliveredOrders}
+        </p>
 
-          <p>
-            Delivered:{" "}
-            {deliveredOrders}
-          </p>
-
-          <p>
-            Cancelled:{" "}
-            {cancelledOrders}
-          </p>
-
-        </div>
+        <p>
+          Cancelled Orders:{" "}
+          {cancelledOrders}
+        </p>
 
       </div>
 
       {/* ====================================================
-          QUICK ACTIONS
+          SALES
           ==================================================== */}
 
       <div>
 
         <h2>
-          Quick Actions
+          Sales — Last 30 Days
         </h2>
 
-        <div>
+        {sales.length ===
+        0 ? (
+          <EmptyState
+            title="No sales data"
+            message="Sales analytics data is not available yet."
+          />
+        ) : (
+          <div>
 
-          <Link to="/admin/products/new">
-            Add Product
-          </Link>
+            {sales.map(
+              (
+                item,
+                index
+              ) => {
 
-          <Link to="/admin/categories/new">
-            Add Category
-          </Link>
+                const date =
+                  item.date ||
+                  item.day ||
+                  item.label ||
+                  `Day ${
+                    index + 1
+                  }`;
 
-          <Link to="/admin/orders">
-            View Orders
-          </Link>
+                const amount =
+                  getNumber(
+                    item.amount,
+                    item.revenue,
+                    item.sales,
+                    item.total
+                  );
 
-          <Link to="/admin/users">
-            View Users
-          </Link>
+                const orderCount =
+                  getNumber(
+                    item.orders,
+                    item.orderCount,
+                    item.count
+                  );
 
-          <Link to="/admin/analytics">
-            View Analytics
-          </Link>
+                return (
+                  <article
+                    key={
+                      item._id ||
+                      item.id ||
+                      index
+                    }
+                  >
 
-          <Link to="/admin/profile">
-            Admin Profile
-          </Link>
+                    <h3>
+                      {date}
+                    </h3>
 
-        </div>
+                    <p>
+                      Sales: ₹
+                      {amount.toLocaleString(
+                        "en-IN"
+                      )}
+                    </p>
+
+                    <p>
+                      Orders:{" "}
+                      {orderCount}
+                    </p>
+
+                  </article>
+                );
+              }
+            )}
+
+          </div>
+        )}
 
       </div>
 
@@ -405,4 +479,4 @@ function AdminDashboardPage() {
   );
 }
 
-export default AdminDashboardPage;
+export default AdminAnalyticsPage;

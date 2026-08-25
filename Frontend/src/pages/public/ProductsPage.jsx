@@ -1,7 +1,7 @@
 // ============================================================
 // SHANTI ENTERPRISES
 // Products Page
-// Frontend Phase 2 - Shopping
+// Frontend Phase 6 - UI/UX
 // ============================================================
 
 import {
@@ -128,7 +128,9 @@ function ProductsPage() {
           data.data.products;
       }
 
-      setProducts(productData);
+      setProducts(
+        productData
+      );
 
       if (data?.pagination) {
         setPagination({
@@ -147,6 +149,17 @@ function ProductsPage() {
           totalPages:
             data.pagination.totalPages ||
             0,
+        });
+      } else {
+        setPagination({
+          page,
+          limit: 12,
+          totalProducts:
+            productData.length,
+          totalPages:
+            productData.length > 0
+              ? 1
+              : 0,
         });
       }
     } catch (err) {
@@ -200,7 +213,8 @@ function ProductsPage() {
     const params = {};
 
     if (value) {
-      params.search = value;
+      params.search =
+        value;
     }
 
     if (category) {
@@ -209,12 +223,15 @@ function ProductsPage() {
     }
 
     if (sort) {
-      params.sort = sort;
+      params.sort =
+        sort;
     }
 
     params.page = "1";
 
-    setSearchParams(params);
+    setSearchParams(
+      params
+    );
   };
 
   // ==========================================================
@@ -240,12 +257,15 @@ function ProductsPage() {
     }
 
     if (value) {
-      params.sort = value;
+      params.sort =
+        value;
     }
 
     params.page = "1";
 
-    setSearchParams(params);
+    setSearchParams(
+      params
+    );
   };
 
   // ==========================================================
@@ -277,7 +297,8 @@ function ProductsPage() {
     const params = {};
 
     if (search) {
-      params.search = search;
+      params.search =
+        search;
     }
 
     if (category) {
@@ -286,13 +307,21 @@ function ProductsPage() {
     }
 
     if (sort) {
-      params.sort = sort;
+      params.sort =
+        sort;
     }
 
     params.page =
       String(nextPage);
 
-    setSearchParams(params);
+    setSearchParams(
+      params
+    );
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
   };
 
   // ==========================================================
@@ -301,9 +330,13 @@ function ProductsPage() {
 
   if (loading) {
     return (
-      <Loading
-        message="Loading products..."
-      />
+      <section className="products-page">
+        <div className="products-container">
+          <Loading
+            message="Loading products..."
+          />
+        </div>
+      </section>
     );
   }
 
@@ -313,10 +346,16 @@ function ProductsPage() {
 
   if (error) {
     return (
-      <ErrorMessage
-        message={error}
-        onRetry={loadProducts}
-      />
+      <section className="products-page">
+        <div className="products-container">
+          <ErrorMessage
+            message={error}
+            onRetry={
+              loadProducts
+            }
+          />
+        </div>
+      </section>
     );
   }
 
@@ -325,174 +364,301 @@ function ProductsPage() {
   // ==========================================================
 
   return (
-    <section>
+    <section className="products-page">
 
-      <h1>
-        Products
-      </h1>
+      <div className="products-container">
 
-      <p>
-        Browse and search available
-        products.
-      </p>
+        {/* ==================================================
+            PAGE HEADER
+            ================================================== */}
 
-      {/* ==================================================
-          SEARCH
-          ================================================== */}
+        <div className="products-page-header">
 
-      <form
-        onSubmit={handleSearch}
-      >
-        <input
-          type="text"
-          name="search"
-          defaultValue={search}
-          placeholder="Search products..."
-        />
+          <div>
 
-        <button
-          type="submit"
-        >
-          Search
-        </button>
-      </form>
+            <span className="products-eyebrow">
+              SHOP COLLECTION
+            </span>
 
-      {/* ==================================================
-          CATEGORY
-          ================================================== */}
+            <h1>
+              Products
+            </h1>
 
-      {category && (
-        <p>
-          Category: {category}
-        </p>
-      )}
+            <p>
+              Browse our products and
+              find what your business needs.
+            </p>
 
-      {/* ==================================================
-          SORT
-          ================================================== */}
+          </div>
 
-      <label>
-        Sort:
+          <div className="products-count-box">
 
-        <select
-          value={sort}
-          onChange={handleSort}
-        >
-          <option value="">
-            Default
-          </option>
+            <strong>
+              {pagination.totalProducts}
+            </strong>
 
-          <option value="price_asc">
-            Price: Low to High
-          </option>
+            <span>
+              Products
+            </span>
 
-          <option value="price_desc">
-            Price: High to Low
-          </option>
+          </div>
 
-          <option value="newest">
-            Newest
-          </option>
-        </select>
-      </label>
+        </div>
 
-      {/* ==================================================
-          CLEAR
-          ================================================== */}
+        {/* ==================================================
+            FILTER BAR
+            ================================================== */}
 
-      {(search ||
-        category ||
-        sort) && (
-        <button
-          type="button"
-          onClick={
-            clearFilters
-          }
-        >
-          Clear Filters
-        </button>
-      )}
+        <div className="products-filter-card">
 
-      {/* ==================================================
-          RESULT COUNT
-          ================================================== */}
+          <form
+            className="products-search-form"
+            onSubmit={
+              handleSearch
+            }
+          >
 
-      <p>
-        Total Products:{" "}
-        {pagination.totalProducts}
-      </p>
+            <div className="products-search-input-wrapper">
 
-      {/* ==================================================
-          PRODUCTS
-          ================================================== */}
+              <span className="products-search-icon">
+                🔍
+              </span>
 
-      {products.length === 0 ? (
-        <EmptyState
-          title="No products found"
-          message="Try a different search or filter."
-        />
-      ) : (
-        <div>
-          {products.map(
-            (product) => (
-              <ProductCard
-                key={
-                  product._id ||
-                  product.id
+              <input
+                type="text"
+                name="search"
+                defaultValue={
+                  search
                 }
-                product={product}
+                placeholder="Search products..."
+                aria-label="Search products"
               />
-            )
+
+            </div>
+
+            <button
+              type="submit"
+              className="products-search-button"
+            >
+              Search
+            </button>
+
+          </form>
+
+          <div className="products-filter-actions">
+
+            <label className="products-sort-wrapper">
+
+              <span>
+                Sort by
+              </span>
+
+              <select
+                value={sort}
+                onChange={
+                  handleSort
+                }
+              >
+                <option value="">
+                  Default
+                </option>
+
+                <option value="price_asc">
+                  Price: Low to High
+                </option>
+
+                <option value="price_desc">
+                  Price: High to Low
+                </option>
+
+                <option value="newest">
+                  Newest
+                </option>
+
+              </select>
+
+            </label>
+
+            {(search ||
+              category ||
+              sort) && (
+              <button
+                type="button"
+                className="products-clear-button"
+                onClick={
+                  clearFilters
+                }
+              >
+                Clear Filters
+              </button>
+            )}
+
+          </div>
+
+        </div>
+
+        {/* ==================================================
+            ACTIVE FILTERS
+            ================================================== */}
+
+        {(search ||
+          category) && (
+          <div className="products-active-filters">
+
+            <span>
+              Active filters:
+            </span>
+
+            {search && (
+              <span className="products-filter-tag">
+                Search: {search}
+              </span>
+            )}
+
+            {category && (
+              <span className="products-filter-tag">
+                Category: {category}
+              </span>
+            )}
+
+          </div>
+        )}
+
+        {/* ==================================================
+            RESULT INFO
+            ================================================== */}
+
+        <div className="products-result-header">
+
+          <p>
+            Showing{" "}
+            <strong>
+              {products.length}
+            </strong>{" "}
+            products
+          </p>
+
+          {pagination.totalPages >
+            1 && (
+            <p>
+              Page{" "}
+              <strong>
+                {page}
+              </strong>{" "}
+              of{" "}
+              <strong>
+                {pagination.totalPages}
+              </strong>
+            </p>
           )}
-        </div>
-      )}
-
-      {/* ==================================================
-          PAGINATION
-          ================================================== */}
-
-      {pagination.totalPages > 1 && (
-        <div>
-
-          <button
-            type="button"
-            disabled={
-              page <= 1
-            }
-            onClick={() =>
-              changePage(
-                page - 1
-              )
-            }
-          >
-            Previous
-          </button>
-
-          <span>
-            {" "}
-            Page {page} of{" "}
-            {
-              pagination.totalPages
-            }{" "}
-          </span>
-
-          <button
-            type="button"
-            disabled={
-              page >=
-              pagination.totalPages
-            }
-            onClick={() =>
-              changePage(
-                page + 1
-              )
-            }
-          >
-            Next
-          </button>
 
         </div>
-      )}
+
+        {/* ==================================================
+            PRODUCTS
+            ================================================== */}
+
+        {products.length === 0 ? (
+          <div className="products-empty">
+
+            <EmptyState
+              title="No products found"
+              message="Try a different search or filter."
+            />
+
+            {(search ||
+              category ||
+              sort) && (
+              <button
+                type="button"
+                className="products-empty-button"
+                onClick={
+                  clearFilters
+                }
+              >
+                Clear Filters
+              </button>
+            )}
+
+          </div>
+        ) : (
+          <div className="products-grid">
+
+            {products.map(
+              (product) => (
+                <div
+                  className="product-grid-item"
+                  key={
+                    product._id ||
+                    product.id
+                  }
+                >
+                  <ProductCard
+                    product={
+                      product
+                    }
+                  />
+                </div>
+              )
+            )}
+
+          </div>
+        )}
+
+        {/* ==================================================
+            PAGINATION
+            ================================================== */}
+
+        {pagination.totalPages >
+          1 && (
+          <div className="products-pagination">
+
+            <button
+              type="button"
+              className="products-page-button"
+              disabled={
+                page <= 1
+              }
+              onClick={() =>
+                changePage(
+                  page - 1
+                )
+              }
+            >
+              ← Previous
+            </button>
+
+            <div className="products-page-number">
+              Page{" "}
+              <strong>
+                {page}
+              </strong>{" "}
+              of{" "}
+              <strong>
+                {pagination.totalPages}
+              </strong>
+            </div>
+
+            <button
+              type="button"
+              className="products-page-button"
+              disabled={
+                page >=
+                pagination.totalPages
+              }
+              onClick={() =>
+                changePage(
+                  page + 1
+                )
+              }
+            >
+              Next →
+            </button>
+
+          </div>
+        )}
+
+      </div>
 
     </section>
   );

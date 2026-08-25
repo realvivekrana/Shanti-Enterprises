@@ -1,3 +1,8 @@
+// ============================================================
+// SHANTI ENTERPRISES
+// Frontend Entry Point
+// ============================================================
+
 import {
   StrictMode,
 } from "react";
@@ -22,20 +27,40 @@ import {
 
 import ErrorBoundary from "./components/common/ErrorBoundary";
 
+// ============================================================
+// GLOBAL CSS
+// ============================================================
+
 import "./index.css";
+
+import "./App.css";
+
+// ============================================================
+// ROOT
+// ============================================================
 
 createRoot(
   document.getElementById("root")
 ).render(
   <StrictMode>
+
     <ErrorBoundary>
+
       <AuthProvider>
+
         <CartProvider>
+
           <AddressProvider>
+
             <App />
+
           </AddressProvider>
+
         </CartProvider>
+
       </AuthProvider>
+
     </ErrorBoundary>
+
   </StrictMode>
 );

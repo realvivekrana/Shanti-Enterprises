@@ -1,20 +1,20 @@
 // ============================================================
 // SHANTI ENTERPRISES
-// Product API
-// Frontend Phase 5 - Admin Product Management
+// Admin User API
+// Frontend Phase 5 - User Management
 // ============================================================
 
 import api from "./axios";
 
 // ============================================================
-// GET PRODUCTS
+// GET ALL USERS
 // ============================================================
 
-export const getProducts = async (
+export const getAdminUsers = async (
   params = {}
 ) => {
   const response = await api.get(
-    "/products",
+    "/users",
     {
       params,
     }
@@ -24,32 +24,49 @@ export const getProducts = async (
 };
 
 // ============================================================
-// GET SINGLE PRODUCT
+// GET SINGLE USER
 // ============================================================
 
-export const getProductById = async (
-  productId
+export const getAdminUserById = async (
+  userId
 ) => {
+  if (!userId) {
+    throw new Error(
+      "User ID is required."
+    );
+  }
+
   const response = await api.get(
-    `/products/${productId}`
+    `/users/${userId}`
   );
 
   return response.data;
 };
 
 // ============================================================
-// SEARCH PRODUCTS
+// UPDATE USER ROLE
 // ============================================================
 
-export const searchProducts = async (
-  query
+export const updateUserRole = async (
+  userId,
+  role
 ) => {
-  const response = await api.get(
-    "/products",
+  if (!userId) {
+    throw new Error(
+      "User ID is required."
+    );
+  }
+
+  if (!role) {
+    throw new Error(
+      "User role is required."
+    );
+  }
+
+  const response = await api.put(
+    `/users/${userId}/role`,
     {
-      params: {
-        search: query,
-      },
+      role,
     }
   );
 
@@ -57,51 +74,44 @@ export const searchProducts = async (
 };
 
 // ============================================================
-// CREATE PRODUCT
+// UPDATE USER STATUS
 // ============================================================
 
-export const createProduct = async (
-  productData
+export const updateUserStatus = async (
+  userId,
+  status
 ) => {
-  const response = await api.post(
-    "/products",
-    productData
-  );
-
-  return response.data;
-};
-
-// ============================================================
-// UPDATE PRODUCT
-// ============================================================
-
-export const updateProduct = async (
-  productId,
-  productData
-) => {
-  const response = await api.put(
-    `/products/${productId}`,
-    productData
-  );
-
-  return response.data;
-};
-
-// ============================================================
-// DELETE PRODUCT
-// ============================================================
-
-export const deleteProduct = async (
-  productId
-) => {
-  if (!productId) {
+  if (!userId) {
     throw new Error(
-      "Product ID is required."
+      "User ID is required."
+    );
+  }
+
+  const response = await api.put(
+    `/users/${userId}/status`,
+    {
+      status,
+    }
+  );
+
+  return response.data;
+};
+
+// ============================================================
+// DELETE USER
+// ============================================================
+
+export const deleteAdminUser = async (
+  userId
+) => {
+  if (!userId) {
+    throw new Error(
+      "User ID is required."
     );
   }
 
   const response = await api.delete(
-    `/products/${productId}`
+    `/users/${userId}`
   );
 
   return response.data;

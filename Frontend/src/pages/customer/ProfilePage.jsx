@@ -1,7 +1,7 @@
 // ============================================================
 // SHANTI ENTERPRISES
 // Customer Profile
-// Frontend Phase 4 - Customer
+// Frontend Phase 6 - UI/UX
 // ============================================================
 
 import {
@@ -72,63 +72,65 @@ function ProfilePage() {
   // LOAD PROFILE
   // ==========================================================
 
-  const loadProfile = async () => {
-    try {
-      setLoading(true);
-      setError("");
+  const loadProfile =
+    async () => {
+      try {
+        setLoading(true);
 
-      const response =
-        await getMyProfile();
+        setError("");
 
-      const profileData =
-        response?.user ||
-        response?.data?.user ||
-        response?.data ||
-        response;
+        const response =
+          await getMyProfile();
 
-      setProfile(
-        profileData
-      );
+        const profileData =
+          response?.user ||
+          response?.data?.user ||
+          response?.data ||
+          response;
 
-      setForm({
-        name:
-          profileData?.name ||
-          "",
-        phone:
-          profileData?.phone ||
-          "",
-      });
-    } catch (err) {
-      console.error(
-        "Profile loading error:",
-        err
-      );
-
-      // --------------------------------------------
-      // Fallback to logged-in user
-      // --------------------------------------------
-
-      if (user) {
-        setProfile(user);
+        setProfile(
+          profileData
+        );
 
         setForm({
           name:
-            user.name || "",
-          phone:
-            user.phone || "",
-        });
-      }
+            profileData?.name ||
+            "",
 
-      setError(
-        err.response?.data
-          ?.message ||
-          err.message ||
-          "Unable to load profile."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+          phone:
+            profileData?.phone ||
+            "",
+        });
+      } catch (err) {
+        console.error(
+          "Profile loading error:",
+          err
+        );
+
+        if (user) {
+          setProfile(user);
+
+          setForm({
+            name:
+              user.name ||
+              "",
+
+            phone:
+              user.phone ||
+              "",
+          });
+        }
+
+        setError(
+          err.response?.data
+            ?.message ||
+            err.message ||
+            "Unable to load profile."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
 
   // ==========================================================
   // INITIAL LOAD
@@ -142,106 +144,109 @@ function ProfilePage() {
   // FORM CHANGE
   // ==========================================================
 
-  const handleChange = (
-    event
-  ) => {
-    const {
-      name,
-      value,
-    } = event.target;
+  const handleChange =
+    (event) => {
+      const {
+        name,
+        value,
+      } = event.target;
 
-    setForm(
-      (current) => ({
-        ...current,
-        [name]: value,
-      })
-    );
+      setForm(
+        (current) => ({
+          ...current,
+          [name]: value,
+        })
+      );
 
-    setSuccess("");
-    setError("");
-  };
+      setSuccess("");
+
+      setError("");
+    };
 
   // ==========================================================
   // UPDATE PROFILE
   // ==========================================================
 
-  const handleSubmit = async (
-    event
-  ) => {
-    event.preventDefault();
+  const handleSubmit =
+    async (
+      event
+    ) => {
+      event.preventDefault();
 
-    try {
-      setSaving(true);
-      setError("");
-      setSuccess("");
+      try {
+        setSaving(true);
 
-      if (!form.name.trim()) {
-        throw new Error(
-          "Name is required."
+        setError("");
+
+        setSuccess("");
+
+        if (!form.name.trim()) {
+          throw new Error(
+            "Name is required."
+          );
+        }
+
+        if (!form.phone.trim()) {
+          throw new Error(
+            "Phone number is required."
+          );
+        }
+
+        const response =
+          await updateMyProfile({
+            name:
+              form.name.trim(),
+
+            phone:
+              form.phone.trim(),
+          });
+
+        const updatedUser =
+          response?.user ||
+          response?.data?.user ||
+          response?.data ||
+          response;
+
+        if (
+          updatedUser &&
+          typeof updatedUser ===
+            "object"
+        ) {
+          setProfile(
+            updatedUser
+          );
+
+          setForm({
+            name:
+              updatedUser.name ||
+              form.name,
+
+            phone:
+              updatedUser.phone ||
+              form.phone,
+          });
+        }
+
+        setSuccess(
+          response?.message ||
+            "Profile updated successfully."
         );
-      }
-
-      if (!form.phone.trim()) {
-        throw new Error(
-          "Phone number is required."
-        );
-      }
-
-      const response =
-        await updateMyProfile({
-          name:
-            form.name.trim(),
-
-          phone:
-            form.phone.trim(),
-        });
-
-      const updatedUser =
-        response?.user ||
-        response?.data?.user ||
-        response?.data ||
-        response;
-
-      if (
-        updatedUser &&
-        typeof updatedUser ===
-          "object"
-      ) {
-        setProfile(
-          updatedUser
+      } catch (err) {
+        console.error(
+          "Profile update error:",
+          err
         );
 
-        setForm({
-          name:
-            updatedUser.name ||
-            form.name,
-
-          phone:
-            updatedUser.phone ||
-            form.phone,
-        });
+        setError(
+          err.response?.data
+            ?.message ||
+            err.message ||
+            "Unable to update profile."
+        );
+      } finally {
+        setSaving(false);
       }
-
-      setSuccess(
-        response?.message ||
-          "Profile updated successfully."
-      );
-    } catch (err) {
-      console.error(
-        "Profile update error:",
-        err
-      );
-
-      setError(
-        err.response?.data
-          ?.message ||
-          err.message ||
-          "Unable to update profile."
-      );
-    } finally {
-      setSaving(false);
-    }
-  };
+    };
 
   // ==========================================================
   // LOADING
@@ -256,169 +261,320 @@ function ProfilePage() {
   }
 
   // ==========================================================
+  // USER INFORMATION
+  // ==========================================================
+
+  const profileName =
+    profile?.name ||
+    user?.name ||
+    "Customer";
+
+  const profileEmail =
+    profile?.email ||
+    user?.email ||
+    "-";
+
+  const profilePhone =
+    profile?.phone ||
+    user?.phone ||
+    "-";
+
+  const profileRole =
+    profile?.role ||
+    user?.role ||
+    "customer";
+
+  const initial =
+    profileName
+      .charAt(0)
+      .toUpperCase();
+
+  // ==========================================================
   // PAGE
   // ==========================================================
 
   return (
-    <section className="app-page">
+    <section className="profile-page">
 
-      <div>
+      <div className="profile-container">
 
-        <Link to="/dashboard">
-          ← Dashboard
-        </Link>
+        {/* ==================================================
+            HEADER
+            ================================================== */}
 
-        <h1>
-          My Profile
-        </h1>
+        <div className="profile-header">
 
-        <p>
-          Manage your personal
-          information.
-        </p>
+          <div>
 
-      </div>
+            <Link
+              to="/dashboard"
+              className="profile-back-link"
+            >
+              ← Dashboard
+            </Link>
 
-      {/* ====================================================
-          PROFILE INFORMATION
-          ==================================================== */}
+            <span className="profile-eyebrow">
+              ACCOUNT SETTINGS
+            </span>
 
-      <div>
+            <h1>
+              My Profile
+            </h1>
 
-        <h2>
-          Account Information
-        </h2>
+            <p>
+              Manage your personal
+              information and account
+              details.
+            </p>
 
-        <p>
-          Email:{" "}
-          {profile?.email ||
-            user?.email ||
-            "-"}
-        </p>
+          </div>
 
-        <p>
-          Role:{" "}
-          {profile?.role ||
-            user?.role ||
-            "customer"}
-        </p>
-
-      </div>
-
-      {/* ====================================================
-          ERROR
-          ==================================================== */}
-
-      {error && (
-        <ErrorMessage
-          message={error}
-          onRetry={loadProfile}
-        />
-      )}
-
-      {/* ====================================================
-          SUCCESS
-          ==================================================== */}
-
-      {success && (
-        <div>
-          <p>
-            {success}
-          </p>
         </div>
-      )}
 
-      {/* ====================================================
-          EDIT PROFILE
-          ==================================================== */}
+        {/* ==================================================
+            ERROR
+            ================================================== */}
 
-      <div>
+        {error && (
+          <div className="profile-message-error">
 
-        <h2>
-          Edit Profile
-        </h2>
-
-        <form
-          onSubmit={
-            handleSubmit
-          }
-        >
-
-          <div>
-
-            <label htmlFor="name">
-              Full Name
-            </label>
-
-            <input
-              id="name"
-              type="text"
-              name="name"
-              value={
-                form.name
-              }
-              onChange={
-                handleChange
-              }
-              placeholder="Enter your name"
+            <ErrorMessage
+              message={error}
+              onRetry={loadProfile}
             />
 
           </div>
+        )}
 
-          <div>
+        {/* ==================================================
+            SUCCESS
+            ================================================== */}
 
-            <label htmlFor="phone">
-              Phone Number
-            </label>
-
-            <input
-              id="phone"
-              type="tel"
-              name="phone"
-              value={
-                form.phone
-              }
-              onChange={
-                handleChange
-              }
-              placeholder="Enter phone number"
-            />
-
-          </div>
-
-          <div>
-
-            <label>
-              Email Address
-            </label>
-
-            <input
-              type="email"
-              value={
-                profile?.email ||
-                user?.email ||
-                ""
-              }
-              disabled
-            />
-
-            <small>
-              Email cannot be changed
-              from this page.
-            </small>
-
-          </div>
-
-          <button
-            type="submit"
-            disabled={saving}
+        {success && (
+          <div
+            className="profile-success-message"
+            role="status"
           >
-            {saving
-              ? "Saving..."
-              : "Save Changes"}
-          </button>
 
-        </form>
+            <span>
+              ✓
+            </span>
+
+            <p>
+              {success}
+            </p>
+
+          </div>
+        )}
+
+        {/* ==================================================
+            MAIN GRID
+            ================================================== */}
+
+        <div className="profile-layout">
+
+          {/* ==================================================
+              PROFILE CARD
+              ================================================== */}
+
+          <aside className="profile-account-card">
+
+            <div className="profile-avatar">
+              {initial}
+            </div>
+
+            <h2>
+              {profileName}
+            </h2>
+
+            <p className="profile-account-email">
+              {profileEmail}
+            </p>
+
+            <span className="profile-role-badge">
+              {profileRole}
+            </span>
+
+            <div className="profile-account-divider" />
+
+            <div className="profile-account-info">
+
+              <div>
+
+                <span>
+                  EMAIL
+                </span>
+
+                <strong>
+                  {profileEmail}
+                </strong>
+
+              </div>
+
+              <div>
+
+                <span>
+                  PHONE
+                </span>
+
+                <strong>
+                  {profilePhone}
+                </strong>
+
+              </div>
+
+            </div>
+
+            <Link
+              to="/addresses"
+              className="profile-address-link"
+            >
+              Manage Addresses
+              <span>
+                →
+              </span>
+            </Link>
+
+          </aside>
+
+          {/* ==================================================
+              EDIT PROFILE
+              ================================================== */}
+
+          <div className="profile-edit-card">
+
+            <div className="profile-card-header">
+
+              <div>
+
+                <span>
+                  PERSONAL INFORMATION
+                </span>
+
+                <h2>
+                  Edit Profile
+                </h2>
+
+                <p>
+                  Update your name and phone
+                  number below.
+                </p>
+
+              </div>
+
+            </div>
+
+            <form
+              className="profile-form"
+              onSubmit={
+                handleSubmit
+              }
+            >
+
+              {/* NAME */}
+
+              <div className="profile-form-group">
+
+                <label htmlFor="profile-name">
+                  Full Name
+                </label>
+
+                <input
+                  id="profile-name"
+                  type="text"
+                  name="name"
+                  value={
+                    form.name
+                  }
+                  onChange={
+                    handleChange
+                  }
+                  placeholder="Enter your name"
+                  autoComplete="name"
+                />
+
+              </div>
+
+              {/* PHONE */}
+
+              <div className="profile-form-group">
+
+                <label htmlFor="profile-phone">
+                  Phone Number
+                </label>
+
+                <input
+                  id="profile-phone"
+                  type="tel"
+                  name="phone"
+                  value={
+                    form.phone
+                  }
+                  onChange={
+                    handleChange
+                  }
+                  placeholder="Enter phone number"
+                  autoComplete="tel"
+                />
+
+              </div>
+
+              {/* EMAIL */}
+
+              <div className="profile-form-group">
+
+                <label htmlFor="profile-email">
+                  Email Address
+                </label>
+
+                <input
+                  id="profile-email"
+                  type="email"
+                  value={
+                    profileEmail === "-"
+                      ? ""
+                      : profileEmail
+                  }
+                  disabled
+                />
+
+                <small>
+                  Email cannot be changed
+                  from this page.
+                </small>
+
+              </div>
+
+              {/* ACTIONS */}
+
+              <div className="profile-form-actions">
+
+                <Link
+                  to="/dashboard"
+                  className="profile-cancel-button"
+                >
+                  Cancel
+                </Link>
+
+                <button
+                  type="submit"
+                  className="profile-save-button"
+                  disabled={
+                    saving
+                  }
+                >
+                  {saving
+                    ? "Saving..."
+                    : "Save Changes"}
+                </button>
+
+              </div>
+
+            </form>
+
+          </div>
+
+        </div>
 
       </div>
 

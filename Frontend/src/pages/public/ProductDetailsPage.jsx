@@ -1,7 +1,7 @@
 // ============================================================
 // SHANTI ENTERPRISES
 // Product Details Page
-// Frontend Phase 2 - Shopping
+// Frontend Phase 6 - UI/UX
 // ============================================================
 
 import {
@@ -72,6 +72,7 @@ function ProductDetailsPage() {
   const loadProduct = async () => {
     try {
       setLoading(true);
+
       setError("");
 
       const data =
@@ -89,7 +90,9 @@ function ProductDetailsPage() {
       ) {
         productData =
           data.data.product;
-      } else if (data?.data) {
+      } else if (
+        data?.data
+      ) {
         productData =
           data.data;
       } else if (
@@ -134,9 +137,13 @@ function ProductDetailsPage() {
 
   if (loading) {
     return (
-      <Loading
-        message="Loading product details..."
-      />
+      <section className="product-details-page">
+        <div className="product-details-container">
+          <Loading
+            message="Loading product details..."
+          />
+        </div>
+      </section>
     );
   }
 
@@ -146,10 +153,16 @@ function ProductDetailsPage() {
 
   if (error) {
     return (
-      <ErrorMessage
-        message={error}
-        onRetry={loadProduct}
-      />
+      <section className="product-details-page">
+        <div className="product-details-container">
+          <ErrorMessage
+            message={error}
+            onRetry={
+              loadProduct
+            }
+          />
+        </div>
+      </section>
     );
   }
 
@@ -159,10 +172,14 @@ function ProductDetailsPage() {
 
   if (!product) {
     return (
-      <EmptyState
-        title="Product not found"
-        message="The requested product could not be found."
-      />
+      <section className="product-details-page">
+        <div className="product-details-container">
+          <EmptyState
+            title="Product not found"
+            message="The requested product could not be found."
+          />
+        </div>
+      </section>
     );
   }
 
@@ -220,16 +237,57 @@ function ProductDetailsPage() {
         : [];
 
   // ==========================================================
+  // QUANTITY
+  // ==========================================================
+
+  const increaseQuantity =
+    () => {
+      setQuantity(
+        (currentQuantity) =>
+          currentQuantity + 1
+      );
+    };
+
+  const decreaseQuantity =
+    () => {
+      setQuantity(
+        (currentQuantity) =>
+          Math.max(
+            moq,
+            currentQuantity - 1
+          )
+      );
+    };
+
+  const handleQuantityChange =
+    (event) => {
+      const value =
+        Number(
+          event.target.value
+        ) || moq;
+
+      setQuantity(
+        Math.max(
+          moq,
+          value
+        )
+      );
+    };
+
+  // ==========================================================
   // ADD TO CART
   // ==========================================================
 
   const handleAddToCart = () => {
-    addToCart(
-      product,
+    const finalQuantity =
       Math.max(
         moq,
         Number(quantity) || moq
-      )
+      );
+
+    addToCart(
+      product,
+      finalQuantity
     );
 
     navigate("/cart");
@@ -240,132 +298,317 @@ function ProductDetailsPage() {
   // ==========================================================
 
   return (
-    <section className="app-page">
+    <section className="product-details-page">
 
-      <p>
-        <Link to="/products">
-          ← Back to Products
-        </Link>
-      </p>
+      <div className="product-details-container">
 
-      <div>
+        {/* ==================================================
+            BREADCRUMB
+            ================================================== */}
 
-        {/* PRODUCT IMAGE */}
+        <div className="product-details-breadcrumb">
 
-        <div>
-          {images.length > 0 ? (
-            <img
-              src={images[0]}
-              alt={productName}
-              style={{
-                width: "100%",
-                maxWidth: "500px",
-                height: "400px",
-                objectFit: "contain",
-              }}
-            />
-          ) : (
-            <div>
-              No Image Available
-            </div>
-          )}
+          <Link to="/">
+            Home
+          </Link>
+
+          <span>
+            /
+          </span>
+
+          <Link to="/products">
+            Products
+          </Link>
+
+          <span>
+            /
+          </span>
+
+          <span>
+            {productName}
+          </span>
+
         </div>
 
-        {/* PRODUCT INFO */}
+        {/* ==================================================
+            BACK BUTTON
+            ================================================== */}
 
-        <div>
+        <Link
+          to="/products"
+          className="product-details-back"
+        >
+          ← Back to Products
+        </Link>
 
-          {category && (
-            <p>
-              Category: {category}
-            </p>
-          )}
+        {/* ==================================================
+            PRODUCT MAIN
+            ================================================== */}
 
-          <h1>
-            {productName}
-          </h1>
+        <div className="product-details-card">
 
-          {brand && (
-            <p>
-              Brand: {brand}
-            </p>
-          )}
+          {/* ==================================================
+              IMAGE SECTION
+              ================================================== */}
 
-          <h2>
-            ₹
-            {price.toLocaleString(
-              "en-IN"
-            )}
-          </h2>
+          <div className="product-details-image-section">
 
-          {product.description && (
-            <div>
-              <h3>
-                Description
-              </h3>
+            <div className="product-details-image-box">
 
-              <p>
-                {product.description}
-              </p>
+              {images.length > 0 ? (
+                <img
+                  src={images[0]}
+                  alt={productName}
+                  className="product-details-image"
+                />
+              ) : (
+                <div className="product-details-no-image">
+
+                  <span>
+                    SE
+                  </span>
+
+                  <p>
+                    No Image Available
+                  </p>
+
+                </div>
+              )}
+
+              {/* STOCK BADGE */}
+
+              <span
+                className={`product-details-stock ${
+                  stock > 0
+                    ? "product-details-stock-in"
+                    : "product-details-stock-out"
+                }`}
+              >
+                {stock > 0
+                  ? "In Stock"
+                  : "Out of Stock"}
+              </span>
+
             </div>
-          )}
 
-          <p>
-            Minimum Order Quantity:{" "}
-            {moq}
-          </p>
+            {/* IMAGE COUNT */}
 
-          <p>
-            {stock > 0
-              ? `In Stock: ${stock}`
-              : "Out of Stock"}
-          </p>
+            {images.length > 1 && (
+              <p className="product-details-image-count">
+                {images.length} product images
+              </p>
+            )}
 
-          {product.sku && (
-            <p>
-              SKU: {product.sku}
-            </p>
-          )}
+          </div>
 
-          {/* QUANTITY */}
+          {/* ==================================================
+              PRODUCT INFORMATION
+              ================================================== */}
 
-          <label>
-            Quantity:
+          <div className="product-details-info">
 
-            <input
-              type="number"
-              min={moq}
-              value={quantity}
-              onChange={(event) =>
-                setQuantity(
-                  Math.max(
-                    moq,
-                    Number(
-                      event.target
-                        .value
-                    ) || moq
-                  )
-                )
-              }
-            />
-          </label>
+            {/* CATEGORY */}
 
-          {/* ADD TO CART */}
+            {category && (
+              <span className="product-details-category">
+                {category}
+              </span>
+            )}
 
-          <div>
-            <button
-              type="button"
-              disabled={
-                stock <= 0
-              }
-              onClick={
-                handleAddToCart
-              }
-            >
-              {stock > 0
-                ? "Add to Cart"
-                : "Out of Stock"}
-            </button>
+            {/* NAME */}
+
+            <h1 className="product-details-title">
+              {productName}
+            </h1>
+
+            {/* BRAND */}
+
+            {brand && (
+              <p className="product-details-brand">
+                Brand:{" "}
+                <strong>
+                  {brand}
+                </strong>
+              </p>
+            )}
+
+            {/* PRICE */}
+
+            <div className="product-details-price-box">
+
+              <span className="product-details-price">
+                ₹
+                {price.toLocaleString(
+                  "en-IN"
+                )}
+              </span>
+
+              <span className="product-details-price-unit">
+                / unit
+              </span>
+
+            </div>
+
+            {/* DESCRIPTION */}
+
+            {product.description && (
+              <div className="product-details-description">
+
+                <h2>
+                  Description
+                </h2>
+
+                <p>
+                  {product.description}
+                </p>
+
+              </div>
+            )}
+
+            {/* PRODUCT INFORMATION */}
+
+            <div className="product-details-meta-grid">
+
+              <div className="product-details-meta-item">
+
+                <span>
+                  Minimum Order
+                </span>
+
+                <strong>
+                  {moq} units
+                </strong>
+
+              </div>
+
+              <div className="product-details-meta-item">
+
+                <span>
+                  Available Stock
+                </span>
+
+                <strong>
+                  {stock > 0
+                    ? stock
+                    : 0}
+                </strong>
+
+              </div>
+
+              {product.sku && (
+                <div className="product-details-meta-item">
+
+                  <span>
+                    SKU
+                  </span>
+
+                  <strong>
+                    {product.sku}
+                  </strong>
+
+                </div>
+              )}
+
+            </div>
+
+            {/* ==================================================
+                PURCHASE BOX
+                ================================================== */}
+
+            <div className="product-details-purchase">
+
+              <div className="product-details-quantity-row">
+
+                <div>
+
+                  <span className="product-details-label">
+                    Quantity
+                  </span>
+
+                  <span className="product-details-moq">
+                    MOQ: {moq}
+                  </span>
+
+                </div>
+
+                <div className="product-quantity-control">
+
+                  <button
+                    type="button"
+                    onClick={
+                      decreaseQuantity
+                    }
+                    disabled={
+                      quantity <= moq
+                    }
+                    aria-label="Decrease quantity"
+                  >
+                    −
+                  </button>
+
+                  <input
+                    type="number"
+                    min={moq}
+                    value={quantity}
+                    onChange={
+                      handleQuantityChange
+                    }
+                    aria-label="Product quantity"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={
+                      increaseQuantity
+                    }
+                    disabled={
+                      stock > 0 &&
+                      quantity >=
+                        stock
+                    }
+                    aria-label="Increase quantity"
+                  >
+                    +
+                  </button>
+
+                </div>
+
+              </div>
+
+              {/* ADD TO CART */}
+
+              <button
+                type="button"
+                className="product-details-add-button"
+                disabled={
+                  stock <= 0
+                }
+                onClick={
+                  handleAddToCart
+                }
+              >
+                {stock > 0
+                  ? "Add to Cart"
+                  : "Out of Stock"}
+              </button>
+
+              {/* BUY INFO */}
+
+              {stock > 0 && (
+                <p className="product-details-cart-note">
+                  Minimum order quantity is{" "}
+                  <strong>
+                    {moq}
+                  </strong>{" "}
+                  unit
+                  {moq > 1
+                    ? "s"
+                    : ""}.
+                </p>
+              )}
+
+            </div>
+
           </div>
 
         </div>

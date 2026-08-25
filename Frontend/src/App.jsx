@@ -14,6 +14,10 @@ import MainLayout from "./layouts/MainLayout";
 
 import ProtectedRoute from "./components/common/ProtectedRoute";
 
+// ============================================================
+// PUBLIC PAGES
+// ============================================================
+
 import HomePage from "./pages/public/HomePage";
 
 import CategoriesPage from "./pages/public/CategoriesPage";
@@ -27,6 +31,10 @@ import CartPage from "./pages/public/CartPage";
 import LoginPage from "./pages/public/LoginPage";
 
 import UnauthorizedPage from "./pages/public/UnauthorizedPage";
+
+// ============================================================
+// CUSTOMER PAGES
+// ============================================================
 
 import CheckoutPage from "./pages/customer/CheckoutPage";
 
@@ -50,17 +58,46 @@ import AddressesPage from "./pages/customer/AddressesPage";
 
 import CustomerTestPage from "./pages/customer/CustomerTestPage";
 
+// ============================================================
+// ADMIN PAGES
+// ============================================================
+
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
+
+import AdminProductsPage from "./pages/admin/AdminProductsPage";
+
+import AddProductPage from "./pages/admin/AddProductPage";
+
+import EditProductPage from "./pages/admin/EditProductPage";
+
+import AdminCategoriesPage from "./pages/admin/AdminCategoriesPage";
+
+import AddCategoryPage from "./pages/admin/AddCategoryPage";
+
+import EditCategoryPage from "./pages/admin/EditCategoryPage";
+
+import AdminOrdersPage from "./pages/admin/AdminOrdersPage";
+
+import AdminOrderDetailsPage from "./pages/admin/AdminOrderDetailsPage";
+
+import AdminUsersPage from "./pages/admin/AdminUsersPage";
+
+import AdminUserDetailsPage from "./pages/admin/AdminUserDetailsPage";
+
+import AdminProfilePage from "./pages/admin/AdminProfilePage";
+
+import AdminAnalyticsPage from "./pages/admin/AdminAnalyticsPage";
 
 import AdminTestPage from "./pages/admin/AdminTestPage";
 
 // ============================================================
-// 404
+// 404 PAGE
 // ============================================================
 
 function NotFoundPage() {
   return (
-    <div>
+    <div className="app-page">
+
       <h1>
         404
       </h1>
@@ -68,6 +105,7 @@ function NotFoundPage() {
       <p>
         Page not found.
       </p>
+
     </div>
   );
 }
@@ -81,6 +119,10 @@ function App() {
     <BrowserRouter>
 
       <Routes>
+
+        {/* ==================================================
+            MAIN LAYOUT
+            ================================================== */}
 
         <Route
           element={
@@ -257,6 +299,102 @@ function App() {
               path="/admin/dashboard"
               element={
                 <AdminDashboardPage />
+              }
+            />
+
+            {/* PRODUCT MANAGEMENT */}
+
+            <Route
+              path="/admin/products"
+              element={
+                <AdminProductsPage />
+              }
+            />
+
+            <Route
+              path="/admin/products/new"
+              element={
+                <AddProductPage />
+              }
+            />
+
+            <Route
+              path="/admin/products/:productId/edit"
+              element={
+                <EditProductPage />
+              }
+            />
+
+            {/* CATEGORY MANAGEMENT */}
+
+            <Route
+              path="/admin/categories"
+              element={
+                <AdminCategoriesPage />
+              }
+            />
+
+            <Route
+              path="/admin/categories/new"
+              element={
+                <AddCategoryPage />
+              }
+            />
+
+            <Route
+              path="/admin/categories/:categoryId/edit"
+              element={
+                <EditCategoryPage />
+              }
+            />
+
+            {/* ORDER MANAGEMENT */}
+
+            <Route
+              path="/admin/orders"
+              element={
+                <AdminOrdersPage />
+              }
+            />
+
+            <Route
+              path="/admin/orders/:orderId"
+              element={
+                <AdminOrderDetailsPage />
+              }
+            />
+
+            {/* USER MANAGEMENT */}
+
+            <Route
+              path="/admin/users"
+              element={
+                <AdminUsersPage />
+              }
+            />
+
+            <Route
+              path="/admin/users/:userId"
+              element={
+                <AdminUserDetailsPage />
+              }
+            />
+
+            {/* ADMIN PROFILE */}
+
+            <Route
+              path="/admin/profile"
+              element={
+                <AdminProfilePage />
+              }
+            />
+
+            {/* ADMIN ANALYTICS */}
+
+            <Route
+              path="/admin/analytics"
+              element={
+                <AdminAnalyticsPage />
               }
             />
 

@@ -1,7 +1,7 @@
 // ============================================================
 // SHANTI ENTERPRISES
 // Order Success Page
-// Frontend Phase 4 - Customer
+// Frontend Phase 6 - UI/UX
 // ============================================================
 
 import {
@@ -9,55 +9,193 @@ import {
   useParams,
 } from "react-router-dom";
 
+// ============================================================
+// ORDER SUCCESS PAGE
+// ============================================================
+
 function OrderSuccessPage() {
   const {
     orderId,
   } = useParams();
 
   return (
-    <section className="app-page">
+    <section className="order-success-page">
 
-      <h1>
-        Order Placed Successfully
-      </h1>
+      <div className="order-success-container">
 
-      <p>
-        Thank you for your order.
-      </p>
+        {/* ==================================================
+            SUCCESS CARD
+            ================================================== */}
 
-      {orderId && (
-        <p>
-          Order ID:{" "}
-          <strong>
-            {orderId}
-          </strong>
-        </p>
-      )}
+        <div className="order-success-card">
 
-      <p>
-        Your order has been
-        created successfully.
-      </p>
+          {/* SUCCESS ICON */}
 
-      <div>
+          <div className="order-success-icon">
+            ✓
+          </div>
 
-        <Link
-          to={`/orders/${orderId}`}
-        >
-          Track Order
-        </Link>
+          {/* EYEBROW */}
 
-        {" "}
+          <span className="order-success-eyebrow">
+            ORDER CONFIRMED
+          </span>
 
-        <Link to="/orders">
-          My Orders
-        </Link>
+          {/* TITLE */}
 
-        {" "}
+          <h1>
+            Order Placed Successfully!
+          </h1>
 
-        <Link to="/products">
-          Continue Shopping
-        </Link>
+          <p className="order-success-message">
+            Thank you for shopping with
+            Shanti Enterprises. Your order
+            has been created successfully.
+          </p>
+
+          {/* ORDER ID */}
+
+          {orderId && (
+            <div className="order-success-order-id">
+
+              <span>
+                ORDER ID
+              </span>
+
+              <strong>
+                {orderId}
+              </strong>
+
+            </div>
+          )}
+
+          {/* STATUS */}
+
+          <div className="order-success-status">
+
+            <div className="order-success-status-icon">
+              ✓
+            </div>
+
+            <div>
+
+              <strong>
+                Payment Successful
+              </strong>
+
+              <p>
+                Your order is now being
+                processed.
+              </p>
+
+            </div>
+
+          </div>
+
+          {/* ACTIONS */}
+
+          <div className="order-success-actions">
+
+            {orderId && (
+              <Link
+                to={`/orders/${orderId}`}
+                className="order-success-primary-button"
+              >
+                Track Order
+                <span>
+                  →
+                </span>
+              </Link>
+            )}
+
+            <Link
+              to="/orders"
+              className="order-success-secondary-button"
+            >
+              My Orders
+            </Link>
+
+            <Link
+              to="/products"
+              className="order-success-shopping-link"
+            >
+              Continue Shopping
+            </Link>
+
+          </div>
+
+        </div>
+
+        {/* ==================================================
+            HELP INFO
+            ================================================== */}
+
+        <div className="order-success-info">
+
+          <div className="order-success-info-item">
+
+            <span>
+              📦
+            </span>
+
+            <div>
+
+              <strong>
+                Order Processing
+              </strong>
+
+              <p>
+                We will start processing
+                your order shortly.
+              </p>
+
+            </div>
+
+          </div>
+
+          <div className="order-success-info-item">
+
+            <span>
+              🚚
+            </span>
+
+            <div>
+
+              <strong>
+                Track Your Order
+              </strong>
+
+              <p>
+                You can check your order
+                status from My Orders.
+              </p>
+
+            </div>
+
+          </div>
+
+          <div className="order-success-info-item">
+
+            <span>
+              🔒
+            </span>
+
+            <div>
+
+              <strong>
+                Secure Transaction
+              </strong>
+
+              <p>
+                Your payment was processed
+                securely.
+              </p>
+
+            </div>
+
+          </div>
+
+        </div>
 
       </div>
 

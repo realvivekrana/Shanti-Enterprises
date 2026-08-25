@@ -1,7 +1,7 @@
 // ============================================================
 // SHANTI ENTERPRISES
 // Order Summary Page
-// Frontend Phase 3 - Checkout
+// Frontend Phase 6 - UI/UX
 // ============================================================
 
 import {
@@ -37,7 +37,6 @@ function OrderSummaryPage() {
     cartItems,
     totalItems,
     subtotal,
-    clearCart,
   } = useCart();
 
   const {
@@ -54,41 +53,94 @@ function OrderSummaryPage() {
     setError,
   ] = useState("");
 
+  // ==========================================================
+  // EMPTY CART
+  // ==========================================================
+
   if (
     cartItems.length === 0
   ) {
     return (
-      <section className="app-page">
-        <h1>
-          Order Summary
-        </h1>
+      <section className="order-summary-page">
 
-        <p>
-          Your cart is empty.
-        </p>
+        <div className="order-summary-container">
 
-        <Link to="/products">
-          Continue Shopping
-        </Link>
+          <div className="order-summary-empty">
+
+            <div className="order-summary-empty-icon">
+              🛒
+            </div>
+
+            <span className="order-summary-eyebrow">
+              ORDER SUMMARY
+            </span>
+
+            <h1>
+              Your cart is empty
+            </h1>
+
+            <p>
+              Add products to your cart
+              before reviewing your order.
+            </p>
+
+            <Link
+              to="/products"
+              className="order-summary-primary-button"
+            >
+              Continue Shopping
+            </Link>
+
+          </div>
+
+        </div>
+
       </section>
     );
   }
 
-  if (!selectedAddress) {
+  // ==========================================================
+  // NO ADDRESS
+  // ==========================================================
+
+  if (
+    !selectedAddress
+  ) {
     return (
-      <section className="app-page">
-        <h1>
-          Order Summary
-        </h1>
+      <section className="order-summary-page">
 
-        <p>
-          Please select a delivery
-          address first.
-        </p>
+        <div className="order-summary-container">
 
-        <Link to="/checkout/address">
-          Select Address
-        </Link>
+          <div className="order-summary-empty">
+
+            <div className="order-summary-empty-icon">
+              📍
+            </div>
+
+            <span className="order-summary-eyebrow">
+              ORDER SUMMARY
+            </span>
+
+            <h1>
+              Delivery address required
+            </h1>
+
+            <p>
+              Please select a delivery
+              address before continuing.
+            </p>
+
+            <Link
+              to="/checkout/address"
+              className="order-summary-primary-button"
+            >
+              Select Address
+            </Link>
+
+          </div>
+
+        </div>
+
       </section>
     );
   }
@@ -101,6 +153,7 @@ function OrderSummaryPage() {
     async () => {
       try {
         setLoading(true);
+
         setError("");
 
         const orderItems =
@@ -136,7 +189,8 @@ function OrderSummaryPage() {
           );
 
         const orderData = {
-          items: orderItems,
+          items:
+            orderItems,
 
           shippingAddress: {
             name:
@@ -198,11 +252,10 @@ function OrderSummaryPage() {
         }
 
         /*
-          Cart is cleared only after
-          successful payment verification.
+          Cart is intentionally NOT cleared here.
 
-          Therefore do NOT call clearCart()
-          here.
+          Cart should be cleared only after
+          successful payment verification.
         */
 
         navigate(
@@ -225,149 +278,462 @@ function OrderSummaryPage() {
       }
     };
 
+  // ==========================================================
+  // PAGE
+  // ==========================================================
+
   return (
-    <section className="app-page">
+    <section className="order-summary-page">
 
-      <h1>
-        Order Summary
-      </h1>
+      <div className="order-summary-container">
 
-      {error && (
-        <p>
-          {error}
-        </p>
-      )}
+        {/* ==================================================
+            HEADER
+            ================================================== */}
 
-      {/* ADDRESS */}
+        <div className="order-summary-header">
 
-      <div>
+          <div>
 
-        <h2>
-          Delivery Address
-        </h2>
+            <span className="order-summary-eyebrow">
+              REVIEW YOUR ORDER
+            </span>
 
-        <p>
-          <strong>
-            {selectedAddress.name}
-          </strong>
-        </p>
+            <h1>
+              Order Summary
+            </h1>
 
-        <p>
-          {selectedAddress.phone}
-        </p>
+            <p>
+              Check your products and delivery
+              details before payment.
+            </p>
 
-        <p>
-          {selectedAddress.address}
-        </p>
+          </div>
 
-        <p>
-          {selectedAddress.city},{" "}
-          {selectedAddress.state} -{" "}
-          {selectedAddress.pincode}
-        </p>
+          <div className="order-summary-items-count">
 
-        <Link to="/checkout/address">
-          Change Address
-        </Link>
+            <strong>
+              {totalItems}
+            </strong>
 
-      </div>
+            <span>
+              {totalItems === 1
+                ? "Item"
+                : "Items"}
+            </span>
 
-      <hr />
+          </div>
 
-      {/* PRODUCTS */}
+        </div>
 
-      <div>
+        {/* ==================================================
+            CHECKOUT STEPS
+            ================================================== */}
 
-        <h2>
-          Products
-        </h2>
+        <div className="order-summary-steps">
 
-        {cartItems.map(
-          (item) => (
-            <article
-              key={
-                item.productId
+          <div className="order-summary-step completed">
+
+            <span>
+              ✓
+            </span>
+
+            <div>
+              <strong>
+                Delivery
+              </strong>
+
+              <small>
+                Address
+              </small>
+            </div>
+
+          </div>
+
+          <div className="order-summary-step-line" />
+
+          <div className="order-summary-step active">
+
+            <span>
+              2
+            </span>
+
+            <div>
+              <strong>
+                Summary
+              </strong>
+
+              <small>
+                Review order
+              </small>
+            </div>
+
+          </div>
+
+          <div className="order-summary-step-line" />
+
+          <div className="order-summary-step">
+
+            <span>
+              3
+            </span>
+
+            <div>
+              <strong>
+                Payment
+              </strong>
+
+              <small>
+                Complete order
+              </small>
+            </div>
+
+          </div>
+
+        </div>
+
+        {/* ==================================================
+            ERROR
+            ================================================== */}
+
+        {error && (
+          <div
+            className="order-summary-error"
+            role="alert"
+          >
+
+            <span>
+              !
+            </span>
+
+            <p>
+              {error}
+            </p>
+
+          </div>
+        )}
+
+        {/* ==================================================
+            MAIN LAYOUT
+            ================================================== */}
+
+        <div className="order-summary-layout">
+
+          {/* ==================================================
+              LEFT CONTENT
+              ================================================== */}
+
+          <div className="order-summary-main">
+
+            {/* ==================================================
+                ADDRESS
+                ================================================== */}
+
+            <div className="order-summary-card">
+
+              <div className="order-summary-card-header">
+
+                <div>
+
+                  <span>
+                    DELIVERY DETAILS
+                  </span>
+
+                  <h2>
+                    Delivery Address
+                  </h2>
+
+                </div>
+
+                <Link
+                  to="/checkout/address"
+                  className="order-summary-edit-link"
+                >
+                  Change
+                </Link>
+
+              </div>
+
+              <div className="order-summary-address">
+
+                <div className="order-summary-address-icon">
+                  📍
+                </div>
+
+                <div>
+
+                  <strong>
+                    {selectedAddress.name}
+                  </strong>
+
+                  <p>
+                    {selectedAddress.phone}
+                  </p>
+
+                  <p>
+                    {selectedAddress.address}
+                  </p>
+
+                  <p>
+                    {selectedAddress.city},{" "}
+                    {selectedAddress.state}{" "}
+                    -{" "}
+                    {selectedAddress.pincode}
+                  </p>
+
+                </div>
+
+              </div>
+
+            </div>
+
+            {/* ==================================================
+                PRODUCTS
+                ================================================== */}
+
+            <div className="order-summary-card">
+
+              <div className="order-summary-card-header">
+
+                <div>
+
+                  <span>
+                    ORDER ITEMS
+                  </span>
+
+                  <h2>
+                    Products
+                  </h2>
+
+                </div>
+
+                <span className="order-summary-product-count">
+                  {cartItems.length}{" "}
+                  product
+                  {cartItems.length !== 1
+                    ? "s"
+                    : ""}
+                </span>
+
+              </div>
+
+              <div className="order-summary-products">
+
+                {cartItems.map(
+                  (item) => {
+
+                    const price =
+                      Number(
+                        item.price
+                      ) || 0;
+
+                    const quantity =
+                      Number(
+                        item.quantity
+                      ) || 0;
+
+                    const itemTotal =
+                      price *
+                      quantity;
+
+                    return (
+                      <article
+                        className="order-summary-product"
+                        key={
+                          item.productId
+                        }
+                      >
+
+                        {/* IMAGE */}
+
+                        <Link
+                          to={`/products/${item.productId}`}
+                          className="order-summary-product-image"
+                        >
+
+                          {item.image ? (
+                            <img
+                              src={
+                                item.image
+                              }
+                              alt={
+                                item.name
+                              }
+                            />
+                          ) : (
+                            <span>
+                              SE
+                            </span>
+                          )}
+
+                        </Link>
+
+                        {/* INFO */}
+
+                        <div className="order-summary-product-info">
+
+                          <Link
+                            to={`/products/${item.productId}`}
+                            className="order-summary-product-name"
+                          >
+                            {item.name}
+                          </Link>
+
+                          <span>
+                            ₹
+                            {price.toLocaleString(
+                              "en-IN"
+                            )}{" "}
+                            / unit
+                          </span>
+
+                          <span>
+                            Quantity:{" "}
+                            {quantity}
+                          </span>
+
+                        </div>
+
+                        {/* TOTAL */}
+
+                        <strong className="order-summary-product-total">
+                          ₹
+                          {itemTotal.toLocaleString(
+                            "en-IN"
+                          )}
+                        </strong>
+
+                      </article>
+                    );
+                  }
+                )}
+
+              </div>
+
+            </div>
+
+            {/* BACK */}
+
+            <Link
+              to="/checkout"
+              className="order-summary-back-link"
+            >
+              ← Back to Checkout
+            </Link>
+
+          </div>
+
+          {/* ==================================================
+              RIGHT SUMMARY
+              ================================================== */}
+
+          <aside className="order-summary-total-card">
+
+            <div className="order-summary-total-header">
+
+              <span>
+                ORDER TOTAL
+              </span>
+
+              <h2>
+                Payment Summary
+              </h2>
+
+            </div>
+
+            <div className="order-summary-total-row">
+
+              <span>
+                Total Items
+              </span>
+
+              <strong>
+                {totalItems}
+              </strong>
+
+            </div>
+
+            <div className="order-summary-total-row">
+
+              <span>
+                Subtotal
+              </span>
+
+              <strong>
+                ₹
+                {subtotal.toLocaleString(
+                  "en-IN"
+                )}
+              </strong>
+
+            </div>
+
+            <div className="order-summary-total-divider" />
+
+            <div className="order-summary-grand-total">
+
+              <span>
+                Total Amount
+              </span>
+
+              <strong>
+                ₹
+                {subtotal.toLocaleString(
+                  "en-IN"
+                )}
+              </strong>
+
+            </div>
+
+            <div className="order-summary-payment-method">
+
+              <div>
+                <span>
+                  Payment Method
+                </span>
+
+                <strong>
+                  Razorpay
+                </strong>
+              </div>
+
+              <span className="order-summary-payment-badge">
+                ONLINE
+              </span>
+
+            </div>
+
+            <button
+              type="button"
+              className="order-summary-payment-button"
+              disabled={
+                loading
+              }
+              onClick={
+                handlePlaceOrder
               }
             >
+              {loading
+                ? "Creating Order..."
+                : "Continue to Payment"}
 
-              <h3>
-                {item.name}
-              </h3>
+              {!loading && (
+                <span>
+                  →
+                </span>
+              )}
+            </button>
 
-              <p>
-                Price: ₹
-                {Number(
-                  item.price
-                ).toLocaleString(
-                  "en-IN"
-                )}
-              </p>
+            <p className="order-summary-note">
+              Your order will be created
+              before proceeding to payment.
+            </p>
 
-              <p>
-                Quantity:{" "}
-                {item.quantity}
-              </p>
+          </aside>
 
-              <p>
-                Item Total: ₹
-                {(
-                  Number(
-                    item.price
-                  ) *
-                  Number(
-                    item.quantity
-                  )
-                ).toLocaleString(
-                  "en-IN"
-                )}
-              </p>
-
-            </article>
-          )
-        )}
+        </div>
 
       </div>
-
-      <hr />
-
-      {/* TOTAL */}
-
-      <h2>
-        Order Total
-      </h2>
-
-      <p>
-        Total Items:{" "}
-        {totalItems}
-      </p>
-
-      <p>
-        Subtotal: ₹
-        {subtotal.toLocaleString(
-          "en-IN"
-        )}
-      </p>
-
-      <h2>
-        Total: ₹
-        {subtotal.toLocaleString(
-          "en-IN"
-        )}
-      </h2>
-
-      {/* PAYMENT */}
-
-      <button
-        type="button"
-        disabled={loading}
-        onClick={
-          handlePlaceOrder
-        }
-      >
-        {loading
-          ? "Creating Order..."
-          : "Continue to Payment"}
-      </button>
 
     </section>
   );
