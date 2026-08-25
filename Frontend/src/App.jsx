@@ -1,7 +1,7 @@
 // ============================================================
 // SHANTI ENTERPRISES
 // App Component
-// Frontend Phase 5 - Admin
+// Frontend Phase 6 - Complete Routing
 // ============================================================
 
 import {
@@ -82,11 +82,9 @@ import AdminOrderDetailsPage from "./pages/admin/AdminOrderDetailsPage";
 
 import AdminUsersPage from "./pages/admin/AdminUsersPage";
 
-import AdminUserDetailsPage from "./pages/admin/AdminUserDetailsPage";
+import AdminAnalyticsPage from "./pages/admin/AdminAnalyticsPage";
 
 import AdminProfilePage from "./pages/admin/AdminProfilePage";
-
-import AdminAnalyticsPage from "./pages/admin/AdminAnalyticsPage";
 
 import AdminTestPage from "./pages/admin/AdminTestPage";
 
@@ -131,7 +129,7 @@ function App() {
         >
 
           {/* ==================================================
-              PUBLIC
+              PUBLIC ROUTES
               ================================================== */}
 
           <Route
@@ -184,7 +182,7 @@ function App() {
           />
 
           {/* ==================================================
-              CUSTOMER
+              CUSTOMER PROTECTED ROUTES
               ================================================== */}
 
           <Route
@@ -193,12 +191,16 @@ function App() {
             }
           >
 
+            {/* CUSTOMER DASHBOARD */}
+
             <Route
               path="/dashboard"
               element={
                 <CustomerDashboardPage />
               }
             />
+
+            {/* PROFILE */}
 
             <Route
               path="/profile"
@@ -207,12 +209,16 @@ function App() {
               }
             />
 
+            {/* ADDRESSES */}
+
             <Route
               path="/addresses"
               element={
                 <AddressesPage />
               }
             />
+
+            {/* CHECKOUT */}
 
             <Route
               path="/checkout"
@@ -235,6 +241,8 @@ function App() {
               }
             />
 
+            {/* PAYMENT */}
+
             <Route
               path="/payment/:orderId"
               element={
@@ -242,12 +250,16 @@ function App() {
               }
             />
 
+            {/* ORDER SUCCESS */}
+
             <Route
               path="/order-success/:orderId"
               element={
                 <OrderSuccessPage />
               }
             />
+
+            {/* ORDERS */}
 
             <Route
               path="/orders"
@@ -263,6 +275,8 @@ function App() {
               }
             />
 
+            {/* CUSTOMER TEST */}
+
             <Route
               path="/customer/test"
               element={
@@ -273,7 +287,7 @@ function App() {
           </Route>
 
           {/* ==================================================
-              ADMIN ONLY
+              ADMIN ONLY ROUTES
               ================================================== */}
 
           <Route
@@ -286,7 +300,9 @@ function App() {
             }
           >
 
-            {/* ADMIN DASHBOARD */}
+            {/* ==================================================
+                ADMIN DASHBOARD
+                ================================================== */}
 
             <Route
               path="/admin"
@@ -302,7 +318,9 @@ function App() {
               }
             />
 
-            {/* PRODUCT MANAGEMENT */}
+            {/* ==================================================
+                PRODUCT MANAGEMENT
+                ================================================== */}
 
             <Route
               path="/admin/products"
@@ -325,7 +343,9 @@ function App() {
               }
             />
 
-            {/* CATEGORY MANAGEMENT */}
+            {/* ==================================================
+                CATEGORY MANAGEMENT
+                ================================================== */}
 
             <Route
               path="/admin/categories"
@@ -348,7 +368,9 @@ function App() {
               }
             />
 
-            {/* ORDER MANAGEMENT */}
+            {/* ==================================================
+                ORDER MANAGEMENT
+                ================================================== */}
 
             <Route
               path="/admin/orders"
@@ -364,7 +386,9 @@ function App() {
               }
             />
 
-            {/* USER MANAGEMENT */}
+            {/* ==================================================
+                USER MANAGEMENT
+                ================================================== */}
 
             <Route
               path="/admin/users"
@@ -373,23 +397,9 @@ function App() {
               }
             />
 
-            <Route
-              path="/admin/users/:userId"
-              element={
-                <AdminUserDetailsPage />
-              }
-            />
-
-            {/* ADMIN PROFILE */}
-
-            <Route
-              path="/admin/profile"
-              element={
-                <AdminProfilePage />
-              }
-            />
-
-            {/* ADMIN ANALYTICS */}
+            {/* ==================================================
+                ANALYTICS
+                ================================================== */}
 
             <Route
               path="/admin/analytics"
@@ -398,7 +408,20 @@ function App() {
               }
             />
 
-            {/* ADMIN TEST */}
+            {/* ==================================================
+                ADMIN PROFILE
+                ================================================== */}
+
+            <Route
+              path="/admin/profile"
+              element={
+                <AdminProfilePage />
+              }
+            />
+
+            {/* ==================================================
+                ADMIN TEST
+                ================================================== */}
 
             <Route
               path="/admin/test"

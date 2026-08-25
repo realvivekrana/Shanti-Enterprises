@@ -1,7 +1,7 @@
 // ============================================================
 // SHANTI ENTERPRISES
 // Customer Order History
-// Frontend Phase 4 - Customer
+// Frontend Phase 6 - UI/UX
 // ============================================================
 
 import {
@@ -25,7 +25,7 @@ import ErrorMessage from "../../components/common/ErrorMessage";
 import EmptyState from "../../components/common/EmptyState";
 
 // ============================================================
-// ORDER STATUS
+// HELPERS
 // ============================================================
 
 const getOrderStatus = (
@@ -38,10 +38,6 @@ const getOrderStatus = (
   );
 };
 
-// ============================================================
-// PAYMENT STATUS
-// ============================================================
-
 const getPaymentStatus = (
   order
 ) => {
@@ -50,10 +46,6 @@ const getPaymentStatus = (
     "Pending"
   );
 };
-
-// ============================================================
-// ORDER TOTAL
-// ============================================================
 
 const getOrderTotal = (
   order
@@ -64,6 +56,36 @@ const getOrderTotal = (
       order.grandTotal ??
       0
   );
+};
+
+const getStatusClass = (
+  status
+) => {
+  const value =
+    String(
+      status
+    ).toLowerCase();
+
+  if (
+    value.includes("deliver")
+  ) {
+    return "success";
+  }
+
+  if (
+    value.includes("cancel")
+  ) {
+    return "danger";
+  }
+
+  if (
+    value.includes("process") ||
+    value.includes("ship")
+  ) {
+    return "info";
+  }
+
+  return "pending";
 };
 
 // ============================================================
@@ -105,41 +127,45 @@ function OrdersPage() {
   // LOAD ORDERS
   // ==========================================================
 
-  const loadOrders = async () => {
-    try {
-      setLoading(true);
-      setError("");
+  const loadOrders =
+    async () => {
+      try {
+        setLoading(true);
 
-      const response =
-        await getMyOrders();
+        setError("");
 
-      const orderList =
-        response?.orders ||
-        response?.data?.orders ||
-        response?.data ||
-        [];
+        const response =
+          await getMyOrders();
 
-      setOrders(
-        Array.isArray(orderList)
-          ? orderList
-          : []
-      );
-    } catch (err) {
-      console.error(
-        "Order history error:",
-        err
-      );
+        const orderList =
+          response?.orders ||
+          response?.data?.orders ||
+          response?.data ||
+          [];
 
-      setError(
-        err.response?.data
-          ?.message ||
-          err.message ||
-          "Unable to load order history."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+        setOrders(
+          Array.isArray(
+            orderList
+          )
+            ? orderList
+            : []
+        );
+      } catch (err) {
+        console.error(
+          "Order history error:",
+          err
+        );
+
+        setError(
+          err.response?.data
+            ?.message ||
+            err.message ||
+            "Unable to load order history."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
 
   // ==========================================================
   // INITIAL LOAD
@@ -159,14 +185,12 @@ function OrdersPage() {
         ...orders,
       ];
 
-      // ------------------------------------------------------
-      // SEARCH
-      // ------------------------------------------------------
-
       const searchValue =
         search
           .trim()
           .toLowerCase();
+
+      // SEARCH
 
       if (searchValue) {
         result =
@@ -186,9 +210,7 @@ function OrdersPage() {
           );
       }
 
-      // ------------------------------------------------------
       // STATUS
-      // ------------------------------------------------------
 
       if (
         statusFilter !==
@@ -204,20 +226,20 @@ function OrdersPage() {
           );
       }
 
-      // ------------------------------------------------------
       // SORT
-      // ------------------------------------------------------
 
       result.sort(
         (a, b) => {
           const dateA =
             new Date(
-              a.createdAt || 0
+              a.createdAt ||
+                0
             ).getTime();
 
           const dateB =
             new Date(
-              b.createdAt || 0
+              b.createdAt ||
+                0
             ).getTime();
 
           if (
@@ -250,7 +272,8 @@ function OrdersPage() {
   const statusCounts =
     useMemo(() => {
       return {
-        all: orders.length,
+        all:
+          orders.length,
 
         pending:
           orders.filter(
@@ -317,12 +340,27 @@ function OrdersPage() {
 
   if (error) {
     return (
-      <section className="app-page">
+      <section className="orders-page">
 
-        <ErrorMessage
-          message={error}
-          onRetry={loadOrders}
-        />
+        <div className="orders-container">
+
+          <Link
+            to="/dashboard"
+            className="orders-back-link"
+          >
+            ← Dashboard
+          </Link>
+
+          <h1>
+            Order History
+          </h1>
+
+          <ErrorMessage
+            message={error}
+            onRetry={loadOrders}
+          />
+
+        </div>
 
       </section>
     );
@@ -334,24 +372,58 @@ function OrdersPage() {
 
   if (orders.length === 0) {
     return (
-      <section className="app-page">
+      <section className="orders-page">
 
-        <Link to="/dashboard">
-          ← Dashboard
-        </Link>
+        <div className="orders-container">
 
-        <h1>
-          Order History
-        </h1>
+          <Link
+            to="/dashboard"
+            className="orders-back-link"
+          >
+            ← Dashboard
+          </Link>
 
-        <EmptyState
-          title="No orders yet"
-          message="You have not placed any orders yet."
-        />
+          <div className="orders-title">
 
-        <Link to="/products">
-          Start Shopping
-        </Link>
+            <span>
+              ORDER HISTORY
+            </span>
+
+            <h1>
+              My Orders
+            </h1>
+
+            <p>
+              View and manage all your
+              previous orders.
+            </p>
+
+          </div>
+
+          <div className="orders-empty-card">
+
+            <div className="orders-empty-icon">
+              📦
+            </div>
+
+            <EmptyState
+              title="No orders yet"
+              message="You have not placed any orders yet."
+            />
+
+            <Link
+              to="/products"
+              className="orders-primary-button"
+            >
+              Start Shopping
+              <span>
+                →
+              </span>
+            </Link>
+
+          </div>
+
+        </div>
 
       </section>
     );
@@ -362,354 +434,538 @@ function OrdersPage() {
   // ==========================================================
 
   return (
-    <section className="app-page">
+    <section className="orders-page">
 
-      {/* ====================================================
-          HEADER
-          ==================================================== */}
+      <div className="orders-container">
 
-      <div>
+        {/* ==================================================
+            HEADER
+            ================================================== */}
 
-        <Link to="/dashboard">
-          ← Dashboard
-        </Link>
+        <div className="orders-header">
 
-        <h1>
-          Order History
-        </h1>
+          <div>
 
-        <p>
-          View and manage all your
-          previous orders.
-        </p>
+            <Link
+              to="/dashboard"
+              className="orders-back-link"
+            >
+              ← Dashboard
+            </Link>
 
-      </div>
+            <span className="orders-eyebrow">
+              ORDER HISTORY
+            </span>
 
-      {/* ====================================================
-          ORDER COUNTS
-          ==================================================== */}
+            <h1>
+              My Orders
+            </h1>
 
-      <div>
+            <p>
+              View and manage all your
+              previous orders.
+            </p>
 
-        <div>
-          <strong>
-            {statusCounts.all}
-          </strong>
+          </div>
 
-          <span>
-            Total
-          </span>
-        </div>
-
-        <div>
-          <strong>
-            {statusCounts.pending}
-          </strong>
-
-          <span>
-            Pending
-          </span>
-        </div>
-
-        <div>
-          <strong>
-            {statusCounts.processing}
-          </strong>
-
-          <span>
-            Processing
-          </span>
-        </div>
-
-        <div>
-          <strong>
-            {statusCounts.shipped}
-          </strong>
-
-          <span>
-            Shipped
-          </span>
-        </div>
-
-        <div>
-          <strong>
-            {statusCounts.delivered}
-          </strong>
-
-          <span>
-            Delivered
-          </span>
-        </div>
-
-      </div>
-
-      {/* ====================================================
-          FILTERS
-          ==================================================== */}
-
-      <div>
-
-        {/* SEARCH */}
-
-        <div>
-
-          <label htmlFor="orderSearch">
-            Search Order
-          </label>
-
-          <input
-            id="orderSearch"
-            type="text"
-            value={search}
-            onChange={(event) =>
-              setSearch(
-                event.target.value
-              )
-            }
-            placeholder="Search by order ID"
-          />
-
-        </div>
-
-        {/* STATUS */}
-
-        <div>
-
-          <label htmlFor="statusFilter">
-            Status
-          </label>
-
-          <select
-            id="statusFilter"
-            value={
-              statusFilter
-            }
-            onChange={(event) =>
-              setStatusFilter(
-                event.target.value
-              )
-            }
+          <Link
+            to="/products"
+            className="orders-shop-button"
           >
-
-            <option value="all">
-              All Orders
-            </option>
-
-            <option value="pending">
-              Pending
-            </option>
-
-            <option value="processing">
-              Processing
-            </option>
-
-            <option value="shipped">
-              Shipped
-            </option>
-
-            <option value="delivered">
-              Delivered
-            </option>
-
-            <option value="cancelled">
-              Cancelled
-            </option>
-
-          </select>
+            Continue Shopping
+            <span>
+              →
+            </span>
+          </Link>
 
         </div>
 
-        {/* SORT */}
+        {/* ==================================================
+            STATUS SUMMARY
+            ================================================== */}
 
-        <div>
+        <div className="orders-stats">
 
-          <label htmlFor="sortOrder">
-            Sort
-          </label>
+          <div className="orders-stat-card">
 
-          <select
-            id="sortOrder"
-            value={
-              sortOrder
-            }
-            onChange={(event) =>
-              setSortOrder(
-                event.target.value
-              )
-            }
-          >
+            <div className="orders-stat-icon">
+              📦
+            </div>
 
-            <option value="newest">
-              Newest First
-            </option>
+            <div>
 
-            <option value="oldest">
-              Oldest First
-            </option>
+              <strong>
+                {statusCounts.all}
+              </strong>
 
-          </select>
+              <span>
+                Total Orders
+              </span>
+
+            </div>
+
+          </div>
+
+          <div className="orders-stat-card">
+
+            <div className="orders-stat-icon">
+              ⏳
+            </div>
+
+            <div>
+
+              <strong>
+                {statusCounts.pending}
+              </strong>
+
+              <span>
+                Pending
+              </span>
+
+            </div>
+
+          </div>
+
+          <div className="orders-stat-card">
+
+            <div className="orders-stat-icon">
+              ⚙️
+            </div>
+
+            <div>
+
+              <strong>
+                {statusCounts.processing}
+              </strong>
+
+              <span>
+                Processing
+              </span>
+
+            </div>
+
+          </div>
+
+          <div className="orders-stat-card">
+
+            <div className="orders-stat-icon">
+              🚚
+            </div>
+
+            <div>
+
+              <strong>
+                {statusCounts.shipped}
+              </strong>
+
+              <span>
+                Shipped
+              </span>
+
+            </div>
+
+          </div>
+
+          <div className="orders-stat-card">
+
+            <div className="orders-stat-icon">
+              ✓
+            </div>
+
+            <div>
+
+              <strong>
+                {statusCounts.delivered}
+              </strong>
+
+              <span>
+                Delivered
+              </span>
+
+            </div>
+
+          </div>
 
         </div>
+
+        {/* ==================================================
+            FILTERS
+            ================================================== */}
+
+        <div className="orders-filter-card">
+
+          <div className="orders-filter-header">
+
+            <div>
+
+              <span>
+                FIND YOUR ORDER
+              </span>
+
+              <h2>
+                Search & Filters
+              </h2>
+
+            </div>
+
+            <span className="orders-result-count">
+              Showing{" "}
+              {filteredOrders.length}{" "}
+              of{" "}
+              {orders.length}
+            </span>
+
+          </div>
+
+          <div className="orders-filters">
+
+            {/* SEARCH */}
+
+            <div className="orders-filter-group orders-search-group">
+
+              <label htmlFor="orderSearch">
+                Search Order
+              </label>
+
+              <div className="orders-search-box">
+
+                <span>
+                  🔍
+                </span>
+
+                <input
+                  id="orderSearch"
+                  type="text"
+                  value={
+                    search
+                  }
+                  onChange={(
+                    event
+                  ) =>
+                    setSearch(
+                      event.target
+                        .value
+                    )
+                  }
+                  placeholder="Search by order ID"
+                />
+
+                {search && (
+                  <button
+                    type="button"
+                    className="orders-clear-search"
+                    onClick={() =>
+                      setSearch("")
+                    }
+                    aria-label="Clear search"
+                  >
+                    ×
+                  </button>
+                )}
+
+              </div>
+
+            </div>
+
+            {/* STATUS */}
+
+            <div className="orders-filter-group">
+
+              <label htmlFor="statusFilter">
+                Status
+              </label>
+
+              <select
+                id="statusFilter"
+                value={
+                  statusFilter
+                }
+                onChange={(
+                  event
+                ) =>
+                  setStatusFilter(
+                    event.target
+                      .value
+                  )
+                }
+              >
+
+                <option value="all">
+                  All Orders
+                </option>
+
+                <option value="pending">
+                  Pending
+                </option>
+
+                <option value="processing">
+                  Processing
+                </option>
+
+                <option value="shipped">
+                  Shipped
+                </option>
+
+                <option value="delivered">
+                  Delivered
+                </option>
+
+                <option value="cancelled">
+                  Cancelled
+                </option>
+
+              </select>
+
+            </div>
+
+            {/* SORT */}
+
+            <div className="orders-filter-group">
+
+              <label htmlFor="sortOrder">
+                Sort
+              </label>
+
+              <select
+                id="sortOrder"
+                value={
+                  sortOrder
+                }
+                onChange={(
+                  event
+                ) =>
+                  setSortOrder(
+                    event.target
+                      .value
+                  )
+                }
+              >
+
+                <option value="newest">
+                  Newest First
+                </option>
+
+                <option value="oldest">
+                  Oldest First
+                </option>
+
+              </select>
+
+            </div>
+
+          </div>
+
+        </div>
+
+        {/* ==================================================
+            NO FILTER RESULTS
+            ================================================== */}
+
+        {filteredOrders.length ===
+        0 ? (
+          <div className="orders-no-results">
+
+            <div className="orders-no-results-icon">
+              🔍
+            </div>
+
+            <h3>
+              No matching orders
+            </h3>
+
+            <p>
+              Try changing your search
+              or filter.
+            </p>
+
+            <button
+              type="button"
+              onClick={() => {
+                setSearch("");
+                setStatusFilter(
+                  "all"
+                );
+              }}
+            >
+              Clear Filters
+            </button>
+
+          </div>
+        ) : (
+
+          /* ==================================================
+             ORDER LIST
+             ================================================== */
+
+          <div className="orders-list">
+
+            {filteredOrders.map(
+              (order) => {
+
+                const orderId =
+                  order._id ||
+                  order.id;
+
+                const status =
+                  getOrderStatus(
+                    order
+                  );
+
+                const paymentStatus =
+                  getPaymentStatus(
+                    order
+                  );
+
+                const total =
+                  getOrderTotal(
+                    order
+                  );
+
+                const items =
+                  Array.isArray(
+                    order.items
+                  )
+                    ? order.items
+                    : [];
+
+                const statusClass =
+                  getStatusClass(
+                    status
+                  );
+
+                return (
+                  <article
+                    className="order-card"
+                    key={
+                      orderId
+                    }
+                  >
+
+                    {/* ORDER TOP */}
+
+                    <div className="order-card-top">
+
+                      <div className="order-card-id">
+
+                        <div className="order-card-icon">
+                          📦
+                        </div>
+
+                        <div>
+
+                          <span>
+                            ORDER
+                          </span>
+
+                          <h2>
+                            #{orderId}
+                          </h2>
+
+                          {order.createdAt && (
+                            <p>
+                              Ordered on{" "}
+                              {new Date(
+                                order.createdAt
+                              ).toLocaleDateString(
+                                "en-IN",
+                                {
+                                  day: "2-digit",
+                                  month: "short",
+                                  year: "numeric",
+                                }
+                              )}
+                            </p>
+                          )}
+
+                        </div>
+
+                      </div>
+
+                      <span
+                        className={`order-status-badge ${statusClass}`}
+                      >
+                        {status}
+                      </span>
+
+                    </div>
+
+                    {/* ORDER DETAILS */}
+
+                    <div className="order-card-details">
+
+                      <div>
+
+                        <span>
+                          PAYMENT
+                        </span>
+
+                        <strong>
+                          {paymentStatus}
+                        </strong>
+
+                      </div>
+
+                      <div>
+
+                        <span>
+                          ITEMS
+                        </span>
+
+                        <strong>
+                          {items.length}
+                        </strong>
+
+                      </div>
+
+                      <div>
+
+                        <span>
+                          TOTAL
+                        </span>
+
+                        <strong className="order-total">
+                          ₹
+                          {total.toLocaleString(
+                            "en-IN"
+                          )}
+                        </strong>
+
+                      </div>
+
+                    </div>
+
+                    {/* ORDER FOOTER */}
+
+                    <div className="order-card-footer">
+
+                      <span>
+                        {items.length ===
+                        1
+                          ? "1 product"
+                          : `${items.length} products`}
+                      </span>
+
+                      <Link
+                        to={`/orders/${orderId}`}
+                        className="order-view-button"
+                      >
+                        View Details
+                        <span>
+                          →
+                        </span>
+                      </Link>
+
+                    </div>
+
+                  </article>
+                );
+              }
+            )}
+
+          </div>
+        )}
 
       </div>
-
-      {/* ====================================================
-          RESULTS
-          ==================================================== */}
-
-      <p>
-        Showing{" "}
-        {filteredOrders.length}{" "}
-        of{" "}
-        {orders.length} orders
-      </p>
-
-      {/* ====================================================
-          NO FILTER RESULTS
-          ==================================================== */}
-
-      {filteredOrders.length ===
-      0 ? (
-        <EmptyState
-          title="No matching orders"
-          message="Try changing your search or filter."
-        />
-      ) : (
-        <div>
-
-          {filteredOrders.map(
-            (order) => {
-              const orderId =
-                order._id ||
-                order.id;
-
-              const status =
-                getOrderStatus(
-                  order
-                );
-
-              const paymentStatus =
-                getPaymentStatus(
-                  order
-                );
-
-              const total =
-                getOrderTotal(
-                  order
-                );
-
-              const items =
-                Array.isArray(
-                  order.items
-                )
-                  ? order.items
-                  : [];
-
-              return (
-                <article
-                  key={orderId}
-                >
-
-                  {/* ORDER HEADER */}
-
-                  <div>
-
-                    <h2>
-                      Order #
-                      {orderId}
-                    </h2>
-
-                    {order.createdAt && (
-                      <p>
-                        Ordered on{" "}
-                        {new Date(
-                          order.createdAt
-                        ).toLocaleDateString(
-                          "en-IN"
-                        )}
-                      </p>
-                    )}
-
-                  </div>
-
-                  {/* STATUS */}
-
-                  <div>
-
-                    <p>
-                      Order Status
-                    </p>
-
-                    <strong>
-                      {status}
-                    </strong>
-
-                  </div>
-
-                  {/* PAYMENT */}
-
-                  <div>
-
-                    <p>
-                      Payment
-                    </p>
-
-                    <strong>
-                      {paymentStatus}
-                    </strong>
-
-                  </div>
-
-                  {/* ITEMS */}
-
-                  <div>
-
-                    <p>
-                      Items
-                    </p>
-
-                    <strong>
-                      {items.length}
-                    </strong>
-
-                  </div>
-
-                  {/* TOTAL */}
-
-                  <div>
-
-                    <p>
-                      Total
-                    </p>
-
-                    <strong>
-                      ₹
-                      {total.toLocaleString(
-                        "en-IN"
-                      )}
-                    </strong>
-
-                  </div>
-
-                  {/* ACTION */}
-
-                  <div>
-
-                    <Link
-                      to={`/orders/${orderId}`}
-                    >
-                      View Details
-                    </Link>
-
-                  </div>
-
-                </article>
-              );
-            }
-          )}
-
-        </div>
-      )}
 
     </section>
   );

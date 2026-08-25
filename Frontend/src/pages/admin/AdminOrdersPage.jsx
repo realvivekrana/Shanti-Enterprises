@@ -1,7 +1,7 @@
 // ============================================================
 // SHANTI ENTERPRISES
 // Admin Orders Page
-// Frontend Phase 5 - Order Management
+// Frontend Phase 6 - UI/UX
 // ============================================================
 
 import {
@@ -132,8 +132,8 @@ function AdminOrdersPage() {
       setError(
         err.response?.data
           ?.message ||
-          err.message ||
-          "Unable to load orders."
+        err.message ||
+        "Unable to load orders."
       );
     } finally {
       setLoading(false);
@@ -226,10 +226,10 @@ function AdminOrdersPage() {
   ) => {
     return Number(
       order.totalAmount ??
-        order.totalPrice ??
-        order.grandTotal ??
-        order.total ??
-        0
+      order.totalPrice ??
+      order.grandTotal ??
+      order.total ??
+      0
     );
   };
 
@@ -261,8 +261,26 @@ function AdminOrdersPage() {
     }
 
     return date.toLocaleDateString(
-      "en-IN"
+      "en-IN",
+      {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }
     );
+  };
+
+  // ==========================================================
+  // STATUS LABEL
+  // ==========================================================
+
+  const getStatusLabel = (
+    status
+  ) => {
+    return status
+      .charAt(0)
+      .toUpperCase() +
+      status.slice(1);
   };
 
   // ==========================================================
@@ -382,8 +400,8 @@ function AdminOrdersPage() {
         setError(
           err.response?.data
             ?.message ||
-            err.message ||
-            "Unable to update order status."
+          err.message ||
+          "Unable to update order status."
         );
       } finally {
         setUpdatingId(
@@ -391,6 +409,40 @@ function AdminOrdersPage() {
         );
       }
     };
+
+  // ==========================================================
+  // SUMMARY COUNTS
+  // ==========================================================
+
+  const pendingCount =
+    orders.filter(
+      (order) =>
+        getStatus(order) ===
+        "pending"
+    ).length;
+
+  const processingCount =
+    orders.filter(
+      (order) =>
+        getStatus(order) ===
+          "processing" ||
+        getStatus(order) ===
+          "confirmed"
+    ).length;
+
+  const shippedCount =
+    orders.filter(
+      (order) =>
+        getStatus(order) ===
+        "shipped"
+    ).length;
+
+  const deliveredCount =
+    orders.filter(
+      (order) =>
+        getStatus(order) ===
+        "delivered"
+    ).length;
 
   // ==========================================================
   // LOADING
@@ -409,310 +461,456 @@ function AdminOrdersPage() {
   // ==========================================================
 
   return (
-    <section className="app-page">
+    <section className="admin-orders-page">
 
-      {/* ====================================================
-          HEADER
-          ==================================================== */}
+      <div className="admin-orders-container">
 
-      <div>
+        {/* ==================================================
+            HEADER
+            ================================================== */}
 
-        <Link to="/admin">
-          ← Admin Dashboard
-        </Link>
+        <div className="admin-orders-header">
 
-        <h1>
-          Order Management
-        </h1>
+          <div>
 
-        <p>
-          Manage customer orders
-          and update their status.
-        </p>
+            <Link
+              to="/admin"
+              className="admin-orders-back"
+            >
+              ← Admin Dashboard
+            </Link>
 
-      </div>
+            <span className="admin-orders-eyebrow">
+              ORDER MANAGEMENT
+            </span>
 
-      {/* ====================================================
-          ERROR
-          ==================================================== */}
+            <h1>
+              Orders
+            </h1>
 
-      {error && (
-        <ErrorMessage
-          message={error}
-          onRetry={loadOrders}
-        />
-      )}
+            <p>
+              Review customer orders and
+              manage their delivery status.
+            </p>
 
-      {/* ====================================================
-          ACTIONS
-          ==================================================== */}
+          </div>
 
-      <div>
-
-        <button
-          type="button"
-          onClick={
-            loadOrders
-          }
-        >
-          Refresh
-        </button>
-
-      </div>
-
-      {/* ====================================================
-          SEARCH
-          ==================================================== */}
-
-      <div>
-
-        <label htmlFor="orderSearch">
-          Search Orders
-        </label>
-
-        <input
-          id="orderSearch"
-          type="text"
-          value={search}
-          onChange={(event) =>
-            setSearch(
-              event.target.value
-            )
-          }
-          placeholder="Order ID or customer name"
-        />
-
-      </div>
-
-      {/* ====================================================
-          STATUS FILTER
-          ==================================================== */}
-
-      <div>
-
-        <label htmlFor="orderStatus">
-          Status
-        </label>
-
-        <select
-          id="orderStatus"
-          value={
-            statusFilter
-          }
-          onChange={(event) =>
-            setStatusFilter(
-              event.target.value
-            )
-          }
-        >
-
-          <option value="all">
-            All Orders
-          </option>
-
-          {ORDER_STATUSES.map(
-            (status) => (
-              <option
-                key={status}
-                value={status}
-              >
-                {status
-                  .charAt(0)
-                  .toUpperCase() +
-                  status.slice(1)}
-              </option>
-            )
-          )}
-
-        </select>
-
-      </div>
-
-      {/* ====================================================
-          COUNT
-          ==================================================== */}
-
-      <p>
-        Showing{" "}
-        {
-          filteredOrders.length
-        }{" "}
-        of{" "}
-        {orders.length} orders
-      </p>
-
-      {/* ====================================================
-          ORDERS
-          ==================================================== */}
-
-      {filteredOrders.length ===
-      0 ? (
-        <EmptyState
-          title="No orders found"
-          message="No orders match the current search or filter."
-        />
-      ) : (
-        <div>
-
-          {filteredOrders.map(
-            (order) => {
-
-              const orderId =
-                getOrderId(
-                  order
-                );
-
-              const status =
-                getStatus(
-                  order
-                );
-
-              const customerName =
-                getCustomerName(
-                  order
-                );
-
-              const total =
-                getTotal(
-                  order
-                );
-
-              const date =
-                getDate(
-                  order
-                );
-
-              const isUpdating =
-                updatingId ===
-                orderId;
-
-              return (
-                <article
-                  key={
-                    orderId
-                  }
-                >
-
-                  {/* ORDER ID */}
-
-                  <h2>
-                    Order #
-                    {orderId}
-                  </h2>
-
-                  {/* CUSTOMER */}
-
-                  <p>
-                    Customer:{" "}
-                    {customerName}
-                  </p>
-
-                  {/* DATE */}
-
-                  <p>
-                    Date:{" "}
-                    {date}
-                  </p>
-
-                  {/* TOTAL */}
-
-                  <p>
-                    Total: ₹
-                    {total.toLocaleString(
-                      "en-IN"
-                    )}
-                  </p>
-
-                  {/* CURRENT STATUS */}
-
-                  <p>
-                    Current Status:{" "}
-                    {status}
-                  </p>
-
-                  {/* STATUS UPDATE */}
-
-                  <div>
-
-                    <label
-                      htmlFor={`status-${orderId}`}
-                    >
-                      Update Status
-                    </label>
-
-                    <select
-                      id={`status-${orderId}`}
-                      value={
-                        status
-                      }
-                      disabled={
-                        isUpdating
-                      }
-                      onChange={(
-                        event
-                      ) =>
-                        handleStatusChange(
-                          orderId,
-                          event.target
-                            .value
-                        )
-                      }
-                    >
-
-                      {ORDER_STATUSES.map(
-                        (
-                          orderStatus
-                        ) => (
-                          <option
-                            key={
-                              orderStatus
-                            }
-                            value={
-                              orderStatus
-                            }
-                          >
-                            {orderStatus
-                              .charAt(
-                                0
-                              )
-                              .toUpperCase() +
-                              orderStatus.slice(
-                                1
-                              )}
-                          </option>
-                        )
-                      )}
-
-                    </select>
-
-                    {isUpdating && (
-                      <span>
-                        Updating...
-                      </span>
-                    )}
-
-                  </div>
-
-                  {/* VIEW */}
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      navigate(
-                        `/admin/orders/${orderId}`
-                      )
-                    }
-                  >
-                    View Order
-                  </button>
-
-                </article>
-              );
+          <button
+            type="button"
+            className="admin-orders-refresh"
+            onClick={
+              loadOrders
             }
-          )}
+          >
+            ↻ Refresh
+          </button>
 
         </div>
-      )}
+
+        {/* ==================================================
+            ERROR
+            ================================================== */}
+
+        {error && (
+          <div className="admin-orders-error">
+
+            <ErrorMessage
+              message={error}
+              onRetry={
+                loadOrders
+              }
+            />
+
+          </div>
+        )}
+
+        {/* ==================================================
+            ORDER SUMMARY
+            ================================================== */}
+
+        <div className="admin-orders-stats">
+
+          <div className="admin-order-stat-card">
+
+            <span>
+              TOTAL ORDERS
+            </span>
+
+            <strong>
+              {orders.length}
+            </strong>
+
+          </div>
+
+          <div className="admin-order-stat-card">
+
+            <span>
+              PENDING
+            </span>
+
+            <strong>
+              {pendingCount}
+            </strong>
+
+          </div>
+
+          <div className="admin-order-stat-card">
+
+            <span>
+              PROCESSING
+            </span>
+
+            <strong>
+              {processingCount}
+            </strong>
+
+          </div>
+
+          <div className="admin-order-stat-card">
+
+            <span>
+              SHIPPED
+            </span>
+
+            <strong>
+              {shippedCount}
+            </strong>
+
+          </div>
+
+          <div className="admin-order-stat-card">
+
+            <span>
+              DELIVERED
+            </span>
+
+            <strong>
+              {deliveredCount}
+            </strong>
+
+          </div>
+
+        </div>
+
+        {/* ==================================================
+            FILTERS
+            ================================================== */}
+
+        <div className="admin-orders-toolbar">
+
+          <div className="admin-orders-search">
+
+            <label htmlFor="orderSearch">
+              Search Orders
+            </label>
+
+            <div className="admin-orders-search-box">
+
+              <span>
+                ⌕
+              </span>
+
+              <input
+                id="orderSearch"
+                type="text"
+                value={search}
+                onChange={(event) =>
+                  setSearch(
+                    event.target.value
+                  )
+                }
+                placeholder="Order ID or customer name..."
+              />
+
+              {search && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSearch("")
+                  }
+                  aria-label="Clear search"
+                >
+                  ×
+                </button>
+              )}
+
+            </div>
+
+          </div>
+
+          <div className="admin-orders-status-filter">
+
+            <label htmlFor="orderStatus">
+              Order Status
+            </label>
+
+            <select
+              id="orderStatus"
+              value={
+                statusFilter
+              }
+              onChange={(event) =>
+                setStatusFilter(
+                  event.target.value
+                )
+              }
+            >
+              <option value="all">
+                All Orders
+              </option>
+
+              {ORDER_STATUSES.map(
+                (status) => (
+                  <option
+                    key={status}
+                    value={status}
+                  >
+                    {getStatusLabel(
+                      status
+                    )}
+                  </option>
+                )
+              )}
+
+            </select>
+
+          </div>
+
+        </div>
+
+        {/* ==================================================
+            RESULT COUNT
+            ================================================== */}
+
+        <div className="admin-orders-result-count">
+
+          <strong>
+            {filteredOrders.length}
+          </strong>
+
+          <span>
+            orders shown
+          </span>
+
+          <span className="admin-orders-total-count">
+            Total: {orders.length}
+          </span>
+
+        </div>
+
+        {/* ==================================================
+            ORDERS LIST
+            ================================================== */}
+
+        {filteredOrders.length ===
+        0 ? (
+          <div className="admin-orders-empty">
+
+            <EmptyState
+              title="No orders found"
+              message="No orders match the current search or status filter."
+            />
+
+          </div>
+        ) : (
+          <div className="admin-orders-list">
+
+            {filteredOrders.map(
+              (order) => {
+
+                const orderId =
+                  getOrderId(
+                    order
+                  );
+
+                const status =
+                  getStatus(
+                    order
+                  );
+
+                const customerName =
+                  getCustomerName(
+                    order
+                  );
+
+                const total =
+                  getTotal(
+                    order
+                  );
+
+                const date =
+                  getDate(
+                    order
+                  );
+
+                const isUpdating =
+                  updatingId ===
+                  orderId;
+
+                return (
+                  <article
+                    key={
+                      orderId
+                    }
+                    className="admin-order-card"
+                  >
+
+                    {/* ==================================================
+                        ORDER MAIN
+                        ================================================== */}
+
+                    <div className="admin-order-main">
+
+                      <div className="admin-order-heading">
+
+                        <div>
+
+                          <span className="admin-order-label">
+                            ORDER
+                          </span>
+
+                          <h2>
+                            #
+                            {orderId}
+                          </h2>
+
+                        </div>
+
+                        <span
+                          className={`admin-order-status ${status}`}
+                        >
+                          {getStatusLabel(
+                            status
+                          )}
+                        </span>
+
+                      </div>
+
+                      <div className="admin-order-details">
+
+                        <div>
+                          <span>
+                            CUSTOMER
+                          </span>
+
+                          <strong>
+                            {customerName}
+                          </strong>
+                        </div>
+
+                        <div>
+                          <span>
+                            DATE
+                          </span>
+
+                          <strong>
+                            {date}
+                          </strong>
+                        </div>
+
+                        <div>
+                          <span>
+                            TOTAL
+                          </span>
+
+                          <strong>
+                            ₹
+                            {total.toLocaleString(
+                              "en-IN"
+                            )}
+                          </strong>
+                        </div>
+
+                      </div>
+
+                    </div>
+
+                    {/* ==================================================
+                        STATUS UPDATE
+                        ================================================== */}
+
+                    <div className="admin-order-update">
+
+                      <label
+                        htmlFor={`status-${orderId}`}
+                      >
+                        Update Status
+                      </label>
+
+                      <select
+                        id={`status-${orderId}`}
+                        value={
+                          status
+                        }
+                        disabled={
+                          isUpdating
+                        }
+                        onChange={(
+                          event
+                        ) =>
+                          handleStatusChange(
+                            orderId,
+                            event
+                              .target
+                              .value
+                          )
+                        }
+                      >
+
+                        {ORDER_STATUSES.map(
+                          (
+                            orderStatus
+                          ) => (
+                            <option
+                              key={
+                                orderStatus
+                              }
+                              value={
+                                orderStatus
+                              }
+                            >
+                              {getStatusLabel(
+                                orderStatus
+                              )}
+                            </option>
+                          )
+                        )}
+
+                      </select>
+
+                      {isUpdating && (
+                        <span className="admin-order-updating">
+                          Updating...
+                        </span>
+                      )}
+
+                    </div>
+
+                    {/* ==================================================
+                        VIEW
+                        ================================================== */}
+
+                    <button
+                      type="button"
+                      className="admin-order-view"
+                      onClick={() =>
+                        navigate(
+                          `/admin/orders/${orderId}`
+                        )
+                      }
+                    >
+                      View Order →
+                    </button>
+
+                  </article>
+                );
+              }
+            )}
+
+          </div>
+        )}
+
+      </div>
 
     </section>
   );

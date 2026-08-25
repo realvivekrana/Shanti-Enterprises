@@ -1,7 +1,7 @@
 // ============================================================
 // SHANTI ENTERPRISES
 // Admin Categories Page
-// Frontend Phase 5 - Category Management
+// Frontend Phase 6 - UI/UX
 // ============================================================
 
 import {
@@ -94,8 +94,7 @@ function AdminCategoriesPage() {
             response.data;
         } else if (
           Array.isArray(
-            response?.data
-              ?.categories
+            response?.data?.categories
           )
         ) {
           categoryData =
@@ -114,8 +113,8 @@ function AdminCategoriesPage() {
         setError(
           err.response?.data
             ?.message ||
-            err.message ||
-            "Unable to load categories."
+          err.message ||
+          "Unable to load categories."
         );
       } finally {
         setLoading(false);
@@ -207,8 +206,8 @@ function AdminCategoriesPage() {
         setError(
           err.response?.data
             ?.message ||
-            err.message ||
-            "Unable to delete category."
+          err.message ||
+          "Unable to delete category."
         );
       } finally {
         setDeletingId(null);
@@ -232,185 +231,288 @@ function AdminCategoriesPage() {
   // ==========================================================
 
   return (
-    <section className="app-page">
+    <section className="admin-categories-page">
 
-      {/* HEADER */}
+      <div className="admin-categories-container">
 
-      <div>
+        {/* ==================================================
+            HEADER
+            ================================================== */}
 
-        <Link to="/admin">
-          ← Admin Dashboard
-        </Link>
+        <div className="admin-categories-header">
 
-        <h1>
-          Category Management
-        </h1>
+          <div>
 
-        <p>
-          Manage product categories.
-        </p>
+            <Link
+              to="/admin"
+              className="admin-categories-back"
+            >
+              ← Admin Dashboard
+            </Link>
 
-      </div>
+            <span className="admin-categories-eyebrow">
+              CATEGORY MANAGEMENT
+            </span>
 
-      {/* ERROR */}
+            <h1>
+              Categories
+            </h1>
 
-      {error && (
-        <ErrorMessage
-          message={error}
-          onRetry={
-            loadCategories
-          }
-        />
-      )}
+            <p>
+              Organize and manage your
+              product categories.
+            </p>
 
-      {/* ACTIONS */}
+          </div>
 
-      <div>
+          <div className="admin-categories-header-actions">
 
-        <button
-          type="button"
-          onClick={() =>
-            navigate(
-              "/admin/categories/new"
-            )
-          }
-        >
-          + Add Category
-        </button>
+            <button
+              type="button"
+              className="admin-categories-refresh"
+              onClick={
+                loadCategories
+              }
+            >
+              ↻ Refresh
+            </button>
 
-        <button
-          type="button"
-          onClick={
-            loadCategories
-          }
-        >
-          Refresh
-        </button>
+            <button
+              type="button"
+              className="admin-categories-add"
+              onClick={() =>
+                navigate(
+                  "/admin/categories/new"
+                )
+              }
+            >
+              + Add Category
+            </button>
 
-      </div>
-
-      {/* SEARCH */}
-
-      <div>
-
-        <label htmlFor="categorySearch">
-          Search Categories
-        </label>
-
-        <input
-          id="categorySearch"
-          type="text"
-          value={search}
-          onChange={(event) =>
-            setSearch(
-              event.target.value
-            )
-          }
-          placeholder="Search category..."
-        />
-
-      </div>
-
-      <p>
-        Showing{" "}
-        {
-          filteredCategories.length
-        }{" "}
-        of{" "}
-        {categories.length} categories
-      </p>
-
-      {/* CATEGORY LIST */}
-
-      {filteredCategories.length ===
-      0 ? (
-        <EmptyState
-          title="No categories found"
-          message="No categories match your search."
-        />
-      ) : (
-        <div>
-
-          {filteredCategories.map(
-            (category) => {
-
-              const categoryId =
-                category._id ||
-                category.id;
-
-              const name =
-                category.name ||
-                category.title ||
-                "Category";
-
-              const description =
-                category.description ||
-                "";
-
-              const isDeleting =
-                deletingId ===
-                categoryId;
-
-              return (
-                <article
-                  key={
-                    categoryId
-                  }
-                >
-
-                  <h2>
-                    {name}
-                  </h2>
-
-                  {description && (
-                    <p>
-                      {
-                        description
-                      }
-                    </p>
-                  )}
-
-                  <div>
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        navigate(
-                          `/admin/categories/${categoryId}/edit`
-                        )
-                      }
-                      disabled={
-                        isDeleting
-                      }
-                    >
-                      Edit
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        handleDelete(
-                          categoryId
-                        )
-                      }
-                      disabled={
-                        isDeleting
-                      }
-                    >
-                      {isDeleting
-                        ? "Deleting..."
-                        : "Delete"}
-                    </button>
-
-                  </div>
-
-                </article>
-              );
-            }
-          )}
+          </div>
 
         </div>
-      )}
+
+        {/* ==================================================
+            ERROR
+            ================================================== */}
+
+        {error && (
+          <div className="admin-categories-error">
+
+            <ErrorMessage
+              message={error}
+              onRetry={
+                loadCategories
+              }
+            />
+
+          </div>
+        )}
+
+        {/* ==================================================
+            TOOLBAR
+            ================================================== */}
+
+        <div className="admin-categories-toolbar">
+
+          <div className="admin-categories-search">
+
+            <label htmlFor="categorySearch">
+              Search Categories
+            </label>
+
+            <div className="admin-categories-search-box">
+
+              <span>
+                ⌕
+              </span>
+
+              <input
+                id="categorySearch"
+                type="text"
+                value={search}
+                onChange={(event) =>
+                  setSearch(
+                    event.target.value
+                  )
+                }
+                placeholder="Search category..."
+              />
+
+              {search && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSearch("")
+                  }
+                  aria-label="Clear search"
+                >
+                  ×
+                </button>
+              )}
+
+            </div>
+
+          </div>
+
+        </div>
+
+        {/* ==================================================
+            SUMMARY
+            ================================================== */}
+
+        <div className="admin-categories-summary">
+
+          <div>
+
+            <strong>
+              {
+                filteredCategories.length
+              }
+            </strong>
+
+            <span>
+              Showing categories
+            </span>
+
+          </div>
+
+          <span>
+            Total categories:{" "}
+            <strong>
+              {categories.length}
+            </strong>
+          </span>
+
+        </div>
+
+        {/* ==================================================
+            CATEGORY LIST
+            ================================================== */}
+
+        {filteredCategories.length ===
+        0 ? (
+          <div className="admin-categories-empty">
+
+            <EmptyState
+              title="No categories found"
+              message={
+                search
+                  ? "No categories match your search."
+                  : "Create your first product category to get started."
+              }
+            />
+
+          </div>
+        ) : (
+          <div className="admin-categories-grid">
+
+            {filteredCategories.map(
+              (category) => {
+
+                const categoryId =
+                  category._id ||
+                  category.id;
+
+                const name =
+                  category.name ||
+                  category.title ||
+                  "Category";
+
+                const description =
+                  category.description ||
+                  "";
+
+                const isDeleting =
+                  deletingId ===
+                  categoryId;
+
+                return (
+                  <article
+                    key={
+                      categoryId
+                    }
+                    className="admin-category-card"
+                  >
+
+                    {/* ICON */}
+
+                    <div className="admin-category-icon">
+                      🗂️
+                    </div>
+
+                    {/* CONTENT */}
+
+                    <div className="admin-category-content">
+
+                      <span className="admin-category-label">
+                        CATEGORY
+                      </span>
+
+                      <h2>
+                        {name}
+                      </h2>
+
+                      {description ? (
+                        <p>
+                          {description}
+                        </p>
+                      ) : (
+                        <p className="admin-category-no-description">
+                          No description available.
+                        </p>
+                      )}
+
+                    </div>
+
+                    {/* ACTIONS */}
+
+                    <div className="admin-category-actions">
+
+                      <button
+                        type="button"
+                        className="admin-category-edit"
+                        onClick={() =>
+                          navigate(
+                            `/admin/categories/${categoryId}/edit`
+                          )
+                        }
+                        disabled={
+                          isDeleting
+                        }
+                      >
+                        Edit
+                      </button>
+
+                      <button
+                        type="button"
+                        className="admin-category-delete"
+                        onClick={() =>
+                          handleDelete(
+                            categoryId
+                          )
+                        }
+                        disabled={
+                          isDeleting
+                        }
+                      >
+                        {isDeleting
+                          ? "Deleting..."
+                          : "Delete"}
+                      </button>
+
+                    </div>
+
+                  </article>
+                );
+              }
+            )}
+
+          </div>
+        )}
+
+      </div>
 
     </section>
   );

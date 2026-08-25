@@ -1,7 +1,7 @@
 // ============================================================
 // SHANTI ENTERPRISES
 // Admin Dashboard Page
-// Frontend Phase 5 - Admin
+// Frontend Phase 6 - UI/UX
 // ============================================================
 
 import {
@@ -60,9 +60,7 @@ function AdminDashboardPage() {
           response?.data ||
           response;
 
-        setStats(
-          data
-        );
+        setStats(data);
       } catch (err) {
         console.error(
           "Admin dashboard error:",
@@ -107,9 +105,7 @@ function AdminDashboardPage() {
           Number(value);
 
         if (
-          !Number.isNaN(
-            number
-          )
+          !Number.isNaN(number)
         ) {
           return number;
         }
@@ -190,214 +186,570 @@ function AdminDashboardPage() {
   // ==========================================================
 
   return (
-    <section className="app-page">
+    <section className="admin-dashboard-page">
 
-      {/* ====================================================
-          HEADER
-          ==================================================== */}
+      <div className="admin-dashboard-container">
 
-      <div>
+        {/* ==================================================
+            HEADER
+            ================================================== */}
 
-        <h1>
-          Admin Dashboard
-        </h1>
+        <div className="admin-dashboard-header">
 
-        <p>
-          Welcome to Shanti
-          Enterprises Admin Panel.
-        </p>
+          <div>
 
-      </div>
+            <span className="admin-dashboard-eyebrow">
+              ADMINISTRATION
+            </span>
 
-      {/* ====================================================
-          ERROR
-          ==================================================== */}
+            <h1>
+              Admin Dashboard
+            </h1>
 
-      {error && (
-        <ErrorMessage
-          message={error}
-          onRetry={
-            loadDashboard
-          }
-        />
-      )}
+            <p>
+              Manage your Shanti Enterprises
+              store from one place.
+            </p>
 
-      {/* ====================================================
-          REFRESH
-          ==================================================== */}
+          </div>
 
-      <button
-        type="button"
-        onClick={
-          loadDashboard
-        }
-      >
-        Refresh Dashboard
-      </button>
-
-      {/* ====================================================
-          STATISTICS
-          ==================================================== */}
-
-      <div>
-
-        <article>
-
-          <h2>
-            Total Users
-          </h2>
-
-          <p>
-            {totalUsers.toLocaleString(
-              "en-IN"
-            )}
-          </p>
-
-          <Link to="/admin/users">
-            Manage Users →
-          </Link>
-
-        </article>
-
-        <article>
-
-          <h2>
-            Total Products
-          </h2>
-
-          <p>
-            {totalProducts.toLocaleString(
-              "en-IN"
-            )}
-          </p>
-
-          <Link to="/admin/products">
-            Manage Products →
-          </Link>
-
-        </article>
-
-        <article>
-
-          <h2>
-            Total Orders
-          </h2>
-
-          <p>
-            {totalOrders.toLocaleString(
-              "en-IN"
-            )}
-          </p>
-
-          <Link to="/admin/orders">
-            Manage Orders →
-          </Link>
-
-        </article>
-
-        <article>
-
-          <h2>
-            Categories
-          </h2>
-
-          <p>
-            {totalCategories.toLocaleString(
-              "en-IN"
-            )}
-          </p>
-
-          <Link to="/admin/categories">
-            Manage Categories →
-          </Link>
-
-        </article>
-
-        <article>
-
-          <h2>
-            Total Revenue
-          </h2>
-
-          <p>
-            ₹
-            {totalRevenue.toLocaleString(
-              "en-IN"
-            )}
-          </p>
-
-        </article>
-
-      </div>
-
-      {/* ====================================================
-          ORDER STATUS
-          ==================================================== */}
-
-      <div>
-
-        <h2>
-          Order Overview
-        </h2>
-
-        <div>
-
-          <p>
-            Pending:{" "}
-            {pendingOrders}
-          </p>
-
-          <p>
-            Delivered:{" "}
-            {deliveredOrders}
-          </p>
-
-          <p>
-            Cancelled:{" "}
-            {cancelledOrders}
-          </p>
+          <button
+            type="button"
+            className="admin-refresh-button"
+            onClick={
+              loadDashboard
+            }
+            disabled={loading}
+          >
+            ↻ Refresh
+          </button>
 
         </div>
 
-      </div>
+        {/* ==================================================
+            ERROR
+            ================================================== */}
 
-      {/* ====================================================
-          QUICK ACTIONS
-          ==================================================== */}
+        {error && (
+          <div className="admin-dashboard-error">
 
-      <div>
+            <ErrorMessage
+              message={error}
+              onRetry={
+                loadDashboard
+              }
+            />
 
-        <h2>
-          Quick Actions
-        </h2>
+          </div>
+        )}
 
-        <div>
+        {/* ==================================================
+            MAIN STATISTICS
+            ================================================== */}
 
-          <Link to="/admin/products/new">
-            Add Product
-          </Link>
+        <div className="admin-stats-grid">
 
-          <Link to="/admin/categories/new">
-            Add Category
-          </Link>
+          {/* USERS */}
 
-          <Link to="/admin/orders">
-            View Orders
-          </Link>
+          <article className="admin-stat-card">
 
-          <Link to="/admin/users">
-            View Users
-          </Link>
+            <div className="admin-stat-top">
 
-          <Link to="/admin/analytics">
-            View Analytics
-          </Link>
+              <div className="admin-stat-icon">
+                👥
+              </div>
 
-          <Link to="/admin/profile">
-            Admin Profile
-          </Link>
+              <span>
+                USERS
+              </span>
+
+            </div>
+
+            <strong>
+              {totalUsers.toLocaleString(
+                "en-IN"
+              )}
+            </strong>
+
+            <p>
+              Registered customers
+            </p>
+
+            <Link
+              to="/admin/users"
+              className="admin-stat-link"
+            >
+              Manage Users →
+            </Link>
+
+          </article>
+
+          {/* PRODUCTS */}
+
+          <article className="admin-stat-card">
+
+            <div className="admin-stat-top">
+
+              <div className="admin-stat-icon">
+                📦
+              </div>
+
+              <span>
+                PRODUCTS
+              </span>
+
+            </div>
+
+            <strong>
+              {totalProducts.toLocaleString(
+                "en-IN"
+              )}
+            </strong>
+
+            <p>
+              Products in catalogue
+            </p>
+
+            <Link
+              to="/admin/products"
+              className="admin-stat-link"
+            >
+              Manage Products →
+            </Link>
+
+          </article>
+
+          {/* ORDERS */}
+
+          <article className="admin-stat-card">
+
+            <div className="admin-stat-top">
+
+              <div className="admin-stat-icon">
+                🛒
+              </div>
+
+              <span>
+                ORDERS
+              </span>
+
+            </div>
+
+            <strong>
+              {totalOrders.toLocaleString(
+                "en-IN"
+              )}
+            </strong>
+
+            <p>
+              Total customer orders
+            </p>
+
+            <Link
+              to="/admin/orders"
+              className="admin-stat-link"
+            >
+              Manage Orders →
+            </Link>
+
+          </article>
+
+          {/* CATEGORIES */}
+
+          <article className="admin-stat-card">
+
+            <div className="admin-stat-top">
+
+              <div className="admin-stat-icon">
+                🗂️
+              </div>
+
+              <span>
+                CATEGORIES
+              </span>
+
+            </div>
+
+            <strong>
+              {totalCategories.toLocaleString(
+                "en-IN"
+              )}
+            </strong>
+
+            <p>
+              Product categories
+            </p>
+
+            <Link
+              to="/admin/categories"
+              className="admin-stat-link"
+            >
+              Manage Categories →
+            </Link>
+
+          </article>
+
+          {/* REVENUE */}
+
+          <article className="admin-stat-card admin-revenue-card">
+
+            <div className="admin-stat-top">
+
+              <div className="admin-stat-icon">
+                ₹
+              </div>
+
+              <span>
+                REVENUE
+              </span>
+
+            </div>
+
+            <strong>
+              ₹
+              {totalRevenue.toLocaleString(
+                "en-IN"
+              )}
+            </strong>
+
+            <p>
+              Total store revenue
+            </p>
+
+            <span className="admin-stat-muted">
+              Based on dashboard data
+            </span>
+
+          </article>
 
         </div>
+
+        {/* ==================================================
+            LOWER GRID
+            ================================================== */}
+
+        <div className="admin-dashboard-lower">
+
+          {/* ==================================================
+              ORDER OVERVIEW
+              ================================================== */}
+
+          <section className="admin-panel">
+
+            <div className="admin-panel-header">
+
+              <div>
+
+                <span>
+                  ORDER MANAGEMENT
+                </span>
+
+                <h2>
+                  Order Overview
+                </h2>
+
+              </div>
+
+              <Link
+                to="/admin/orders"
+                className="admin-panel-link"
+              >
+                View All →
+              </Link>
+
+            </div>
+
+            <div className="admin-order-status-grid">
+
+              <div className="admin-order-status">
+
+                <div className="admin-status-icon pending">
+                  ⏳
+                </div>
+
+                <div>
+
+                  <strong>
+                    {pendingOrders}
+                  </strong>
+
+                  <span>
+                    Pending
+                  </span>
+
+                </div>
+
+              </div>
+
+              <div className="admin-order-status">
+
+                <div className="admin-status-icon delivered">
+                  ✓
+                </div>
+
+                <div>
+
+                  <strong>
+                    {deliveredOrders}
+                  </strong>
+
+                  <span>
+                    Delivered
+                  </span>
+
+                </div>
+
+              </div>
+
+              <div className="admin-order-status">
+
+                <div className="admin-status-icon cancelled">
+                  ×
+                </div>
+
+                <div>
+
+                  <strong>
+                    {cancelledOrders}
+                  </strong>
+
+                  <span>
+                    Cancelled
+                  </span>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </section>
+
+          {/* ==================================================
+              QUICK ACTIONS
+              ================================================== */}
+
+          <section className="admin-panel">
+
+            <div className="admin-panel-header">
+
+              <div>
+
+                <span>
+                  SHORTCUTS
+                </span>
+
+                <h2>
+                  Quick Actions
+                </h2>
+
+              </div>
+
+            </div>
+
+            <div className="admin-quick-actions">
+
+              <Link
+                to="/admin/products/new"
+                className="admin-action-card"
+              >
+                <span>
+                  ＋
+                </span>
+
+                <div>
+                  <strong>
+                    Add Product
+                  </strong>
+
+                  <small>
+                    Create a new product
+                  </small>
+                </div>
+              </Link>
+
+              <Link
+                to="/admin/categories/new"
+                className="admin-action-card"
+              >
+                <span>
+                  ＋
+                </span>
+
+                <div>
+                  <strong>
+                    Add Category
+                  </strong>
+
+                  <small>
+                    Create product category
+                  </small>
+                </div>
+              </Link>
+
+              <Link
+                to="/admin/orders"
+                className="admin-action-card"
+              >
+                <span>
+                  🛒
+                </span>
+
+                <div>
+                  <strong>
+                    View Orders
+                  </strong>
+
+                  <small>
+                    Manage customer orders
+                  </small>
+                </div>
+              </Link>
+
+              <Link
+                to="/admin/users"
+                className="admin-action-card"
+              >
+                <span>
+                  👤
+                </span>
+
+                <div>
+                  <strong>
+                    View Users
+                  </strong>
+
+                  <small>
+                    Manage customers
+                  </small>
+                </div>
+              </Link>
+
+            </div>
+
+          </section>
+
+        </div>
+
+        {/* ==================================================
+            ADMIN NAVIGATION
+            ================================================== */}
+
+        <section className="admin-navigation-panel">
+
+          <div className="admin-panel-header">
+
+            <div>
+
+              <span>
+                STORE MANAGEMENT
+              </span>
+
+              <h2>
+                Administration
+              </h2>
+
+            </div>
+
+          </div>
+
+          <div className="admin-navigation-grid">
+
+            <Link
+              to="/admin/products"
+              className="admin-navigation-item"
+            >
+              <span>
+                📦
+              </span>
+
+              <div>
+                <strong>
+                  Products
+                </strong>
+
+                <small>
+                  Add, edit and manage products
+                </small>
+              </div>
+
+              <b>
+                →
+              </b>
+            </Link>
+
+            <Link
+              to="/admin/categories"
+              className="admin-navigation-item"
+            >
+              <span>
+                🗂️
+              </span>
+
+              <div>
+                <strong>
+                  Categories
+                </strong>
+
+                <small>
+                  Organize product categories
+                </small>
+              </div>
+
+              <b>
+                →
+              </b>
+            </Link>
+
+            <Link
+              to="/admin/orders"
+              className="admin-navigation-item"
+            >
+              <span>
+                🛒
+              </span>
+
+              <div>
+                <strong>
+                  Orders
+                </strong>
+
+                <small>
+                  Review and manage orders
+                </small>
+              </div>
+
+              <b>
+                →
+              </b>
+            </Link>
+
+            <Link
+              to="/admin/users"
+              className="admin-navigation-item"
+            >
+              <span>
+                👥
+              </span>
+
+              <div>
+                <strong>
+                  Users
+                </strong>
+
+                <small>
+                  Manage registered users
+                </small>
+              </div>
+
+              <b>
+                →
+              </b>
+            </Link>
+
+          </div>
+
+        </section>
 
       </div>
 

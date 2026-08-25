@@ -1,7 +1,7 @@
 // ============================================================
 // SHANTI ENTERPRISES
 // Saved Addresses Page
-// Frontend Phase 4 - Customer
+// Frontend Phase 6 - UI/UX
 // ============================================================
 
 import {
@@ -75,21 +75,26 @@ function AddressesPage() {
       value,
     } = event.target;
 
-    setForm((current) => ({
-      ...current,
-      [name]: value,
-    }));
+    setForm(
+      (current) => ({
+        ...current,
+        [name]: value,
+      })
+    );
 
     setError("");
     setSuccess("");
   };
 
   // ==========================================================
-  // RESET FORM
+  // RESET
   // ==========================================================
 
   const resetForm = () => {
-    setForm(emptyForm);
+    setForm({
+      ...emptyForm,
+    });
+
     setEditingId(null);
     setError("");
   };
@@ -135,7 +140,7 @@ function AddressesPage() {
   };
 
   // ==========================================================
-  // SAVE ADDRESS
+  // SAVE
   // ==========================================================
 
   const handleSubmit = (
@@ -193,7 +198,10 @@ function AddressesPage() {
       );
     }
 
-    setForm(emptyForm);
+    setForm({
+      ...emptyForm,
+    });
+
     setEditingId(null);
   };
 
@@ -285,331 +293,492 @@ function AddressesPage() {
   // ==========================================================
 
   return (
-    <section className="app-page">
+    <section className="addresses-page">
 
-      {/* ====================================================
-          HEADER
-          ==================================================== */}
+      <div className="addresses-container">
 
-      <div>
+        {/* ==================================================
+            HEADER
+            ================================================== */}
 
-        <Link to="/dashboard">
-          ← Dashboard
-        </Link>
+        <div className="addresses-header">
 
-        <h1>
-          Saved Addresses
-        </h1>
+          <div>
 
-        <p>
-          Manage your delivery
-          addresses.
-        </p>
+            <Link
+              to="/dashboard"
+              className="addresses-back-link"
+            >
+              ← Dashboard
+            </Link>
 
-      </div>
+            <span className="addresses-eyebrow">
+              DELIVERY SETTINGS
+            </span>
 
-      {/* ====================================================
-          MESSAGES
-          ==================================================== */}
+            <h1>
+              Saved Addresses
+            </h1>
 
-      {error && (
-        <div>
-          <p>
-            {error}
-          </p>
+            <p>
+              Manage your delivery
+              addresses for faster checkout.
+            </p>
+
+          </div>
+
+          <Link
+            to="/products"
+            className="addresses-shop-link"
+          >
+            Continue Shopping →
+          </Link>
+
         </div>
-      )}
 
-      {success && (
-        <div>
-          <p>
-            {success}
-          </p>
-        </div>
-      )}
+        {/* ==================================================
+            MESSAGES
+            ================================================== */}
 
-      {/* ====================================================
-          SAVED ADDRESSES
-          ==================================================== */}
+        {error && (
+          <div className="addresses-error">
+            <span>
+              !
+            </span>
 
-      <div>
-
-        <h2>
-          Your Addresses
-        </h2>
-
-        {addresses.length === 0 ? (
-          <p>
-            You don't have any saved
-            addresses yet.
-          </p>
-        ) : (
-          addresses.map(
-            (address) => (
-              <article
-                key={address.id}
-              >
-
-                {/* SELECT */}
-
-                <label>
-
-                  <input
-                    type="radio"
-                    name="selectedAddress"
-                    checked={
-                      selectedAddressId ===
-                      address.id
-                    }
-                    onChange={() =>
-                      handleSelect(
-                        address.id
-                      )
-                    }
-                  />
-
-                  <strong>
-                    {address.name}
-                  </strong>
-
-                  {selectedAddressId ===
-                    address.id && (
-                    <span>
-                      {" "}
-                      — Selected
-                    </span>
-                  )}
-
-                </label>
-
-                <p>
-                  {address.phone}
-                </p>
-
-                <p>
-                  {address.address}
-                </p>
-
-                <p>
-                  {address.city},{" "}
-                  {address.state} -{" "}
-                  {address.pincode}
-                </p>
-
-                {/* ACTIONS */}
-
-                <div>
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      handleEdit(
-                        address
-                      )
-                    }
-                  >
-                    Edit
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      handleDelete(
-                        address.id
-                      )
-                    }
-                  >
-                    Delete
-                  </button>
-
-                </div>
-
-              </article>
-            )
-          )
+            <p>
+              {error}
+            </p>
+          </div>
         )}
 
-      </div>
+        {success && (
+          <div className="addresses-success">
+            <span>
+              ✓
+            </span>
 
-      <hr />
-
-      {/* ====================================================
-          ADD / EDIT FORM
-          ==================================================== */}
-
-      <div>
-
-        <h2>
-          {editingId
-            ? "Edit Address"
-            : "Add New Address"}
-        </h2>
-
-        <form
-          onSubmit={
-            handleSubmit
-          }
-        >
-
-          <div>
-
-            <label htmlFor="name">
-              Full Name
-            </label>
-
-            <input
-              id="name"
-              type="text"
-              name="name"
-              value={form.name}
-              onChange={
-                handleChange
-              }
-              placeholder="Enter full name"
-            />
-
+            <p>
+              {success}
+            </p>
           </div>
+        )}
 
-          <div>
+        {/* ==================================================
+            MAIN GRID
+            ================================================== */}
 
-            <label htmlFor="phone">
-              Phone Number
-            </label>
+        <div className="addresses-layout">
 
-            <input
-              id="phone"
-              type="tel"
-              name="phone"
-              value={form.phone}
-              onChange={
-                handleChange
-              }
-              placeholder="Enter phone number"
-            />
+          {/* ==================================================
+              SAVED ADDRESSES
+              ================================================== */}
 
-          </div>
+          <div className="saved-addresses-section">
 
-          <div>
+            <div className="addresses-section-heading">
 
-            <label htmlFor="address">
-              Complete Address
-            </label>
+              <div>
 
-            <textarea
-              id="address"
-              name="address"
-              value={
-                form.address
-              }
-              onChange={
-                handleChange
-              }
-              placeholder="House number, street, area"
-              rows="4"
-            />
+                <span>
+                  YOUR ADDRESSES
+                </span>
 
-          </div>
+                <h2>
+                  Saved Addresses
+                </h2>
 
-          <div>
+              </div>
 
-            <label htmlFor="city">
-              City
-            </label>
+              <strong>
+                {addresses.length}
+              </strong>
 
-            <input
-              id="city"
-              type="text"
-              name="city"
-              value={form.city}
-              onChange={
-                handleChange
-              }
-              placeholder="Enter city"
-            />
+            </div>
 
-          </div>
+            {addresses.length === 0 ? (
+              <div className="addresses-empty">
 
-          <div>
+                <div className="addresses-empty-icon">
+                  📍
+                </div>
 
-            <label htmlFor="state">
-              State
-            </label>
+                <h3>
+                  No saved addresses
+                </h3>
 
-            <input
-              id="state"
-              type="text"
-              name="state"
-              value={form.state}
-              onChange={
-                handleChange
-              }
-              placeholder="Enter state"
-            />
+                <p>
+                  Add a delivery address to
+                  make checkout faster.
+                </p>
 
-          </div>
+              </div>
+            ) : (
+              <div className="address-list">
 
-          <div>
+                {addresses.map(
+                  (address) => {
 
-            <label htmlFor="pincode">
-              Pincode
-            </label>
+                    const isSelected =
+                      selectedAddressId ===
+                      address.id;
 
-            <input
-              id="pincode"
-              type="text"
-              name="pincode"
-              value={
-                form.pincode
-              }
-              onChange={
-                handleChange
-              }
-              placeholder="6 digit pincode"
-              maxLength="6"
-            />
+                    return (
+                      <article
+                        key={
+                          address.id
+                        }
+                        className={`address-card ${
+                          isSelected
+                            ? "selected"
+                            : ""
+                        }`}
+                      >
 
-          </div>
+                        {/* TOP */}
 
-          <div>
+                        <div className="address-card-top">
 
-            <button
-              type="submit"
-            >
-              {editingId
-                ? "Update Address"
-                : "Save Address"}
-            </button>
+                          <label className="address-select">
 
-            {editingId && (
-              <button
-                type="button"
-                onClick={
-                  resetForm
-                }
-              >
-                Cancel
-              </button>
+                            <input
+                              type="radio"
+                              name="selectedAddress"
+                              checked={
+                                isSelected
+                              }
+                              onChange={() =>
+                                handleSelect(
+                                  address.id
+                                )
+                              }
+                            />
+
+                            <span>
+                              {isSelected
+                                ? "Selected"
+                                : "Select Address"}
+                            </span>
+
+                          </label>
+
+                          {isSelected && (
+                            <span className="selected-address-badge">
+                              ✓ Selected
+                            </span>
+                          )}
+
+                        </div>
+
+                        {/* CONTENT */}
+
+                        <div className="address-card-content">
+
+                          <h3>
+                            {address.name}
+                          </h3>
+
+                          <p className="address-phone">
+                            {address.phone}
+                          </p>
+
+                          <p>
+                            {address.address}
+                          </p>
+
+                          <p>
+                            {address.city},{" "}
+                            {address.state} -{" "}
+                            {address.pincode}
+                          </p>
+
+                        </div>
+
+                        {/* ACTIONS */}
+
+                        <div className="address-card-actions">
+
+                          <button
+                            type="button"
+                            className="address-edit-button"
+                            onClick={() =>
+                              handleEdit(
+                                address
+                              )
+                            }
+                          >
+                            Edit
+                          </button>
+
+                          <button
+                            type="button"
+                            className="address-delete-button"
+                            onClick={() =>
+                              handleDelete(
+                                address.id
+                              )
+                            }
+                          >
+                            Delete
+                          </button>
+
+                        </div>
+
+                      </article>
+                    );
+                  }
+                )}
+
+              </div>
             )}
 
           </div>
 
-        </form>
+          {/* ==================================================
+              ADD / EDIT FORM
+              ================================================== */}
 
-      </div>
+          <div className="address-form-card">
 
-      {/* ====================================================
-          CHECKOUT LINK
-          ==================================================== */}
+            <div className="address-form-header">
 
-      {selectedAddressId && (
-        <div>
+              <span>
+                {editingId
+                  ? "UPDATE ADDRESS"
+                  : "NEW ADDRESS"}
+              </span>
 
-          <Link to="/checkout/summary">
-            Continue with Selected Address
-          </Link>
+              <h2>
+                {editingId
+                  ? "Edit Address"
+                  : "Add New Address"}
+              </h2>
+
+              <p>
+                Enter your complete delivery
+                information.
+              </p>
+
+            </div>
+
+            <form
+              className="address-form"
+              onSubmit={
+                handleSubmit
+              }
+            >
+
+              {/* NAME */}
+
+              <div className="address-form-group">
+
+                <label htmlFor="name">
+                  Full Name
+                </label>
+
+                <input
+                  id="name"
+                  type="text"
+                  name="name"
+                  value={
+                    form.name
+                  }
+                  onChange={
+                    handleChange
+                  }
+                  placeholder="Enter full name"
+                  autoComplete="name"
+                />
+
+              </div>
+
+              {/* PHONE */}
+
+              <div className="address-form-group">
+
+                <label htmlFor="phone">
+                  Phone Number
+                </label>
+
+                <input
+                  id="phone"
+                  type="tel"
+                  name="phone"
+                  value={
+                    form.phone
+                  }
+                  onChange={
+                    handleChange
+                  }
+                  placeholder="Enter phone number"
+                  autoComplete="tel"
+                />
+
+              </div>
+
+              {/* ADDRESS */}
+
+              <div className="address-form-group">
+
+                <label htmlFor="address">
+                  Complete Address
+                </label>
+
+                <textarea
+                  id="address"
+                  name="address"
+                  value={
+                    form.address
+                  }
+                  onChange={
+                    handleChange
+                  }
+                  placeholder="House number, street, area"
+                  rows="4"
+                />
+
+              </div>
+
+              {/* CITY + STATE */}
+
+              <div className="address-form-row">
+
+                <div className="address-form-group">
+
+                  <label htmlFor="city">
+                    City
+                  </label>
+
+                  <input
+                    id="city"
+                    type="text"
+                    name="city"
+                    value={
+                      form.city
+                    }
+                    onChange={
+                      handleChange
+                    }
+                    placeholder="Enter city"
+                  />
+
+                </div>
+
+                <div className="address-form-group">
+
+                  <label htmlFor="state">
+                    State
+                  </label>
+
+                  <input
+                    id="state"
+                    type="text"
+                    name="state"
+                    value={
+                      form.state
+                    }
+                    onChange={
+                      handleChange
+                    }
+                    placeholder="Enter state"
+                  />
+
+                </div>
+
+              </div>
+
+              {/* PINCODE */}
+
+              <div className="address-form-group">
+
+                <label htmlFor="pincode">
+                  Pincode
+                </label>
+
+                <input
+                  id="pincode"
+                  type="text"
+                  name="pincode"
+                  value={
+                    form.pincode
+                  }
+                  onChange={
+                    handleChange
+                  }
+                  placeholder="6 digit pincode"
+                  maxLength="6"
+                  inputMode="numeric"
+                />
+
+              </div>
+
+              {/* ACTIONS */}
+
+              <div className="address-form-actions">
+
+                {editingId && (
+                  <button
+                    type="button"
+                    className="address-cancel-button"
+                    onClick={
+                      resetForm
+                    }
+                  >
+                    Cancel
+                  </button>
+                )}
+
+                <button
+                  type="submit"
+                  className="address-save-button"
+                >
+                  {editingId
+                    ? "Update Address"
+                    : "Save Address"}
+                </button>
+
+              </div>
+
+            </form>
+
+          </div>
 
         </div>
-      )}
+
+        {/* ==================================================
+            CHECKOUT
+            ================================================== */}
+
+        {selectedAddressId && (
+          <div className="addresses-checkout">
+
+            <div>
+
+              <span>
+                READY FOR CHECKOUT?
+              </span>
+
+              <p>
+                Your selected delivery address
+                will be used for your order.
+              </p>
+
+            </div>
+
+            <Link
+              to="/checkout/summary"
+              className="addresses-checkout-button"
+            >
+              Continue to Checkout
+              <span>
+                →
+              </span>
+            </Link>
+
+          </div>
+        )}
+
+      </div>
 
     </section>
   );

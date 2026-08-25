@@ -1,7 +1,7 @@
 // ============================================================
 // SHANTI ENTERPRISES
 // Admin Products Page
-// Frontend Phase 5 - Product Management
+// Frontend Phase 6 - UI/UX
 // ============================================================
 
 import {
@@ -79,11 +79,8 @@ function AdminProductsPage() {
 
       let productData = [];
 
-      if (
-        Array.isArray(response)
-      ) {
-        productData =
-          response;
+      if (Array.isArray(response)) {
+        productData = response;
       } else if (
         Array.isArray(
           response?.products
@@ -119,8 +116,8 @@ function AdminProductsPage() {
       setError(
         err.response?.data
           ?.message ||
-          err.message ||
-          "Unable to load products."
+        err.message ||
+        "Unable to load products."
       );
     } finally {
       setLoading(false);
@@ -158,9 +155,9 @@ function AdminProductsPage() {
   ) => {
     return Number(
       product.price ??
-        product.sellingPrice ??
-        product.salePrice ??
-        0
+      product.sellingPrice ??
+      product.salePrice ??
+      0
     );
   };
 
@@ -173,10 +170,10 @@ function AdminProductsPage() {
   ) => {
     return Number(
       product.stock ??
-        product.countInStock ??
-        product.inventory ??
-        product.quantity ??
-        0
+      product.countInStock ??
+      product.inventory ??
+      product.quantity ??
+      0
     );
   };
 
@@ -294,8 +291,8 @@ function AdminProductsPage() {
         setError(
           err.response?.data
             ?.message ||
-            err.message ||
-            "Unable to delete product."
+          err.message ||
+          "Unable to delete product."
         );
       } finally {
         setDeletingId(null);
@@ -319,323 +316,434 @@ function AdminProductsPage() {
   // ==========================================================
 
   return (
-    <section className="app-page">
+    <section className="admin-products-page">
 
-      {/* ====================================================
-          HEADER
-          ==================================================== */}
+      <div className="admin-products-container">
 
-      <div>
+        {/* ==================================================
+            HEADER
+            ================================================== */}
 
-        <Link to="/admin">
-          ← Admin Dashboard
-        </Link>
+        <div className="admin-products-header">
 
-        <h1>
-          Product Management
-        </h1>
+          <div>
 
-        <p>
-          Manage all products in
-          your store.
-        </p>
+            <Link
+              to="/admin"
+              className="admin-products-back"
+            >
+              ← Admin Dashboard
+            </Link>
 
-      </div>
+            <span className="admin-products-eyebrow">
+              PRODUCT MANAGEMENT
+            </span>
 
-      {/* ====================================================
-          ERROR
-          ==================================================== */}
+            <h1>
+              Products
+            </h1>
 
-      {error && (
-        <ErrorMessage
-          message={error}
-          onRetry={loadProducts}
-        />
-      )}
+            <p>
+              Manage your store catalogue,
+              pricing and inventory.
+            </p>
 
-      {/* ====================================================
-          ACTIONS
-          ==================================================== */}
+          </div>
 
-      <div>
+          <div className="admin-products-header-actions">
 
-        <button
-          type="button"
-          onClick={() =>
-            navigate(
-              "/admin/products/new"
-            )
-          }
-        >
-          + Add Product
-        </button>
+            <button
+              type="button"
+              className="admin-products-refresh"
+              onClick={
+                loadProducts
+              }
+            >
+              ↻ Refresh
+            </button>
 
-        <button
-          type="button"
-          onClick={
-            loadProducts
-          }
-          disabled={loading}
-        >
-          Refresh
-        </button>
+            <button
+              type="button"
+              className="admin-products-add"
+              onClick={() =>
+                navigate(
+                  "/admin/products/new"
+                )
+              }
+            >
+              + Add Product
+            </button>
 
-      </div>
-
-      {/* ====================================================
-          SEARCH
-          ==================================================== */}
-
-      <div>
-
-        <label htmlFor="productSearch">
-          Search Products
-        </label>
-
-        <input
-          id="productSearch"
-          type="text"
-          value={search}
-          onChange={(event) =>
-            setSearch(
-              event.target.value
-            )
-          }
-          placeholder="Search product..."
-        />
-
-      </div>
-
-      {/* ====================================================
-          STOCK FILTER
-          ==================================================== */}
-
-      <div>
-
-        <label htmlFor="stockFilter">
-          Stock
-        </label>
-
-        <select
-          id="stockFilter"
-          value={
-            stockFilter
-          }
-          onChange={(event) =>
-            setStockFilter(
-              event.target.value
-            )
-          }
-        >
-
-          <option value="all">
-            All Products
-          </option>
-
-          <option value="in-stock">
-            In Stock
-          </option>
-
-          <option value="low-stock">
-            Low Stock
-          </option>
-
-          <option value="out-of-stock">
-            Out of Stock
-          </option>
-
-        </select>
-
-      </div>
-
-      {/* ====================================================
-          COUNT
-          ==================================================== */}
-
-      <p>
-        Showing{" "}
-        {
-          filteredProducts.length
-        }{" "}
-        of{" "}
-        {products.length} products
-      </p>
-
-      {/* ====================================================
-          PRODUCTS
-          ==================================================== */}
-
-      {filteredProducts.length ===
-      0 ? (
-        <EmptyState
-          title="No products found"
-          message="Try changing your search or stock filter."
-        />
-      ) : (
-        <div>
-
-          {filteredProducts.map(
-            (product) => {
-
-              const productId =
-                product._id ||
-                product.id;
-
-              const name =
-                getName(
-                  product
-                );
-
-              const price =
-                getPrice(
-                  product
-                );
-
-              const stock =
-                getStock(
-                  product
-                );
-
-              const category =
-                typeof product.category ===
-                "object"
-                  ? product
-                      .category
-                      ?.name
-                  : product.category;
-
-              const image =
-                product.image ||
-                (
-                  Array.isArray(
-                    product.images
-                  )
-                    ? product
-                        .images[0]
-                    : ""
-                );
-
-              const isDeleting =
-                deletingId ===
-                productId;
-
-              return (
-                <article
-                  key={
-                    productId
-                  }
-                >
-
-                  {/* IMAGE */}
-
-                  {image && (
-                    <img
-                      src={image}
-                      alt={name}
-                      style={{
-                        width:
-                          "120px",
-                        height:
-                          "100px",
-                        objectFit:
-                          "contain",
-                      }}
-                    />
-                  )}
-
-                  {/* INFO */}
-
-                  <div>
-
-                    <h2>
-                      {name}
-                    </h2>
-
-                    {category && (
-                      <p>
-                        Category:{" "}
-                        {category}
-                      </p>
-                    )}
-
-                    <p>
-                      Price: ₹
-                      {price.toLocaleString(
-                        "en-IN"
-                      )}
-                    </p>
-
-                    <p>
-                      Stock:{" "}
-                      {stock}
-                    </p>
-
-                    {stock <=
-                      0 && (
-                      <strong>
-                        Out of Stock
-                      </strong>
-                    )}
-
-                    {stock > 0 &&
-                      stock <=
-                        10 && (
-                      <strong>
-                        Low Stock
-                      </strong>
-                    )}
-
-                  </div>
-
-                  {/* ACTIONS */}
-
-                  <div>
-
-                    <Link
-                      to={`/products/${productId}`}
-                    >
-                      View
-                    </Link>
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        navigate(
-                          `/admin/products/${productId}/edit`
-                        )
-                      }
-                      disabled={
-                        isDeleting
-                      }
-                    >
-                      Edit
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        handleDelete(
-                          productId
-                        )
-                      }
-                      disabled={
-                        isDeleting
-                      }
-                    >
-                      {isDeleting
-                        ? "Deleting..."
-                        : "Delete"}
-                    </button>
-
-                  </div>
-
-                </article>
-              );
-            }
-          )}
+          </div>
 
         </div>
-      )}
+
+        {/* ==================================================
+            ERROR
+            ================================================== */}
+
+        {error && (
+          <div className="admin-products-error">
+
+            <ErrorMessage
+              message={error}
+              onRetry={
+                loadProducts
+              }
+            />
+
+          </div>
+        )}
+
+        {/* ==================================================
+            TOOLBAR
+            ================================================== */}
+
+        <div className="admin-products-toolbar">
+
+          <div className="admin-products-search">
+
+            <label htmlFor="productSearch">
+              Search Products
+            </label>
+
+            <div className="admin-products-search-box">
+
+              <span>
+                ⌕
+              </span>
+
+              <input
+                id="productSearch"
+                type="text"
+                value={search}
+                onChange={(event) =>
+                  setSearch(
+                    event.target.value
+                  )
+                }
+                placeholder="Search product by name..."
+              />
+
+              {search && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSearch("")
+                  }
+                  aria-label="Clear search"
+                >
+                  ×
+                </button>
+              )}
+
+            </div>
+
+          </div>
+
+          <div className="admin-products-filter">
+
+            <label htmlFor="stockFilter">
+              Stock Status
+            </label>
+
+            <select
+              id="stockFilter"
+              value={
+                stockFilter
+              }
+              onChange={(event) =>
+                setStockFilter(
+                  event.target.value
+                )
+              }
+            >
+              <option value="all">
+                All Products
+              </option>
+
+              <option value="in-stock">
+                In Stock
+              </option>
+
+              <option value="low-stock">
+                Low Stock
+              </option>
+
+              <option value="out-of-stock">
+                Out of Stock
+              </option>
+            </select>
+
+          </div>
+
+        </div>
+
+        {/* ==================================================
+            SUMMARY
+            ================================================== */}
+
+        <div className="admin-products-summary">
+
+          <div>
+
+            <strong>
+              {filteredProducts.length}
+            </strong>
+
+            <span>
+              Showing products
+            </span>
+
+          </div>
+
+          <span>
+            Total catalogue:{" "}
+            <strong>
+              {products.length}
+            </strong>
+          </span>
+
+        </div>
+
+        {/* ==================================================
+            PRODUCTS
+            ================================================== */}
+
+        {filteredProducts.length === 0 ? (
+          <div className="admin-products-empty">
+
+            <EmptyState
+              title="No products found"
+              message="Try changing your search or stock filter."
+            />
+
+          </div>
+        ) : (
+          <div className="admin-products-list">
+
+            {filteredProducts.map(
+              (product) => {
+
+                const productId =
+                  product._id ||
+                  product.id;
+
+                const name =
+                  getName(
+                    product
+                  );
+
+                const price =
+                  getPrice(
+                    product
+                  );
+
+                const stock =
+                  getStock(
+                    product
+                  );
+
+                const category =
+                  typeof product.category ===
+                  "object"
+                    ? product
+                        .category
+                        ?.name
+                    : product.category;
+
+                const image =
+                  product.image ||
+                  (
+                    Array.isArray(
+                      product.images
+                    )
+                      ? product
+                          .images[0]
+                      : ""
+                  );
+
+                const isDeleting =
+                  deletingId ===
+                  productId;
+
+                let stockStatus =
+                  "In Stock";
+
+                let stockClass =
+                  "in-stock";
+
+                if (
+                  stock <= 0
+                ) {
+                  stockStatus =
+                    "Out of Stock";
+
+                  stockClass =
+                    "out-of-stock";
+                } else if (
+                  stock <= 10
+                ) {
+                  stockStatus =
+                    "Low Stock";
+
+                  stockClass =
+                    "low-stock";
+                }
+
+                return (
+                  <article
+                    key={
+                      productId
+                    }
+                    className="admin-product-card"
+                  >
+
+                    {/* IMAGE */}
+
+                    <div className="admin-product-image">
+
+                      {image ? (
+                        <img
+                          src={image}
+                          alt={name}
+                        />
+                      ) : (
+                        <div className="admin-product-no-image">
+                          No Image
+                        </div>
+                      )}
+
+                    </div>
+
+                    {/* INFO */}
+
+                    <div className="admin-product-info">
+
+                      <div className="admin-product-heading">
+
+                        <div>
+
+                          <span className="admin-product-label">
+                            PRODUCT
+                          </span>
+
+                          <h2>
+                            {name}
+                          </h2>
+
+                        </div>
+
+                        <span
+                          className={`admin-stock-badge ${stockClass}`}
+                        >
+                          {stockStatus}
+                        </span>
+
+                      </div>
+
+                      {category && (
+                        <p className="admin-product-category">
+                          Category:{" "}
+                          {category}
+                        </p>
+                      )}
+
+                      <div className="admin-product-meta">
+
+                        <div>
+                          <span>
+                            PRICE
+                          </span>
+
+                          <strong>
+                            ₹
+                            {price.toLocaleString(
+                              "en-IN"
+                            )}
+                          </strong>
+                        </div>
+
+                        <div>
+                          <span>
+                            STOCK
+                          </span>
+
+                          <strong>
+                            {stock}
+                          </strong>
+                        </div>
+
+                        {product.sku && (
+                          <div>
+                            <span>
+                              SKU
+                            </span>
+
+                            <strong>
+                              {product.sku}
+                            </strong>
+                          </div>
+                        )}
+
+                      </div>
+
+                    </div>
+
+                    {/* ACTIONS */}
+
+                    <div className="admin-product-actions">
+
+                      <Link
+                        to={`/products/${productId}`}
+                        className="admin-product-view"
+                      >
+                        View
+                      </Link>
+
+                      <button
+                        type="button"
+                        className="admin-product-edit"
+                        onClick={() =>
+                          navigate(
+                            `/admin/products/${productId}/edit`
+                          )
+                        }
+                        disabled={
+                          isDeleting
+                        }
+                      >
+                        Edit
+                      </button>
+
+                      <button
+                        type="button"
+                        className="admin-product-delete"
+                        onClick={() =>
+                          handleDelete(
+                            productId
+                          )
+                        }
+                        disabled={
+                          isDeleting
+                        }
+                      >
+                        {isDeleting
+                          ? "Deleting..."
+                          : "Delete"}
+                      </button>
+
+                    </div>
+
+                  </article>
+                );
+              }
+            )}
+
+          </div>
+        )}
+
+      </div>
 
     </section>
   );
