@@ -5,6 +5,21 @@
 // ============================================================
 
 const Quotation = require("../models/Quotation");
+const RFQ = require("../models/RFQ");
+
+// ============================================================
+// GENERATE QUOTATION NUMBER
+// ============================================================
+
+const generateQuotationNumber = () => {
+  const timestamp = Date.now();
+
+  const random = Math.floor(
+    1000 + Math.random() * 9000
+  );
+
+  return `SE-Q-${timestamp}-${random}`;
+};
 
 // ============================================================
 // GET ALL QUOTATIONS - ADMIN
@@ -122,11 +137,11 @@ const getAdminQuotationById = async (
         )
         .populate(
           "rfq",
-          "rfqNumber status items"
+          "rfqNumber status items message"
         )
         .populate(
           "items.product",
-          "name sku image price"
+          "name slug image price unit"
         );
 
     if (!quotation) {
@@ -149,146 +164,95 @@ const getAdminQuotationById = async (
 };
 
 // ============================================================
-// UPDATE QUOTATION STATUS
+// CREATE QUOTATION FROM RFQ - ADMIN
 // ============================================================
 
-const updateAdminQuotationStatus = async (
+const createAdminQuotation = async (
   req,
   res,
   next
 ) => {
   try {
     const {
-      status,
+      rfqId,
+      items,
+      note = "",
+      validUntil = null,
     } = req.body;
 
-    const allowedStatuses = [
-      "draft",
-      "sent",
+    // --------------------------------------------------------
+    // BASIC VALIDATION
+    // --------------------------------------------------------
+
+    if (!rfqId) {
+      const error = new Error(
+        "RFQ ID is required"
+      );
+
+      error.statusCode = 400;
+
+      return next(error);
+    }
+
+    if (
+      !Array.isArray(items) ||
+      items.length === 0
+    ) {
+      const error = new Error(
+        "At least one quotation item is required"
+      );
+
+      error.statusCode = 400;
+
+      return next(error);
+    }
+
+    // --------------------------------------------------------
+    // FIND RFQ
+    // --------------------------------------------------------
+
+    const rfq =
+      await RFQ.findById(rfqId);
+
+    if (!rfq) {
+      const error = new Error(
+        "RFQ not found"
+      );
+
+      error.statusCode = 404;
+
+      return next(error);
+    }
+
+    // --------------------------------------------------------
+    // CHECK RFQ STATUS
+    // --------------------------------------------------------
+    //
+    // Quotation can be created when RFQ is:
+    //
+    // pending
+    // reviewing
+    // quoted
+    // accepted
+    //
+    // We allow accepted here because your current test RFQ
+    // is already in accepted status.
+    // --------------------------------------------------------
+
+    const allowedRFQStatuses = [
+      "pending",
+      "reviewing",
+      "quoted",
       "accepted",
-      "rejected",
-      "expired",
-      "cancelled",
     ];
 
     if (
-      !status ||
-      !allowedStatuses.includes(status)
-    ) {
-      const error = new Error(
-        `Invalid quotation status. Allowed values: ${allowedStatuses.join(
-          ", "
-        )}`
-      );
-
-      error.statusCode = 400;
-
-      return next(error);
-    }
-
-    const quotation =
-      await Quotation.findById(
-        req.params.id
-      );
-
-    if (!quotation) {
-      const error = new Error(
-        "Quotation not found"
-      );
-
-      error.statusCode = 404;
-
-      return next(error);
-    }
-
-    quotation.status = status;
-
-    // --------------------------------------------------------
-    // STATUS DATES
-    // --------------------------------------------------------
-
-    if (status === "sent") {
-      quotation.sentAt =
-        quotation.sentAt ||
-        new Date();
-    }
-
-    if (status === "accepted") {
-      quotation.acceptedAt =
-        quotation.acceptedAt ||
-        new Date();
-    }
-
-    if (status === "rejected") {
-      quotation.rejectedAt =
-        quotation.rejectedAt ||
-        new Date();
-    }
-
-    if (status === "cancelled") {
-      quotation.cancelledAt =
-        quotation.cancelledAt ||
-        new Date();
-    }
-
-    await quotation.save();
-
-    res.status(200).json({
-      success: true,
-
-      message:
-        "Quotation status updated successfully",
-
-      quotation: {
-        id: quotation._id,
-
-        quotationNumber:
-          quotation.quotationNumber,
-
-        status:
-          quotation.status,
-      },
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// ============================================================
-// CANCEL QUOTATION
-// ============================================================
-
-const cancelAdminQuotation = async (
-  req,
-  res,
-  next
-) => {
-  try {
-    const quotation =
-      await Quotation.findById(
-        req.params.id
-      );
-
-    if (!quotation) {
-      const error = new Error(
-        "Quotation not found"
-      );
-
-      error.statusCode = 404;
-
-      return next(error);
-    }
-
-    if (
-      [
-        "accepted",
-        "cancelled",
-      ].includes(
-        quotation.status
+      !allowedRFQStatuses.includes(
+        rfq.status
       )
     ) {
       const error = new Error(
-        "This quotation cannot be cancelled"
+        `Quotation cannot be created for RFQ with status "${rfq.status}"`
       );
 
       error.statusCode = 400;
@@ -296,19 +260,224 @@ const cancelAdminQuotation = async (
       return next(error);
     }
 
-    quotation.status =
-      "cancelled";
+    // --------------------------------------------------------
+    // CHECK EXISTING QUOTATION
+    // --------------------------------------------------------
 
-    quotation.cancelledAt =
-      new Date();
+    const existingQuotation =
+      await Quotation.findOne({
+        rfq: rfq._id,
+      });
 
-    await quotation.save();
+    if (existingQuotation) {
+      const error = new Error(
+        "A quotation already exists for this RFQ"
+      );
 
-    res.status(200).json({
+      error.statusCode = 409;
+
+      return next(error);
+    }
+
+    // --------------------------------------------------------
+    // BUILD QUOTATION ITEMS
+    // --------------------------------------------------------
+
+    const quotationItems = [];
+
+    let subtotal = 0;
+
+    for (const requestedItem of items) {
+      const {
+        productId,
+        unitPrice,
+      } = requestedItem;
+
+      if (!productId) {
+        const error = new Error(
+          "Product ID is required for every quotation item"
+        );
+
+        error.statusCode = 400;
+
+        return next(error);
+      }
+
+      const parsedUnitPrice =
+        Number(unitPrice);
+
+      if (
+        !Number.isFinite(
+          parsedUnitPrice
+        ) ||
+        parsedUnitPrice < 0
+      ) {
+        const error = new Error(
+          "Valid unit price is required for every quotation item"
+        );
+
+        error.statusCode = 400;
+
+        return next(error);
+      }
+
+      // ------------------------------------------------------
+      // FIND PRODUCT IN RFQ
+      // ------------------------------------------------------
+
+      const rfqItem =
+        rfq.items.find(
+          (item) =>
+            item.product.toString() ===
+            productId.toString()
+        );
+
+      if (!rfqItem) {
+        const error = new Error(
+          `Product ${productId} is not part of this RFQ`
+        );
+
+        error.statusCode = 400;
+
+        return next(error);
+      }
+
+      // ------------------------------------------------------
+      // CALCULATE TOTAL
+      // ------------------------------------------------------
+
+      const totalPrice =
+        rfqItem.quantity *
+        parsedUnitPrice;
+
+      subtotal += totalPrice;
+
+      quotationItems.push({
+        product:
+          rfqItem.product,
+
+        productName:
+          rfqItem.productName,
+
+        quantity:
+          rfqItem.quantity,
+
+        unit:
+          rfqItem.unit,
+
+        unitPrice:
+          parsedUnitPrice,
+
+        totalPrice,
+      });
+    }
+
+    // --------------------------------------------------------
+    // VALIDATE ALL RFQ ITEMS ARE QUOTED
+    // --------------------------------------------------------
+
+    if (
+      quotationItems.length !==
+      rfq.items.length
+    ) {
+      const error = new Error(
+        "Quotation must include pricing for every RFQ item"
+      );
+
+      error.statusCode = 400;
+
+      return next(error);
+    }
+
+    // --------------------------------------------------------
+    // VALIDATE VALID UNTIL
+    // --------------------------------------------------------
+
+    let quotationValidUntil =
+      null;
+
+    if (validUntil) {
+      const parsedDate =
+        new Date(validUntil);
+
+      if (
+        Number.isNaN(
+          parsedDate.getTime()
+        )
+      ) {
+        const error = new Error(
+          "Invalid quotation validity date"
+        );
+
+        error.statusCode = 400;
+
+        return next(error);
+      }
+
+      if (
+        parsedDate <= new Date()
+      ) {
+        const error = new Error(
+          "Quotation validUntil must be a future date"
+        );
+
+        error.statusCode = 400;
+
+        return next(error);
+      }
+
+      quotationValidUntil =
+        parsedDate;
+    }
+
+    // --------------------------------------------------------
+    // CREATE QUOTATION
+    // --------------------------------------------------------
+
+    const quotation =
+      await Quotation.create({
+        quotationNumber:
+          generateQuotationNumber(),
+
+        rfq: rfq._id,
+
+        user: rfq.user,
+
+        items: quotationItems,
+
+        subtotal,
+
+        totalAmount: subtotal,
+
+        note:
+          typeof note === "string"
+            ? note.trim()
+            : "",
+
+        validUntil:
+          quotationValidUntil,
+
+        status: "pending",
+      });
+
+    // --------------------------------------------------------
+    // UPDATE RFQ
+    // --------------------------------------------------------
+
+    rfq.status = "quoted";
+    rfq.quotedAt = new Date();
+
+    await rfq.save();
+
+    // --------------------------------------------------------
+    // RESPONSE
+    // --------------------------------------------------------
+
+    res.status(201).json({
       success: true,
 
       message:
-        "Quotation cancelled successfully",
+        "Quotation created successfully",
 
       quotation: {
         id: quotation._id,
@@ -316,21 +485,310 @@ const cancelAdminQuotation = async (
         quotationNumber:
           quotation.quotationNumber,
 
+        rfq:
+          quotation.rfq,
+
+        user:
+          quotation.user,
+
+        items:
+          quotation.items,
+
+        subtotal:
+          quotation.subtotal,
+
+        totalAmount:
+          quotation.totalAmount,
+
+        note:
+          quotation.note,
+
+        validUntil:
+          quotation.validUntil,
+
         status:
           quotation.status,
 
-        cancelledAt:
-          quotation.cancelledAt,
+        createdAt:
+          quotation.createdAt,
       },
     });
   } catch (error) {
     next(error);
   }
 };
+
+// ============================================================
+// UPDATE QUOTATION STATUS - ADMIN
+// ============================================================
+
+const updateAdminQuotationStatus =
+  async (
+    req,
+    res,
+    next
+  ) => {
+    try {
+      const {
+        status,
+      } = req.body;
+
+      const allowedStatuses = [
+        "pending",
+        "sent",
+        "accepted",
+        "rejected",
+        "expired",
+      ];
+
+      if (
+        !status ||
+        !allowedStatuses.includes(
+          status
+        )
+      ) {
+        const error = new Error(
+          `Invalid quotation status. Allowed values: ${allowedStatuses.join(
+            ", "
+          )}`
+        );
+
+        error.statusCode = 400;
+
+        return next(error);
+      }
+
+      const quotation =
+        await Quotation.findById(
+          req.params.id
+        );
+
+      if (!quotation) {
+        const error = new Error(
+          "Quotation not found"
+        );
+
+        error.statusCode = 404;
+
+        return next(error);
+      }
+
+      quotation.status =
+        status;
+
+      // ------------------------------------------------------
+      // STATUS DATES
+      // ------------------------------------------------------
+
+      if (
+        status === "sent"
+      ) {
+        quotation.sentAt =
+          quotation.sentAt ||
+          new Date();
+      }
+
+      if (
+        status === "accepted"
+      ) {
+        quotation.acceptedAt =
+          quotation.acceptedAt ||
+          new Date();
+      }
+
+      if (
+        status === "rejected"
+      ) {
+        quotation.rejectedAt =
+          quotation.rejectedAt ||
+          new Date();
+      }
+
+      await quotation.save();
+
+      // ------------------------------------------------------
+      // UPDATE RELATED RFQ
+      // ------------------------------------------------------
+
+      if (
+        status === "sent"
+      ) {
+        await RFQ.findByIdAndUpdate(
+          quotation.rfq,
+          {
+            $set: {
+              status: "quoted",
+              quotedAt:
+                new Date(),
+            },
+          }
+        );
+      }
+
+      if (
+        status === "accepted"
+      ) {
+        await RFQ.findByIdAndUpdate(
+          quotation.rfq,
+          {
+            $set: {
+              status: "accepted",
+              acceptedAt:
+                new Date(),
+            },
+          }
+        );
+      }
+
+      if (
+        status === "rejected"
+      ) {
+        await RFQ.findByIdAndUpdate(
+          quotation.rfq,
+          {
+            $set: {
+              status: "rejected",
+            },
+          }
+        );
+      }
+
+      res.status(200).json({
+        success: true,
+
+        message:
+          "Quotation status updated successfully",
+
+        quotation: {
+          id:
+            quotation._id,
+
+          quotationNumber:
+            quotation.quotationNumber,
+
+          status:
+            quotation.status,
+
+          sentAt:
+            quotation.sentAt,
+
+          acceptedAt:
+            quotation.acceptedAt,
+
+          rejectedAt:
+            quotation.rejectedAt,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+// ============================================================
+// CANCEL QUOTATION - ADMIN
+// ============================================================
+
+const cancelAdminQuotation =
+  async (
+    req,
+    res,
+    next
+  ) => {
+    try {
+      const quotation =
+        await Quotation.findById(
+          req.params.id
+        );
+
+      if (!quotation) {
+        const error = new Error(
+          "Quotation not found"
+        );
+
+        error.statusCode = 404;
+
+        return next(error);
+      }
+
+      if (
+        [
+          "accepted",
+          "rejected",
+          "expired",
+        ].includes(
+          quotation.status
+        )
+      ) {
+        const error = new Error(
+          "This quotation cannot be cancelled"
+        );
+
+        error.statusCode = 400;
+
+        return next(error);
+      }
+
+      const rfq =
+        await RFQ.findById(
+          quotation.rfq
+        );
+
+      quotation.status =
+        "rejected";
+
+      quotation.rejectedAt =
+        new Date();
+
+      await quotation.save();
+
+      // ------------------------------------------------------
+      // UPDATE RFQ
+      // ------------------------------------------------------
+
+      if (
+        rfq &&
+        rfq.status !==
+          "accepted"
+      ) {
+        rfq.status =
+          "rejected";
+
+        await rfq.save();
+      }
+
+      res.status(200).json({
+        success: true,
+
+        message:
+          "Quotation cancelled successfully",
+
+        quotation: {
+          id:
+            quotation._id,
+
+          quotationNumber:
+            quotation.quotationNumber,
+
+          status:
+            quotation.status,
+
+          rejectedAt:
+            quotation.rejectedAt,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+// ============================================================
+// EXPORT
+// ============================================================
 
 module.exports = {
   getAdminQuotations,
   getAdminQuotationById,
+  createAdminQuotation,
   updateAdminQuotationStatus,
   cancelAdminQuotation,
 };

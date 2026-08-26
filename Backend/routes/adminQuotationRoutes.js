@@ -23,6 +23,7 @@ const validate = require("../middleware/validate");
 const {
   getAdminQuotations,
   getAdminQuotationById,
+  createAdminQuotation,
   updateAdminQuotationStatus,
   cancelAdminQuotation,
 } = require(
@@ -34,6 +35,36 @@ const router = express.Router();
 // ============================================================
 // VALIDATION
 // ============================================================
+
+const createQuotationValidation = [
+  body("rfqId")
+    .notEmpty()
+    .withMessage(
+      "RFQ ID is required"
+    ),
+
+  body("items")
+    .isArray({
+      min: 1,
+    })
+    .withMessage(
+      "At least one quotation item is required"
+    ),
+
+  body("note")
+    .optional()
+    .isString()
+    .withMessage(
+      "Quotation note must be text"
+    ),
+
+  body("validUntil")
+    .optional()
+    .isISO8601()
+    .withMessage(
+      "Valid quotation expiry date is required"
+    ),
+];
 
 const quotationStatusValidation = [
   body("status")
@@ -56,9 +87,24 @@ router.use(adminOnly);
 // ============================================================
 
 // GET /api/admin/quotations
+
 router.get(
   "/",
   getAdminQuotations
+);
+
+// ============================================================
+// CREATE QUOTATION
+// ============================================================
+
+// POST /api/admin/quotations
+
+router.post(
+  "/",
+  validate(
+    createQuotationValidation
+  ),
+  createAdminQuotation
 );
 
 // ============================================================
@@ -66,6 +112,7 @@ router.get(
 // ============================================================
 
 // GET /api/admin/quotations/:id
+
 router.get(
   "/:id",
   getAdminQuotationById
@@ -76,9 +123,12 @@ router.get(
 // ============================================================
 
 // PATCH /api/admin/quotations/:id/status
+
 router.patch(
   "/:id/status",
-  validate(quotationStatusValidation),
+  validate(
+    quotationStatusValidation
+  ),
   updateAdminQuotationStatus
 );
 
@@ -87,6 +137,7 @@ router.patch(
 // ============================================================
 
 // PATCH /api/admin/quotations/:id/cancel
+
 router.patch(
   "/:id/cancel",
   cancelAdminQuotation

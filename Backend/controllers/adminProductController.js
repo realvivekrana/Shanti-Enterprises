@@ -5,6 +5,45 @@
 // ============================================================
 
 const Product = require("../models/Product");
+const Category = require("../models/Category");
+
+// ============================================================
+// HELPER - NORMALIZE WHOLESALE PRICE TIERS
+// ============================================================
+
+const normalizeWholesalePriceTiers = (
+  wholesalePriceTiers
+) => {
+  if (!Array.isArray(wholesalePriceTiers)) {
+    return [];
+  }
+
+  return wholesalePriceTiers
+    .map((tier) => ({
+      minQuantity: Number(
+        tier?.minQuantity
+      ),
+      price: Number(
+        tier?.price
+      ),
+    }))
+    .filter(
+      (tier) =>
+        Number.isInteger(
+          tier.minQuantity
+        ) &&
+        tier.minQuantity >= 1 &&
+        Number.isFinite(
+          tier.price
+        ) &&
+        tier.price >= 0
+    )
+    .sort(
+      (a, b) =>
+        a.minQuantity -
+        b.minQuantity
+    );
+};
 
 // ============================================================
 // GET ALL PRODUCTS - ADMIN
@@ -44,20 +83,10 @@ const getAdminProducts = async (
     // --------------------------------------------------------
 
     if (search.trim()) {
-      filter.$or = [
-        {
-          name: {
-            $regex: search.trim(),
-            $options: "i",
-          },
-        },
-        {
-          sku: {
-            $regex: search.trim(),
-            $options: "i",
-          },
-        },
-      ];
+      filter.name = {
+        $regex: search.trim(),
+        $options: "i",
+      };
     }
 
     // --------------------------------------------------------
@@ -65,7 +94,8 @@ const getAdminProducts = async (
     // --------------------------------------------------------
 
     if (category.trim()) {
-      filter.category = category.trim();
+      filter.category =
+        category.trim();
     }
 
     // --------------------------------------------------------
@@ -80,32 +110,51 @@ const getAdminProducts = async (
       filter.isActive = false;
     }
 
+    // --------------------------------------------------------
+    // PAGINATION
+    // --------------------------------------------------------
+
     const skip =
       (currentPage - 1) *
       perPage;
+
+    // --------------------------------------------------------
+    // GET PRODUCTS
+    // --------------------------------------------------------
 
     const [
       products,
       totalProducts,
     ] = await Promise.all([
       Product.find(filter)
+        .populate(
+          "category",
+          "name slug"
+        )
         .sort({
           createdAt: -1,
         })
         .skip(skip)
         .limit(perPage),
 
-      Product.countDocuments(filter),
+      Product.countDocuments(
+        filter
+      ),
     ]);
 
     const totalPages = Math.ceil(
       totalProducts / perPage
     );
 
+    // --------------------------------------------------------
+    // RESPONSE
+    // --------------------------------------------------------
+
     res.status(200).json({
       success: true,
 
-      count: products.length,
+      count:
+        products.length,
 
       pagination: {
         page: currentPage,
@@ -134,6 +183,9 @@ const getAdminProductById = async (
     const product =
       await Product.findById(
         req.params.id
+      ).populate(
+        "category",
+        "name slug"
       );
 
     if (!product) {
@@ -167,18 +219,22 @@ const createAdminProduct = async (
   try {
     const {
       name,
-      sku,
+      slug,
       description = "",
       category,
       price,
-      wholesalePrice,
       moq,
       stock,
-      unit,
+      unit = "piece",
       isWholesale,
       isActive,
-      image,
+      image = "",
+      wholesalePriceTiers = [],
     } = req.body;
+
+    // --------------------------------------------------------
+    // NAME VALIDATION
+    // --------------------------------------------------------
 
     if (
       !name ||
@@ -193,10 +249,42 @@ const createAdminProduct = async (
       return next(error);
     }
 
+    // --------------------------------------------------------
+    // SLUG VALIDATION
+    // --------------------------------------------------------
+
+    if (
+      !slug ||
+      !String(slug).trim()
+    ) {
+      const error = new Error(
+        "Product slug is required"
+      );
+
+      error.statusCode = 400;
+
+      return next(error);
+    }
+
+    const normalizedSlug =
+      String(slug)
+        .trim()
+        .toLowerCase();
+
+    // --------------------------------------------------------
+    // PRICE VALIDATION
+    // --------------------------------------------------------
+
+    const numericPrice =
+      Number(price);
+
     if (
       price === undefined ||
       price === null ||
-      Number(price) < 0
+      !Number.isFinite(
+        numericPrice
+      ) ||
+      numericPrice < 0
     ) {
       const error = new Error(
         "Valid product price is required"
@@ -208,103 +296,162 @@ const createAdminProduct = async (
     }
 
     // --------------------------------------------------------
-    // SKU DUPLICATE CHECK
+    // DUPLICATE SLUG CHECK
     // --------------------------------------------------------
 
-    if (
-      sku &&
-      String(sku).trim()
-    ) {
-      const existingSKU =
-        await Product.findOne({
-          sku: String(sku).trim(),
+    const existingProduct =
+      await Product.findOne({
+        slug: normalizedSlug,
+      });
+
+    if (existingProduct) {
+      const error = new Error(
+        "A product with this slug already exists"
+      );
+
+      error.statusCode = 409;
+
+      return next(error);
+    }
+
+    // --------------------------------------------------------
+    // CATEGORY VALIDATION
+    // --------------------------------------------------------
+
+    let categoryId = null;
+
+    if (category) {
+      const categoryExists =
+        await Category.findOne({
+          _id: category,
+          isActive: true,
         });
 
-      if (existingSKU) {
+      if (!categoryExists) {
         const error = new Error(
-          "Product SKU already exists"
+          "Category not found or inactive"
         );
 
-        error.statusCode = 409;
+        error.statusCode = 400;
 
         return next(error);
       }
+
+      categoryId =
+        categoryExists._id;
     }
+
+    // --------------------------------------------------------
+    // STOCK
+    // --------------------------------------------------------
+
+    const numericStock =
+      Number(stock);
+
+    const finalStock =
+      Number.isFinite(
+        numericStock
+      ) &&
+      numericStock >= 0
+        ? numericStock
+        : 0;
+
+    // --------------------------------------------------------
+    // MOQ
+    // --------------------------------------------------------
+
+    const numericMoq =
+      Number(moq);
+
+    const finalMoq =
+      Number.isInteger(
+        numericMoq
+      ) &&
+      numericMoq >= 1
+        ? numericMoq
+        : 1;
+
+    // --------------------------------------------------------
+    // WHOLESALE PRICE TIERS
+    // --------------------------------------------------------
+
+    const normalizedTiers =
+      normalizeWholesalePriceTiers(
+        wholesalePriceTiers
+      );
 
     // --------------------------------------------------------
     // PRODUCT DATA
     // --------------------------------------------------------
 
     const productData = {
-      name: String(name).trim(),
+      name:
+        String(name).trim(),
+
+      slug:
+        normalizedSlug,
 
       description:
-        String(description).trim(),
+        String(
+          description
+        ).trim(),
 
-      price: Number(price),
+      image:
+        String(
+          image || ""
+        ).trim(),
 
-      stock: Math.max(
-        Number(stock) || 0,
-        0
-      ),
+      price:
+        numericPrice,
 
       unit:
-        unit ||
-        "piece",
+        String(
+          unit || "piece"
+        ).trim(),
+
+      stock:
+        finalStock,
+
+      moq:
+        finalMoq,
 
       isWholesale:
         isWholesale !== false,
+
+      wholesalePriceTiers:
+        normalizedTiers,
+
+      category:
+        categoryId,
 
       isActive:
         isActive !== false,
     };
 
-    if (
-      sku &&
-      String(sku).trim()
-    ) {
-      productData.sku =
-        String(sku).trim();
-    }
-
-    if (category) {
-      productData.category =
-        category;
-    }
-
-    if (
-      wholesalePrice !==
-        undefined &&
-      wholesalePrice !== null &&
-      wholesalePrice !== ""
-    ) {
-      productData.wholesalePrice =
-        Math.max(
-          Number(wholesalePrice),
-          0
-        );
-    }
-
-    if (
-      moq !== undefined &&
-      moq !== null &&
-      moq !== ""
-    ) {
-      productData.moq = Math.max(
-        Number(moq),
-        1
-      );
-    }
-
-    if (image) {
-      productData.image =
-        String(image).trim();
-    }
+    // --------------------------------------------------------
+    // CREATE PRODUCT
+    // --------------------------------------------------------
 
     const product =
       await Product.create(
         productData
       );
+
+    // --------------------------------------------------------
+    // POPULATE CATEGORY
+    // --------------------------------------------------------
+
+    const populatedProduct =
+      await Product.findById(
+        product._id
+      ).populate(
+        "category",
+        "name slug"
+      );
+
+    // --------------------------------------------------------
+    // RESPONSE
+    // --------------------------------------------------------
 
     res.status(201).json({
       success: true,
@@ -312,7 +459,8 @@ const createAdminProduct = async (
       message:
         "Product created successfully",
 
-      product,
+      product:
+        populatedProduct,
     });
   } catch (error) {
     next(error);
@@ -346,41 +494,76 @@ const updateAdminProduct = async (
 
     const {
       name,
-      sku,
+      slug,
       description,
       category,
       price,
-      wholesalePrice,
       moq,
       stock,
       unit,
       isWholesale,
       isActive,
       image,
+      wholesalePriceTiers,
     } = req.body;
 
     // --------------------------------------------------------
-    // SKU CHECK
+    // UPDATE NAME
     // --------------------------------------------------------
 
     if (
-      sku !== undefined &&
-      String(sku).trim() &&
-      String(sku).trim() !==
-        product.sku
+      name !== undefined
     ) {
-      const existingSKU =
-        await Product.findOne({
-          sku: String(sku).trim(),
+      const normalizedName =
+        String(name).trim();
 
+      if (!normalizedName) {
+        const error = new Error(
+          "Product name cannot be empty"
+        );
+
+        error.statusCode = 400;
+
+        return next(error);
+      }
+
+      product.name =
+        normalizedName;
+    }
+
+    // --------------------------------------------------------
+    // UPDATE SLUG
+    // --------------------------------------------------------
+
+    if (
+      slug !== undefined
+    ) {
+      const normalizedSlug =
+        String(slug)
+          .trim()
+          .toLowerCase();
+
+      if (!normalizedSlug) {
+        const error = new Error(
+          "Product slug cannot be empty"
+        );
+
+        error.statusCode = 400;
+
+        return next(error);
+      }
+
+      const duplicateSlug =
+        await Product.findOne({
+          slug: normalizedSlug,
           _id: {
             $ne: product._id,
           },
         });
 
-      if (existingSKU) {
+      if (duplicateSlug) {
         const error = new Error(
-          "Product SKU already exists"
+          "A product with this slug already exists"
         );
 
         error.statusCode = 409;
@@ -388,35 +571,61 @@ const updateAdminProduct = async (
         return next(error);
       }
 
-      product.sku =
-        String(sku).trim();
+      product.slug =
+        normalizedSlug;
     }
 
     // --------------------------------------------------------
-    // UPDATE FIELDS
+    // UPDATE DESCRIPTION
     // --------------------------------------------------------
-
-    if (
-      name !== undefined &&
-      String(name).trim()
-    ) {
-      product.name =
-        String(name).trim();
-    }
 
     if (
       description !== undefined
     ) {
       product.description =
-        String(description).trim();
+        String(
+          description
+        ).trim();
     }
+
+    // --------------------------------------------------------
+    // UPDATE CATEGORY
+    // --------------------------------------------------------
 
     if (
       category !== undefined
     ) {
-      product.category =
-        category;
+      if (
+        category === null ||
+        category === ""
+      ) {
+        product.category =
+          null;
+      } else {
+        const categoryExists =
+          await Category.findOne({
+            _id: category,
+            isActive: true,
+          });
+
+        if (!categoryExists) {
+          const error = new Error(
+            "Category not found or inactive"
+          );
+
+          error.statusCode = 400;
+
+          return next(error);
+        }
+
+        product.category =
+          categoryExists._id;
+      }
     }
+
+    // --------------------------------------------------------
+    // UPDATE PRICE
+    // --------------------------------------------------------
 
     if (
       price !== undefined
@@ -443,42 +652,91 @@ const updateAdminProduct = async (
         numericPrice;
     }
 
-    if (
-      wholesalePrice !==
-        undefined
-    ) {
-      product.wholesalePrice =
-        Math.max(
-          Number(wholesalePrice) ||
-            0,
-          0
-        );
-    }
+    // --------------------------------------------------------
+    // UPDATE MOQ
+    // --------------------------------------------------------
 
     if (
       moq !== undefined
     ) {
-      product.moq = Math.max(
-        Number(moq) || 1,
-        1
-      );
+      const numericMoq =
+        Number(moq);
+
+      if (
+        !Number.isInteger(
+          numericMoq
+        ) ||
+        numericMoq < 1
+      ) {
+        const error = new Error(
+          "MOQ must be a positive whole number"
+        );
+
+        error.statusCode = 400;
+
+        return next(error);
+      }
+
+      product.moq =
+        numericMoq;
     }
+
+    // --------------------------------------------------------
+    // UPDATE STOCK
+    // --------------------------------------------------------
 
     if (
       stock !== undefined
     ) {
-      product.stock = Math.max(
-        Number(stock) || 0,
-        0
-      );
+      const numericStock =
+        Number(stock);
+
+      if (
+        !Number.isFinite(
+          numericStock
+        ) ||
+        numericStock < 0
+      ) {
+        const error = new Error(
+          "Stock cannot be negative"
+        );
+
+        error.statusCode = 400;
+
+        return next(error);
+      }
+
+      product.stock =
+        numericStock;
     }
+
+    // --------------------------------------------------------
+    // UPDATE UNIT
+    // --------------------------------------------------------
 
     if (
       unit !== undefined
     ) {
-      product.unit =
+      const normalizedUnit =
         String(unit).trim();
+
+      if (!normalizedUnit) {
+        const error = new Error(
+          "Unit cannot be empty"
+        );
+
+        error.statusCode = 400;
+
+        return next(error);
+      }
+
+      product.unit =
+        normalizedUnit;
     }
+
+    // --------------------------------------------------------
+    // UPDATE WHOLESALE STATUS
+    // --------------------------------------------------------
 
     if (
       isWholesale !== undefined
@@ -487,12 +745,34 @@ const updateAdminProduct = async (
         Boolean(isWholesale);
     }
 
+    // --------------------------------------------------------
+    // UPDATE WHOLESALE PRICE TIERS
+    // --------------------------------------------------------
+
+    if (
+      wholesalePriceTiers !==
+      undefined
+    ) {
+      product.wholesalePriceTiers =
+        normalizeWholesalePriceTiers(
+          wholesalePriceTiers
+        );
+    }
+
+    // --------------------------------------------------------
+    // UPDATE ACTIVE STATUS
+    // --------------------------------------------------------
+
     if (
       isActive !== undefined
     ) {
       product.isActive =
         Boolean(isActive);
     }
+
+    // --------------------------------------------------------
+    // UPDATE IMAGE
+    // --------------------------------------------------------
 
     if (
       image !== undefined
@@ -501,7 +781,27 @@ const updateAdminProduct = async (
         String(image).trim();
     }
 
+    // --------------------------------------------------------
+    // SAVE
+    // --------------------------------------------------------
+
     await product.save();
+
+    // --------------------------------------------------------
+    // POPULATE CATEGORY
+    // --------------------------------------------------------
+
+    const updatedProduct =
+      await Product.findById(
+        product._id
+      ).populate(
+        "category",
+        "name slug"
+      );
+
+    // --------------------------------------------------------
+    // RESPONSE
+    // --------------------------------------------------------
 
     res.status(200).json({
       success: true,
@@ -509,7 +809,8 @@ const updateAdminProduct = async (
       message:
         "Product updated successfully",
 
-      product,
+      product:
+        updatedProduct,
     });
   } catch (error) {
     next(error);
@@ -518,6 +819,10 @@ const updateAdminProduct = async (
 
 // ============================================================
 // DELETE PRODUCT - ADMIN
+// ============================================================
+//
+// Soft delete is safer for an ecommerce system.
+// Existing orders can still keep their product reference.
 // ============================================================
 
 const deleteAdminProduct = async (
@@ -541,15 +846,25 @@ const deleteAdminProduct = async (
       return next(error);
     }
 
-    await Product.findByIdAndDelete(
-      req.params.id
-    );
+    product.isActive =
+      false;
+
+    await product.save();
 
     res.status(200).json({
       success: true,
 
       message:
         "Product deleted successfully",
+
+      product: {
+        id: product._id,
+
+        name: product.name,
+
+        isActive:
+          product.isActive,
+      },
     });
   } catch (error) {
     next(error);
@@ -607,6 +922,10 @@ const toggleProductStatus = async (
     next(error);
   }
 };
+
+// ============================================================
+// EXPORT
+// ============================================================
 
 module.exports = {
   getAdminProducts,

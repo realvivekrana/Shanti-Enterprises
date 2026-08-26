@@ -33,11 +33,11 @@ const getAdminOrders = async (req, res, next) => {
     const filter = {};
 
     // --------------------------------------------------------
-    // STATUS FILTER
+    // ORDER STATUS FILTER
     // --------------------------------------------------------
 
     if (status.trim()) {
-      filter.status = status.trim();
+      filter.orderStatus = status.trim();
     }
 
     // --------------------------------------------------------
@@ -50,7 +50,7 @@ const getAdminOrders = async (req, res, next) => {
     }
 
     // --------------------------------------------------------
-    // SEARCH
+    // SEARCH BY ORDER NUMBER
     // --------------------------------------------------------
 
     if (search.trim()) {
@@ -63,6 +63,10 @@ const getAdminOrders = async (req, res, next) => {
     const skip =
       (currentPage - 1) * perPage;
 
+    // --------------------------------------------------------
+    // GET ORDERS + COUNT
+    // --------------------------------------------------------
+
     const [
       orders,
       totalOrders,
@@ -71,6 +75,10 @@ const getAdminOrders = async (req, res, next) => {
         .populate(
           "user",
           "name email phone"
+        )
+        .populate(
+          "items.product",
+          "name slug image price unit"
         )
         .sort({
           createdAt: -1,
@@ -84,6 +92,10 @@ const getAdminOrders = async (req, res, next) => {
     const totalPages = Math.ceil(
       totalOrders / perPage
     );
+
+    // --------------------------------------------------------
+    // RESPONSE
+    // --------------------------------------------------------
 
     res.status(200).json({
       success: true,
@@ -115,14 +127,16 @@ const getAdminOrderById = async (
 ) => {
   try {
     const order =
-      await Order.findById(req.params.id)
+      await Order.findById(
+        req.params.id
+      )
         .populate(
           "user",
           "name email phone"
         )
         .populate(
           "items.product",
-          "name sku image price"
+          "name slug image price unit"
         );
 
     if (!order) {
@@ -146,6 +160,7 @@ const getAdminOrderById = async (
 
 // ============================================================
 // UPDATE ORDER STATUS
+// ADMIN ONLY
 // ============================================================
 
 const updateAdminOrderStatus = async (
@@ -158,10 +173,14 @@ const updateAdminOrderStatus = async (
       status,
     } = req.body;
 
+    // --------------------------------------------------------
+    // ALLOWED ORDER STATUSES
+    // --------------------------------------------------------
+
     const allowedStatuses = [
       "pending",
-      "processing",
       "confirmed",
+      "processing",
       "shipped",
       "delivered",
       "cancelled",
@@ -182,6 +201,10 @@ const updateAdminOrderStatus = async (
       return next(error);
     }
 
+    // --------------------------------------------------------
+    // FIND ORDER
+    // --------------------------------------------------------
+
     const order =
       await Order.findById(
         req.params.id
@@ -197,9 +220,17 @@ const updateAdminOrderStatus = async (
       return next(error);
     }
 
-    order.status = status;
+    // --------------------------------------------------------
+    // UPDATE CORRECT MODEL FIELD
+    // --------------------------------------------------------
+
+    order.orderStatus = status;
 
     await order.save();
+
+    // --------------------------------------------------------
+    // RESPONSE
+    // --------------------------------------------------------
 
     res.status(200).json({
       success: true,
@@ -213,7 +244,8 @@ const updateAdminOrderStatus = async (
         orderNumber:
           order.orderNumber,
 
-        status: order.status,
+        orderStatus:
+          order.orderStatus,
 
         paymentStatus:
           order.paymentStatus,
@@ -226,6 +258,7 @@ const updateAdminOrderStatus = async (
 
 // ============================================================
 // UPDATE PAYMENT STATUS
+// ADMIN ONLY
 // ============================================================
 
 const updateAdminPaymentStatus = async (
@@ -238,12 +271,15 @@ const updateAdminPaymentStatus = async (
       paymentStatus,
     } = req.body;
 
+    // --------------------------------------------------------
+    // ALLOWED PAYMENT STATUSES
+    // --------------------------------------------------------
+
     const allowedPaymentStatuses = [
       "pending",
       "paid",
       "failed",
       "refunded",
-      "cancelled",
     ];
 
     if (
@@ -263,6 +299,10 @@ const updateAdminPaymentStatus = async (
       return next(error);
     }
 
+    // --------------------------------------------------------
+    // FIND ORDER
+    // --------------------------------------------------------
+
     const order =
       await Order.findById(
         req.params.id
@@ -278,10 +318,18 @@ const updateAdminPaymentStatus = async (
       return next(error);
     }
 
+    // --------------------------------------------------------
+    // UPDATE PAYMENT STATUS
+    // --------------------------------------------------------
+
     order.paymentStatus =
       paymentStatus;
 
     await order.save();
+
+    // --------------------------------------------------------
+    // RESPONSE
+    // --------------------------------------------------------
 
     res.status(200).json({
       success: true,
@@ -295,7 +343,8 @@ const updateAdminPaymentStatus = async (
         orderNumber:
           order.orderNumber,
 
-        status: order.status,
+        orderStatus:
+          order.orderStatus,
 
         paymentStatus:
           order.paymentStatus,
@@ -331,11 +380,17 @@ const cancelAdminOrder = async (
       return next(error);
     }
 
+    // --------------------------------------------------------
+    // CHECK CURRENT STATUS
+    // --------------------------------------------------------
+
     if (
       [
         "delivered",
         "cancelled",
-      ].includes(order.status)
+      ].includes(
+        order.orderStatus
+      )
     ) {
       const error = new Error(
         "This order cannot be cancelled"
@@ -346,9 +401,18 @@ const cancelAdminOrder = async (
       return next(error);
     }
 
-    order.status = "cancelled";
+    // --------------------------------------------------------
+    // CANCEL ORDER
+    // --------------------------------------------------------
+
+    order.orderStatus =
+      "cancelled";
 
     await order.save();
+
+    // --------------------------------------------------------
+    // RESPONSE
+    // --------------------------------------------------------
 
     res.status(200).json({
       success: true,
@@ -362,13 +426,21 @@ const cancelAdminOrder = async (
         orderNumber:
           order.orderNumber,
 
-        status: order.status,
+        orderStatus:
+          order.orderStatus,
+
+        paymentStatus:
+          order.paymentStatus,
       },
     });
   } catch (error) {
     next(error);
   }
 };
+
+// ============================================================
+// EXPORT
+// ============================================================
 
 module.exports = {
   getAdminOrders,
