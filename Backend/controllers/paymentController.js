@@ -1,7 +1,7 @@
 // ============================================================
 // SHANTI ENTERPRISES
 // Payment Controller
-// Phase 5 - Operations
+// Razorpay Payment Integration
 // ============================================================
 
 const crypto = require("crypto");
@@ -27,7 +27,7 @@ try {
 
 const createControllerError = (
   message,
-  statusCode
+  statusCode = 500
 ) => {
   const error = new Error(message);
 
@@ -37,7 +37,67 @@ const createControllerError = (
 };
 
 // ============================================================
+// GET RAZORPAY INSTANCE
+// ============================================================
+
+const getRazorpayInstance = () => {
+  if (!Razorpay) {
+    throw createControllerError(
+      "Razorpay package is not installed",
+      500
+    );
+  }
+
+  if (
+    !process.env.RAZORPAY_KEY_ID ||
+    !process.env.RAZORPAY_KEY_SECRET
+  ) {
+    throw createControllerError(
+      "Razorpay configuration is missing",
+      500
+    );
+  }
+
+  return new Razorpay({
+    key_id:
+      process.env.RAZORPAY_KEY_ID,
+
+    key_secret:
+      process.env.RAZORPAY_KEY_SECRET,
+  });
+};
+
+// ============================================================
+// GET ORDER AMOUNT
+// ============================================================
+
+const getOrderAmount = (order) => {
+  const amount = Number(
+    order?.totalPrice
+  );
+
+  if (
+    !Number.isFinite(amount) ||
+    amount <= 0
+  ) {
+    return null;
+  }
+
+  return amount;
+};
+
+// ============================================================
 // CREATE RAZORPAY ORDER
+//
+// POST /api/payment/create-order
+//
+// Body:
+// {
+//   "orderId": "MONGODB_ORDER_ID"
+// }
+//
+// IMPORTANT:
+// Order must already exist in database.
 // ============================================================
 
 const createPaymentOrder = async (
@@ -47,7 +107,7 @@ const createPaymentOrder = async (
 ) => {
   try {
     // ========================================================
-    // CHECK RAZORPAY PACKAGE
+    // CHECK RAZORPAY
     // ========================================================
 
     if (!Razorpay) {
@@ -58,10 +118,6 @@ const createPaymentOrder = async (
         )
       );
     }
-
-    // ========================================================
-    // CHECK RAZORPAY CONFIGURATION
-    // ========================================================
 
     if (
       !process.env.RAZORPAY_KEY_ID ||
@@ -79,22 +135,20 @@ const createPaymentOrder = async (
     // GET ORDER ID
     // ========================================================
 
-    const {
-      orderId,
-    } = req.body;
+    const orderId =
+      req.body?.orderId;
 
     if (!orderId) {
       return next(
         createControllerError(
-          "Order ID is required",
+          "Order ID is required. Create the order first, then start Razorpay payment.",
           400
         )
       );
     }
 
     // ========================================================
-    // FIND ORDER
-    // ONLY CURRENT USER'S ORDER
+    // FIND CURRENT USER ORDER
     // ========================================================
 
     const order =
@@ -116,7 +170,9 @@ const createPaymentOrder = async (
     // ALREADY PAID CHECK
     // ========================================================
 
-    if (order.isPaid === true) {
+    if (
+      order.isPaid === true
+    ) {
       return next(
         createControllerError(
           "Order has already been paid",
@@ -126,20 +182,13 @@ const createPaymentOrder = async (
     }
 
     // ========================================================
-    // ORDER TOTAL
-    //
-    // IMPORTANT:
-    // Existing Order model uses totalPrice.
+    // GET ORDER AMOUNT
     // ========================================================
 
-    const amount = Number(
-      order.totalPrice
-    );
+    const amount =
+      getOrderAmount(order);
 
-    if (
-      !Number.isFinite(amount) ||
-      amount <= 0
-    ) {
+    if (amount === null) {
       return next(
         createControllerError(
           "Invalid order amount",
@@ -153,13 +202,7 @@ const createPaymentOrder = async (
     // ========================================================
 
     const razorpay =
-      new Razorpay({
-        key_id:
-          process.env.RAZORPAY_KEY_ID,
-
-        key_secret:
-          process.env.RAZORPAY_KEY_SECRET,
-      });
+      getRazorpayInstance();
 
     // ========================================================
     // CREATE RAZORPAY ORDER
@@ -167,11 +210,13 @@ const createPaymentOrder = async (
 
     const razorpayOrder =
       await razorpay.orders.create({
-        amount: Math.round(
-          amount * 100
-        ),
+        amount:
+          Math.round(
+            amount * 100
+          ),
 
-        currency: "INR",
+        currency:
+          "INR",
 
         receipt:
           `order_${order._id}`,
@@ -180,9 +225,6 @@ const createPaymentOrder = async (
           orderId:
             order._id.toString(),
 
-          // IMPORTANT:
-          // Existing order payment verification
-          // expects customerId.
           customerId:
             order.user.toString(),
         },
@@ -195,7 +237,8 @@ const createPaymentOrder = async (
     const payment =
       await Payment.findOneAndUpdate(
         {
-          order: order._id,
+          order:
+            order._id,
         },
 
         {
@@ -205,14 +248,17 @@ const createPaymentOrder = async (
 
             amount,
 
-            currency: "INR",
+            currency:
+              "INR",
 
-            provider: "razorpay",
+            provider:
+              "razorpay",
 
             razorpayOrderId:
               razorpayOrder.id,
 
-            status: "created",
+            status:
+              "created",
 
             razorpayPaymentId:
               "",
@@ -236,7 +282,8 @@ const createPaymentOrder = async (
 
           new: true,
 
-          setDefaultsOnInsert: true,
+          setDefaultsOnInsert:
+            true,
         }
       );
 
@@ -244,42 +291,60 @@ const createPaymentOrder = async (
     // RESPONSE
     // ========================================================
 
-    res.status(201).json({
-      success: true,
+    return res
+      .status(201)
+      .json({
+        success: true,
 
-      message:
-        "Payment order created successfully",
+        message:
+          "Payment order created successfully",
 
-      payment: {
-        id:
-          payment._id,
+        payment: {
+          id:
+            payment._id,
 
-        orderId:
-          order._id,
+          orderId:
+            order._id,
 
-        razorpayOrderId:
-          razorpayOrder.id,
+          razorpayOrderId:
+            razorpayOrder.id,
 
-        amount:
           amount,
 
-        amountInPaise:
-          razorpayOrder.amount,
+          amountInPaise:
+            razorpayOrder.amount,
 
-        currency:
-          razorpayOrder.currency,
+          currency:
+            razorpayOrder.currency,
 
-        keyId:
-          process.env.RAZORPAY_KEY_ID,
-      },
-    });
+          keyId:
+            process.env.RAZORPAY_KEY_ID,
+        },
+      });
   } catch (error) {
+    console.error(
+      "Create Razorpay order error:",
+      error
+    );
+
     next(error);
   }
 };
 
 // ============================================================
 // VERIFY RAZORPAY PAYMENT
+//
+// POST /api/payment/verify
+//
+// Razorpay frontend response normally:
+//
+// {
+//   razorpay_payment_id,
+//   razorpay_order_id,
+//   razorpay_signature
+// }
+//
+// We also support camelCase names.
 // ============================================================
 
 const verifyPayment = async (
@@ -289,10 +354,11 @@ const verifyPayment = async (
 ) => {
   try {
     // ========================================================
-    // CHECK RAZORPAY CONFIGURATION
+    // CHECK CONFIG
     // ========================================================
 
     if (
+      !process.env.RAZORPAY_KEY_ID ||
       !process.env.RAZORPAY_KEY_SECRET
     ) {
       return next(
@@ -307,11 +373,21 @@ const verifyPayment = async (
     // GET PAYMENT DATA
     // ========================================================
 
-    const {
-      razorpayOrderId,
-      razorpayPaymentId,
-      razorpaySignature,
-    } = req.body;
+    const razorpayOrderId =
+      req.body?.razorpay_order_id ||
+      req.body?.razorpayOrderId;
+
+    const razorpayPaymentId =
+      req.body?.razorpay_payment_id ||
+      req.body?.razorpayPaymentId;
+
+    const razorpaySignature =
+      req.body?.razorpay_signature ||
+      req.body?.razorpaySignature;
+
+    // ========================================================
+    // VALIDATION
+    // ========================================================
 
     if (
       !razorpayOrderId ||
@@ -348,7 +424,7 @@ const verifyPayment = async (
     }
 
     // ========================================================
-    // GET ORDER
+    // FIND ORDER
     // ========================================================
 
     const order =
@@ -377,36 +453,49 @@ const verifyPayment = async (
       payment.status === "paid" &&
       order.isPaid === true
     ) {
-      return res.status(200).json({
-        success: true,
+      return res
+        .status(200)
+        .json({
+          success: true,
 
-        message:
-          "Payment is already verified",
+          message:
+            "Payment is already verified",
 
-        payment: {
-          id:
-            payment._id,
+          payment: {
+            id:
+              payment._id,
 
-          orderId:
-            payment.order,
+            orderId:
+              payment.order,
 
-          razorpayOrderId:
-            payment.razorpayOrderId,
+            razorpayOrderId:
+              payment.razorpayOrderId,
 
-          razorpayPaymentId:
-            payment.razorpayPaymentId,
+            razorpayPaymentId:
+              payment.razorpayPaymentId,
 
-          status:
-            payment.status,
+            status:
+              payment.status,
 
-          paidAt:
-            payment.paidAt,
-        },
-      });
+            paidAt:
+              payment.paidAt,
+          },
+
+          order: {
+            id:
+              order._id,
+
+            isPaid:
+              order.isPaid,
+
+            paidAt:
+              order.paidAt,
+          },
+        });
     }
 
     // ========================================================
-    // VERIFY RAZORPAY SIGNATURE
+    // VERIFY SIGNATURE
     // ========================================================
 
     const generatedSignature =
@@ -421,7 +510,7 @@ const verifyPayment = async (
         .digest("hex");
 
     // ========================================================
-    // TIMING-SAFE SIGNATURE COMPARISON
+    // TIMING SAFE COMPARISON
     // ========================================================
 
     const generatedBuffer =
@@ -469,15 +558,31 @@ const verifyPayment = async (
     }
 
     // ========================================================
-    // VERIFY AMOUNT
+    // EXPECTED ORDER AMOUNT
     // ========================================================
+
+    const orderAmount =
+      getOrderAmount(order);
+
+    if (
+      orderAmount === null
+    ) {
+      return next(
+        createControllerError(
+          "Invalid order amount",
+          400
+        )
+      );
+    }
 
     const expectedAmount =
       Math.round(
-        Number(
-          order.totalPrice
-        ) * 100
+        orderAmount * 100
       );
+
+    // ========================================================
+    // PAYMENT RECORD AMOUNT
+    // ========================================================
 
     const paymentAmount =
       Math.round(
@@ -510,29 +615,27 @@ const verifyPayment = async (
     }
 
     // ========================================================
-    // RAZORPAY PAYMENT OBJECT
+    // FETCH PAYMENT DIRECTLY FROM RAZORPAY
     //
-    // We don't trust only the frontend response.
-    // Fetch payment directly from Razorpay.
+    // Do not trust only frontend response.
     // ========================================================
 
     let razorpayPayment;
 
     try {
       const razorpay =
-        new Razorpay({
-          key_id:
-            process.env.RAZORPAY_KEY_ID,
-
-          key_secret:
-            process.env.RAZORPAY_KEY_SECRET,
-        });
+        getRazorpayInstance();
 
       razorpayPayment =
         await razorpay.payments.fetch(
           razorpayPaymentId
         );
     } catch (error) {
+      console.error(
+        "Razorpay payment fetch error:",
+        error
+      );
+
       payment.status =
         "failed";
 
@@ -557,7 +660,7 @@ const verifyPayment = async (
     // ========================================================
 
     if (
-      razorpayPayment.order_id !==
+      razorpayPayment?.order_id !==
       razorpayOrderId
     ) {
       payment.status =
@@ -584,7 +687,7 @@ const verifyPayment = async (
     // ========================================================
 
     if (
-      razorpayPayment.status !==
+      razorpayPayment?.status !==
       "captured"
     ) {
       payment.status =
@@ -594,13 +697,13 @@ const verifyPayment = async (
         new Date();
 
       payment.failureReason =
-        `Payment is not captured. Current status: ${razorpayPayment.status}`;
+        `Payment is not captured. Current status: ${razorpayPayment?.status}`;
 
       await payment.save();
 
       return next(
         createControllerError(
-          `Payment is not captured. Current status: ${razorpayPayment.status}`,
+          `Payment is not captured. Current status: ${razorpayPayment?.status}`,
           400
         )
       );
@@ -613,7 +716,8 @@ const verifyPayment = async (
     if (
       Number(
         razorpayPayment.amount
-      ) !== expectedAmount
+      ) !==
+      expectedAmount
     ) {
       payment.status =
         "failed";
@@ -661,7 +765,7 @@ const verifyPayment = async (
     // ========================================================
     // UPDATE ORDER
     //
-    // Existing Order system uses:
+    // Current Order system uses:
     // isPaid
     // paidAt
     // paymentResult
@@ -690,50 +794,59 @@ const verifyPayment = async (
     // RESPONSE
     // ========================================================
 
-    res.status(200).json({
-      success: true,
+    return res
+      .status(200)
+      .json({
+        success: true,
 
-      message:
-        "Payment verified successfully",
+        message:
+          "Payment verified successfully",
 
-      payment: {
-        id:
-          payment._id,
+        payment: {
+          id:
+            payment._id,
 
-        orderId:
-          payment.order,
+          orderId:
+            payment.order,
 
-        razorpayOrderId:
-          payment.razorpayOrderId,
+          razorpayOrderId:
+            payment.razorpayOrderId,
 
-        razorpayPaymentId:
-          payment.razorpayPaymentId,
+          razorpayPaymentId:
+            payment.razorpayPaymentId,
 
-        status:
-          payment.status,
+          status:
+            payment.status,
 
-        paidAt:
-          payment.paidAt,
-      },
+          paidAt:
+            payment.paidAt,
+        },
 
-      order: {
-        id:
-          order._id,
+        order: {
+          id:
+            order._id,
 
-        isPaid:
-          order.isPaid,
+          isPaid:
+            order.isPaid,
 
-        paidAt:
-          order.paidAt,
-      },
-    });
+          paidAt:
+            order.paidAt,
+        },
+      });
   } catch (error) {
+    console.error(
+      "Payment verification error:",
+      error
+    );
+
     next(error);
   }
 };
 
 // ============================================================
 // GET MY PAYMENT
+//
+// GET /api/payment/:orderId
 // ============================================================
 
 const getMyPayment = async (
@@ -742,10 +855,6 @@ const getMyPayment = async (
   next
 ) => {
   try {
-    // ========================================================
-    // FIND PAYMENT
-    // ========================================================
-
     const payment =
       await Payment.findOne({
         order:
@@ -755,12 +864,8 @@ const getMyPayment = async (
           req.user._id,
       }).populate(
         "order",
-        "orderNumber totalPrice isPaid paidAt orderStatus"
+        "orderNumber totalPrice isPaid paidAt orderStatus paymentMethod shippingPrice itemsPrice"
       );
-
-    // ========================================================
-    // NOT FOUND
-    // ========================================================
 
     if (!payment) {
       return next(
@@ -771,16 +876,19 @@ const getMyPayment = async (
       );
     }
 
-    // ========================================================
-    // RESPONSE
-    // ========================================================
+    return res
+      .status(200)
+      .json({
+        success: true,
 
-    res.status(200).json({
-      success: true,
-
-      payment,
-    });
+        payment,
+      });
   } catch (error) {
+    console.error(
+      "Get payment error:",
+      error
+    );
+
     next(error);
   }
 };

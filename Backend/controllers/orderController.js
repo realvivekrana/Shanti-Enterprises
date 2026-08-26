@@ -4,6 +4,8 @@
 // Phase 3 - Customer Portal
 // ============================================================
 
+const mongoose = require("mongoose");
+
 const Cart = require("../models/Cart");
 const Order = require("../models/Order");
 const Product = require("../models/Product");
@@ -24,10 +26,20 @@ const generateOrderNumber = () => {
 
 // ============================================================
 // CREATE ORDER FROM CART
+// POST /api/orders
 // ============================================================
 
 const createOrder = async (req, res, next) => {
   try {
+    console.log("");
+    console.log("================================================");
+    console.log("              CREATE ORDER");
+    console.log("================================================");
+
+    // --------------------------------------------------------
+    // SHIPPING ADDRESS
+    // --------------------------------------------------------
+
     const {
       name,
       phone,
@@ -38,6 +50,10 @@ const createOrder = async (req, res, next) => {
       postalCode,
       country = "India",
     } = req.body;
+
+    // --------------------------------------------------------
+    // VALIDATE SHIPPING ADDRESS
+    // --------------------------------------------------------
 
     if (
       !name ||
@@ -56,11 +72,70 @@ const createOrder = async (req, res, next) => {
       return next(error);
     }
 
+    // --------------------------------------------------------
+    // AUTH CHECK
+    // --------------------------------------------------------
+
+    if (!req.user || !req.user.id) {
+      const error = new Error(
+        "Authentication required"
+      );
+
+      error.statusCode = 401;
+
+      return next(error);
+    }
+
+    const userId = req.user.id;
+
+    console.log("User ID:", userId);
+
+    // --------------------------------------------------------
+    // FIND CART
+    // --------------------------------------------------------
+
     const cart = await Cart.findOne({
-      user: req.user.id,
+      user: userId,
     });
 
-    if (!cart || cart.items.length === 0) {
+    // --------------------------------------------------------
+    // CART NOT FOUND
+    // --------------------------------------------------------
+
+    if (!cart) {
+      const error = new Error(
+        "Cart not found"
+      );
+
+      error.statusCode = 404;
+
+      return next(error);
+    }
+
+    // --------------------------------------------------------
+    // DEBUG CART
+    // --------------------------------------------------------
+
+    console.log(
+      "Cart ID:",
+      cart._id.toString()
+    );
+
+    console.log(
+      "Cart Items Count:",
+      Array.isArray(cart.items)
+        ? cart.items.length
+        : 0
+    );
+
+    // --------------------------------------------------------
+    // CART EMPTY
+    // --------------------------------------------------------
+
+    if (
+      !Array.isArray(cart.items) ||
+      cart.items.length === 0
+    ) {
       const error = new Error(
         "Your cart is empty"
       );
@@ -70,9 +145,77 @@ const createOrder = async (req, res, next) => {
       return next(error);
     }
 
-    const productIds = cart.items.map(
-      (item) => item.product
+    // --------------------------------------------------------
+    // EXTRACT PRODUCT IDS
+    //
+    // Supports:
+    //
+    // cartItem.product = ObjectId
+    //
+    // cartItem.product = populated product object
+    //
+    // cartItem.productId = ObjectId
+    //
+    // --------------------------------------------------------
+
+    const productIds = [];
+
+    for (const cartItem of cart.items) {
+      let productId = null;
+
+      if (cartItem.product) {
+        if (
+          typeof cartItem.product === "object" &&
+          cartItem.product._id
+        ) {
+          productId = cartItem.product._id;
+        } else {
+          productId = cartItem.product;
+        }
+      }
+
+      if (!productId && cartItem.productId) {
+        productId = cartItem.productId;
+      }
+
+      if (
+        productId &&
+        mongoose.Types.ObjectId.isValid(
+          productId
+        )
+      ) {
+        productIds.push(
+          productId.toString()
+        );
+      }
+    }
+
+    // --------------------------------------------------------
+    // DEBUG PRODUCT IDS
+    // --------------------------------------------------------
+
+    console.log(
+      "Product IDs:",
+      productIds
     );
+
+    // --------------------------------------------------------
+    // NO VALID PRODUCTS
+    // --------------------------------------------------------
+
+    if (productIds.length === 0) {
+      const error = new Error(
+        "No valid products found in cart"
+      );
+
+      error.statusCode = 400;
+
+      return next(error);
+    }
+
+    // --------------------------------------------------------
+    // FETCH PRODUCTS
+    // --------------------------------------------------------
 
     const products = await Product.find({
       _id: {
@@ -81,9 +224,32 @@ const createOrder = async (req, res, next) => {
       isActive: true,
     });
 
-    if (
-      products.length !== cart.items.length
-    ) {
+    // --------------------------------------------------------
+    // DEBUG PRODUCTS
+    // --------------------------------------------------------
+
+    console.log(
+      "Products Found:",
+      products.length
+    );
+
+    // --------------------------------------------------------
+    // PRODUCT AVAILABILITY
+    // --------------------------------------------------------
+
+    if (products.length !== productIds.length) {
+      console.log(
+        "Cart Product IDs:",
+        productIds
+      );
+
+      console.log(
+        "Database Products:",
+        products.map((product) =>
+          product._id.toString()
+        )
+      );
+
       const error = new Error(
         "One or more products in your cart are no longer available"
       );
@@ -93,15 +259,65 @@ const createOrder = async (req, res, next) => {
       return next(error);
     }
 
+    // --------------------------------------------------------
+    // BUILD ORDER ITEMS
+    // --------------------------------------------------------
+
     const orderItems = [];
 
     let subtotal = 0;
 
     for (const cartItem of cart.items) {
+      // ------------------------------------------------------
+      // GET PRODUCT ID
+      // ------------------------------------------------------
+
+      let productId = null;
+
+      if (cartItem.product) {
+        if (
+          typeof cartItem.product === "object" &&
+          cartItem.product._id
+        ) {
+          productId = cartItem.product._id;
+        } else {
+          productId = cartItem.product;
+        }
+      }
+
+      if (!productId && cartItem.productId) {
+        productId = cartItem.productId;
+      }
+
+      // ------------------------------------------------------
+      // SKIP INVALID PRODUCT
+      // ------------------------------------------------------
+
+      if (
+        !productId ||
+        !mongoose.Types.ObjectId.isValid(
+          productId
+        )
+      ) {
+        console.log(
+          "Invalid cart item:",
+          cartItem
+        );
+
+        continue;
+      }
+
+      const productIdString =
+        productId.toString();
+
+      // ------------------------------------------------------
+      // FIND PRODUCT
+      // ------------------------------------------------------
+
       const product = products.find(
         (item) =>
           item._id.toString() ===
-          cartItem.product.toString()
+          productIdString
       );
 
       if (!product) {
@@ -114,12 +330,20 @@ const createOrder = async (req, res, next) => {
         return next(error);
       }
 
+      // ------------------------------------------------------
+      // QUANTITY
+      // ------------------------------------------------------
+
+      const quantity = Number(
+        cartItem.quantity
+      );
+
       if (
-        cartItem.quantity >
-        product.stock
+        !Number.isInteger(quantity) ||
+        quantity <= 0
       ) {
         const error = new Error(
-          `Insufficient stock for ${product.name}`
+          `Invalid quantity for ${product.name}`
         );
 
         error.statusCode = 400;
@@ -127,26 +351,97 @@ const createOrder = async (req, res, next) => {
         return next(error);
       }
 
+      // ------------------------------------------------------
+      // STOCK CHECK
+      // ------------------------------------------------------
+
+      if (
+        quantity >
+        Number(product.stock)
+      ) {
+        const error = new Error(
+          `Insufficient stock for ${product.name}. Available stock: ${product.stock}`
+        );
+
+        error.statusCode = 400;
+
+        return next(error);
+      }
+
+      // ------------------------------------------------------
+      // ITEM SUBTOTAL
+      // ------------------------------------------------------
+
       const itemSubtotal =
-        product.price *
-        cartItem.quantity;
+        Number(product.price) *
+        quantity;
 
       subtotal += itemSubtotal;
+
+      // ------------------------------------------------------
+      // PUSH ORDER ITEM
+      // ------------------------------------------------------
 
       orderItems.push({
         product: product._id,
         name: product.name,
         image: product.image,
-        quantity: cartItem.quantity,
+        quantity,
         price: product.price,
         unit: product.unit,
       });
     }
 
-    const order = await Order.create({
-      orderNumber: generateOrderNumber(),
+    // --------------------------------------------------------
+    // FINAL ORDER ITEMS CHECK
+    // --------------------------------------------------------
 
-      user: req.user.id,
+    console.log(
+      "Order Items Count:",
+      orderItems.length
+    );
+
+    console.log(
+      "Subtotal:",
+      subtotal
+    );
+
+    if (orderItems.length === 0) {
+      const error = new Error(
+        "No order items"
+      );
+
+      error.statusCode = 400;
+
+      return next(error);
+    }
+
+    // --------------------------------------------------------
+    // AMOUNT CHECK
+    // --------------------------------------------------------
+
+    if (
+      !Number.isFinite(subtotal) ||
+      subtotal <= 0
+    ) {
+      const error = new Error(
+        "Invalid order amount"
+      );
+
+      error.statusCode = 400;
+
+      return next(error);
+    }
+
+    // --------------------------------------------------------
+    // CREATE ORDER
+    // --------------------------------------------------------
+
+    const order = await Order.create({
+      orderNumber:
+        generateOrderNumber(),
+
+      user: userId,
 
       items: orderItems,
 
@@ -156,12 +451,15 @@ const createOrder = async (req, res, next) => {
         addressLine1:
           addressLine1.trim(),
         addressLine2:
-          addressLine2.trim(),
+          addressLine2
+            ? addressLine2.trim()
+            : "",
         city: city.trim(),
         state: state.trim(),
         postalCode:
           postalCode.trim(),
-        country: country.trim(),
+        country:
+          country.trim(),
       },
 
       subtotal,
@@ -173,52 +471,104 @@ const createOrder = async (req, res, next) => {
       orderStatus: "pending",
     });
 
-    for (const cartItem of cart.items) {
+    // --------------------------------------------------------
+    // REDUCE STOCK
+    // --------------------------------------------------------
+
+    for (const orderItem of orderItems) {
       await Product.findByIdAndUpdate(
-        cartItem.product,
+        orderItem.product,
         {
           $inc: {
-            stock: -cartItem.quantity,
+            stock: -orderItem.quantity,
           },
         }
       );
     }
 
+    // --------------------------------------------------------
+    // CLEAR CART
+    // --------------------------------------------------------
+
     cart.items = [];
 
     await cart.save();
 
-    res.status(201).json({
+    // --------------------------------------------------------
+    // SUCCESS RESPONSE
+    // --------------------------------------------------------
+
+    console.log(
+      "Order Created:",
+      order._id.toString()
+    );
+
+    console.log(
+      "Order Number:",
+      order.orderNumber
+    );
+
+    console.log(
+      "================================================"
+    );
+
+    return res.status(201).json({
       success: true,
+
       message:
         "Order created successfully",
 
       order: {
         id: order._id,
+
         orderNumber:
           order.orderNumber,
+
         subtotal:
           order.subtotal,
+
         totalAmount:
           order.totalAmount,
+
         paymentStatus:
           order.paymentStatus,
+
         orderStatus:
           order.orderStatus,
+
         shippingAddress:
           order.shippingAddress,
-        items: order.items,
+
+        items:
+          order.items,
+
         createdAt:
           order.createdAt,
       },
     });
   } catch (error) {
+    console.error("");
+    console.error(
+      "================================================"
+    );
+    console.error(
+      "          CREATE ORDER ERROR"
+    );
+    console.error(
+      "================================================"
+    );
+    console.error(error);
+    console.error(
+      "================================================"
+    );
+
     next(error);
   }
 };
 
 // ============================================================
 // GET CUSTOMER ORDERS
+// GET /api/orders
 // ============================================================
 
 const getMyOrders = async (
@@ -227,6 +577,24 @@ const getMyOrders = async (
   next
 ) => {
   try {
+    // --------------------------------------------------------
+    // AUTH CHECK
+    // --------------------------------------------------------
+
+    if (!req.user || !req.user.id) {
+      const error = new Error(
+        "Authentication required"
+      );
+
+      error.statusCode = 401;
+
+      return next(error);
+    }
+
+    // --------------------------------------------------------
+    // QUERY
+    // --------------------------------------------------------
+
     const {
       page = 1,
       limit = 10,
@@ -246,18 +614,33 @@ const getMyOrders = async (
       50
     );
 
+    // --------------------------------------------------------
+    // FILTER
+    // --------------------------------------------------------
+
     const filter = {
       user: req.user.id,
     };
 
-    if (status.trim()) {
+    if (
+      typeof status === "string" &&
+      status.trim()
+    ) {
       filter.orderStatus =
         status.trim();
     }
 
+    // --------------------------------------------------------
+    // PAGINATION
+    // --------------------------------------------------------
+
     const skip =
       (currentPage - 1) *
       perPage;
+
+    // --------------------------------------------------------
+    // GET ORDERS
+    // --------------------------------------------------------
 
     const [
       orders,
@@ -265,7 +648,7 @@ const getMyOrders = async (
     ] = await Promise.all([
       Order.find(filter)
         .select(
-          "orderNumber items subtotal totalAmount paymentStatus orderStatus createdAt"
+          "orderNumber items subtotal totalAmount paymentStatus orderStatus shippingAddress createdAt updatedAt"
         )
         .sort({
           createdAt: -1,
@@ -276,11 +659,22 @@ const getMyOrders = async (
       Order.countDocuments(filter),
     ]);
 
-    const totalPages = Math.ceil(
-      totalOrders / perPage
-    );
+    // --------------------------------------------------------
+    // TOTAL PAGES
+    // --------------------------------------------------------
 
-    res.status(200).json({
+    const totalPages =
+      totalOrders === 0
+        ? 0
+        : Math.ceil(
+            totalOrders / perPage
+          );
+
+    // --------------------------------------------------------
+    // RESPONSE
+    // --------------------------------------------------------
+
+    return res.status(200).json({
       success: true,
 
       count: orders.length,
@@ -295,12 +689,18 @@ const getMyOrders = async (
       orders,
     });
   } catch (error) {
+    console.error(
+      "GET MY ORDERS ERROR:",
+      error
+    );
+
     next(error);
   }
 };
 
 // ============================================================
 // GET ORDER DETAILS
+// GET /api/orders/:id
 // ============================================================
 
 const getOrderById = async (
@@ -309,6 +709,42 @@ const getOrderById = async (
   next
 ) => {
   try {
+    // --------------------------------------------------------
+    // AUTH CHECK
+    // --------------------------------------------------------
+
+    if (!req.user || !req.user.id) {
+      const error = new Error(
+        "Authentication required"
+      );
+
+      error.statusCode = 401;
+
+      return next(error);
+    }
+
+    // --------------------------------------------------------
+    // VALIDATE ORDER ID
+    // --------------------------------------------------------
+
+    if (
+      !mongoose.Types.ObjectId.isValid(
+        req.params.id
+      )
+    ) {
+      const error = new Error(
+        "Invalid order ID"
+      );
+
+      error.statusCode = 400;
+
+      return next(error);
+    }
+
+    // --------------------------------------------------------
+    // FIND ORDER
+    // --------------------------------------------------------
+
     const order =
       await Order.findOne({
         _id: req.params.id,
@@ -317,6 +753,10 @@ const getOrderById = async (
         "items.product",
         "name slug image price unit"
       );
+
+    // --------------------------------------------------------
+    // ORDER NOT FOUND
+    // --------------------------------------------------------
 
     if (!order) {
       const error = new Error(
@@ -328,14 +768,27 @@ const getOrderById = async (
       return next(error);
     }
 
-    res.status(200).json({
+    // --------------------------------------------------------
+    // RESPONSE
+    // --------------------------------------------------------
+
+    return res.status(200).json({
       success: true,
       order,
     });
   } catch (error) {
+    console.error(
+      "GET ORDER DETAILS ERROR:",
+      error
+    );
+
     next(error);
   }
 };
+
+// ============================================================
+// EXPORTS
+// ============================================================
 
 module.exports = {
   createOrder,
