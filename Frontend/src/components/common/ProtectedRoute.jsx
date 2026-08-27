@@ -1,7 +1,7 @@
 // ============================================================
 // SHANTI ENTERPRISES
 // Protected Route
-// Frontend Phase 1 - Foundation
+// Frontend Phase 7 - Authentication & Navigation
 // ============================================================
 
 import {
@@ -33,7 +33,7 @@ function ProtectedRoute({
     useLocation();
 
   // ==========================================================
-  // AUTH CHECK LOADING
+  // AUTH CHECK
   // ==========================================================
 
   if (loading) {
@@ -45,7 +45,7 @@ function ProtectedRoute({
   }
 
   // ==========================================================
-  // NOT LOGGED IN
+  // NOT AUTHENTICATED
   // ==========================================================
 
   if (!isAuthenticated) {
@@ -74,6 +74,9 @@ function ProtectedRoute({
       <Navigate
         to="/unauthorized"
         replace
+        state={{
+          from: location,
+        }}
       />
     );
   }

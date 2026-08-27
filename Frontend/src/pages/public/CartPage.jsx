@@ -1,11 +1,16 @@
 // ============================================================
 // SHANTI ENTERPRISES
 // Cart Page
-// Frontend Phase 6 - UI/UX
+// Frontend Phase 6 - Complete UI/UX
 // ============================================================
 
 import {
+  useState,
+} from "react";
+
+import {
   Link,
+  useNavigate,
 } from "react-router-dom";
 
 import {
@@ -13,6 +18,31 @@ import {
 } from "../../context/CartContext";
 
 import EmptyState from "../../components/common/EmptyState";
+
+// ============================================================
+// IMAGE URL HELPER
+// ============================================================
+
+const getImageUrl = (
+  image
+) => {
+  if (!image) {
+    return "";
+  }
+
+  if (
+    typeof image === "string"
+  ) {
+    return image;
+  }
+
+  return (
+    image.url ||
+    image.secure_url ||
+    image.src ||
+    ""
+  );
+};
 
 // ============================================================
 // CART PAGE
@@ -28,6 +58,167 @@ function CartPage() {
     clearCart,
   } = useCart();
 
+  const navigate =
+    useNavigate();
+
+  const [
+    imageErrors,
+    setImageErrors,
+  ] = useState({});
+
+  const [
+    removingProductId,
+    setRemovingProductId,
+  ] = useState(null);
+
+  const [
+    clearingCart,
+    setClearingCart,
+  ] = useState(false);
+
+  // ==========================================================
+  // REMOVE ITEM
+  // ==========================================================
+
+  const handleRemove = async (
+    productId
+  ) => {
+    if (
+      removingProductId
+    ) {
+      return;
+    }
+
+    try {
+      setRemovingProductId(
+        productId
+      );
+
+      await removeFromCart(
+        productId
+      );
+    } catch (error) {
+      console.error(
+        "Remove cart item error:",
+        error
+      );
+    } finally {
+      setRemovingProductId(
+        null
+      );
+    }
+  };
+
+  // ==========================================================
+  // CLEAR CART
+  // ==========================================================
+
+  const handleClearCart =
+    async () => {
+      if (
+        clearingCart ||
+        cartItems.length === 0
+      ) {
+        return;
+      }
+
+      const confirmed =
+        window.confirm(
+          "Are you sure you want to remove all items from your cart?"
+        );
+
+      if (!confirmed) {
+        return;
+      }
+
+      try {
+        setClearingCart(
+          true
+        );
+
+        await clearCart();
+      } catch (error) {
+        console.error(
+          "Clear cart error:",
+          error
+        );
+      } finally {
+        setClearingCart(
+          false
+        );
+      }
+    };
+
+  // ==========================================================
+  // IMAGE ERROR
+  // ==========================================================
+
+  const handleImageError =
+    (productId) => {
+      setImageErrors(
+        (current) => ({
+          ...current,
+          [productId]: true,
+        })
+      );
+    };
+
+  // ==========================================================
+  // UPDATE QUANTITY
+  // ==========================================================
+
+  const handleQuantityChange =
+    (
+      item,
+      requestedQuantity
+    ) => {
+      const moq =
+        Number(
+          item.moq
+        ) || 1;
+
+      const stock =
+        Number(
+          item.stock ??
+            item.countInStock ??
+            item.inventory
+        );
+
+      let nextQuantity =
+        Number(
+          requestedQuantity
+        );
+
+      if (
+        Number.isNaN(
+          nextQuantity
+        ) ||
+        nextQuantity < moq
+      ) {
+        nextQuantity = moq;
+      }
+
+      // ------------------------------------------------------
+      // STOCK LIMIT
+      // ------------------------------------------------------
+
+      if (
+        Number.isFinite(stock) &&
+        stock > 0
+      ) {
+        nextQuantity =
+          Math.min(
+            nextQuantity,
+            stock
+          );
+      }
+
+      updateQuantity(
+        item.productId,
+        nextQuantity
+      );
+    };
+
   // ==========================================================
   // EMPTY CART
   // ==========================================================
@@ -40,22 +231,30 @@ function CartPage() {
 
         <div className="cart-container">
 
+          {/* HEADER */}
+
           <div className="cart-page-header">
 
-            <span className="cart-eyebrow">
-              YOUR SHOPPING CART
-            </span>
+            <div>
 
-            <h1>
-              Shopping Cart
-            </h1>
+              <span className="cart-eyebrow">
+                YOUR SHOPPING CART
+              </span>
 
-            <p>
-              Review your selected products
-              before checkout.
-            </p>
+              <h1>
+                Shopping Cart
+              </h1>
+
+              <p>
+                Review your selected
+                products before checkout.
+              </p>
+
+            </div>
 
           </div>
+
+          {/* EMPTY CART */}
 
           <div className="cart-empty-card">
 
@@ -153,10 +352,15 @@ function CartPage() {
                 type="button"
                 className="cart-clear-button"
                 onClick={
-                  clearCart
+                  handleClearCart
+                }
+                disabled={
+                  clearingCart
                 }
               >
-                Clear Cart
+                {clearingCart
+                  ? "Clearing..."
+                  : "Clear Cart"}
               </button>
 
             </div>
@@ -165,6 +369,8 @@ function CartPage() {
 
               {cartItems.map(
                 (item) => {
+                  const itemId =
+                    item.productId;
 
                   const itemPrice =
                     Number(
@@ -181,39 +387,86 @@ function CartPage() {
                       item.moq
                     ) || 1;
 
+                  const itemStock =
+                    Number(
+                      item.stock ??
+                        item.countInStock ??
+                        item.inventory
+                    );
+
+                  const hasStockLimit =
+                    Number.isFinite(
+                      itemStock
+                    ) &&
+                    itemStock > 0;
+
                   const itemTotal =
                     itemPrice *
                     itemQuantity;
 
+                  const image =
+                    getImageUrl(
+                      item.image
+                    );
+
+                  const imageFailed =
+                    imageErrors[
+                      itemId
+                    ];
+
+                  const canDecrease =
+                    itemQuantity >
+                    itemMoq;
+
+                  const canIncrease =
+                    !hasStockLimit ||
+                    itemQuantity <
+                      itemStock;
+
                   return (
                     <article
                       className="cart-item"
-                      key={
-                        item.productId
-                      }
+                      key={itemId}
                     >
 
-                      {/* PRODUCT IMAGE */}
+                      {/* ====================================
+                          PRODUCT IMAGE
+                          ==================================== */}
 
                       <Link
-                        to={`/products/${item.productId}`}
+                        to={`/products/${itemId}`}
                         className="cart-item-image-link"
+                        aria-label={`View ${item.name}`}
                       >
 
                         <div className="cart-item-image">
 
-                          {item.image ? (
+                          {image &&
+                          !imageFailed ? (
                             <img
-                              src={
-                                item.image
-                              }
+                              src={image}
                               alt={
-                                item.name
+                                item.name ||
+                                "Product"
+                              }
+                              loading="lazy"
+                              onError={() =>
+                                handleImageError(
+                                  itemId
+                                )
                               }
                             />
                           ) : (
                             <div className="cart-item-no-image">
-                              SE
+
+                              <span>
+                                SE
+                              </span>
+
+                              <small>
+                                No Image
+                              </small>
+
                             </div>
                           )}
 
@@ -221,41 +474,63 @@ function CartPage() {
 
                       </Link>
 
-                      {/* PRODUCT INFO */}
+                      {/* ====================================
+                          PRODUCT INFO
+                          ==================================== */}
 
                       <div className="cart-item-info">
 
                         <Link
-                          to={`/products/${item.productId}`}
+                          to={`/products/${itemId}`}
                           className="cart-item-name"
                         >
-                          {item.name}
+                          {item.name ||
+                            "Product"}
                         </Link>
 
+                        {item.category && (
+                          <span className="cart-item-category">
+                            {typeof item.category ===
+                            "object"
+                              ? item.category?.name
+                              : item.category}
+                          </span>
+                        )}
+
                         <p className="cart-item-price">
+
                           ₹
                           {itemPrice.toLocaleString(
-                            "en-IN"
+                            "en-IN",
+                            {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            }
                           )}
+
                           <span>
                             / unit
                           </span>
+
                         </p>
 
                         <p className="cart-item-moq">
-                          Minimum Order:
-                          {" "}
+
+                          Minimum Order:{" "}
+
                           <strong>
                             {itemMoq}
-                          </strong>
-                          {" "}
-                          unit
-                          {itemMoq > 1
-                            ? "s"
-                            : ""}
+                          </strong>{" "}
+
+                          {itemMoq === 1
+                            ? "unit"
+                            : "units"}
+
                         </p>
 
-                        {/* QUANTITY */}
+                        {/* ==================================
+                            QUANTITY
+                            ================================== */}
 
                         <div className="cart-item-quantity-row">
 
@@ -268,20 +543,16 @@ function CartPage() {
                             <button
                               type="button"
                               disabled={
-                                itemQuantity <=
-                                itemMoq
+                                !canDecrease
                               }
                               onClick={() =>
-                                updateQuantity(
-                                  item.productId,
-                                  Math.max(
-                                    itemMoq,
-                                    itemQuantity -
-                                      1
-                                  )
+                                handleQuantityChange(
+                                  item,
+                                  itemQuantity -
+                                    1
                                 )
                               }
-                              aria-label="Decrease quantity"
+                              aria-label={`Decrease ${item.name} quantity`}
                             >
                               −
                             </button>
@@ -291,38 +562,40 @@ function CartPage() {
                               min={
                                 itemMoq
                               }
+                              max={
+                                hasStockLimit
+                                  ? itemStock
+                                  : undefined
+                              }
                               value={
                                 itemQuantity
                               }
                               onChange={(
                                 event
                               ) =>
-                                updateQuantity(
-                                  item.productId,
-                                  Math.max(
-                                    itemMoq,
-                                    Number(
-                                      event
-                                        .target
-                                        .value
-                                    ) ||
-                                      itemMoq
-                                  )
+                                handleQuantityChange(
+                                  item,
+                                  event
+                                    .target
+                                    .value
                                 )
                               }
-                              aria-label="Cart quantity"
+                              aria-label={`${item.name} quantity`}
                             />
 
                             <button
                               type="button"
+                              disabled={
+                                !canIncrease
+                              }
                               onClick={() =>
-                                updateQuantity(
-                                  item.productId,
+                                handleQuantityChange(
+                                  item,
                                   itemQuantity +
                                     1
                                 )
                               }
-                              aria-label="Increase quantity"
+                              aria-label={`Increase ${item.name} quantity`}
                             >
                               +
                             </button>
@@ -331,9 +604,26 @@ function CartPage() {
 
                         </div>
 
+                        {/* STOCK INFORMATION */}
+
+                        {hasStockLimit && (
+                          <small className="cart-item-stock">
+
+                            {itemStock}{" "}
+                            {itemStock ===
+                            1
+                              ? "unit"
+                              : "units"}{" "}
+                            available
+
+                          </small>
+                        )}
+
                       </div>
 
-                      {/* TOTAL + REMOVE */}
+                      {/* ====================================
+                          TOTAL + REMOVE
+                          ==================================== */}
 
                       <div className="cart-item-actions">
 
@@ -344,10 +634,16 @@ function CartPage() {
                           </span>
 
                           <strong>
+
                             ₹
                             {itemTotal.toLocaleString(
-                              "en-IN"
+                              "en-IN",
+                              {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              }
                             )}
+
                           </strong>
 
                         </div>
@@ -356,12 +652,19 @@ function CartPage() {
                           type="button"
                           className="cart-remove-button"
                           onClick={() =>
-                            removeFromCart(
-                              item.productId
+                            handleRemove(
+                              itemId
                             )
                           }
+                          disabled={
+                            removingProductId ===
+                            itemId
+                          }
                         >
-                          Remove
+                          {removingProductId ===
+                          itemId
+                            ? "Removing..."
+                            : "Remove"}
                         </button>
 
                       </div>
@@ -373,7 +676,9 @@ function CartPage() {
 
             </div>
 
-            {/* CONTINUE SHOPPING */}
+            {/* ==================================================
+                CONTINUE SHOPPING
+                ================================================== */}
 
             <Link
               to="/products"
@@ -421,10 +726,18 @@ function CartPage() {
               </span>
 
               <strong>
+
                 ₹
-                {subtotal.toLocaleString(
-                  "en-IN"
+                {Number(
+                  subtotal || 0
+                ).toLocaleString(
+                  "en-IN",
+                  {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  }
                 )}
+
               </strong>
 
             </div>
@@ -438,13 +751,23 @@ function CartPage() {
               </span>
 
               <strong>
+
                 ₹
-                {subtotal.toLocaleString(
-                  "en-IN"
+                {Number(
+                  subtotal || 0
+                ).toLocaleString(
+                  "en-IN",
+                  {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  }
                 )}
+
               </strong>
 
             </div>
+
+            {/* CHECKOUT */}
 
             <Link
               to="/checkout"
@@ -453,9 +776,25 @@ function CartPage() {
               Proceed to Checkout
             </Link>
 
+            {/* VIEW CART */}
+
+            <button
+              type="button"
+              className="cart-summary-products-button"
+              onClick={() =>
+                navigate(
+                  "/products"
+                )
+              }
+            >
+              Continue Shopping
+            </button>
+
             <p className="cart-summary-note">
-              Review your address and order
-              details during checkout.
+
+              Review your address and
+              order details during checkout.
+
             </p>
 
           </aside>

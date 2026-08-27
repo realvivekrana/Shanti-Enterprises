@@ -1,7 +1,15 @@
 // ============================================================
 // SHANTI ENTERPRISES
 // Order Tracking Component
-// Frontend Phase 4 - Customer
+// Frontend Phase 6 - Complete Customer Tracking
+// ============================================================
+
+import {
+  Link,
+} from "react-router-dom";
+
+// ============================================================
+// TRACKING STEPS
 // ============================================================
 
 const TRACKING_STEPS = [
@@ -16,7 +24,7 @@ const TRACKING_STEPS = [
     key: "processing",
     title: "Processing",
     description:
-      "Your order is being prepared.",
+      "Your order is being prepared for dispatch.",
   },
 
   {
@@ -41,14 +49,21 @@ const TRACKING_STEPS = [
 const normalizeStatus = (
   status
 ) => {
-  const value = String(
-    status || "pending"
-  )
-    .trim()
-    .toLowerCase();
+  const value =
+    String(
+      status || "pending"
+    )
+      .trim()
+      .toLowerCase()
+      .replace(
+        /-/g,
+        "_"
+      );
 
   if (
+    value === "pending" ||
     value === "placed" ||
+    value === "order_placed" ||
     value === "order placed" ||
     value === "created"
   ) {
@@ -57,7 +72,10 @@ const normalizeStatus = (
 
   if (
     value === "confirmed" ||
-    value === "processing"
+    value === "processing" ||
+    value === "processed" ||
+    value === "packed" ||
+    value === "ready_to_ship"
   ) {
     return "processing";
   }
@@ -65,7 +83,9 @@ const normalizeStatus = (
   if (
     value === "shipped" ||
     value === "out_for_delivery" ||
-    value === "out for delivery"
+    value === "out for delivery" ||
+    value === "dispatched" ||
+    value === "in_transit"
   ) {
     return "shipped";
   }
@@ -88,6 +108,81 @@ const normalizeStatus = (
 };
 
 // ============================================================
+// STATUS LABEL
+// ============================================================
+
+const getStatusLabel = (
+  status
+) => {
+  const normalized =
+    normalizeStatus(
+      status
+    );
+
+  if (
+    normalized ===
+    "processing"
+  ) {
+    return "Processing";
+  }
+
+  if (
+    normalized ===
+    "shipped"
+  ) {
+    return "Shipped";
+  }
+
+  if (
+    normalized ===
+    "delivered"
+  ) {
+    return "Delivered";
+  }
+
+  if (
+    normalized ===
+    "cancelled"
+  ) {
+    return "Cancelled";
+  }
+
+  return "Order Placed";
+};
+
+// ============================================================
+// DATE FORMATTER
+// ============================================================
+
+const formatDate = (
+  value
+) => {
+  if (!value) {
+    return "";
+  }
+
+  const date =
+    new Date(value);
+
+  if (
+    Number.isNaN(
+      date.getTime()
+    )
+  ) {
+    return "";
+  }
+
+  return date.toLocaleDateString(
+    "en-IN",
+    {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }
+  );
+};
+
+// ============================================================
 // ORDER TRACKING
 // ============================================================
 
@@ -98,33 +193,94 @@ function OrderTracking({
     return null;
   }
 
-  const status = normalizeStatus(
-    order.status ||
-      order.orderStatus
-  );
+  // ==========================================================
+  // STATUS
+  // ==========================================================
+
+  const status =
+    normalizeStatus(
+      order.status ||
+        order.orderStatus
+    );
 
   // ==========================================================
   // CANCELLED
   // ==========================================================
 
-  if (status === "cancelled") {
+  if (
+    status ===
+    "cancelled"
+  ) {
     return (
-      <section>
+      <section className="order-tracking">
 
-        <h2>
-          Order Tracking
-        </h2>
+        <div className="order-tracking-header">
 
-        <div>
+          <div>
 
-          <h3>
-            Order Cancelled
-          </h3>
+            <span className="order-tracking-eyebrow">
+              ORDER PROGRESS
+            </span>
 
-          <p>
-            This order has been
-            cancelled.
-          </p>
+            <h2>
+              Order Tracking
+            </h2>
+
+          </div>
+
+          <span className="order-tracking-cancelled-badge">
+            Cancelled
+          </span>
+
+        </div>
+
+        <div className="order-tracking-cancelled-card">
+
+          <div className="order-tracking-cancelled-icon">
+            ×
+          </div>
+
+          <div>
+
+            <h3>
+              Order Cancelled
+            </h3>
+
+            <p>
+              This order has been
+              cancelled and will not
+              continue through the
+              delivery process.
+            </p>
+
+            {order.updatedAt && (
+              <small>
+                Last updated:{" "}
+                {formatDate(
+                  order.updatedAt
+                )}
+              </small>
+            )}
+
+          </div>
+
+        </div>
+
+        <div className="order-tracking-cancelled-actions">
+
+          <Link
+            to="/orders"
+            className="order-tracking-secondary-button"
+          >
+            ← My Orders
+          </Link>
+
+          <Link
+            to="/products"
+            className="order-tracking-primary-button"
+          >
+            Continue Shopping
+          </Link>
 
         </div>
 
@@ -132,69 +288,423 @@ function OrderTracking({
     );
   }
 
+  // ==========================================================
+  // CURRENT STEP
+  // ==========================================================
+
   const currentIndex =
     TRACKING_STEPS.findIndex(
       (step) =>
-        step.key === status
+        step.key ===
+        status
     );
 
+  const safeCurrentIndex =
+    currentIndex >= 0
+      ? currentIndex
+      : 0;
+
+  // ==========================================================
+  // PAYMENT STATUS
+  // ==========================================================
+
+  const paymentStatus =
+    String(
+      order.paymentStatus ||
+        ""
+    )
+      .trim()
+      .toLowerCase();
+
+  const paymentSuccessful =
+    paymentStatus ===
+      "paid" ||
+    paymentStatus ===
+      "completed" ||
+    paymentStatus ===
+      "success" ||
+    paymentStatus ===
+      "successful";
+
+  // ==========================================================
+  // SHIPPING INFO
+  // ==========================================================
+
+  const shipment =
+    order.shipment ||
+    order.shipping ||
+    {};
+
+  const trackingNumber =
+    shipment.trackingNumber ||
+    shipment.trackingId ||
+    order.trackingNumber ||
+    order.trackingId ||
+    "";
+
+  const courier =
+    shipment.courier ||
+    shipment.carrier ||
+    order.courier ||
+    order.carrier ||
+    "";
+
+  const estimatedDelivery =
+    shipment.estimatedDelivery ||
+    order.estimatedDelivery ||
+    order.expectedDelivery ||
+    "";
+
+  // ==========================================================
+  // PAGE
+  // ==========================================================
+
   return (
-    <section>
+    <section className="order-tracking">
 
-      <h2>
-        Order Tracking
-      </h2>
+      {/* ==================================================
+          HEADER
+          ================================================== */}
 
-      <div>
+      <div className="order-tracking-header">
+
+        <div>
+
+          <span className="order-tracking-eyebrow">
+            ORDER PROGRESS
+          </span>
+
+          <h2>
+            Order Tracking
+          </h2>
+
+        </div>
+
+        <span className="order-tracking-current-badge">
+
+          {getStatusLabel(
+            status
+          )}
+
+        </span>
+
+      </div>
+
+      {/* ==================================================
+          TIMELINE
+          ================================================== */}
+
+      <div className="order-tracking-timeline">
 
         {TRACKING_STEPS.map(
-          (step, index) => {
+          (
+            step,
+            index
+          ) => {
 
             const completed =
               index <=
-              currentIndex;
+              safeCurrentIndex;
 
             const active =
               index ===
-              currentIndex;
+              safeCurrentIndex;
+
+            const upcoming =
+              index >
+              safeCurrentIndex;
 
             return (
               <div
-                key={step.key}
+                className={`order-tracking-step ${
+                  completed
+                    ? "order-tracking-step-completed"
+                    : ""
+                } ${
+                  active
+                    ? "order-tracking-step-active"
+                    : ""
+                } ${
+                  upcoming
+                    ? "order-tracking-step-upcoming"
+                    : ""
+                }`}
+                key={
+                  step.key
+                }
               >
 
-                <div>
+                {/* STEP ICON */}
+
+                <div className="order-tracking-step-marker">
 
                   <span>
+
                     {completed
                       ? "✓"
                       : index + 1}
+
                   </span>
 
                 </div>
 
-                <div>
+                {/* STEP CONTENT */}
 
-                  <h3>
-                    {step.title}
-                  </h3>
+                <div className="order-tracking-step-content">
+
+                  <div className="order-tracking-step-heading">
+
+                    <h3>
+                      {step.title}
+                    </h3>
+
+                    {active && (
+                      <span className="order-tracking-current-label">
+                        Current
+                      </span>
+                    )}
+
+                    {completed &&
+                      !active && (
+                        <span className="order-tracking-completed-label">
+                          Completed
+                        </span>
+                      )}
+
+                  </div>
 
                   <p>
                     {step.description}
                   </p>
 
-                  {active && (
-                    <strong>
-                      Current Status
-                    </strong>
-                  )}
-
                 </div>
+
+                {/* CONNECTOR */}
+
+                {index <
+                  TRACKING_STEPS.length -
+                    1 && (
+                  <div className="order-tracking-connector" />
+                )}
 
               </div>
             );
           }
         )}
+
+      </div>
+
+      {/* ==================================================
+          CURRENT STATUS MESSAGE
+          ================================================== */}
+
+      <div className="order-tracking-status-card">
+
+        <div className="order-tracking-status-icon">
+          {status ===
+          "delivered"
+            ? "✓"
+            : status ===
+                "shipped"
+              ? "🚚"
+              : status ===
+                  "processing"
+                ? "📦"
+                : "✓"}
+        </div>
+
+        <div>
+
+          <span>
+            Current Status
+          </span>
+
+          <strong>
+            {getStatusLabel(
+              status
+            )}
+          </strong>
+
+          <p>
+
+            {status ===
+              "delivered" &&
+              "Your order has been delivered successfully."}
+
+            {status ===
+              "shipped" &&
+              "Your order is currently on its way to you."}
+
+            {status ===
+              "processing" &&
+              "Your order is being prepared for dispatch."}
+
+            {status ===
+              "pending" &&
+              "Your order has been received and is awaiting processing."}
+
+          </p>
+
+        </div>
+
+      </div>
+
+      {/* ==================================================
+          SHIPPING INFORMATION
+          ================================================== */}
+
+      {(trackingNumber ||
+        courier ||
+        estimatedDelivery) && (
+        <div className="order-tracking-shipping-card">
+
+          <div className="order-tracking-shipping-header">
+
+            <span>
+              DELIVERY INFORMATION
+            </span>
+
+            <h3>
+              Shipment Details
+            </h3>
+
+          </div>
+
+          <div className="order-tracking-shipping-grid">
+
+            {trackingNumber && (
+              <div>
+
+                <span>
+                  Tracking Number
+                </span>
+
+                <strong>
+                  {trackingNumber}
+                </strong>
+
+              </div>
+            )}
+
+            {courier && (
+              <div>
+
+                <span>
+                  Courier
+                </span>
+
+                <strong>
+                  {courier}
+                </strong>
+
+              </div>
+            )}
+
+            {estimatedDelivery && (
+              <div>
+
+                <span>
+                  Expected Delivery
+                </span>
+
+                <strong>
+                  {formatDate(
+                    estimatedDelivery
+                  )}
+                </strong>
+
+              </div>
+            )}
+
+          </div>
+
+        </div>
+      )}
+
+      {/* ==================================================
+          PAYMENT INFORMATION
+          ================================================== */}
+
+      {order.paymentStatus && (
+        <div className="order-tracking-payment-card">
+
+          <div className="order-tracking-payment-icon">
+
+            {paymentSuccessful
+              ? "✓"
+              : "₹"}
+
+          </div>
+
+          <div>
+
+            <span>
+              PAYMENT
+            </span>
+
+            <strong>
+              {paymentSuccessful
+                ? "Payment Successful"
+                : String(
+                    order.paymentStatus
+                  )
+                    .replace(
+                      /[-_]/g,
+                      " "
+                    )
+                    .replace(
+                      /\b\w/g,
+                      (
+                        letter
+                      ) =>
+                        letter.toUpperCase()
+                    )}
+            </strong>
+
+            {order.paymentMethod && (
+              <p>
+                Method:{" "}
+                {String(
+                  order.paymentMethod
+                )
+                  .replace(
+                    /[-_]/g,
+                    " "
+                  )
+                  .replace(
+                    /\b\w/g,
+                    (
+                      letter
+                    ) =>
+                      letter.toUpperCase()
+                  )}
+              </p>
+            )}
+
+          </div>
+
+        </div>
+      )}
+
+      {/* ==================================================
+          ACTIONS
+          ================================================== */}
+
+      <div className="order-tracking-actions">
+
+        <Link
+          to="/orders"
+          className="order-tracking-secondary-button"
+        >
+          ← My Orders
+        </Link>
+
+        <Link
+          to="/products"
+          className="order-tracking-primary-button"
+        >
+          Continue Shopping
+        </Link>
 
       </div>
 

@@ -107,8 +107,11 @@ function PaymentPage() {
     async () => {
       try {
         setLoading(true);
-
         setError("");
+
+        // ----------------------------------------------------
+        // LOAD RAZORPAY SCRIPT
+        // ----------------------------------------------------
 
         const scriptLoaded =
           await loadRazorpayScript();
@@ -128,7 +131,24 @@ function PaymentPage() {
             orderId
           );
 
+        // ----------------------------------------------------
+        // BACKEND RESPONSE
+        // Backend returns:
+        //
+        // {
+        //   success: true,
+        //   payment: {
+        //     razorpayOrderId,
+        //     amount,
+        //     currency,
+        //     keyId
+        //   }
+        // }
+        // ----------------------------------------------------
+
         const paymentOrder =
+          response?.payment ||
+          response?.data?.payment ||
           response?.order ||
           response?.paymentOrder ||
           response?.data?.order ||
@@ -136,22 +156,44 @@ function PaymentPage() {
           response?.data ||
           response;
 
+        // ----------------------------------------------------
+        // RAZORPAY ORDER ID
+        // ----------------------------------------------------
+
         const razorpayOrderId =
+          paymentOrder?.razorpayOrderId ||
           paymentOrder?.id ||
           paymentOrder?.orderId;
 
+        // ----------------------------------------------------
+        // AMOUNT
+        // ----------------------------------------------------
+
         const amount =
           paymentOrder?.amount;
+
+        // ----------------------------------------------------
+        // CURRENCY
+        // ----------------------------------------------------
 
         const currency =
           paymentOrder?.currency ||
           "INR";
 
+        // ----------------------------------------------------
+        // RAZORPAY KEY
+        // ----------------------------------------------------
+
         const keyId =
+          paymentOrder?.keyId ||
           response?.keyId ||
           response?.data?.keyId ||
           import.meta.env
             .VITE_RAZORPAY_KEY_ID;
+
+        // ----------------------------------------------------
+        // VALIDATION
+        // ----------------------------------------------------
 
         if (!razorpayOrderId) {
           throw new Error(
@@ -165,11 +207,19 @@ function PaymentPage() {
           );
         }
 
-        if (!amount) {
+        if (
+          amount === undefined ||
+          amount === null ||
+          Number(amount) <= 0
+        ) {
           throw new Error(
             "Payment amount was not returned by the server."
           );
         }
+
+        // ----------------------------------------------------
+        // PAYMENT STARTED
+        // ----------------------------------------------------
 
         setPaymentStarted(
           true
@@ -182,7 +232,9 @@ function PaymentPage() {
         const options = {
           key: keyId,
 
-          amount,
+          amount: Number(
+            amount
+          ),
 
           currency,
 
@@ -201,21 +253,27 @@ function PaymentPage() {
             ) {
               try {
                 setLoading(true);
-
                 setError("");
+
+                // ------------------------------------------------
+                // VERIFY PAYMENT
+                // ------------------------------------------------
 
                 const verification =
                   await verifyPayment({
                     orderId,
 
                     razorpay_order_id:
-                      paymentResponse.razorpay_order_id,
+                      paymentResponse
+                        .razorpay_order_id,
 
                     razorpay_payment_id:
-                      paymentResponse.razorpay_payment_id,
+                      paymentResponse
+                        .razorpay_payment_id,
 
                     razorpay_signature:
-                      paymentResponse.razorpay_signature,
+                      paymentResponse
+                        .razorpay_signature,
                   });
 
                 if (
@@ -227,6 +285,10 @@ function PaymentPage() {
                       "Payment verification failed."
                   );
                 }
+
+                // ------------------------------------------------
+                // PAYMENT SUCCESS
+                // ------------------------------------------------
 
                 navigate(
                   `/order-success/${orderId}`,
@@ -267,6 +329,10 @@ function PaymentPage() {
           },
         };
 
+        // ----------------------------------------------------
+        // RAZORPAY CHECK
+        // ----------------------------------------------------
+
         if (
           !window.Razorpay
         ) {
@@ -275,10 +341,18 @@ function PaymentPage() {
           );
         }
 
+        // ----------------------------------------------------
+        // OPEN RAZORPAY
+        // ----------------------------------------------------
+
         const razorpay =
           new window.Razorpay(
             options
           );
+
+        // ----------------------------------------------------
+        // PAYMENT FAILED
+        // ----------------------------------------------------
 
         razorpay.on(
           "payment.failed",
@@ -373,6 +447,7 @@ function PaymentPage() {
             </span>
 
             <div>
+
               <strong>
                 Delivery
               </strong>
@@ -380,6 +455,7 @@ function PaymentPage() {
               <small>
                 Address
               </small>
+
             </div>
 
           </div>
@@ -393,6 +469,7 @@ function PaymentPage() {
             </span>
 
             <div>
+
               <strong>
                 Summary
               </strong>
@@ -400,6 +477,7 @@ function PaymentPage() {
               <small>
                 Review order
               </small>
+
             </div>
 
           </div>
@@ -413,6 +491,7 @@ function PaymentPage() {
             </span>
 
             <div>
+
               <strong>
                 Payment
               </strong>
@@ -420,6 +499,7 @@ function PaymentPage() {
               <small>
                 Complete order
               </small>
+
             </div>
 
           </div>
@@ -540,7 +620,8 @@ function PaymentPage() {
               </span>
 
               <strong>
-                {orderId || "Unavailable"}
+                {orderId ||
+                  "Unavailable"}
               </strong>
 
             </div>

@@ -1,7 +1,7 @@
 // ============================================================
 // SHANTI ENTERPRISES
-// Customer Order History
-// Frontend Phase 6 - UI/UX
+// Orders Page
+// Frontend Phase 6 - Complete Customer Orders
 // ============================================================
 
 import {
@@ -25,74 +25,179 @@ import ErrorMessage from "../../components/common/ErrorMessage";
 import EmptyState from "../../components/common/EmptyState";
 
 // ============================================================
-// HELPERS
+// EXTRACT ORDERS
 // ============================================================
 
-const getOrderStatus = (
-  order
+const extractOrders = (
+  responseData
 ) => {
-  return (
-    order.status ||
-    order.orderStatus ||
-    "Pending"
+  if (
+    Array.isArray(
+      responseData
+    )
+  ) {
+    return responseData;
+  }
+
+  if (
+    Array.isArray(
+      responseData?.orders
+    )
+  ) {
+    return responseData.orders;
+  }
+
+  if (
+    Array.isArray(
+      responseData?.data
+    )
+  ) {
+    return responseData.data;
+  }
+
+  if (
+    Array.isArray(
+      responseData?.data?.orders
+    )
+  ) {
+    return responseData.data.orders;
+  }
+
+  return [];
+};
+
+// ============================================================
+// GET PAGINATION
+// ============================================================
+
+const extractPagination = (
+  responseData
+) => {
+  const pagination =
+    responseData?.pagination ||
+    responseData?.data?.pagination ||
+    {};
+
+  return {
+    page:
+      Number(
+        pagination.page
+      ) || 1,
+
+    limit:
+      Number(
+        pagination.limit
+      ) || 10,
+
+    total:
+      Number(
+        pagination.total
+      ) || 0,
+
+    totalPages:
+      Number(
+        pagination.totalPages
+      ) || 1,
+  };
+};
+
+// ============================================================
+// FORMAT DATE
+// ============================================================
+
+const formatDate = (
+  value
+) => {
+  if (!value) {
+    return "Date unavailable";
+  }
+
+  const date =
+    new Date(value);
+
+  if (
+    Number.isNaN(
+      date.getTime()
+    )
+  ) {
+    return "Date unavailable";
+  }
+
+  return date.toLocaleDateString(
+    "en-IN",
+    {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }
   );
 };
 
-const getPaymentStatus = (
-  order
+// ============================================================
+// FORMAT CURRENCY
+// ============================================================
+
+const formatCurrency = (
+  value
 ) => {
-  return (
-    order.paymentStatus ||
-    "Pending"
-  );
+  return `₹${Number(
+    value || 0
+  ).toLocaleString(
+    "en-IN",
+    {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }
+  )}`;
 };
 
-const getOrderTotal = (
-  order
+// ============================================================
+// STATUS LABEL
+// ============================================================
+
+const getStatusLabel = (
+  status
 ) => {
-  return Number(
-    order.totalAmount ??
-      order.total ??
-      order.grandTotal ??
-      0
-  );
+  if (!status) {
+    return "Pending";
+  }
+
+  return String(status)
+    .replace(
+      /[-_]/g,
+      " "
+    )
+    .replace(
+      /\b\w/g,
+      (letter) =>
+        letter.toUpperCase()
+    );
 };
+
+// ============================================================
+// STATUS CLASS
+// ============================================================
 
 const getStatusClass = (
   status
 ) => {
-  const value =
+  const normalized =
     String(
-      status
+      status || "pending"
     ).toLowerCase();
 
-  if (
-    value.includes("deliver")
-  ) {
-    return "success";
-  }
-
-  if (
-    value.includes("cancel")
-  ) {
-    return "danger";
-  }
-
-  if (
-    value.includes("process") ||
-    value.includes("ship")
-  ) {
-    return "info";
-  }
-
-  return "pending";
+  return `orders-status orders-status-${normalized}`;
 };
 
 // ============================================================
-// ORDER HISTORY
+// ORDERS PAGE
 // ============================================================
 
 function OrdersPage() {
+  // ==========================================================
+  // STATE
+  // ==========================================================
+
   const [
     orders,
     setOrders,
@@ -123,145 +228,237 @@ function OrdersPage() {
     setSortOrder,
   ] = useState("newest");
 
+  const [
+    page,
+    setPage,
+  ] = useState(1);
+
+  const [
+    pagination,
+    setPagination,
+  ] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 1,
+  });
+
+  const [
+    refreshing,
+    setRefreshing,
+  ] = useState(false);
+
   // ==========================================================
   // LOAD ORDERS
   // ==========================================================
 
-  const loadOrders =
-    async () => {
-      try {
+  const loadOrders = async (
+    requestedPage = page,
+    showFullLoader = true
+  ) => {
+    try {
+      if (showFullLoader) {
         setLoading(true);
-
-        setError("");
-
-        const response =
-          await getMyOrders();
-
-        const orderList =
-          response?.orders ||
-          response?.data?.orders ||
-          response?.data ||
-          [];
-
-        setOrders(
-          Array.isArray(
-            orderList
-          )
-            ? orderList
-            : []
-        );
-      } catch (err) {
-        console.error(
-          "Order history error:",
-          err
-        );
-
-        setError(
-          err.response?.data
-            ?.message ||
-            err.message ||
-            "Unable to load order history."
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-
-  // ==========================================================
-  // INITIAL LOAD
-  // ==========================================================
-
-  useEffect(() => {
-    loadOrders();
-  }, []);
-
-  // ==========================================================
-  // FILTER + SORT
-  // ==========================================================
-
-  const filteredOrders =
-    useMemo(() => {
-      let result = [
-        ...orders,
-      ];
-
-      const searchValue =
-        search
-          .trim()
-          .toLowerCase();
-
-      // SEARCH
-
-      if (searchValue) {
-        result =
-          result.filter(
-            (order) => {
-              const orderId =
-                String(
-                  order._id ||
-                    order.id ||
-                    ""
-                ).toLowerCase();
-
-              return orderId.includes(
-                searchValue
-              );
-            }
-          );
+      } else {
+        setRefreshing(true);
       }
 
-      // STATUS
+      setError("");
+
+      const params = {
+        page: requestedPage,
+        limit: 10,
+      };
 
       if (
         statusFilter !==
         "all"
       ) {
+        params.status =
+          statusFilter;
+      }
+
+      const response =
+        await getMyOrders(
+          params
+        );
+
+      const orderData =
+        extractOrders(
+          response
+        );
+
+      const pageData =
+        extractPagination(
+          response
+        );
+
+      setOrders(
+        orderData
+      );
+
+      setPagination(
+        pageData
+      );
+
+      setPage(
+        pageData.page ||
+          requestedPage
+      );
+    } catch (err) {
+      console.error(
+        "Orders fetch error:",
+        err
+      );
+
+      setError(
+        err.response?.data
+          ?.message ||
+          err.message ||
+          "Unable to load your orders."
+      );
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  // ==========================================================
+  // INITIAL / FILTER LOAD
+  // ==========================================================
+
+  useEffect(() => {
+    setPage(1);
+
+    loadOrders(
+      1,
+      true
+    );
+  }, [
+    statusFilter,
+  ]);
+
+  // ==========================================================
+  // REFRESH
+  // ==========================================================
+
+  const handleRefresh =
+    () => {
+      loadOrders(
+        page,
+        false
+      );
+    };
+
+  // ==========================================================
+  // PAGE CHANGE
+  // ==========================================================
+
+  const handlePageChange =
+    (
+      nextPage
+    ) => {
+      if (
+        nextPage < 1 ||
+        nextPage >
+          pagination.totalPages ||
+        nextPage === page
+      ) {
+        return;
+      }
+
+      loadOrders(
+        nextPage,
+        true
+      );
+
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
+    };
+
+  // ==========================================================
+  // SEARCH
+  // ==========================================================
+
+  const normalizedSearch =
+    search
+      .trim()
+      .toLowerCase();
+
+  // ==========================================================
+  // FILTER + SORT
+  // ==========================================================
+
+  const visibleOrders =
+    useMemo(() => {
+      let result =
+        [...orders];
+
+      if (
+        normalizedSearch
+      ) {
         result =
           result.filter(
-            (order) =>
-              getOrderStatus(
-                order
-              ).toLowerCase() ===
-              statusFilter.toLowerCase()
+            (order) => {
+              const orderId =
+                String(
+                  order?._id ||
+                    order?.id ||
+                    ""
+                ).toLowerCase();
+
+              const status =
+                String(
+                  order?.status ||
+                    ""
+                ).toLowerCase();
+
+              return (
+                orderId.includes(
+                  normalizedSearch
+                ) ||
+                status.includes(
+                  normalizedSearch
+                )
+              );
+            }
           );
       }
 
-      // SORT
-
       result.sort(
-        (a, b) => {
-          const dateA =
+        (
+          first,
+          second
+        ) => {
+          const firstDate =
             new Date(
-              a.createdAt ||
+              first?.createdAt ||
+                first?.created_at ||
                 0
             ).getTime();
 
-          const dateB =
+          const secondDate =
             new Date(
-              b.createdAt ||
+              second?.createdAt ||
+                second?.created_at ||
                 0
             ).getTime();
 
-          if (
-            sortOrder ===
+          return sortOrder ===
             "oldest"
-          ) {
-            return (
-              dateA - dateB
-            );
-          }
-
-          return (
-            dateB - dateA
-          );
+            ? firstDate -
+                secondDate
+            : secondDate -
+                firstDate;
         }
       );
 
       return result;
     }, [
       orders,
-      search,
-      statusFilter,
+      normalizedSearch,
       sortOrder,
     ]);
 
@@ -271,66 +468,62 @@ function OrdersPage() {
 
   const statusCounts =
     useMemo(() => {
-      return {
-        all:
-          orders.length,
-
-        pending:
-          orders.filter(
-            (order) =>
-              getOrderStatus(
-                order
-              ).toLowerCase() ===
-              "pending"
-          ).length,
-
-        processing:
-          orders.filter(
-            (order) =>
-              getOrderStatus(
-                order
-              ).toLowerCase() ===
-              "processing"
-          ).length,
-
-        shipped:
-          orders.filter(
-            (order) =>
-              getOrderStatus(
-                order
-              ).toLowerCase() ===
-              "shipped"
-          ).length,
-
-        delivered:
-          orders.filter(
-            (order) =>
-              getOrderStatus(
-                order
-              ).toLowerCase() ===
-              "delivered"
-          ).length,
-
-        cancelled:
-          orders.filter(
-            (order) =>
-              getOrderStatus(
-                order
-              ).toLowerCase() ===
-              "cancelled"
-          ).length,
+      const counts = {
+        all: orders.length,
+        pending: 0,
+        confirmed: 0,
+        processing: 0,
+        shipped: 0,
+        delivered: 0,
+        cancelled: 0,
       };
-    }, [orders]);
+
+      orders.forEach(
+        (order) => {
+          const status =
+            String(
+              order?.status ||
+                "pending"
+            ).toLowerCase();
+
+          if (
+            Object.prototype.hasOwnProperty.call(
+              counts,
+              status
+            )
+          ) {
+            counts[
+              status
+            ] += 1;
+          }
+        }
+      );
+
+      return counts;
+    }, [
+      orders,
+    ]);
 
   // ==========================================================
   // LOADING
   // ==========================================================
 
-  if (loading) {
+  if (
+    loading &&
+    orders.length === 0
+  ) {
     return (
-      <Loading
-        message="Loading order history..."
-      />
+      <section className="orders-page">
+
+        <div className="orders-container">
+
+          <Loading
+            message="Loading your orders..."
+          />
+
+        </div>
+
+      </section>
     );
   }
 
@@ -338,26 +531,34 @@ function OrdersPage() {
   // ERROR
   // ==========================================================
 
-  if (error) {
+  if (
+    error &&
+    orders.length === 0
+  ) {
     return (
       <section className="orders-page">
 
         <div className="orders-container">
 
-          <Link
-            to="/dashboard"
-            className="orders-back-link"
-          >
-            ← Dashboard
-          </Link>
+          <div className="orders-back-row">
 
-          <h1>
-            Order History
-          </h1>
+            <Link
+              to="/dashboard"
+              className="orders-back-link"
+            >
+              ← Back to Dashboard
+            </Link>
+
+          </div>
 
           <ErrorMessage
             message={error}
-            onRetry={loadOrders}
+            onRetry={() =>
+              loadOrders(
+                page,
+                true
+              )
+            }
           />
 
         </div>
@@ -370,45 +571,40 @@ function OrdersPage() {
   // EMPTY
   // ==========================================================
 
-  if (orders.length === 0) {
+  if (
+    orders.length === 0
+  ) {
     return (
       <section className="orders-page">
 
         <div className="orders-container">
 
-          <Link
-            to="/dashboard"
-            className="orders-back-link"
-          >
-            ← Dashboard
-          </Link>
+          <div className="orders-page-header">
 
-          <div className="orders-title">
+            <div>
 
-            <span>
-              ORDER HISTORY
-            </span>
+              <span className="orders-eyebrow">
+                CUSTOMER ACCOUNT
+              </span>
 
-            <h1>
-              My Orders
-            </h1>
+              <h1>
+                My Orders
+              </h1>
 
-            <p>
-              View and manage all your
-              previous orders.
-            </p>
+              <p>
+                Track and manage your
+                orders from one place.
+              </p>
+
+            </div>
 
           </div>
 
           <div className="orders-empty-card">
 
-            <div className="orders-empty-icon">
-              📦
-            </div>
-
             <EmptyState
               title="No orders yet"
-              message="You have not placed any orders yet."
+              message="Your completed orders will appear here."
             />
 
             <Link
@@ -416,9 +612,6 @@ function OrdersPage() {
               className="orders-primary-button"
             >
               Start Shopping
-              <span>
-                →
-              </span>
             </Link>
 
           </div>
@@ -442,19 +635,12 @@ function OrdersPage() {
             HEADER
             ================================================== */}
 
-        <div className="orders-header">
+        <div className="orders-page-header">
 
           <div>
 
-            <Link
-              to="/dashboard"
-              className="orders-back-link"
-            >
-              ← Dashboard
-            </Link>
-
             <span className="orders-eyebrow">
-              ORDER HISTORY
+              CUSTOMER ACCOUNT
             </span>
 
             <h1>
@@ -462,494 +648,476 @@ function OrdersPage() {
             </h1>
 
             <p>
-              View and manage all your
-              previous orders.
+              Track and manage your
+              orders from one place.
             </p>
 
           </div>
 
-          <Link
-            to="/products"
-            className="orders-shop-button"
+          <div className="orders-header-actions">
+
+            <button
+              type="button"
+              className="orders-refresh-button"
+              onClick={
+                handleRefresh
+              }
+              disabled={
+                refreshing
+              }
+            >
+              {refreshing
+                ? "Refreshing..."
+                : "↻ Refresh"}
+            </button>
+
+            <Link
+              to="/products"
+              className="orders-primary-button"
+            >
+              Continue Shopping
+            </Link>
+
+          </div>
+
+        </div>
+
+        {/* ==================================================
+            STATUS FILTERS
+            ================================================== */}
+
+        <div className="orders-status-filters">
+
+          <button
+            type="button"
+            className={
+              statusFilter ===
+              "all"
+                ? "orders-filter-active"
+                : ""
+            }
+            onClick={() =>
+              setStatusFilter(
+                "all"
+              )
+            }
           >
-            Continue Shopping
+            All
             <span>
-              →
+              {statusCounts.all}
             </span>
-          </Link>
+          </button>
 
-        </div>
-
-        {/* ==================================================
-            STATUS SUMMARY
-            ================================================== */}
-
-        <div className="orders-stats">
-
-          <div className="orders-stat-card">
-
-            <div className="orders-stat-icon">
-              📦
-            </div>
-
-            <div>
-
-              <strong>
-                {statusCounts.all}
-              </strong>
-
-              <span>
-                Total Orders
-              </span>
-
-            </div>
-
-          </div>
-
-          <div className="orders-stat-card">
-
-            <div className="orders-stat-icon">
-              ⏳
-            </div>
-
-            <div>
-
-              <strong>
-                {statusCounts.pending}
-              </strong>
-
-              <span>
-                Pending
-              </span>
-
-            </div>
-
-          </div>
-
-          <div className="orders-stat-card">
-
-            <div className="orders-stat-icon">
-              ⚙️
-            </div>
-
-            <div>
-
-              <strong>
-                {statusCounts.processing}
-              </strong>
-
-              <span>
-                Processing
-              </span>
-
-            </div>
-
-          </div>
-
-          <div className="orders-stat-card">
-
-            <div className="orders-stat-icon">
-              🚚
-            </div>
-
-            <div>
-
-              <strong>
-                {statusCounts.shipped}
-              </strong>
-
-              <span>
-                Shipped
-              </span>
-
-            </div>
-
-          </div>
-
-          <div className="orders-stat-card">
-
-            <div className="orders-stat-icon">
-              ✓
-            </div>
-
-            <div>
-
-              <strong>
-                {statusCounts.delivered}
-              </strong>
-
-              <span>
-                Delivered
-              </span>
-
-            </div>
-
-          </div>
-
-        </div>
-
-        {/* ==================================================
-            FILTERS
-            ================================================== */}
-
-        <div className="orders-filter-card">
-
-          <div className="orders-filter-header">
-
-            <div>
-
-              <span>
-                FIND YOUR ORDER
-              </span>
-
-              <h2>
-                Search & Filters
-              </h2>
-
-            </div>
-
-            <span className="orders-result-count">
-              Showing{" "}
-              {filteredOrders.length}{" "}
-              of{" "}
-              {orders.length}
+          <button
+            type="button"
+            className={
+              statusFilter ===
+              "pending"
+                ? "orders-filter-active"
+                : ""
+            }
+            onClick={() =>
+              setStatusFilter(
+                "pending"
+              )
+            }
+          >
+            Pending
+            <span>
+              {statusCounts.pending}
             </span>
+          </button>
+
+          <button
+            type="button"
+            className={
+              statusFilter ===
+              "confirmed"
+                ? "orders-filter-active"
+                : ""
+            }
+            onClick={() =>
+              setStatusFilter(
+                "confirmed"
+              )
+            }
+          >
+            Confirmed
+            <span>
+              {statusCounts.confirmed}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            className={
+              statusFilter ===
+              "processing"
+                ? "orders-filter-active"
+                : ""
+            }
+            onClick={() =>
+              setStatusFilter(
+                "processing"
+              )
+            }
+          >
+            Processing
+            <span>
+              {statusCounts.processing}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            className={
+              statusFilter ===
+              "shipped"
+                ? "orders-filter-active"
+                : ""
+            }
+            onClick={() =>
+              setStatusFilter(
+                "shipped"
+              )
+            }
+          >
+            Shipped
+            <span>
+              {statusCounts.shipped}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            className={
+              statusFilter ===
+              "delivered"
+                ? "orders-filter-active"
+                : ""
+            }
+            onClick={() =>
+              setStatusFilter(
+                "delivered"
+              )
+            }
+          >
+            Delivered
+            <span>
+              {statusCounts.delivered}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            className={
+              statusFilter ===
+              "cancelled"
+                ? "orders-filter-active"
+                : ""
+            }
+            onClick={() =>
+              setStatusFilter(
+                "cancelled"
+              )
+            }
+          >
+            Cancelled
+            <span>
+              {statusCounts.cancelled}
+            </span>
+          </button>
+
+        </div>
+
+        {/* ==================================================
+            SEARCH + SORT
+            ================================================== */}
+
+        <div className="orders-toolbar">
+
+          <div className="orders-search">
+
+            <label
+              htmlFor="order-search"
+            >
+              Search Orders
+            </label>
+
+            <input
+              id="order-search"
+              type="search"
+              value={
+                search
+              }
+              onChange={(
+                event
+              ) =>
+                setSearch(
+                  event.target.value
+                )
+              }
+              placeholder="Search by order ID or status"
+            />
 
           </div>
 
-          <div className="orders-filters">
+          <div className="orders-sort">
 
-            {/* SEARCH */}
+            <label
+              htmlFor="order-sort"
+            >
+              Sort
+            </label>
 
-            <div className="orders-filter-group orders-search-group">
+            <select
+              id="order-sort"
+              value={
+                sortOrder
+              }
+              onChange={(
+                event
+              ) =>
+                setSortOrder(
+                  event.target.value
+                )
+              }
+            >
+              <option value="newest">
+                Newest First
+              </option>
 
-              <label htmlFor="orderSearch">
-                Search Order
-              </label>
-
-              <div className="orders-search-box">
-
-                <span>
-                  🔍
-                </span>
-
-                <input
-                  id="orderSearch"
-                  type="text"
-                  value={
-                    search
-                  }
-                  onChange={(
-                    event
-                  ) =>
-                    setSearch(
-                      event.target
-                        .value
-                    )
-                  }
-                  placeholder="Search by order ID"
-                />
-
-                {search && (
-                  <button
-                    type="button"
-                    className="orders-clear-search"
-                    onClick={() =>
-                      setSearch("")
-                    }
-                    aria-label="Clear search"
-                  >
-                    ×
-                  </button>
-                )}
-
-              </div>
-
-            </div>
-
-            {/* STATUS */}
-
-            <div className="orders-filter-group">
-
-              <label htmlFor="statusFilter">
-                Status
-              </label>
-
-              <select
-                id="statusFilter"
-                value={
-                  statusFilter
-                }
-                onChange={(
-                  event
-                ) =>
-                  setStatusFilter(
-                    event.target
-                      .value
-                  )
-                }
-              >
-
-                <option value="all">
-                  All Orders
-                </option>
-
-                <option value="pending">
-                  Pending
-                </option>
-
-                <option value="processing">
-                  Processing
-                </option>
-
-                <option value="shipped">
-                  Shipped
-                </option>
-
-                <option value="delivered">
-                  Delivered
-                </option>
-
-                <option value="cancelled">
-                  Cancelled
-                </option>
-
-              </select>
-
-            </div>
-
-            {/* SORT */}
-
-            <div className="orders-filter-group">
-
-              <label htmlFor="sortOrder">
-                Sort
-              </label>
-
-              <select
-                id="sortOrder"
-                value={
-                  sortOrder
-                }
-                onChange={(
-                  event
-                ) =>
-                  setSortOrder(
-                    event.target
-                      .value
-                  )
-                }
-              >
-
-                <option value="newest">
-                  Newest First
-                </option>
-
-                <option value="oldest">
-                  Oldest First
-                </option>
-
-              </select>
-
-            </div>
+              <option value="oldest">
+                Oldest First
+              </option>
+            </select>
 
           </div>
 
         </div>
 
         {/* ==================================================
-            NO FILTER RESULTS
+            ERROR WHILE REFRESHING
             ================================================== */}
 
-        {filteredOrders.length ===
-        0 ? (
-          <div className="orders-no-results">
+        {error && (
+          <div className="orders-inline-error">
 
-            <div className="orders-no-results-icon">
-              🔍
-            </div>
-
-            <h3>
-              No matching orders
-            </h3>
+            <strong>
+              Unable to refresh orders
+            </strong>
 
             <p>
-              Try changing your search
-              or filter.
+              {error}
             </p>
 
             <button
               type="button"
-              onClick={() => {
-                setSearch("");
-                setStatusFilter(
-                  "all"
-                );
-              }}
+              onClick={() =>
+                loadOrders(
+                  page,
+                  false
+                )
+              }
             >
-              Clear Filters
+              Try Again
             </button>
 
           </div>
-        ) : (
+        )}
 
-          /* ==================================================
-             ORDER LIST
-             ================================================== */
+        {/* ==================================================
+            SEARCH EMPTY
+            ================================================== */}
 
+        {visibleOrders.length ===
+          0 && (
+          <div className="orders-search-empty">
+
+            <h2>
+              No matching orders
+            </h2>
+
+            <p>
+              Try a different order ID
+              or search term.
+            </p>
+
+            <button
+              type="button"
+              onClick={() =>
+                setSearch("")
+              }
+            >
+              Clear Search
+            </button>
+
+          </div>
+        )}
+
+        {/* ==================================================
+            ORDERS LIST
+            ================================================== */}
+
+        {visibleOrders.length >
+          0 && (
           <div className="orders-list">
 
-            {filteredOrders.map(
+            {visibleOrders.map(
               (order) => {
-
                 const orderId =
-                  order._id ||
-                  order.id;
+                  order?._id ||
+                  order?.id;
+
+                const orderNumber =
+                  order?.orderNumber ||
+                  order?.orderNo ||
+                  orderId;
 
                 const status =
-                  getOrderStatus(
-                    order
-                  );
+                  order?.status ||
+                  "pending";
 
                 const paymentStatus =
-                  getPaymentStatus(
-                    order
-                  );
+                  order?.paymentStatus ||
+                  "";
 
-                const total =
-                  getOrderTotal(
-                    order
-                  );
-
-                const items =
+                const itemCount =
                   Array.isArray(
-                    order.items
+                    order?.items
                   )
-                    ? order.items
-                    : [];
+                    ? order.items.length
+                    : Number(
+                        order?.itemsCount ||
+                          order?.totalItems ||
+                          0
+                      );
 
-                const statusClass =
-                  getStatusClass(
-                    status
+                const totalAmount =
+                  Number(
+                    order?.totalAmount ??
+                      order?.total ??
+                      order?.grandTotal ??
+                      order?.amount ??
+                      0
                   );
 
                 return (
                   <article
-                    className="order-card"
-                    key={
-                      orderId
-                    }
+                    className="orders-card"
+                    key={orderId}
                   >
 
-                    {/* ORDER TOP */}
+                    {/* ======================================
+                        ORDER HEADER
+                        ====================================== */}
 
-                    <div className="order-card-top">
+                    <div className="orders-card-header">
 
-                      <div className="order-card-id">
+                      <div>
 
-                        <div className="order-card-icon">
-                          📦
-                        </div>
+                        <span className="orders-card-label">
+                          ORDER
+                        </span>
 
-                        <div>
-
-                          <span>
-                            ORDER
-                          </span>
-
-                          <h2>
-                            #{orderId}
-                          </h2>
-
-                          {order.createdAt && (
-                            <p>
-                              Ordered on{" "}
-                              {new Date(
-                                order.createdAt
-                              ).toLocaleDateString(
-                                "en-IN",
-                                {
-                                  day: "2-digit",
-                                  month: "short",
-                                  year: "numeric",
-                                }
-                              )}
-                            </p>
-                          )}
-
-                        </div>
+                        <h2>
+                          #{orderNumber}
+                        </h2>
 
                       </div>
 
                       <span
-                        className={`order-status-badge ${statusClass}`}
+                        className={getStatusClass(
+                          status
+                        )}
                       >
-                        {status}
+                        {getStatusLabel(
+                          status
+                        )}
                       </span>
 
                     </div>
 
-                    {/* ORDER DETAILS */}
+                    {/* ======================================
+                        ORDER META
+                        ====================================== */}
 
-                    <div className="order-card-details">
+                    <div className="orders-card-meta">
 
                       <div>
 
                         <span>
-                          PAYMENT
+                          Order Date
                         </span>
 
                         <strong>
-                          {paymentStatus}
-                        </strong>
-
-                      </div>
-
-                      <div>
-
-                        <span>
-                          ITEMS
-                        </span>
-
-                        <strong>
-                          {items.length}
-                        </strong>
-
-                      </div>
-
-                      <div>
-
-                        <span>
-                          TOTAL
-                        </span>
-
-                        <strong className="order-total">
-                          ₹
-                          {total.toLocaleString(
-                            "en-IN"
+                          {formatDate(
+                            order?.createdAt ||
+                              order?.created_at
                           )}
                         </strong>
 
                       </div>
 
+                      <div>
+
+                        <span>
+                          Items
+                        </span>
+
+                        <strong>
+                          {itemCount}
+                        </strong>
+
+                      </div>
+
+                      <div>
+
+                        <span>
+                          Total
+                        </span>
+
+                        <strong>
+                          {formatCurrency(
+                            totalAmount
+                          )}
+                        </strong>
+
+                      </div>
+
+                      {paymentStatus && (
+                        <div>
+
+                          <span>
+                            Payment
+                          </span>
+
+                          <strong>
+                            {getStatusLabel(
+                              paymentStatus
+                            )}
+                          </strong>
+
+                        </div>
+                      )}
+
                     </div>
 
-                    {/* ORDER FOOTER */}
+                    {/* ======================================
+                        ORDER ACTIONS
+                        ====================================== */}
 
-                    <div className="order-card-footer">
-
-                      <span>
-                        {items.length ===
-                        1
-                          ? "1 product"
-                          : `${items.length} products`}
-                      </span>
+                    <div className="orders-card-actions">
 
                       <Link
-                        to={`/orders/${orderId}`}
-                        className="order-view-button"
+                        to={
+                          orderId
+                            ? `/orders/${orderId}`
+                            : "/orders"
+                        }
+                        className="orders-view-button"
                       >
-                        View Details
+                        View Order
                         <span>
                           →
                         </span>
@@ -963,6 +1131,144 @@ function OrdersPage() {
             )}
 
           </div>
+        )}
+
+        {/* ==================================================
+            PAGINATION
+            ================================================== */}
+
+        {pagination.totalPages >
+          1 && (
+          <div className="orders-pagination">
+
+            <button
+              type="button"
+              disabled={
+                page <= 1 ||
+                loading
+              }
+              onClick={() =>
+                handlePageChange(
+                  page - 1
+                )
+              }
+            >
+              ← Previous
+            </button>
+
+            <div className="orders-page-numbers">
+
+              {Array.from(
+                {
+                  length:
+                    pagination.totalPages,
+                },
+                (
+                  _,
+                  index
+                ) =>
+                  index + 1
+              )
+                .filter(
+                  (
+                    pageNumber
+                  ) => {
+                    if (
+                      pagination.totalPages <=
+                      7
+                    ) {
+                      return true;
+                    }
+
+                    return (
+                      pageNumber ===
+                        1 ||
+                      pageNumber ===
+                        pagination.totalPages ||
+                      Math.abs(
+                        pageNumber -
+                          page
+                      ) <= 1
+                    );
+                  }
+                )
+                .map(
+                  (
+                    pageNumber
+                  ) => (
+                    <button
+                      key={
+                        pageNumber
+                      }
+                      type="button"
+                      className={
+                        pageNumber ===
+                        page
+                          ? "orders-page-number-active"
+                          : ""
+                      }
+                      disabled={
+                        loading
+                      }
+                      onClick={() =>
+                        handlePageChange(
+                          pageNumber
+                        )
+                      }
+                    >
+                      {
+                        pageNumber
+                      }
+                    </button>
+                  )
+                )}
+
+            </div>
+
+            <button
+              type="button"
+              disabled={
+                page >=
+                  pagination.totalPages ||
+                loading
+              }
+              onClick={() =>
+                handlePageChange(
+                  page + 1
+                )
+              }
+            >
+              Next →
+            </button>
+
+          </div>
+        )}
+
+        {/* ==================================================
+            PAGINATION INFO
+            ================================================== */}
+
+        {pagination.total >
+          0 && (
+          <p className="orders-pagination-info">
+
+            Showing page{" "}
+            <strong>
+              {page}
+            </strong>{" "}
+            of{" "}
+            <strong>
+              {pagination.totalPages}
+            </strong>
+
+            {" · "}
+
+            Total orders:{" "}
+            <strong>
+              {pagination.total}
+            </strong>
+
+          </p>
         )}
 
       </div>

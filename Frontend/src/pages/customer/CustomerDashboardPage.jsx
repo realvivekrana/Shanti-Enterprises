@@ -1,11 +1,12 @@
 // ============================================================
 // SHANTI ENTERPRISES
 // Customer Dashboard
-// Frontend Phase 6 - UI/UX
+// Frontend Phase 6 - Complete Customer UI/UX
 // ============================================================
 
 import {
   useEffect,
+  useMemo,
   useState,
 } from "react";
 
@@ -30,6 +31,84 @@ import Loading from "../../components/common/Loading";
 import ErrorMessage from "../../components/common/ErrorMessage";
 
 // ============================================================
+// STATUS NORMALIZER
+// ============================================================
+
+const getStatusClass = (
+  status
+) => {
+  const value = String(
+    status || "Pending"
+  )
+    .trim()
+    .toLowerCase();
+
+  if (
+    value.includes("deliver") ||
+    value.includes("complete")
+  ) {
+    return "success";
+  }
+
+  if (
+    value.includes("cancel") ||
+    value.includes("reject")
+  ) {
+    return "danger";
+  }
+
+  if (
+    value.includes("ship") ||
+    value.includes("process") ||
+    value.includes("confirm")
+  ) {
+    return "info";
+  }
+
+  return "pending";
+};
+
+// ============================================================
+// EXTRACT ORDERS
+// ============================================================
+
+const extractOrders = (
+  response
+) => {
+  if (
+    Array.isArray(
+      response?.orders
+    )
+  ) {
+    return response.orders;
+  }
+
+  if (
+    Array.isArray(
+      response?.data?.orders
+    )
+  ) {
+    return response.data.orders;
+  }
+
+  if (
+    Array.isArray(
+      response?.data
+    )
+  ) {
+    return response.data;
+  }
+
+  if (
+    Array.isArray(response)
+  ) {
+    return response;
+  }
+
+  return [];
+};
+
+// ============================================================
 // CUSTOMER DASHBOARD
 // ============================================================
 
@@ -39,9 +118,13 @@ function CustomerDashboardPage() {
   } = useAuth();
 
   const {
-    totalItems,
-    subtotal,
+    totalItems = 0,
+    subtotal = 0,
   } = useCart();
+
+  // ==========================================================
+  // STATE
+  // ==========================================================
 
   const [
     orders,
@@ -54,6 +137,11 @@ function CustomerDashboardPage() {
   ] = useState(true);
 
   const [
+    refreshing,
+    setRefreshing,
+  ] = useState(false);
+
+  const [
     error,
     setError,
   ] = useState("");
@@ -62,45 +150,46 @@ function CustomerDashboardPage() {
   // LOAD ORDERS
   // ==========================================================
 
-  const loadOrders =
-    async () => {
-      try {
+  const loadOrders = async (
+    isRefresh = false
+  ) => {
+    try {
+      if (isRefresh) {
+        setRefreshing(true);
+      } else {
         setLoading(true);
-
-        setError("");
-
-        const response =
-          await getMyOrders();
-
-        const orderList =
-          response?.orders ||
-          response?.data?.orders ||
-          response?.data ||
-          [];
-
-        setOrders(
-          Array.isArray(
-            orderList
-          )
-            ? orderList
-            : []
-        );
-      } catch (err) {
-        console.error(
-          "Dashboard orders error:",
-          err
-        );
-
-        setError(
-          err.response?.data
-            ?.message ||
-            err.message ||
-            "Unable to load dashboard data."
-        );
-      } finally {
-        setLoading(false);
       }
-    };
+
+      setError("");
+
+      const response =
+        await getMyOrders();
+
+      const orderList =
+        extractOrders(
+          response
+        );
+
+      setOrders(
+        orderList
+      );
+    } catch (err) {
+      console.error(
+        "Dashboard orders error:",
+        err
+      );
+
+      setError(
+        err?.response?.data
+          ?.message ||
+          err?.message ||
+          "Unable to load dashboard data."
+      );
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
 
   // ==========================================================
   // INITIAL LOAD
@@ -109,6 +198,98 @@ function CustomerDashboardPage() {
   useEffect(() => {
     loadOrders();
   }, []);
+
+  // ==========================================================
+  // USER DATA
+  // ==========================================================
+
+  const customerName =
+    user?.name?.trim() ||
+    "Customer";
+
+  const customerEmail =
+    user?.email ||
+    "No email available";
+
+  const customerPhone =
+    user?.phone ||
+    "No phone available";
+
+  const customerInitial =
+    customerName
+      .charAt(0)
+      .toUpperCase();
+
+  // ==========================================================
+  // RECENT ORDERS
+  // ==========================================================
+
+  const recentOrders =
+    useMemo(
+      () =>
+        orders.slice(
+          0,
+          5
+        ),
+      [orders]
+    );
+
+  // ==========================================================
+  // ORDER STATS
+  // ==========================================================
+
+  const deliveredOrders =
+    useMemo(
+      () =>
+        orders.filter(
+          (order) => {
+            const status =
+              String(
+                order?.status ||
+                  order?.orderStatus ||
+                  ""
+              ).toLowerCase();
+
+            return (
+              status.includes(
+                "deliver"
+              ) ||
+              status.includes(
+                "complete"
+              )
+            );
+          }
+        ).length,
+      [orders]
+    );
+
+  const pendingOrders =
+    useMemo(
+      () =>
+        orders.filter(
+          (order) => {
+            const status =
+              String(
+                order?.status ||
+                  order?.orderStatus ||
+                  "pending"
+              ).toLowerCase();
+
+            return (
+              !status.includes(
+                "deliver"
+              ) &&
+              !status.includes(
+                "complete"
+              ) &&
+              !status.includes(
+                "cancel"
+              )
+            );
+          }
+        ).length,
+      [orders]
+    );
 
   // ==========================================================
   // LOADING
@@ -123,32 +304,6 @@ function CustomerDashboardPage() {
   }
 
   // ==========================================================
-  // USER DATA
-  // ==========================================================
-
-  const customerName =
-    user?.name ||
-    "Customer";
-
-  const customerEmail =
-    user?.email ||
-    "No email available";
-
-  const customerPhone =
-    user?.phone ||
-    "No phone available";
-
-  // ==========================================================
-  // RECENT ORDERS
-  // ==========================================================
-
-  const recentOrders =
-    orders.slice(
-      0,
-      5
-    );
-
-  // ==========================================================
   // PAGE
   // ==========================================================
 
@@ -158,7 +313,7 @@ function CustomerDashboardPage() {
       <div className="customer-dashboard-container">
 
         {/* ==================================================
-            WELCOME HEADER
+            HEADER
             ================================================== */}
 
         <div className="customer-dashboard-header">
@@ -175,21 +330,41 @@ function CustomerDashboardPage() {
             </h1>
 
             <p>
-              Manage your account, orders
-              and shopping from one place.
+              Manage your account,
+              orders and shopping
+              from one place.
             </p>
 
           </div>
 
-          <Link
-            to="/products"
-            className="customer-dashboard-shop-button"
-          >
-            Browse Products
-            <span>
-              →
-            </span>
-          </Link>
+          <div className="customer-dashboard-header-actions">
+
+            <button
+              type="button"
+              className="customer-dashboard-refresh-button"
+              onClick={() =>
+                loadOrders(true)
+              }
+              disabled={
+                refreshing
+              }
+            >
+              {refreshing
+                ? "Refreshing..."
+                : "↻ Refresh"}
+            </button>
+
+            <Link
+              to="/products"
+              className="customer-dashboard-shop-button"
+            >
+              Browse Products
+              <span>
+                →
+              </span>
+            </Link>
+
+          </div>
 
         </div>
 
@@ -202,7 +377,9 @@ function CustomerDashboardPage() {
 
             <ErrorMessage
               message={error}
-              onRetry={loadOrders}
+              onRetry={() =>
+                loadOrders()
+              }
             />
 
           </div>
@@ -228,6 +405,46 @@ function CustomerDashboardPage() {
 
               <span>
                 Total Orders
+              </span>
+
+            </div>
+
+          </div>
+
+          <div className="customer-dashboard-stat-card">
+
+            <div className="customer-dashboard-stat-icon">
+              ⏳
+            </div>
+
+            <div>
+
+              <strong>
+                {pendingOrders}
+              </strong>
+
+              <span>
+                Active Orders
+              </span>
+
+            </div>
+
+          </div>
+
+          <div className="customer-dashboard-stat-card">
+
+            <div className="customer-dashboard-stat-icon">
+              ✓
+            </div>
+
+            <div>
+
+              <strong>
+                {deliveredOrders}
+              </strong>
+
+              <span>
+                Delivered
               </span>
 
             </div>
@@ -264,7 +481,9 @@ function CustomerDashboardPage() {
 
               <strong>
                 ₹
-                {subtotal.toLocaleString(
+                {Number(
+                  subtotal || 0
+                ).toLocaleString(
                   "en-IN"
                 )}
               </strong>
@@ -286,7 +505,7 @@ function CustomerDashboardPage() {
         <div className="customer-dashboard-grid">
 
           {/* ==================================================
-              LEFT
+              MAIN CONTENT
               ================================================== */}
 
           <div className="customer-dashboard-main">
@@ -319,13 +538,11 @@ function CustomerDashboardPage() {
                   to="/products"
                   className="customer-dashboard-action"
                 >
-
                   <span>
                     🛍️
                   </span>
 
                   <div>
-
                     <strong>
                       Browse Products
                     </strong>
@@ -333,26 +550,45 @@ function CustomerDashboardPage() {
                     <small>
                       Explore our products
                     </small>
-
                   </div>
 
                   <b>
                     →
                   </b>
+                </Link>
 
+                <Link
+                  to="/categories"
+                  className="customer-dashboard-action"
+                >
+                  <span>
+                    🗂️
+                  </span>
+
+                  <div>
+                    <strong>
+                      Browse Categories
+                    </strong>
+
+                    <small>
+                      Find products by category
+                    </small>
+                  </div>
+
+                  <b>
+                    →
+                  </b>
                 </Link>
 
                 <Link
                   to="/cart"
                   className="customer-dashboard-action"
                 >
-
                   <span>
                     🛒
                   </span>
 
                   <div>
-
                     <strong>
                       View Cart
                     </strong>
@@ -360,26 +596,22 @@ function CustomerDashboardPage() {
                     <small>
                       Review your cart
                     </small>
-
                   </div>
 
                   <b>
                     →
                   </b>
-
                 </Link>
 
                 <Link
                   to="/orders"
                   className="customer-dashboard-action"
                 >
-
                   <span>
                     📦
                   </span>
 
                   <div>
-
                     <strong>
                       My Orders
                     </strong>
@@ -387,26 +619,22 @@ function CustomerDashboardPage() {
                     <small>
                       Track your orders
                     </small>
-
                   </div>
 
                   <b>
                     →
                   </b>
-
                 </Link>
 
                 <Link
                   to="/profile"
                   className="customer-dashboard-action"
                 >
-
                   <span>
                     👤
                   </span>
 
                   <div>
-
                     <strong>
                       My Profile
                     </strong>
@@ -414,26 +642,22 @@ function CustomerDashboardPage() {
                     <small>
                       Manage your profile
                     </small>
-
                   </div>
 
                   <b>
                     →
                   </b>
-
                 </Link>
 
                 <Link
                   to="/addresses"
                   className="customer-dashboard-action"
                 >
-
                   <span>
                     📍
                   </span>
 
                   <div>
-
                     <strong>
                       Saved Addresses
                     </strong>
@@ -441,13 +665,11 @@ function CustomerDashboardPage() {
                     <small>
                       Manage delivery addresses
                     </small>
-
                   </div>
 
                   <b>
                     →
                   </b>
-
                 </Link>
 
               </div>
@@ -474,7 +696,8 @@ function CustomerDashboardPage() {
 
                 </div>
 
-                {orders.length > 0 && (
+                {orders.length >
+                  0 && (
                   <Link
                     to="/orders"
                     className="customer-dashboard-view-all"
@@ -485,7 +708,8 @@ function CustomerDashboardPage() {
 
               </div>
 
-              {recentOrders.length === 0 ? (
+              {recentOrders.length ===
+              0 ? (
                 <div className="customer-dashboard-empty">
 
                   <div className="customer-dashboard-empty-icon">
@@ -497,8 +721,8 @@ function CustomerDashboardPage() {
                   </h3>
 
                   <p>
-                    You have not placed any
-                    orders yet.
+                    You have not placed
+                    any orders yet.
                   </p>
 
                   <Link
@@ -513,58 +737,33 @@ function CustomerDashboardPage() {
                 <div className="customer-dashboard-orders">
 
                   {recentOrders.map(
-                    (order) => {
+                    (
+                      order,
+                      index
+                    ) => {
 
                       const orderId =
-                        order._id ||
-                        order.id;
+                        order?._id ||
+                        order?.id ||
+                        index;
 
                       const status =
-                        order.status ||
-                        order.orderStatus ||
+                        order?.status ||
+                        order?.orderStatus ||
                         "Pending";
 
                       const total =
                         Number(
-                          order.totalAmount ??
-                            order.total ??
-                            order.grandTotal ??
+                          order?.totalAmount ??
+                            order?.total ??
+                            order?.grandTotal ??
                             0
                         );
 
-                      const normalizedStatus =
-                        String(
+                      const statusClass =
+                        getStatusClass(
                           status
-                        ).toLowerCase();
-
-                      let statusClass =
-                        "pending";
-
-                      if (
-                        normalizedStatus.includes(
-                          "deliver"
-                        )
-                      ) {
-                        statusClass =
-                          "success";
-                      } else if (
-                        normalizedStatus.includes(
-                          "cancel"
-                        )
-                      ) {
-                        statusClass =
-                          "danger";
-                      } else if (
-                        normalizedStatus.includes(
-                          "process"
-                        ) ||
-                        normalizedStatus.includes(
-                          "ship"
-                        )
-                      ) {
-                        statusClass =
-                          "info";
-                      }
+                        );
 
                       return (
                         <article
@@ -585,6 +784,21 @@ function CustomerDashboardPage() {
                               {orderId}
                             </strong>
 
+                            {order?.createdAt && (
+                              <small>
+                                {new Date(
+                                  order.createdAt
+                                ).toLocaleDateString(
+                                  "en-IN",
+                                  {
+                                    day: "2-digit",
+                                    month: "short",
+                                    year: "numeric",
+                                  }
+                                )}
+                              </small>
+                            )}
+
                             <span>
                               Total: ₹
                               {total.toLocaleString(
@@ -600,12 +814,14 @@ function CustomerDashboardPage() {
                             {status}
                           </span>
 
-                          <Link
-                            to={`/orders/${orderId}`}
-                            className="customer-dashboard-order-link"
-                          >
-                            View
-                          </Link>
+                          {orderId && (
+                            <Link
+                              to={`/orders/${orderId}`}
+                              className="customer-dashboard-order-link"
+                            >
+                              View
+                            </Link>
+                          )}
 
                         </article>
                       );
@@ -617,15 +833,55 @@ function CustomerDashboardPage() {
 
             </div>
 
+            {/* ==================================================
+                SHOPPING CTA
+                ================================================== */}
+
+            <div className="customer-dashboard-large-cta">
+
+              <div>
+
+                <span>
+                  KEEP SHOPPING
+                </span>
+
+                <h2>
+                  Find the products
+                  you need.
+                </h2>
+
+                <p>
+                  Explore our latest
+                  products and add
+                  what you need to
+                  your cart.
+                </p>
+
+              </div>
+
+              <Link
+                to="/products"
+                className="customer-dashboard-large-cta-button"
+              >
+                Explore Products
+                <span>
+                  →
+                </span>
+              </Link>
+
+            </div>
+
           </div>
 
           {/* ==================================================
-              RIGHT SIDEBAR
+              SIDEBAR
               ================================================== */}
 
           <aside className="customer-dashboard-sidebar">
 
-            {/* ACCOUNT */}
+            {/* ==================================================
+                PROFILE
+                ================================================== */}
 
             <div className="customer-dashboard-card">
 
@@ -648,9 +904,7 @@ function CustomerDashboardPage() {
               <div className="customer-dashboard-profile">
 
                 <div className="customer-dashboard-avatar">
-                  {customerName
-                    .charAt(0)
-                    .toUpperCase()}
+                  {customerInitial}
                 </div>
 
                 <strong>
@@ -700,7 +954,50 @@ function CustomerDashboardPage() {
 
             </div>
 
-            {/* SHOPPING CARD */}
+            {/* ==================================================
+                ADDRESS
+                ================================================== */}
+
+            <div className="customer-dashboard-card customer-dashboard-address-card">
+
+              <div className="customer-dashboard-card-header">
+
+                <div>
+
+                  <span>
+                    DELIVERY
+                  </span>
+
+                  <h2>
+                    Addresses
+                  </h2>
+
+                </div>
+
+              </div>
+
+              <div className="customer-dashboard-sidebar-icon">
+                📍
+              </div>
+
+              <p>
+                Manage your saved
+                delivery addresses
+                for faster checkout.
+              </p>
+
+              <Link
+                to="/addresses"
+                className="customer-dashboard-profile-button"
+              >
+                Manage Addresses
+              </Link>
+
+            </div>
+
+            {/* ==================================================
+                SHOPPING CARD
+                ================================================== */}
 
             <div className="customer-dashboard-shopping-card">
 
@@ -718,8 +1015,8 @@ function CustomerDashboardPage() {
               </h3>
 
               <p>
-                Browse our products and
-                find what you need.
+                Browse our products
+                and find what you need.
               </p>
 
               <Link

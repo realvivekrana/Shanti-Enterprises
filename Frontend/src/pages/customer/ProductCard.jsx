@@ -1,8 +1,12 @@
 // ============================================================
 // SHANTI ENTERPRISES
 // Product Card
-// Frontend Phase 6 - UI/UX
+// Frontend Phase 6 - Complete UI/UX
 // ============================================================
+
+import {
+  useState,
+} from "react";
 
 import {
   Link,
@@ -11,6 +15,30 @@ import {
 import {
   useCart,
 } from "../../context/CartContext";
+
+// ============================================================
+// IMAGE URL HELPER
+// ============================================================
+
+const getImageUrl = (
+  image
+) => {
+  if (!image) {
+    return "";
+  }
+
+  if (
+    typeof image === "string"
+  ) {
+    return image;
+  }
+
+  return (
+    image.url ||
+    image.secure_url ||
+    ""
+  );
+};
 
 // ============================================================
 // PRODUCT CARD
@@ -23,9 +51,28 @@ function ProductCard({
     addToCart,
   } = useCart();
 
+  const [
+    imageError,
+    setImageError,
+  ] = useState(false);
+
+  const [
+    addingToCart,
+    setAddingToCart,
+  ] = useState(false);
+
+  const [
+    addedToCart,
+    setAddedToCart,
+  ] = useState(false);
+
   // ==========================================================
   // PRODUCT DATA
   // ==========================================================
+
+  if (!product) {
+    return null;
+  }
 
   const productId =
     product?._id ||
@@ -81,30 +128,58 @@ function ProductCard({
         : [];
 
   const image =
-    images[0] || "";
+    getImageUrl(
+      images[0]
+    );
+
+  const isInStock =
+    stock > 0;
+
+  const productPath =
+    productId
+      ? `/products/${productId}`
+      : "/products";
 
   // ==========================================================
   // ADD TO CART
   // ==========================================================
 
-  const handleAddToCart = (
+  const handleAddToCart = async (
     event
   ) => {
     event.preventDefault();
-
     event.stopPropagation();
 
     if (
       !productId ||
-      stock <= 0
+      !isInStock ||
+      addingToCart
     ) {
       return;
     }
 
-    addToCart(
-      product,
-      moq
-    );
+    try {
+      setAddingToCart(true);
+      setAddedToCart(false);
+
+      await addToCart(
+        product,
+        moq
+      );
+
+      setAddedToCart(true);
+
+      window.setTimeout(() => {
+        setAddedToCart(false);
+      }, 1800);
+    } catch (error) {
+      console.error(
+        "Add to cart error:",
+        error
+      );
+    } finally {
+      setAddingToCart(false);
+    }
   };
 
   // ==========================================================
@@ -119,20 +194,26 @@ function ProductCard({
           ================================================== */}
 
       <Link
-        to={`/products/${productId}`}
+        to={productPath}
         className="product-card-image-link"
+        aria-label={`View ${productName}`}
       >
 
         <div className="product-card-image">
 
-          {image ? (
+          {image &&
+          !imageError ? (
             <img
               src={image}
               alt={productName}
               loading="lazy"
+              onError={() =>
+                setImageError(true)
+              }
             />
           ) : (
             <div className="product-card-no-image">
+
               <span>
                 SE
               </span>
@@ -140,6 +221,7 @@ function ProductCard({
               <small>
                 No Image
               </small>
+
             </div>
           )}
 
@@ -147,12 +229,12 @@ function ProductCard({
 
           <span
             className={`product-stock-badge ${
-              stock > 0
+              isInStock
                 ? "product-stock-badge-in"
                 : "product-stock-badge-out"
             }`}
           >
-            {stock > 0
+            {isInStock
               ? "In Stock"
               : "Out of Stock"}
           </span>
@@ -178,7 +260,7 @@ function ProductCard({
         {/* NAME */}
 
         <Link
-          to={`/products/${productId}`}
+          to={productPath}
           className="product-card-title"
         >
           {productName}
@@ -192,6 +274,14 @@ function ProductCard({
           </p>
         )}
 
+        {/* DESCRIPTION */}
+
+        {product?.description && (
+          <p className="product-card-description">
+            {product.description}
+          </p>
+        )}
+
         {/* PRICE */}
 
         <div className="product-card-price-row">
@@ -201,7 +291,11 @@ function ProductCard({
             <span className="product-card-price">
               ₹
               {price.toLocaleString(
-                "en-IN"
+                "en-IN",
+                {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                }
               )}
             </span>
 
@@ -213,26 +307,44 @@ function ProductCard({
 
         </div>
 
-        {/* MOQ */}
+        {/* META */}
 
         <div className="product-card-meta">
 
-          <span>
-            MOQ
-          </span>
+          <div>
 
-          <strong>
-            {moq}
-          </strong>
+            <span>
+              MOQ
+            </span>
+
+            <strong>
+              {moq}
+            </strong>
+
+          </div>
+
+          {isInStock && (
+            <div>
+
+              <span>
+                Stock
+              </span>
+
+              <strong>
+                {stock}
+              </strong>
+
+            </div>
+          )}
 
         </div>
 
-        {/* ACTION */}
+        {/* ACTIONS */}
 
         <div className="product-card-actions">
 
           <Link
-            to={`/products/${productId}`}
+            to={productPath}
             className="product-view-button"
           >
             View Details
@@ -242,15 +354,26 @@ function ProductCard({
             type="button"
             className="product-add-button"
             disabled={
-              stock <= 0
+              !isInStock ||
+              !productId ||
+              addingToCart
             }
             onClick={
               handleAddToCart
             }
+            aria-label={
+              isInStock
+                ? `Add ${productName} to cart`
+                : `${productName} is unavailable`
+            }
           >
-            {stock > 0
-              ? "Add to Cart"
-              : "Unavailable"}
+            {addingToCart
+              ? "Adding..."
+              : addedToCart
+                ? "Added ✓"
+                : isInStock
+                  ? "Add to Cart"
+                  : "Unavailable"}
           </button>
 
         </div>

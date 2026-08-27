@@ -153,8 +153,11 @@ function OrderSummaryPage() {
     async () => {
       try {
         setLoading(true);
-
         setError("");
+
+        // ------------------------------------------------------
+        // BUILD ORDER ITEMS
+        // ------------------------------------------------------
 
         const orderItems =
           cartItems.map(
@@ -167,6 +170,9 @@ function OrderSummaryPage() {
 
               name:
                 item.name,
+
+              image:
+                item.image || "",
 
               quantity:
                 Number(
@@ -185,32 +191,100 @@ function OrderSummaryPage() {
                 Number(
                   item.quantity
                 ),
+
+              unit:
+                item.unit ||
+                "piece",
             })
           );
+
+        // ------------------------------------------------------
+        // VALIDATE ITEMS
+        // ------------------------------------------------------
+
+        if (
+          orderItems.length === 0
+        ) {
+          throw new Error(
+            "Your cart is empty."
+          );
+        }
+
+        const invalidItem =
+          orderItems.find(
+            (item) =>
+              !item.product ||
+              item.quantity <= 0 ||
+              item.price < 0
+          );
+
+        if (invalidItem) {
+          throw new Error(
+            "One or more cart items are invalid."
+          );
+        }
+
+        // ------------------------------------------------------
+        // BUILD SHIPPING ADDRESS
+        //
+        // AddressContext:
+        // address  -> addressLine1
+        // pincode  -> postalCode
+        // ------------------------------------------------------
+
+        const shippingAddress = {
+          name:
+            selectedAddress.name?.trim(),
+
+          phone:
+            selectedAddress.phone?.trim(),
+
+          addressLine1:
+            selectedAddress.address?.trim(),
+
+          addressLine2:
+            selectedAddress.addressLine2 ||
+            "",
+
+          city:
+            selectedAddress.city?.trim(),
+
+          state:
+            selectedAddress.state?.trim(),
+
+          postalCode:
+            selectedAddress.pincode?.trim(),
+
+          country:
+            "India",
+        };
+
+        // ------------------------------------------------------
+        // VALIDATE ADDRESS
+        // ------------------------------------------------------
+
+        if (
+          !shippingAddress.name ||
+          !shippingAddress.phone ||
+          !shippingAddress.addressLine1 ||
+          !shippingAddress.city ||
+          !shippingAddress.state ||
+          !shippingAddress.postalCode
+        ) {
+          throw new Error(
+            "Please complete your delivery address."
+          );
+        }
+
+        // ------------------------------------------------------
+        // ORDER DATA
+        // ------------------------------------------------------
 
         const orderData = {
           items:
             orderItems,
 
-          shippingAddress: {
-            name:
-              selectedAddress.name,
-
-            phone:
-              selectedAddress.phone,
-
-            address:
-              selectedAddress.address,
-
-            city:
-              selectedAddress.city,
-
-            state:
-              selectedAddress.state,
-
-            pincode:
-              selectedAddress.pincode,
-          },
+          shippingAddress,
 
           subtotal:
             Number(subtotal),
@@ -220,18 +294,20 @@ function OrderSummaryPage() {
 
           totalItems:
             Number(totalItems),
-
-          paymentMethod:
-            "RAZORPAY",
-
-          paymentStatus:
-            "PENDING",
         };
+
+        // ------------------------------------------------------
+        // CREATE ORDER
+        // ------------------------------------------------------
 
         const response =
           await createOrder(
             orderData
           );
+
+        // ------------------------------------------------------
+        // EXTRACT CREATED ORDER
+        // ------------------------------------------------------
 
         const createdOrder =
           response?.order ||
@@ -251,12 +327,14 @@ function OrderSummaryPage() {
           );
         }
 
-        /*
-          Cart is intentionally NOT cleared here.
-
-          Cart should be cleared only after
-          successful payment verification.
-        */
+        // ------------------------------------------------------
+        // IMPORTANT
+        //
+        // Do NOT clear cart here.
+        //
+        // Cart should be cleared after successful payment
+        // verification.
+        // ------------------------------------------------------
 
         navigate(
           `/payment/${orderId}`
@@ -270,8 +348,8 @@ function OrderSummaryPage() {
         setError(
           err.response?.data
             ?.message ||
-            err.message ||
-            "Unable to create order."
+          err.message ||
+          "Unable to create order."
         );
       } finally {
         setLoading(false);
@@ -339,6 +417,7 @@ function OrderSummaryPage() {
             </span>
 
             <div>
+
               <strong>
                 Delivery
               </strong>
@@ -346,6 +425,7 @@ function OrderSummaryPage() {
               <small>
                 Address
               </small>
+
             </div>
 
           </div>
@@ -359,6 +439,7 @@ function OrderSummaryPage() {
             </span>
 
             <div>
+
               <strong>
                 Summary
               </strong>
@@ -366,6 +447,7 @@ function OrderSummaryPage() {
               <small>
                 Review order
               </small>
+
             </div>
 
           </div>
@@ -379,6 +461,7 @@ function OrderSummaryPage() {
             </span>
 
             <div>
+
               <strong>
                 Payment
               </strong>
@@ -386,6 +469,7 @@ function OrderSummaryPage() {
               <small>
                 Complete order
               </small>
+
             </div>
 
           </div>
@@ -612,7 +696,9 @@ function OrderSummaryPage() {
 
             </div>
 
-            {/* BACK */}
+            {/* ==================================================
+                BACK
+                ================================================== */}
 
             <Link
               to="/checkout"
@@ -688,6 +774,7 @@ function OrderSummaryPage() {
             <div className="order-summary-payment-method">
 
               <div>
+
                 <span>
                   Payment Method
                 </span>
@@ -695,6 +782,7 @@ function OrderSummaryPage() {
                 <strong>
                   Razorpay
                 </strong>
+
               </div>
 
               <span className="order-summary-payment-badge">
@@ -713,6 +801,7 @@ function OrderSummaryPage() {
                 handlePlaceOrder
               }
             >
+
               {loading
                 ? "Creating Order..."
                 : "Continue to Payment"}
@@ -722,6 +811,7 @@ function OrderSummaryPage() {
                   →
                 </span>
               )}
+
             </button>
 
             <p className="order-summary-note">

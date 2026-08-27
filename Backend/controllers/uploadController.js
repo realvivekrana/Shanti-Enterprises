@@ -1,62 +1,37 @@
 // ============================================================
 // SHANTI ENTERPRISES
 // Upload Controller
-// Phase 6 - Admin Product Images
+// Backend - Product Image Upload
 // ============================================================
 
-const cloudinary = require("cloudinary").v2;
+const streamifier = require("streamifier");
+
+const {
+  cloudinary,
+  isCloudinaryConfigured,
+} = require("../config/cloudinary");
 
 // ============================================================
-// CLOUDINARY CONFIGURATION
+// UPLOAD PRODUCT IMAGE
 // ============================================================
 
-cloudinary.config({
-  cloud_name:
-    process.env.CLOUDINARY_CLOUD_NAME,
-
-  api_key:
-    process.env.CLOUDINARY_API_KEY,
-
-  api_secret:
-    process.env.CLOUDINARY_API_SECRET,
-});
-
-// ============================================================
-// UPLOAD IMAGE
-// ============================================================
-
-const uploadImage = async (
+const uploadProductImage = async (
   req,
   res,
   next
 ) => {
   try {
     // ----------------------------------------------------------
-    // CHECK FILE
-    // ----------------------------------------------------------
-
-    if (!req.file) {
-      const error = new Error(
-        "Please choose an image to upload."
-      );
-
-      error.statusCode = 400;
-
-      return next(error);
-    }
-
-    // ----------------------------------------------------------
-    // CLOUDINARY CONFIG CHECK
+    // CLOUDINARY CHECK
     // ----------------------------------------------------------
 
     if (
-      !process.env.CLOUDINARY_CLOUD_NAME ||
-      !process.env.CLOUDINARY_API_KEY ||
-      !process.env.CLOUDINARY_API_SECRET
+      !isCloudinaryConfigured
     ) {
-      const error = new Error(
-        "Cloudinary configuration is missing."
-      );
+      const error =
+        new Error(
+          "Cloudinary is not configured. Please check Backend/.env."
+        );
 
       error.statusCode = 500;
 
@@ -64,79 +39,101 @@ const uploadImage = async (
     }
 
     // ----------------------------------------------------------
-    // UPLOAD BUFFER TO CLOUDINARY
+    // FILE CHECK
     // ----------------------------------------------------------
 
-    const uploadFromBuffer = () => {
-      return new Promise(
-        (resolve, reject) => {
-          const uploadStream =
-            cloudinary.uploader.upload_stream(
-              {
-                folder:
-                  "shanti-enterprises/products",
+    if (!req.file) {
+      const error =
+        new Error(
+          "Please select an image to upload."
+        );
 
-                resource_type:
-                  "image",
-              },
+      error.statusCode = 400;
 
-              (
-                uploadError,
-                result
-              ) => {
-                if (uploadError) {
-                  return reject(
-                    uploadError
-                  );
-                }
+      return next(error);
+    }
 
-                resolve(result);
-              }
+    // ----------------------------------------------------------
+    // CLOUDINARY UPLOAD
+    // ----------------------------------------------------------
+
+    const uploadStream =
+      cloudinary.uploader.upload_stream(
+        {
+          folder:
+            "shanti-enterprises/products",
+
+          resource_type:
+            "image",
+
+          transformation: [
+            {
+              width: 1200,
+              height: 1200,
+              crop: "limit",
+              quality: "auto",
+              fetch_format: "auto",
+            },
+          ],
+        },
+
+        (error, result) => {
+          if (error) {
+            console.error(
+              "Cloudinary upload error:",
+              error
             );
 
-          uploadStream.end(
-            req.file.buffer
-          );
+            const uploadError =
+              new Error(
+                "Unable to upload image to Cloudinary."
+              );
+
+            uploadError.statusCode = 500;
+
+            return next(
+              uploadError
+            );
+          }
+
+          // ----------------------------------------------------
+          // SUCCESS RESPONSE
+          // ----------------------------------------------------
+
+          return res.status(200).json({
+            success: true,
+
+            message:
+              "Image uploaded successfully",
+
+            image: {
+              url: result.secure_url,
+
+              publicId:
+                result.public_id,
+
+              width:
+                result.width,
+
+              height:
+                result.height,
+
+              format:
+                result.format,
+            },
+          });
         }
       );
-    };
 
     // ----------------------------------------------------------
-    // UPLOAD
+    // SEND MEMORY BUFFER TO CLOUDINARY
     // ----------------------------------------------------------
 
-    const result =
-      await uploadFromBuffer();
-
-    // ----------------------------------------------------------
-    // RESPONSE
-    // ----------------------------------------------------------
-
-    return res.status(200).json({
-      success: true,
-
-      message:
-        "Image uploaded successfully",
-
-      image: {
-        url: result.secure_url,
-
-        publicId:
-          result.public_id,
-
-        width:
-          result.width,
-
-        height:
-          result.height,
-
-        format:
-          result.format,
-
-        resourceType:
-          result.resource_type,
-      },
-    });
+    streamifier
+      .createReadStream(
+        req.file.buffer
+      )
+      .pipe(uploadStream);
   } catch (error) {
     next(error);
   }
@@ -147,5 +144,5 @@ const uploadImage = async (
 // ============================================================
 
 module.exports = {
-  uploadImage,
+  uploadProductImage,
 };

@@ -14,7 +14,7 @@ export const createPaymentOrder = async (
   orderId
 ) => {
   const response = await api.post(
-    "/payment/create-order",
+    "/payments/create-order",
     {
       orderId,
     }
@@ -31,7 +31,7 @@ export const verifyPayment = async (
   paymentData
 ) => {
   const response = await api.post(
-    "/payment/verify",
+    "/payments/verify",
     paymentData
   );
 

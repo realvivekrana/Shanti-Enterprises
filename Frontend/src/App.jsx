@@ -1,7 +1,7 @@
 // ============================================================
 // SHANTI ENTERPRISES
 // App Component
-// Frontend Phase 6 - Complete Routing
+// Frontend Phase 7 - Authentication & Navigation
 // ============================================================
 
 import {
@@ -67,11 +67,66 @@ import AdminTestPage from "./pages/admin/AdminTestPage";
 function NotFoundPage() {
   return (
     <div className="app-page">
-      <h1>404</h1>
 
-      <p>
-        Page not found.
-      </p>
+      <div className="page-header">
+
+        <div>
+
+          <span className="page-eyebrow">
+            SHANTI ENTERPRISES
+          </span>
+
+          <h1>
+            Page Not Found
+          </h1>
+
+          <p>
+            The page you are looking
+            for does not exist.
+          </p>
+
+        </div>
+
+      </div>
+
+      <div
+        style={{
+          textAlign: "center",
+          padding: "60px 20px",
+        }}
+      >
+
+        <div
+          style={{
+            fontSize: "72px",
+            fontWeight: 800,
+            lineHeight: 1,
+            marginBottom: "16px",
+          }}
+        >
+          404
+        </div>
+
+        <p
+          style={{
+            marginBottom: "24px",
+          }}
+        >
+          Sorry, we couldn't find
+          that page.
+        </p>
+
+        <button
+          type="button"
+          onClick={() =>
+            window.history.back()
+          }
+        >
+          ← Go Back
+        </button>
+
+      </div>
+
     </div>
   );
 }
@@ -83,6 +138,7 @@ function NotFoundPage() {
 function App() {
   return (
     <BrowserRouter>
+
       <Routes>
 
         {/* ==================================================
@@ -156,6 +212,10 @@ function App() {
             }
           />
 
+          {/* ==================================================
+              UNAUTHORIZED
+              ================================================== */}
+
           <Route
             path="/unauthorized"
             element={
@@ -164,12 +224,16 @@ function App() {
           />
 
           {/* ==================================================
-              CUSTOMER PROTECTED ROUTES
+              CUSTOMER ONLY ROUTES
               ================================================== */}
 
           <Route
             element={
-              <ProtectedRoute />
+              <ProtectedRoute
+                allowedRoles={[
+                  "customer",
+                ]}
+              />
             }
           >
 
@@ -182,7 +246,7 @@ function App() {
               }
             />
 
-            {/* PROFILE */}
+            {/* CUSTOMER PROFILE */}
 
             <Route
               path="/profile"
@@ -191,7 +255,7 @@ function App() {
               }
             />
 
-            {/* ADDRESSES */}
+            {/* CUSTOMER ADDRESSES */}
 
             <Route
               path="/addresses"
@@ -282,9 +346,7 @@ function App() {
             }
           >
 
-            {/* ==================================================
-                ADMIN DASHBOARD
-                ================================================== */}
+            {/* ADMIN DASHBOARD */}
 
             <Route
               path="/admin"
@@ -300,9 +362,7 @@ function App() {
               }
             />
 
-            {/* ==================================================
-                PRODUCT MANAGEMENT
-                ================================================== */}
+            {/* ADMIN PRODUCTS */}
 
             <Route
               path="/admin/products"
@@ -325,9 +385,7 @@ function App() {
               }
             />
 
-            {/* ==================================================
-                CATEGORY MANAGEMENT
-                ================================================== */}
+            {/* ADMIN CATEGORIES */}
 
             <Route
               path="/admin/categories"
@@ -350,9 +408,7 @@ function App() {
               }
             />
 
-            {/* ==================================================
-                ORDER MANAGEMENT
-                ================================================== */}
+            {/* ADMIN ORDERS */}
 
             <Route
               path="/admin/orders"
@@ -368,9 +424,7 @@ function App() {
               }
             />
 
-            {/* ==================================================
-                USER MANAGEMENT
-                ================================================== */}
+            {/* ADMIN USERS */}
 
             <Route
               path="/admin/users"
@@ -379,9 +433,7 @@ function App() {
               }
             />
 
-            {/* ==================================================
-                ANALYTICS
-                ================================================== */}
+            {/* ADMIN ANALYTICS */}
 
             <Route
               path="/admin/analytics"
@@ -390,9 +442,7 @@ function App() {
               }
             />
 
-            {/* ==================================================
-                ADMIN PROFILE
-                ================================================== */}
+            {/* ADMIN PROFILE */}
 
             <Route
               path="/admin/profile"
@@ -401,9 +451,7 @@ function App() {
               }
             />
 
-            {/* ==================================================
-                ADMIN TEST
-                ================================================== */}
+            {/* ADMIN TEST */}
 
             <Route
               path="/admin/test"
@@ -428,6 +476,7 @@ function App() {
         </Route>
 
       </Routes>
+
     </BrowserRouter>
   );
 }

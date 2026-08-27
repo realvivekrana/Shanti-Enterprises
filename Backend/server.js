@@ -1,7 +1,6 @@
 // ============================================================
 // SHANTI ENTERPRISES
 // Backend Server
-// Phase 6 - Admin
 // ============================================================
 
 const express = require("express");
@@ -30,6 +29,7 @@ const paymentRoutes = require("./routes/paymentRoutes");
 const invoiceRoutes = require("./routes/invoiceRoutes");
 const shipmentRoutes = require("./routes/shipmentRoutes");
 const returnRoutes = require("./routes/returnRoutes");
+const uploadRoutes = require("./routes/uploadRoutes");
 
 // ============================================================
 // ADMIN ROUTES
@@ -140,10 +140,8 @@ app.get(
   (req, res) => {
     res.status(200).json({
       success: true,
-
       message:
         "Shanti Enterprises API is running",
-
       environment:
         process.env.NODE_ENV ||
         "development",
@@ -160,10 +158,8 @@ app.get(
   (req, res) => {
     res.status(200).json({
       success: true,
-
       message:
         "Welcome to Shanti Enterprises API",
-
       version: "1.0.0",
     });
   }
@@ -305,6 +301,22 @@ app.use(
 );
 
 // ============================================================
+// IMAGE UPLOAD
+// ============================================================
+// IMPORTANT:
+// Frontend calls:
+// POST /api/upload/image
+//
+// Therefore uploadRoutes is mounted at:
+// /api/upload
+// ============================================================
+
+app.use(
+  "/api/upload",
+  uploadRoutes
+);
+
+// ============================================================
 // ADMIN DASHBOARD
 // ============================================================
 
@@ -389,13 +401,17 @@ app.use(
 // 404 ROUTE
 // ============================================================
 
-app.use(notFound);
+app.use(
+  notFound
+);
 
 // ============================================================
 // GLOBAL ERROR HANDLER
 // ============================================================
 
-app.use(errorHandler);
+app.use(
+  errorHandler
+);
 
 // ============================================================
 // START SERVER

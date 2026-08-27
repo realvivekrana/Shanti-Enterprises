@@ -1,30 +1,287 @@
 // ============================================================
 // SHANTI ENTERPRISES
 // Home Page
-// Frontend Phase 6 - UI/UX
+// Frontend Phase 6 - Complete UI/UX
 // ============================================================
+
+import {
+  useEffect,
+  useState,
+} from "react";
 
 import {
   Link,
 } from "react-router-dom";
+
+import {
+  getProducts,
+} from "../../api/productApi";
+
+import {
+  getCategories,
+} from "../../api/categoryApi";
+
+// ============================================================
+// HELPERS
+// ============================================================
+
+const getImageUrl = (image) => {
+  if (!image) {
+    return "";
+  }
+
+  if (
+    typeof image === "string"
+  ) {
+    return image;
+  }
+
+  return (
+    image.url ||
+    image.secure_url ||
+    ""
+  );
+};
+
+const getCategoryId = (
+  category
+) => {
+  if (!category) {
+    return "";
+  }
+
+  if (
+    typeof category === "string"
+  ) {
+    return category;
+  }
+
+  return (
+    category._id ||
+    category.id ||
+    ""
+  );
+};
+
+const getCategoryName = (
+  category
+) => {
+  if (!category) {
+    return "Uncategorized";
+  }
+
+  if (
+    typeof category === "string"
+  ) {
+    return category;
+  }
+
+  return (
+    category.name ||
+    "Uncategorized"
+  );
+};
 
 // ============================================================
 // HOME PAGE
 // ============================================================
 
 function HomePage() {
+  // ==========================================================
+  // STATE
+  // ==========================================================
+
+  const [
+    products,
+    setProducts,
+  ] = useState([]);
+
+  const [
+    categories,
+    setCategories,
+  ] = useState([]);
+
+  const [
+    loadingProducts,
+    setLoadingProducts,
+  ] = useState(true);
+
+  const [
+    loadingCategories,
+    setLoadingCategories,
+  ] = useState(true);
+
+  const [
+    productError,
+    setProductError,
+  ] = useState("");
+
+  const [
+    categoryError,
+    setCategoryError,
+  ] = useState("");
+
+  // ==========================================================
+  // LOAD PRODUCTS
+  // ==========================================================
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadProducts =
+      async () => {
+        try {
+          setLoadingProducts(
+            true
+          );
+
+          setProductError("");
+
+          const response =
+            await getProducts({
+              page: 1,
+              limit: 8,
+            });
+
+          if (!mounted) {
+            return;
+          }
+
+          if (
+            response?.success &&
+            Array.isArray(
+              response.products
+            )
+          ) {
+            setProducts(
+              response.products
+            );
+          } else {
+            setProducts([]);
+          }
+        } catch (error) {
+          console.error(
+            "Home products error:",
+            error
+          );
+
+          if (mounted) {
+            setProductError(
+              error.response?.data
+                ?.message ||
+                error.message ||
+                "Unable to load products."
+            );
+          }
+        } finally {
+          if (mounted) {
+            setLoadingProducts(
+              false
+            );
+          }
+        }
+      };
+
+    loadProducts();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  // ==========================================================
+  // LOAD CATEGORIES
+  // ==========================================================
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadCategories =
+      async () => {
+        try {
+          setLoadingCategories(
+            true
+          );
+
+          setCategoryError("");
+
+          const response =
+            await getCategories();
+
+          if (!mounted) {
+            return;
+          }
+
+          if (
+            response?.success &&
+            Array.isArray(
+              response.categories
+            )
+          ) {
+            setCategories(
+              response.categories
+            );
+          } else {
+            setCategories([]);
+          }
+        } catch (error) {
+          console.error(
+            "Home categories error:",
+            error
+          );
+
+          if (mounted) {
+            setCategoryError(
+              error.response?.data
+                ?.message ||
+                error.message ||
+                "Unable to load categories."
+            );
+          }
+        } finally {
+          if (mounted) {
+            setLoadingCategories(
+              false
+            );
+          }
+        }
+      };
+
+    loadCategories();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  // ==========================================================
+  // FEATURED PRODUCTS
+  // ==========================================================
+
+  const featuredProducts =
+    products.slice(0, 8);
+
+  // ==========================================================
+  // FEATURED CATEGORIES
+  // ==========================================================
+
+  const featuredCategories =
+    categories.slice(0, 6);
+
+  // ==========================================================
+  // PAGE
+  // ==========================================================
+
   return (
     <div className="home-page">
 
       {/* ====================================================
-          HERO SECTION
+          HERO
           ==================================================== */}
 
       <section className="home-hero">
 
         <div className="home-container home-hero-grid">
-
-          {/* HERO CONTENT */}
 
           <div className="home-hero-content">
 
@@ -39,10 +296,10 @@ function HomePage() {
             </h1>
 
             <p>
-              Discover quality products from
-              Shanti Enterprises with reliable
-              service and a smooth shopping
-              experience.
+              Discover quality products
+              from Shanti Enterprises with
+              reliable service and a smooth
+              shopping experience.
             </p>
 
             <div className="home-hero-actions">
@@ -60,6 +317,42 @@ function HomePage() {
               >
                 Browse Categories
               </Link>
+
+            </div>
+
+            {/* TRUST POINTS */}
+
+            <div className="home-hero-trust">
+
+              <div>
+                <strong>
+                  Quality
+                </strong>
+
+                <span>
+                  Products
+                </span>
+              </div>
+
+              <div>
+                <strong>
+                  Reliable
+                </strong>
+
+                <span>
+                  Service
+                </span>
+              </div>
+
+              <div>
+                <strong>
+                  Secure
+                </strong>
+
+                <span>
+                  Checkout
+                </span>
+              </div>
 
             </div>
 
@@ -90,21 +383,21 @@ function HomePage() {
 
                 <div>
                   <strong>
-                    Quality
+                    Business
                   </strong>
 
                   <span>
-                    Products
+                    Solutions
                   </span>
                 </div>
 
                 <div>
                   <strong>
-                    Reliable
+                    Trusted
                   </strong>
 
                   <span>
-                    Service
+                    Partner
                   </span>
                 </div>
 
@@ -119,10 +412,403 @@ function HomePage() {
       </section>
 
       {/* ====================================================
-          FEATURES
+          CATEGORIES
+          ==================================================== */}
+
+      <section className="home-section home-category-section">
+
+        <div className="home-container">
+
+          <div className="home-section-heading home-section-heading-row">
+
+            <div>
+              <span>
+                SHOP BY CATEGORY
+              </span>
+
+              <h2>
+                Explore our categories
+              </h2>
+
+              <p>
+                Find the products you need
+                by browsing our available
+                categories.
+              </p>
+            </div>
+
+            <Link
+              to="/categories"
+              className="home-text-link"
+            >
+              View All Categories →
+            </Link>
+
+          </div>
+
+          {loadingCategories ? (
+            <div className="home-loading-grid">
+
+              {[1, 2, 3, 4].map(
+                (item) => (
+                  <div
+                    key={item}
+                    className="home-skeleton-card"
+                  >
+                    <div className="home-skeleton-image" />
+
+                    <div className="home-skeleton-line" />
+
+                    <div className="home-skeleton-small" />
+                  </div>
+                )
+              )}
+
+            </div>
+          ) : categoryError ? (
+            <div className="home-message-card">
+
+              <strong>
+                Unable to load categories
+              </strong>
+
+              <p>
+                {categoryError}
+              </p>
+
+              <Link
+                to="/categories"
+                className="home-primary-button"
+              >
+                Browse Categories
+              </Link>
+
+            </div>
+          ) : featuredCategories.length === 0 ? (
+            <div className="home-message-card">
+
+              <strong>
+                Categories coming soon
+              </strong>
+
+              <p>
+                New categories will appear
+                here once they are available.
+              </p>
+
+            </div>
+          ) : (
+            <div className="home-category-grid">
+
+              {featuredCategories.map(
+                (category) => {
+                  const categoryId =
+                    getCategoryId(
+                      category
+                    );
+
+                  const image =
+                    getImageUrl(
+                      category.image
+                    );
+
+                  return (
+                    <Link
+                      key={
+                        categoryId ||
+                        category.name
+                      }
+                      to={
+                        categoryId
+                          ? `/products?category=${encodeURIComponent(
+                              categoryId
+                            )}`
+                          : "/products"
+                      }
+                      className="home-category-card"
+                    >
+
+                      <div className="home-category-image">
+
+                        {image ? (
+                          <img
+                            src={image}
+                            alt={
+                              category.name ||
+                              "Category"
+                            }
+                            loading="lazy"
+                          />
+                        ) : (
+                          <span>
+                            {(
+                              category.name ||
+                              "C"
+                            )
+                              .charAt(0)
+                              .toUpperCase()}
+                          </span>
+                        )}
+
+                      </div>
+
+                      <div className="home-category-content">
+
+                        <h3>
+                          {category.name}
+                        </h3>
+
+                        {category.description && (
+                          <p>
+                            {
+                              category.description
+                            }
+                          </p>
+                        )}
+
+                        <span>
+                          Explore →
+                        </span>
+
+                      </div>
+
+                    </Link>
+                  );
+                }
+              )}
+
+            </div>
+          )}
+
+        </div>
+
+      </section>
+
+      {/* ====================================================
+          FEATURED PRODUCTS
           ==================================================== */}
 
       <section className="home-section">
+
+        <div className="home-container">
+
+          <div className="home-section-heading home-section-heading-row">
+
+            <div>
+              <span>
+                FEATURED PRODUCTS
+              </span>
+
+              <h2>
+                Popular products
+              </h2>
+
+              <p>
+                Explore products currently
+                available from Shanti Enterprises.
+              </p>
+            </div>
+
+            <Link
+              to="/products"
+              className="home-text-link"
+            >
+              View All Products →
+            </Link>
+
+          </div>
+
+          {loadingProducts ? (
+            <div className="home-product-grid">
+
+              {[1, 2, 3, 4].map(
+                (item) => (
+                  <div
+                    key={item}
+                    className="home-product-card home-product-skeleton"
+                  >
+                    <div className="home-skeleton-product-image" />
+
+                    <div className="home-skeleton-line" />
+
+                    <div className="home-skeleton-small" />
+
+                    <div className="home-skeleton-price" />
+                  </div>
+                )
+              )}
+
+            </div>
+          ) : productError ? (
+            <div className="home-message-card">
+
+              <strong>
+                Unable to load products
+              </strong>
+
+              <p>
+                {productError}
+              </p>
+
+              <Link
+                to="/products"
+                className="home-primary-button"
+              >
+                View Products
+              </Link>
+
+            </div>
+          ) : featuredProducts.length === 0 ? (
+            <div className="home-message-card">
+
+              <strong>
+                Products coming soon
+              </strong>
+
+              <p>
+                There are no active products
+                available right now.
+              </p>
+
+              <Link
+                to="/products"
+                className="home-primary-button"
+              >
+                Browse Products
+              </Link>
+
+            </div>
+          ) : (
+            <div className="home-product-grid">
+
+              {featuredProducts.map(
+                (product) => {
+                  const productId =
+                    product._id ||
+                    product.id;
+
+                  const image =
+                    getImageUrl(
+                      product.image
+                    );
+
+                  const categoryName =
+                    getCategoryName(
+                      product.category
+                    );
+
+                  return (
+                    <article
+                      key={productId}
+                      className="home-product-card"
+                    >
+
+                      {/* PRODUCT IMAGE */}
+
+                      <Link
+                        to={`/products/${productId}`}
+                        className="home-product-image"
+                      >
+
+                        {image ? (
+                          <img
+                            src={image}
+                            alt={
+                              product.name
+                            }
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="home-product-image-placeholder">
+                            <span>
+                              SE
+                            </span>
+                          </div>
+                        )}
+
+                      </Link>
+
+                      {/* PRODUCT CONTENT */}
+
+                      <div className="home-product-content">
+
+                        <span className="home-product-category">
+                          {categoryName}
+                        </span>
+
+                        <Link
+                          to={`/products/${productId}`}
+                        >
+                          <h3>
+                            {product.name}
+                          </h3>
+                        </Link>
+
+                        {product.description && (
+                          <p>
+                            {
+                              product.description
+                            }
+                          </p>
+                        )}
+
+                        <div className="home-product-meta">
+
+                          <div>
+                            <strong>
+                              ₹
+                              {Number(
+                                product.price ||
+                                0
+                              ).toLocaleString(
+                                "en-IN",
+                                {
+                                  minimumFractionDigits: 2,
+                                }
+                              )}
+                            </strong>
+
+                            <span>
+                              /{" "}
+                              {product.unit ||
+                                "piece"}
+                            </span>
+                          </div>
+
+                          <span className="home-product-moq">
+                            MOQ:{" "}
+                            {product.moq ||
+                              1}
+                          </span>
+
+                        </div>
+
+                        <Link
+                          to={`/products/${productId}`}
+                          className="home-product-button"
+                        >
+                          View Product
+                        </Link>
+
+                      </div>
+
+                    </article>
+                  );
+                }
+              )}
+
+            </div>
+          )}
+
+        </div>
+
+      </section>
+
+      {/* ====================================================
+          WHY CHOOSE US
+          ==================================================== */}
+
+      <section className="home-section home-features-section">
 
         <div className="home-container">
 
@@ -225,7 +911,7 @@ function HomePage() {
       </section>
 
       {/* ====================================================
-          SHOPPING SECTION
+          HOW IT WORKS
           ==================================================== */}
 
       <section className="home-section home-shopping-section">
@@ -237,7 +923,7 @@ function HomePage() {
             <div>
 
               <span className="home-eyebrow">
-                SHOP WITH CONFIDENCE
+                SIMPLE SHOPPING
               </span>
 
               <h2>
@@ -262,51 +948,66 @@ function HomePage() {
             <div className="home-shopping-box">
 
               <div className="home-shopping-item">
+
                 <span>
                   01
                 </span>
 
                 <div>
+
                   <strong>
                     Browse
                   </strong>
 
                   <p>
-                    Find products and categories.
+                    Find products and
+                    categories.
                   </p>
+
                 </div>
+
               </div>
 
               <div className="home-shopping-item">
+
                 <span>
                   02
                 </span>
 
                 <div>
+
                   <strong>
                     Add to Cart
                   </strong>
 
                   <p>
-                    Select the quantity you need.
+                    Select the quantity
+                    you need.
                   </p>
+
                 </div>
+
               </div>
 
               <div className="home-shopping-item">
+
                 <span>
                   03
                 </span>
 
                 <div>
+
                   <strong>
                     Checkout
                   </strong>
 
                   <p>
-                    Complete your order securely.
+                    Complete your order
+                    securely.
                   </p>
+
                 </div>
+
               </div>
 
             </div>
@@ -318,7 +1019,61 @@ function HomePage() {
       </section>
 
       {/* ====================================================
-          CTA
+          BUSINESS / WHOLESALE
+          ==================================================== */}
+
+      <section className="home-business-section">
+
+        <div className="home-container">
+
+          <div className="home-business-card">
+
+            <div>
+
+              <span className="home-eyebrow">
+                BUSINESS ORDERS
+              </span>
+
+              <h2>
+                Need products in larger
+                quantities?
+              </h2>
+
+              <p>
+                Explore wholesale-friendly
+                products and quantity-based
+                purchasing options for your
+                business requirements.
+              </p>
+
+            </div>
+
+            <div className="home-business-actions">
+
+              <Link
+                to="/products"
+                className="home-primary-button"
+              >
+                Explore Products
+              </Link>
+
+              <Link
+                to="/rfq"
+                className="home-secondary-button"
+              >
+                Request a Quote
+              </Link>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+      {/* ====================================================
+          FINAL CTA
           ==================================================== */}
 
       <section className="home-cta-section">

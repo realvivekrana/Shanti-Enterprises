@@ -8,6 +8,10 @@ import {
   Link,
 } from "react-router-dom";
 
+import {
+  useAuth,
+} from "../../context/AuthContext";
+
 // ============================================================
 // FOOTER
 // ============================================================
@@ -15,6 +19,15 @@ import {
 function Footer() {
   const currentYear =
     new Date().getFullYear();
+
+  const {
+    isAuthenticated,
+    isAdmin,
+  } = useAuth();
+
+  // ==========================================================
+  // PAGE
+  // ==========================================================
 
   return (
     <footer className="site-footer">
@@ -86,21 +99,41 @@ function Footer() {
             Account
           </h3>
 
-          <Link to="/login">
-            Login
-          </Link>
+          {!isAuthenticated && (
+            <Link to="/login">
+              Login
+            </Link>
+          )}
 
-          <Link to="/dashboard">
-            Dashboard
-          </Link>
+          {isAuthenticated && (
+            <>
+              {isAdmin ? (
+                <Link to="/admin">
+                  Admin Dashboard
+                </Link>
+              ) : (
+                <>
+                  <Link to="/dashboard">
+                    Dashboard
+                  </Link>
 
-          <Link to="/orders">
-            My Orders
-          </Link>
+                  <Link to="/orders">
+                    My Orders
+                  </Link>
 
-          <Link to="/profile">
-            Profile
-          </Link>
+                  <Link to="/profile">
+                    Profile
+                  </Link>
+                </>
+              )}
+            </>
+          )}
+
+          {!isAuthenticated && (
+            <Link to="/register">
+              Create Account
+            </Link>
+          )}
 
         </div>
 
