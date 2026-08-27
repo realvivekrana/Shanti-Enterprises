@@ -19,17 +19,11 @@ import ProtectedRoute from "./components/common/ProtectedRoute";
 // ============================================================
 
 import HomePage from "./pages/public/HomePage";
-
 import CategoriesPage from "./pages/public/CategoriesPage";
-
 import ProductsPage from "./pages/public/ProductsPage";
-
 import ProductDetailsPage from "./pages/public/ProductDetailsPage";
-
 import CartPage from "./pages/public/CartPage";
-
 import LoginPage from "./pages/public/LoginPage";
-
 import UnauthorizedPage from "./pages/public/UnauthorizedPage";
 
 // ============================================================
@@ -37,25 +31,15 @@ import UnauthorizedPage from "./pages/public/UnauthorizedPage";
 // ============================================================
 
 import CheckoutPage from "./pages/customer/CheckoutPage";
-
 import AddressPage from "./pages/customer/AddressPage";
-
 import OrderSummaryPage from "./pages/customer/OrderSummaryPage";
-
 import PaymentPage from "./pages/customer/PaymentPage";
-
 import OrderSuccessPage from "./pages/customer/OrderSuccessPage";
-
 import OrdersPage from "./pages/customer/OrdersPage";
-
 import OrderDetailsPage from "./pages/customer/OrderDetailsPage";
-
 import CustomerDashboardPage from "./pages/customer/CustomerDashboardPage";
-
 import ProfilePage from "./pages/customer/ProfilePage";
-
 import AddressesPage from "./pages/customer/AddressesPage";
-
 import CustomerTestPage from "./pages/customer/CustomerTestPage";
 
 // ============================================================
@@ -63,29 +47,17 @@ import CustomerTestPage from "./pages/customer/CustomerTestPage";
 // ============================================================
 
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
-
 import AdminProductsPage from "./pages/admin/AdminProductsPage";
-
 import AddProductPage from "./pages/admin/AddProductPage";
-
 import EditProductPage from "./pages/admin/EditProductPage";
-
 import AdminCategoriesPage from "./pages/admin/AdminCategoriesPage";
-
 import AddCategoryPage from "./pages/admin/AddCategoryPage";
-
 import EditCategoryPage from "./pages/admin/EditCategoryPage";
-
 import AdminOrdersPage from "./pages/admin/AdminOrdersPage";
-
 import AdminOrderDetailsPage from "./pages/admin/AdminOrderDetailsPage";
-
 import AdminUsersPage from "./pages/admin/AdminUsersPage";
-
 import AdminAnalyticsPage from "./pages/admin/AdminAnalyticsPage";
-
 import AdminProfilePage from "./pages/admin/AdminProfilePage";
-
 import AdminTestPage from "./pages/admin/AdminTestPage";
 
 // ============================================================
@@ -95,15 +67,11 @@ import AdminTestPage from "./pages/admin/AdminTestPage";
 function NotFoundPage() {
   return (
     <div className="app-page">
-
-      <h1>
-        404
-      </h1>
+      <h1>404</h1>
 
       <p>
         Page not found.
       </p>
-
     </div>
   );
 }
@@ -115,7 +83,6 @@ function NotFoundPage() {
 function App() {
   return (
     <BrowserRouter>
-
       <Routes>
 
         {/* ==================================================
@@ -167,8 +134,23 @@ function App() {
             }
           />
 
+          {/* ==================================================
+              CUSTOMER LOGIN
+              ================================================== */}
+
           <Route
             path="/login"
+            element={
+              <LoginPage />
+            }
+          />
+
+          {/* ==================================================
+              ADMIN LOGIN
+              ================================================== */}
+
+          <Route
+            path="/admin/login"
             element={
               <LoginPage />
             }
@@ -446,7 +428,6 @@ function App() {
         </Route>
 
       </Routes>
-
     </BrowserRouter>
   );
 }

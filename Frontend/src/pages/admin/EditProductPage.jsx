@@ -1,11 +1,12 @@
 // ============================================================
 // SHANTI ENTERPRISES
 // Edit Product Page
-// Frontend Phase 5 - Admin
+// Frontend Phase 6 - Admin
 // ============================================================
 
 import {
   useEffect,
+  useRef,
   useState,
 } from "react";
 
@@ -20,9 +21,9 @@ import {
   updateProduct,
 } from "../../api/productApi";
 
-import Loading from "../../components/common/Loading";
-
-import ErrorMessage from "../../components/common/ErrorMessage";
+import {
+  uploadImage,
+} from "../../api/uploadApi";
 
 // ============================================================
 // EDIT PRODUCT PAGE
@@ -35,6 +36,13 @@ function EditProductPage() {
 
   const navigate =
     useNavigate();
+
+  const fileInputRef =
+    useRef(null);
+
+  // ==========================================================
+  // FORM
+  // ==========================================================
 
   const [
     form,
@@ -51,14 +59,18 @@ function EditProductPage() {
     image: "",
   });
 
+  // ==========================================================
+  // PAGE STATE
+  // ==========================================================
+
   const [
-    loading,
-    setLoading,
+    pageLoading,
+    setPageLoading,
   ] = useState(true);
 
   const [
-    saving,
-    setSaving,
+    loading,
+    setLoading,
   ] = useState(false);
 
   const [
@@ -72,124 +84,147 @@ function EditProductPage() {
   ] = useState("");
 
   // ==========================================================
+  // IMAGE STATE
+  // ==========================================================
+
+  const [
+    selectedImage,
+    setSelectedImage,
+  ] = useState(null);
+
+  const [
+    imagePreview,
+    setImagePreview,
+  ] = useState("");
+
+  const [
+    imageUploading,
+    setImageUploading,
+  ] = useState(false);
+
+  const [
+    uploadedImageUrl,
+    setUploadedImageUrl,
+  ] = useState("");
+
+  // ==========================================================
   // LOAD PRODUCT
   // ==========================================================
 
-  const loadProduct = async () => {
-    try {
-      setLoading(true);
-      setError("");
-
-      const response =
-        await getProductById(
-          productId
-        );
-
-      const product =
-        response?.product ||
-        response?.data?.product ||
-        response?.data ||
-        response;
-
-      if (!product) {
-        throw new Error(
-          "Product not found."
-        );
-      }
-
-      const category =
-        typeof product.category ===
-        "object"
-          ? product.category?.name
-          : product.category;
-
-      const brand =
-        typeof product.brand ===
-        "object"
-          ? product.brand?.name
-          : product.brand;
-
-      const image =
-        product.image ||
-        (
-          Array.isArray(
-            product.images
-          )
-            ? product.images[0]
-            : ""
-        );
-
-      setForm({
-        name:
-          product.name ||
-          product.title ||
-          "",
-
-        sku:
-          product.sku ||
-          "",
-
-        description:
-          product.description ||
-          "",
-
-        price:
-          product.price ??
-          product.sellingPrice ??
-          product.salePrice ??
-          "",
-
-        stock:
-          product.stock ??
-          product.countInStock ??
-          product.inventory ??
-          product.quantity ??
-          "",
-
-        moq:
-          product.moq ??
-          product.minimumOrderQuantity ??
-          product.minOrderQuantity ??
-          1,
-
-        category:
-          category || "",
-
-        brand:
-          brand || "",
-
-        image:
-          image || "",
-      });
-    } catch (err) {
-      console.error(
-        "Load product error:",
-        err
-      );
-
-      setError(
-        err.response?.data
-          ?.message ||
-          err.message ||
-          "Unable to load product."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ==========================================================
-  // INITIAL LOAD
-  // ==========================================================
-
   useEffect(() => {
+    const loadProduct =
+      async () => {
+        try {
+          setPageLoading(true);
+          setError("");
+
+          const response =
+            await getProductById(
+              productId
+            );
+
+          const product =
+            response?.product ||
+            response?.data?.product ||
+            response;
+
+          if (!product) {
+            throw new Error(
+              "Product not found."
+            );
+          }
+
+          setForm({
+            name:
+              product.name || "",
+
+            sku:
+              product.sku || "",
+
+            description:
+              product.description ||
+              "",
+
+            price:
+              product.price ??
+              "",
+
+            stock:
+              product.stock ??
+              "",
+
+            moq:
+              product.moq ??
+              "1",
+
+            category:
+              typeof product.category ===
+              "object"
+                ? product.category?._id ||
+                  product.category?.slug ||
+                  ""
+                : product.category ||
+                  "",
+
+            brand:
+              product.brand || "",
+
+            image:
+              product.image || "",
+          });
+
+          if (product.image) {
+            setImagePreview(
+              product.image
+            );
+          }
+        } catch (err) {
+          console.error(
+            "Load product error:",
+            err
+          );
+
+          setError(
+            err.response?.data
+              ?.message ||
+              err.message ||
+              "Unable to load product."
+          );
+        } finally {
+          setPageLoading(false);
+        }
+      };
+
     if (productId) {
       loadProduct();
     }
-  }, [productId]);
+  }, [
+    productId,
+  ]);
 
   // ==========================================================
-  // HANDLE CHANGE
+  // CLEANUP
+  // ==========================================================
+
+  useEffect(() => {
+    return () => {
+      if (
+        imagePreview &&
+        imagePreview.startsWith(
+          "blob:"
+        )
+      ) {
+        URL.revokeObjectURL(
+          imagePreview
+        );
+      }
+    };
+  }, [
+    imagePreview,
+  ]);
+
+  // ==========================================================
+  // HANDLE INPUT
   // ==========================================================
 
   const handleChange = (
@@ -212,6 +247,214 @@ function EditProductPage() {
   };
 
   // ==========================================================
+  // OPEN FILE SELECTOR
+  // ==========================================================
+
+  const handleChooseImage = () => {
+    if (
+      loading ||
+      imageUploading
+    ) {
+      return;
+    }
+
+    fileInputRef.current?.click();
+  };
+
+  // ==========================================================
+  // IMAGE SELECTION
+  // ==========================================================
+
+  const handleImageChange = (
+    event
+  ) => {
+    const file =
+      event.target.files?.[0];
+
+    setError("");
+    setSuccess("");
+
+    if (!file) {
+      return;
+    }
+
+    const allowedTypes = [
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/webp",
+      "image/gif",
+    ];
+
+    if (
+      !allowedTypes.includes(
+        file.type
+      )
+    ) {
+      setError(
+        "Only JPG, JPEG, PNG, WEBP and GIF images are allowed."
+      );
+
+      event.target.value = "";
+
+      return;
+    }
+
+    const maxSize =
+      5 * 1024 * 1024;
+
+    if (
+      file.size >
+      maxSize
+    ) {
+      setError(
+        "Image size cannot exceed 5 MB."
+      );
+
+      event.target.value = "";
+
+      return;
+    }
+
+    // --------------------------------------------------------
+    // REMOVE OLD BLOB PREVIEW
+    // --------------------------------------------------------
+
+    if (
+      imagePreview &&
+      imagePreview.startsWith(
+        "blob:"
+      )
+    ) {
+      URL.revokeObjectURL(
+        imagePreview
+      );
+    }
+
+    // --------------------------------------------------------
+    // CREATE NEW PREVIEW
+    // --------------------------------------------------------
+
+    const previewUrl =
+      URL.createObjectURL(
+        file
+      );
+
+    setSelectedImage(file);
+
+    setImagePreview(
+      previewUrl
+    );
+
+    setUploadedImageUrl("");
+
+    setError("");
+    setSuccess("");
+  };
+
+  // ==========================================================
+  // REMOVE IMAGE
+  // ==========================================================
+
+  const handleRemoveImage = () => {
+    if (
+      imagePreview &&
+      imagePreview.startsWith(
+        "blob:"
+      )
+    ) {
+      URL.revokeObjectURL(
+        imagePreview
+      );
+    }
+
+    setSelectedImage(null);
+    setImagePreview("");
+    setUploadedImageUrl("");
+
+    setForm(
+      (current) => ({
+        ...current,
+        image: "",
+      })
+    );
+
+    if (
+      fileInputRef.current
+    ) {
+      fileInputRef.current.value =
+        "";
+    }
+
+    setError("");
+    setSuccess("");
+  };
+
+  // ==========================================================
+  // UPLOAD IMAGE
+  // ==========================================================
+
+  const handleUploadImage =
+    async () => {
+      if (!selectedImage) {
+        setError(
+          "Please choose an image first."
+        );
+
+        return;
+      }
+
+      try {
+        setImageUploading(true);
+        setError("");
+        setSuccess("");
+
+        const response =
+          await uploadImage(
+            selectedImage
+          );
+
+        const imageUrl =
+          response?.image?.url;
+
+        if (!imageUrl) {
+          throw new Error(
+            "Image uploaded but no image URL was returned."
+          );
+        }
+
+        setUploadedImageUrl(
+          imageUrl
+        );
+
+        setForm(
+          (current) => ({
+            ...current,
+            image: imageUrl,
+          })
+        );
+
+        setSuccess(
+          "New image uploaded successfully."
+        );
+      } catch (err) {
+        console.error(
+          "Image upload error:",
+          err
+        );
+
+        setError(
+          err.response?.data
+            ?.message ||
+            err.message ||
+            "Unable to upload image."
+        );
+      } finally {
+        setImageUploading(false);
+      }
+    };
+
+  // ==========================================================
   // VALIDATION
   // ==========================================================
 
@@ -220,11 +463,14 @@ function EditProductPage() {
       return "Product name is required.";
     }
 
+    if (!form.price) {
+      return "Product price is required.";
+    }
+
     if (
-      form.price === "" ||
       Number(form.price) < 0
     ) {
-      return "Valid price is required.";
+      return "Price cannot be negative.";
     }
 
     if (
@@ -241,11 +487,18 @@ function EditProductPage() {
       return "MOQ must be at least 1.";
     }
 
+    if (
+      selectedImage &&
+      !uploadedImageUrl
+    ) {
+      return "Please upload the selected image before updating the product.";
+    }
+
     return "";
   };
 
   // ==========================================================
-  // UPDATE PRODUCT
+  // SUBMIT
   // ==========================================================
 
   const handleSubmit = async (
@@ -265,7 +518,7 @@ function EditProductPage() {
     }
 
     try {
-      setSaving(true);
+      setLoading(true);
       setError("");
       setSuccess("");
 
@@ -311,7 +564,7 @@ function EditProductPage() {
         navigate(
           "/admin/products"
         );
-      }, 800);
+      }, 1000);
     } catch (err) {
       console.error(
         "Update product error:",
@@ -325,7 +578,7 @@ function EditProductPage() {
           "Unable to update product."
       );
     } finally {
-      setSaving(false);
+      setLoading(false);
     }
   };
 
@@ -333,11 +586,25 @@ function EditProductPage() {
   // LOADING
   // ==========================================================
 
-  if (loading) {
+  if (pageLoading) {
     return (
-      <Loading
-        message="Loading product..."
-      />
+      <section className="app-page">
+
+        <Link
+          to="/admin/products"
+        >
+          ← Product Management
+        </Link>
+
+        <h1>
+          Edit Product
+        </h1>
+
+        <p>
+          Loading product...
+        </p>
+
+      </section>
     );
   }
 
@@ -348,11 +615,15 @@ function EditProductPage() {
   return (
     <section className="app-page">
 
-      {/* HEADER */}
+      {/* ====================================================
+          HEADER
+          ==================================================== */}
 
       <div>
 
-        <Link to="/admin/products">
+        <Link
+          to="/admin/products"
+        >
           ← Product Management
         </Link>
 
@@ -361,21 +632,31 @@ function EditProductPage() {
         </h1>
 
         <p>
-          Update product information.
+          Update product
+          information.
         </p>
 
       </div>
 
-      {/* ERROR */}
+      {/* ====================================================
+          ERROR
+          ==================================================== */}
 
       {error && (
-        <ErrorMessage
-          message={error}
-          onRetry={loadProduct}
-        />
+        <div>
+          <strong>
+            Error
+          </strong>
+
+          <p>
+            {error}
+          </p>
+        </div>
       )}
 
-      {/* SUCCESS */}
+      {/* ====================================================
+          SUCCESS
+          ==================================================== */}
 
       {success && (
         <div>
@@ -389,7 +670,9 @@ function EditProductPage() {
         </div>
       )}
 
-      {/* FORM */}
+      {/* ====================================================
+          FORM
+          ==================================================== */}
 
       <form
         onSubmit={
@@ -397,7 +680,7 @@ function EditProductPage() {
         }
       >
 
-        {/* NAME */}
+        {/* PRODUCT NAME */}
 
         <div>
 
@@ -409,10 +692,13 @@ function EditProductPage() {
             id="name"
             name="name"
             type="text"
-            value={form.name}
+            value={
+              form.name
+            }
             onChange={
               handleChange
             }
+            placeholder="Enter product name"
           />
 
         </div>
@@ -429,10 +715,13 @@ function EditProductPage() {
             id="sku"
             name="sku"
             type="text"
-            value={form.sku}
+            value={
+              form.sku
+            }
             onChange={
               handleChange
             }
+            placeholder="Enter SKU"
           />
 
         </div>
@@ -448,13 +737,14 @@ function EditProductPage() {
           <textarea
             id="description"
             name="description"
-            rows="5"
             value={
               form.description
             }
             onChange={
               handleChange
             }
+            placeholder="Enter product description"
+            rows="5"
           />
 
         </div>
@@ -473,10 +763,13 @@ function EditProductPage() {
             type="number"
             min="0"
             step="0.01"
-            value={form.price}
+            value={
+              form.price
+            }
             onChange={
               handleChange
             }
+            placeholder="Enter price"
           />
 
         </div>
@@ -494,10 +787,13 @@ function EditProductPage() {
             name="stock"
             type="number"
             min="0"
-            value={form.stock}
+            value={
+              form.stock
+            }
             onChange={
               handleChange
             }
+            placeholder="Enter stock quantity"
           />
 
         </div>
@@ -515,10 +811,13 @@ function EditProductPage() {
             name="moq"
             type="number"
             min="1"
-            value={form.moq}
+            value={
+              form.moq
+            }
             onChange={
               handleChange
             }
+            placeholder="Enter MOQ"
           />
 
         </div>
@@ -541,6 +840,7 @@ function EditProductPage() {
             onChange={
               handleChange
             }
+            placeholder="Enter category"
           />
 
         </div>
@@ -557,48 +857,202 @@ function EditProductPage() {
             id="brand"
             name="brand"
             type="text"
-            value={form.brand}
+            value={
+              form.brand
+            }
             onChange={
               handleChange
             }
+            placeholder="Enter brand"
           />
 
         </div>
 
-        {/* IMAGE */}
+        {/* ==================================================
+            PRODUCT IMAGE
+            ================================================== */}
 
         <div>
 
-          <label htmlFor="image">
-            Image URL
+          <label>
+            Product Image
           </label>
 
+          {/* HIDDEN FILE INPUT */}
+
           <input
-            id="image"
-            name="image"
-            type="url"
-            value={form.image}
-            onChange={
-              handleChange
+            ref={
+              fileInputRef
             }
+            type="file"
+            accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
+            onChange={
+              handleImageChange
+            }
+            style={{
+              display:
+                "none",
+            }}
           />
+
+          {/* CURRENT / NEW IMAGE */}
+
+          {imagePreview ? (
+            <div>
+
+              <img
+                src={
+                  imagePreview
+                }
+                alt="Product preview"
+                style={{
+                  width:
+                    "220px",
+                  height:
+                    "220px",
+                  objectFit:
+                    "cover",
+                  borderRadius:
+                    "12px",
+                  display:
+                    "block",
+                }}
+              />
+
+              {selectedImage && (
+                <p>
+                  {selectedImage.name}
+                </p>
+              )}
+
+              <div>
+
+                <button
+                  type="button"
+                  onClick={
+                    handleChooseImage
+                  }
+                  disabled={
+                    loading ||
+                    imageUploading
+                  }
+                >
+                  Change Image
+                </button>
+
+                <button
+                  type="button"
+                  onClick={
+                    handleRemoveImage
+                  }
+                  disabled={
+                    loading ||
+                    imageUploading
+                  }
+                >
+                  Remove
+                </button>
+
+              </div>
+
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={
+                handleChooseImage
+              }
+              disabled={
+                loading ||
+                imageUploading
+              }
+            >
+              Choose Image
+            </button>
+          )}
+
+          {/* ==================================================
+              UPLOAD NEW IMAGE
+              ================================================== */}
+
+          {selectedImage &&
+            !uploadedImageUrl && (
+              <div>
+
+                <button
+                  type="button"
+                  onClick={
+                    handleUploadImage
+                  }
+                  disabled={
+                    imageUploading ||
+                    loading
+                  }
+                >
+                  {imageUploading
+                    ? "Uploading..."
+                    : "Upload Image"}
+                </button>
+
+              </div>
+            )}
+
+          {/* ==================================================
+              UPLOAD SUCCESS
+              ================================================== */}
+
+          {uploadedImageUrl && (
+            <div>
+
+              <p>
+                ✓ New image uploaded
+                successfully
+              </p>
+
+              <button
+                type="button"
+                onClick={
+                  handleChooseImage
+                }
+                disabled={
+                  loading ||
+                  imageUploading
+                }
+              >
+                Change Image
+              </button>
+
+            </div>
+          )}
+
+          <p>
+            JPG, JPEG, PNG, WEBP or GIF
+            · Maximum 5 MB
+          </p>
 
         </div>
 
-        {/* ACTIONS */}
+        {/* ==================================================
+            ACTIONS
+            ================================================== */}
 
         <div>
 
           <button
             type="submit"
-            disabled={saving}
+            disabled={
+              loading ||
+              imageUploading
+            }
           >
-            {saving
+            {loading
               ? "Updating..."
               : "Update Product"}
           </button>
 
-          <Link to="/admin/products">
+          <Link
+            to="/admin/products"
+          >
             Cancel
           </Link>
 

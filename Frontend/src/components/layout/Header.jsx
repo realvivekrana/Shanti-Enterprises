@@ -14,6 +14,10 @@ import {
   useNavigate,
 } from "react-router-dom";
 
+import {
+  useAuth,
+} from "../../context/AuthContext";
+
 // ============================================================
 // HEADER
 // ============================================================
@@ -24,6 +28,11 @@ function Header() {
     setMobileMenuOpen,
   ] = useState(false);
 
+  const [
+    logoutLoading,
+    setLogoutLoading,
+  ] = useState(false);
+
   const navigate =
     useNavigate();
 
@@ -31,69 +40,46 @@ function Header() {
   // AUTH DATA
   // ==========================================================
 
-  const token =
-    localStorage.getItem(
-      "token"
-    ) ||
-    localStorage.getItem(
-      "accessToken"
-    );
-
-  let currentUser = null;
-
-  try {
-    const storedUser =
-      localStorage.getItem(
-        "user"
-      );
-
-    if (storedUser) {
-      currentUser =
-        JSON.parse(
-          storedUser
-        );
-    }
-  } catch (error) {
-    console.error(
-      "Unable to read user:",
-      error
-    );
-  }
-
-  const isLoggedIn =
-    Boolean(token);
-
-  const role =
-    currentUser?.role ||
-    currentUser?.userRole ||
-    "";
-
-  const isAdmin =
-    role.toLowerCase() ===
-    "admin";
+  const {
+    user,
+    isAuthenticated,
+    isAdmin,
+    logout,
+  } = useAuth();
 
   // ==========================================================
   // LOGOUT
   // ==========================================================
 
-  const handleLogout = () => {
-    localStorage.removeItem(
-      "token"
-    );
+  const handleLogout = async () => {
+    if (logoutLoading) {
+      return;
+    }
 
-    localStorage.removeItem(
-      "accessToken"
-    );
+    try {
+      setLogoutLoading(true);
 
-    localStorage.removeItem(
-      "user"
-    );
+      setMobileMenuOpen(false);
 
-    setMobileMenuOpen(
-      false
-    );
+      await logout();
 
-    navigate("/login");
+      navigate("/login", {
+        replace: true,
+      });
+    } catch (error) {
+      console.error(
+        "Logout error:",
+        error
+      );
+
+      // Even if API logout fails,
+      // AuthContext clears frontend state.
+      navigate("/login", {
+        replace: true,
+      });
+    } finally {
+      setLogoutLoading(false);
+    }
   };
 
   // ==========================================================
@@ -115,10 +101,17 @@ function Header() {
   // ==========================================================
 
   const closeMobileMenu = () => {
-    setMobileMenuOpen(
-      false
-    );
+    setMobileMenuOpen(false);
   };
+
+  // ==========================================================
+  // DASHBOARD PATH
+  // ==========================================================
+
+  const dashboardPath =
+    isAdmin
+      ? "/admin"
+      : "/dashboard";
 
   // ==========================================================
   // PAGE
@@ -199,23 +192,28 @@ function Header() {
 
         <div className="header-actions">
 
-          {isLoggedIn ? (
+          {isAuthenticated ? (
             <>
-              {isAdmin ? (
-                <Link
-                  to="/admin"
-                  className="header-action-button"
-                >
-                  Admin
-                </Link>
-              ) : (
-                <Link
-                  to="/dashboard"
-                  className="header-action-button"
-                >
-                  Dashboard
-                </Link>
-              )}
+
+              {/* USER NAME */}
+
+              <span className="header-user-name">
+                {user?.name ||
+                  "Account"}
+              </span>
+
+              {/* ADMIN / CUSTOMER DASHBOARD */}
+
+              <Link
+                to={dashboardPath}
+                className="header-action-button"
+              >
+                {isAdmin
+                  ? "Admin"
+                  : "Dashboard"}
+              </Link>
+
+              {/* LOGOUT */}
 
               <button
                 type="button"
@@ -223,9 +221,15 @@ function Header() {
                 onClick={
                   handleLogout
                 }
+                disabled={
+                  logoutLoading
+                }
               >
-                Logout
+                {logoutLoading
+                  ? "Logging out..."
+                  : "Logout"}
               </button>
+
             </>
           ) : (
             <Link
@@ -324,14 +328,30 @@ function Header() {
               Cart
             </NavLink>
 
-            {isLoggedIn ? (
+            {/* ==================================================
+                AUTHENTICATED MOBILE ACTIONS
+                ================================================== */}
+
+            {isAuthenticated ? (
               <>
+
+                {/* USER */}
+
+                <div className="header-mobile-user">
+                  <span>
+                    Signed in as
+                  </span>
+
+                  <strong>
+                    {user?.name ||
+                      "Account"}
+                  </strong>
+                </div>
+
+                {/* DASHBOARD */}
+
                 <NavLink
-                  to={
-                    isAdmin
-                      ? "/admin"
-                      : "/dashboard"
-                  }
+                  to={dashboardPath}
                   className={
                     getNavClass
                   }
@@ -340,9 +360,27 @@ function Header() {
                   }
                 >
                   {isAdmin
-                    ? "Admin"
+                    ? "Admin Dashboard"
                     : "Dashboard"}
                 </NavLink>
+
+                {/* PROFILE */}
+
+                {!isAdmin && (
+                  <NavLink
+                    to="/profile"
+                    className={
+                      getNavClass
+                    }
+                    onClick={
+                      closeMobileMenu
+                    }
+                  >
+                    Profile
+                  </NavLink>
+                )}
+
+                {/* LOGOUT */}
 
                 <button
                   type="button"
@@ -350,9 +388,15 @@ function Header() {
                   onClick={
                     handleLogout
                   }
+                  disabled={
+                    logoutLoading
+                  }
                 >
-                  Logout
+                  {logoutLoading
+                    ? "Logging out..."
+                    : "Logout"}
                 </button>
+
               </>
             ) : (
               <NavLink

@@ -3,6 +3,13 @@ import { useNavigate } from "react-router-dom";
 import API from "../../api/axios";
 import { useCart } from "../../context/CartContext";
 
+// ============================================================
+// SHANTI ENTERPRISES
+// CHECKOUT PAGE
+// Customer Portal
+// Razorpay Payment Integration
+// ============================================================
+
 const CheckoutPage = () => {
   const { cartItems, clearCart } = useCart();
   const navigate = useNavigate();
@@ -18,9 +25,15 @@ const CheckoutPage = () => {
   let user = null;
 
   try {
-    user = userInfo ? JSON.parse(userInfo) : null;
+    user = userInfo
+      ? JSON.parse(userInfo)
+      : null;
   } catch (error) {
-    console.error("Failed to parse userInfo:", error);
+    console.error(
+      "Failed to parse userInfo:",
+      error
+    );
+
     user = null;
   }
 
@@ -76,7 +89,10 @@ const CheckoutPage = () => {
     let cancelled = false;
 
     const calculatePrices = async () => {
-      if (!cartItems || cartItems.length === 0) {
+      if (
+        !cartItems ||
+        cartItems.length === 0
+      ) {
         if (!cancelled) {
           setPricing({});
           setLoadingPricing(false);
@@ -102,32 +118,29 @@ const CheckoutPage = () => {
           }
 
           try {
-            const response = await API.get(
-              `/products/${productId}/wholesale-price`,
-              {
-                params: {
-                  quantity: Number(item.quantity || 1),
-                },
-              }
-            );
+            const response =
+              await API.get(
+                `/products/${productId}/wholesale-price`,
+                {
+                  params: {
+                    quantity:
+                      Number(
+                        item.quantity || 1
+                      ),
+                  },
+                }
+              );
 
             const data =
               response?.data ?? response;
-
-            /*
-             * Axios interceptor may return:
-             *
-             * 1. direct object
-             * 2. { success, data }
-             * 3. { success, unitPrice, subtotal }
-             */
 
             const priceData =
               data?.data ||
               data?.pricing ||
               data;
 
-            results[productId] = priceData;
+            results[productId] =
+              priceData;
           } catch (priceError) {
             console.error(
               "Wholesale price error:",
@@ -135,15 +148,20 @@ const CheckoutPage = () => {
               priceError
             );
 
-            /*
-             * If wholesale-price endpoint fails,
-             * use product price as fallback.
-             */
+            // Fallback to normal product price
             results[productId] = {
-              unitPrice: Number(item.price || 0),
+              unitPrice:
+                Number(
+                  item?.price || 0
+                ),
+
               subtotal:
-                Number(item.price || 0) *
-                Number(item.quantity || 1),
+                Number(
+                  item?.price || 0
+                ) *
+                Number(
+                  item?.quantity || 1
+                ),
             };
           }
         }
@@ -183,7 +201,10 @@ const CheckoutPage = () => {
   // ============================================================
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const {
+      name,
+      value,
+    } = e.target;
 
     setAddress((previous) => ({
       ...previous,
@@ -205,7 +226,7 @@ const CheckoutPage = () => {
   };
 
   // ============================================================
-  // PRICES
+  // ITEMS PRICE
   // ============================================================
 
   const itemsPrice = (
@@ -218,13 +239,17 @@ const CheckoutPage = () => {
       pricing[productId];
 
     const quantity =
-      Number(item?.quantity || 1);
+      Number(
+        item?.quantity || 1
+      );
 
     const subtotal =
       Number(
         itemPricing?.subtotal ??
           itemPricing?.total ??
-          Number(item?.price || 0) * quantity
+          Number(
+            item?.price || 0
+          ) * quantity
       );
 
     return sum + subtotal;
@@ -232,9 +257,15 @@ const CheckoutPage = () => {
 
   // ============================================================
   // SHIPPING
+  //
+  // NOTE:
+  // Current backend createOrder calculates totalAmount
+  // from cart subtotal and does NOT add shippingPrice.
+  //
+  // Therefore Razorpay amount currently remains itemsPrice.
   // ============================================================
 
-  const shippingPrice = 50;
+  const shippingPrice = 0;
 
   // ============================================================
   // TOTAL
@@ -280,169 +311,79 @@ const CheckoutPage = () => {
   };
 
   // ============================================================
-  // CREATE ORDER IN DATABASE
+  // CREATE DATABASE ORDER
   //
   // IMPORTANT:
   //
-  // Order must be created BEFORE Razorpay order.
+  // Backend expects these fields directly:
   //
-  // Backend:
-  // POST /api/orders
+  // name
+  // phone
+  // addressLine1
+  // addressLine2
+  // city
+  // state
+  // postalCode
+  // country
   //
-  // Returns:
-  // {
-  //   success: true,
-  //   order: {
-  //      id: "...",
-  //      orderNumber: "...",
-  //      ...
-  //   }
-  // }
+  // NOT:
+  //
+  // shippingAddress: {}
+  // orderItems: []
+  //
+  // Backend creates order items from the logged-in user's cart.
   // ============================================================
 
   const createOrderInDB = async () => {
-    const orderItems = cartItems.map((item) => {
-      const productId =
-        getProductId(item);
-
-      const itemPricing =
-        pricing[productId];
-
-      return {
-        product: productId,
-
-        name:
-          item?.name ||
-          item?.product?.name ||
-          "Product",
-
-        image:
-          item?.image ||
-          item?.product?.image ||
-          "",
-
-        quantity:
-          Number(item?.quantity || 1),
-
-        price:
-          Number(
-            itemPricing?.unitPrice ??
-              item?.price ??
-              item?.product?.price ??
-              0
-          ),
-
-        unit:
-          item?.unit ||
-          item?.product?.unit ||
-          "piece",
-      };
-    });
-
+    console.log("");
     console.log(
       "========================================"
     );
 
     console.log(
-      "CREATING ORDER FROM CHECKOUT"
-    );
-
-    console.log(
-      "Order Items:",
-      orderItems
-    );
-
-    console.log(
-      "Shipping Address:",
-      address
-    );
-
-    console.log(
-      "Payment Method:",
-      paymentMethod
-    );
-
-    console.log(
-      "Items Price:",
-      itemsPrice
-    );
-
-    console.log(
-      "Shipping:",
-      shippingPrice
-    );
-
-    console.log(
-      "Total:",
-      totalPrice
+      "CREATING DATABASE ORDER"
     );
 
     console.log(
       "========================================"
     );
 
-    const response = await API.post(
-      "/orders",
-      {
-        /*
-         * IMPORTANT:
-         * Backend orderController expects orderItems.
-         */
-        orderItems,
+    const payload = {
+      name:
+        address.name.trim(),
 
-        /*
-         * Backend validation expects:
-         *
-         * name
-         * phone
-         * addressLine1
-         * addressLine2
-         * city
-         * state
-         * postalCode
-         * country
-         */
-        shippingAddress: {
-          name:
-            address.name.trim(),
+      phone:
+        address.phone.trim(),
 
-          phone:
-            address.phone.trim(),
+      addressLine1:
+        address.addressLine1.trim(),
 
-          addressLine1:
-            address.addressLine1.trim(),
+      addressLine2:
+        address.addressLine2.trim(),
 
-          addressLine2:
-            address.addressLine2.trim(),
+      city:
+        address.city.trim(),
 
-          city:
-            address.city.trim(),
+      state:
+        address.state.trim(),
 
-          state:
-            address.state.trim(),
+      postalCode:
+        address.postalCode.trim(),
 
-          postalCode:
-            address.postalCode.trim(),
+      country:
+        address.country.trim(),
+    };
 
-          country:
-            address.country.trim(),
-        },
-
-        paymentMethod,
-
-        /*
-         * Backend recalculates the actual
-         * wholesale prices.
-         *
-         * These are sent for compatibility.
-         */
-        itemsPrice,
-
-        shippingPrice,
-
-        totalPrice,
-      }
+    console.log(
+      "Order Payload:",
+      payload
     );
+
+    const response =
+      await API.post(
+        "/orders",
+        payload
+      );
 
     const responseData =
       response?.data ?? response;
@@ -451,23 +392,6 @@ const CheckoutPage = () => {
       "CREATE ORDER RESPONSE:",
       responseData
     );
-
-    /*
-     * Current backend returns:
-     *
-     * {
-     *   success: true,
-     *   order: {
-     *      id: "..."
-     *   }
-     * }
-     *
-     * Some older code may return:
-     *
-     * {
-     *   _id: "..."
-     * }
-     */
 
     const createdOrder =
       responseData?.order ||
@@ -481,7 +405,7 @@ const CheckoutPage = () => {
 
     if (!orderId) {
       console.error(
-        "Order response did not contain ID:",
+        "Order ID missing:",
         responseData
       );
 
@@ -490,32 +414,31 @@ const CheckoutPage = () => {
       );
     }
 
+    console.log(
+      "DATABASE ORDER ID:",
+      orderId
+    );
+
     return {
-      order: createdOrder,
-      orderId: String(orderId),
+      order:
+        createdOrder,
+
+      orderId:
+        String(orderId),
     };
   };
 
   // ============================================================
   // CREATE RAZORPAY ORDER
   //
-  // IMPORTANT FIX:
+  // POST /api/payments/create-order
   //
-  // OLD WRONG FLOW:
+  // Body:
   //
-  // POST /payments/create-order
-  // { amount: totalPrice }
+  // {
+  //   orderId: "MongoDB Order ID"
+  // }
   //
-  // NEW CORRECT FLOW:
-  //
-  // 1. Create database order
-  // 2. Get MongoDB orderId
-  // 3. POST /payments/create-order
-  //    { orderId }
-  // 4. Open Razorpay
-  //
-  // Backend payment controller specifically searches
-  // Order using orderId + current user.
   // ============================================================
 
   const createRazorpayOrder =
@@ -526,6 +449,7 @@ const CheckoutPage = () => {
         );
       }
 
+      console.log("");
       console.log(
         "========================================"
       );
@@ -547,7 +471,8 @@ const CheckoutPage = () => {
         await API.post(
           "/payments/create-order",
           {
-            orderId: String(orderId),
+            orderId:
+              String(orderId),
           }
         );
 
@@ -558,24 +483,6 @@ const CheckoutPage = () => {
         "RAZORPAY ORDER RESPONSE:",
         responseData
       );
-
-      /*
-       * Payment controller response:
-       *
-       * {
-       *   success: true,
-       *   payment: {
-       *     razorpayOrderId: "...",
-       *     amount: 1000,
-       *     amountInPaise: 100000,
-       *     currency: "INR",
-       *     keyId: "..."
-       *   }
-       * }
-       *
-       * IMPORTANT:
-       * Razorpay Checkout expects amount in paise.
-       */
 
       const paymentData =
         responseData?.payment ||
@@ -590,9 +497,7 @@ const CheckoutPage = () => {
 
       const amount =
         paymentData?.amountInPaise ??
-        paymentData?.amount ??
-        responseData?.amountInPaise ??
-        responseData?.amount;
+        responseData?.amountInPaise;
 
       const currency =
         paymentData?.currency ||
@@ -602,12 +507,12 @@ const CheckoutPage = () => {
       const keyId =
         paymentData?.keyId ||
         responseData?.keyId ||
-        import.meta.env?.VITE_RAZORPAY_KEY_ID ||
-        "rzp_test_TQ87uv6EO8OzPI";
+        import.meta.env
+          .VITE_RAZORPAY_KEY_ID;
 
       if (!razorpayOrderId) {
         console.error(
-          "Razorpay response missing ID:",
+          "Razorpay Order ID missing:",
           responseData
         );
 
@@ -616,26 +521,45 @@ const CheckoutPage = () => {
         );
       }
 
-      if (!amount) {
+      if (
+        amount === undefined ||
+        amount === null
+      ) {
         throw new Error(
           "Razorpay amount was not returned by the server."
         );
       }
 
+      if (!keyId) {
+        throw new Error(
+          "Razorpay Key ID is missing."
+        );
+      }
+
       return {
-        id: razorpayOrderId,
-        amount,
+        id:
+          razorpayOrderId,
+
+        amount:
+          Number(amount),
+
         currency,
+
         keyId,
       };
     };
 
   // ============================================================
   // VERIFY RAZORPAY PAYMENT
+  //
+  // POST /api/payments/verify
   // ============================================================
 
   const verifyRazorpayPayment =
-    async (paymentResponse) => {
+    async (
+      paymentResponse
+    ) => {
+      console.log("");
       console.log(
         "========================================"
       );
@@ -645,29 +569,53 @@ const CheckoutPage = () => {
       );
 
       console.log(
-        paymentResponse
+        "========================================"
       );
 
       console.log(
-        "========================================"
+        "Payment Response:",
+        paymentResponse
       );
+
+      const razorpayOrderId =
+        paymentResponse?.razorpay_order_id;
+
+      const razorpayPaymentId =
+        paymentResponse?.razorpay_payment_id;
+
+      const razorpaySignature =
+        paymentResponse?.razorpay_signature;
+
+      if (!razorpayOrderId) {
+        throw new Error(
+          "Razorpay Order ID is missing."
+        );
+      }
+
+      if (!razorpayPaymentId) {
+        throw new Error(
+          "Razorpay Payment ID is missing."
+        );
+      }
+
+      if (!razorpaySignature) {
+        throw new Error(
+          "Razorpay payment signature is missing."
+        );
+      }
 
       const response =
         await API.post(
           "/payments/verify",
           {
-            /*
-             * Backend validation expects camelCase fields.
-             * Razorpay itself returns snake_case fields.
-             */
             razorpayOrderId:
-              paymentResponse.razorpay_order_id,
+              razorpayOrderId,
 
             razorpayPaymentId:
-              paymentResponse.razorpay_payment_id,
+              razorpayPaymentId,
 
             razorpaySignature:
-              paymentResponse.razorpay_signature,
+              razorpaySignature,
           }
         );
 
@@ -697,20 +645,19 @@ const CheckoutPage = () => {
 
   const openRazorpayCheckout =
     async (databaseOrderId) => {
-      /*
-       * Make sure Razorpay SDK exists.
-       */
+      // ========================================================
+      // CHECK SDK
+      // ========================================================
 
       if (!window.Razorpay) {
         throw new Error(
-          "Razorpay SDK is not loaded. Please check index.html."
+          "Razorpay SDK is not loaded. Please add Razorpay Checkout script to index.html."
         );
       }
 
-      /*
-       * Create Razorpay order using
-       * DATABASE ORDER ID.
-       */
+      // ========================================================
+      // CREATE RAZORPAY ORDER
+      // ========================================================
 
       const razorpayOrder =
         await createRazorpayOrder(
@@ -718,31 +665,23 @@ const CheckoutPage = () => {
         );
 
       console.log(
-        "Opening Razorpay:",
+        "Opening Razorpay Checkout:",
         razorpayOrder
       );
 
-      /*
-       * Razorpay options.
-       *
-       * Prefer env key if available.
-       * Fallback keeps existing test key.
-       */
-
-      const razorpayKey =
-        razorpayOrder.keyId ||
-        import.meta.env
-          ?.VITE_RAZORPAY_KEY_ID ||
-        "rzp_test_TQ87uv6EO8OzPI";
+      // ========================================================
+      // RAZORPAY OPTIONS
+      // ========================================================
 
       const options = {
-        key: razorpayKey,
+        key:
+          razorpayOrder.keyId,
 
         amount:
           razorpayOrder.amount,
 
         currency:
-          razorpayOrder.currency || "INR",
+          razorpayOrder.currency,
 
         name:
           "Shanti Enterprises",
@@ -779,32 +718,44 @@ const CheckoutPage = () => {
             "#0d9488",
         },
 
+        // ======================================================
+        // PAYMENT SUCCESS
+        // ======================================================
+
         handler:
-          async (paymentResponse) => {
+          async (
+            paymentResponse
+          ) => {
             try {
               setLoading(true);
               setError("");
 
-              /*
-               * Verify payment on backend.
-               */
+              console.log(
+                "Razorpay Success:",
+                paymentResponse
+              );
+
+              // ==================================================
+              // VERIFY PAYMENT
+              // ==================================================
 
               await verifyRazorpayPayment(
                 paymentResponse
               );
 
-              /*
-               * Payment is verified.
-               *
-               * Backend already marks the order
-               * as paid.
-               */
+              // ==================================================
+              // PAYMENT VERIFIED
+              // ==================================================
 
               clearCart();
 
               setSuccessMessage(
                 "Payment successful. Your order has been confirmed."
               );
+
+              // ==================================================
+              // GO TO ORDER SUCCESS PAGE
+              // ==================================================
 
               navigate(
                 `/order-success/${databaseOrderId}`
@@ -820,13 +771,21 @@ const CheckoutPage = () => {
                   err?.message ||
                   "Payment verification failed."
               );
-            } finally {
+
               setLoading(false);
             }
           },
 
+        // ======================================================
+        // MODAL DISMISS
+        // ======================================================
+
         modal: {
           ondismiss: () => {
+            console.log(
+              "Razorpay Checkout closed."
+            );
+
             setLoading(false);
 
             setError(
@@ -836,10 +795,18 @@ const CheckoutPage = () => {
         },
       };
 
+      // ========================================================
+      // CREATE RAZORPAY INSTANCE
+      // ========================================================
+
       const razorpay =
         new window.Razorpay(
           options
         );
+
+      // ========================================================
+      // PAYMENT FAILED EVENT
+      // ========================================================
 
       razorpay.on(
         "payment.failed",
@@ -852,11 +819,16 @@ const CheckoutPage = () => {
           setLoading(false);
 
           setError(
-            response?.error?.description ||
+            response?.error
+              ?.description ||
               "Payment failed. Please try again."
           );
         }
       );
+
+      // ========================================================
+      // OPEN CHECKOUT
+      // ========================================================
 
       razorpay.open();
     };
@@ -873,7 +845,7 @@ const CheckoutPage = () => {
       setSuccessMessage("");
 
       // ========================================================
-      // LOGIN
+      // LOGIN CHECK
       // ========================================================
 
       if (!isLoggedIn) {
@@ -885,7 +857,7 @@ const CheckoutPage = () => {
       }
 
       // ========================================================
-      // EMPTY CART
+      // CART CHECK
       // ========================================================
 
       if (
@@ -900,14 +872,16 @@ const CheckoutPage = () => {
       }
 
       // ========================================================
-      // ADDRESS VALIDATION
+      // ADDRESS CHECK
       // ========================================================
 
       const addressError =
         validateAddress();
 
       if (addressError) {
-        setError(addressError);
+        setError(
+          addressError
+        );
 
         return;
       }
@@ -918,7 +892,7 @@ const CheckoutPage = () => {
 
       if (loadingPricing) {
         setError(
-          "Please wait while wholesale prices are calculated."
+          "Please wait while prices are calculated."
         );
 
         return;
@@ -937,27 +911,22 @@ const CheckoutPage = () => {
       }
 
       // ========================================================
-      // LOADING
+      // START
       // ========================================================
 
       setLoading(true);
 
       try {
-        /*
-         * ======================================================
-         * STEP 1
-         * ======================================================
-         *
-         * ALWAYS CREATE DATABASE ORDER FIRST.
-         *
-         * This fixes the "Order not found" error because
-         * payment controller needs an existing orderId.
-         */
+        // ======================================================
+        // STEP 1
+        // CREATE DATABASE ORDER
+        // ======================================================
 
         const {
           order,
           orderId,
-        } = await createOrderInDB();
+        } =
+          await createOrderInDB();
 
         console.log(
           "DATABASE ORDER CREATED:",
@@ -974,7 +943,8 @@ const CheckoutPage = () => {
         // ======================================================
 
         if (
-          paymentMethod === "COD"
+          paymentMethod ===
+          "COD"
         ) {
           clearCart();
 
@@ -993,10 +963,10 @@ const CheckoutPage = () => {
           paymentMethod ===
           "Razorpay"
         ) {
-          /*
-           * STEP 2:
-           * Create Razorpay order using database orderId.
-           */
+          // ====================================================
+          // STEP 2
+          // CREATE RAZORPAY ORDER
+          // ====================================================
 
           await openRazorpayCheckout(
             orderId
@@ -1014,12 +984,9 @@ const CheckoutPage = () => {
           err
         );
 
-        /*
-         * Axios error
-         */
-
         const backendMessage =
-          err?.response?.data?.message;
+          err?.response?.data
+            ?.message;
 
         setError(
           backendMessage ||
@@ -1032,7 +999,7 @@ const CheckoutPage = () => {
     };
 
   // ============================================================
-  // EMPTY CART UI
+  // EMPTY CART
   // ============================================================
 
   if (
@@ -1051,13 +1018,16 @@ const CheckoutPage = () => {
           </h1>
 
           <p className="text-slate-500 mt-2">
-            Add some products before proceeding to checkout.
+            Add some products before
+            proceeding to checkout.
           </p>
 
           <button
             type="button"
             onClick={() =>
-              navigate("/products")
+              navigate(
+                "/products"
+              )
             }
             className="mt-6 px-6 py-3 bg-teal-600 text-white rounded-lg font-medium hover:bg-teal-700 transition"
           >
@@ -1084,7 +1054,7 @@ const CheckoutPage = () => {
       <div className="max-w-6xl mx-auto px-4">
 
         {/* ======================================================
-            PAGE HEADER
+            HEADER
         ====================================================== */}
 
         <div className="mb-8">
@@ -1097,7 +1067,8 @@ const CheckoutPage = () => {
           </h1>
 
           <p className="text-slate-500 mt-2">
-            Complete your shipping details and place your order.
+            Complete your shipping details
+            and place your order.
           </p>
         </div>
 
@@ -1132,7 +1103,7 @@ const CheckoutPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
           {/* ====================================================
-              LEFT - CHECKOUT FORM
+              CHECKOUT FORM
           ==================================================== */}
 
           <div className="lg:col-span-2">
@@ -1153,7 +1124,8 @@ const CheckoutPage = () => {
                 </h2>
 
                 <p className="text-sm text-slate-500 mt-1">
-                  Enter the address where you want the order delivered.
+                  Enter the address where you
+                  want the order delivered.
                 </p>
               </div>
 
@@ -1306,7 +1278,7 @@ const CheckoutPage = () => {
 
               </div>
 
-              {/* POSTAL CODE + COUNTRY */}
+              {/* POSTAL + COUNTRY */}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
 
@@ -1405,7 +1377,8 @@ const CheckoutPage = () => {
                         </p>
 
                         <p className="text-sm text-slate-500 mt-1">
-                          Pay when your order is delivered.
+                          Pay when your order
+                          is delivered.
                         </p>
                       </div>
 
@@ -1446,7 +1419,8 @@ const CheckoutPage = () => {
                         </p>
 
                         <p className="text-sm text-slate-500 mt-1">
-                          Pay securely using Razorpay.
+                          Pay securely using
+                          Razorpay.
                         </p>
                       </div>
 
@@ -1482,7 +1456,7 @@ const CheckoutPage = () => {
           </div>
 
           {/* ====================================================
-              RIGHT - ORDER SUMMARY
+              ORDER SUMMARY
           ==================================================== */}
 
           <aside className="lg:col-span-1">
@@ -1497,7 +1471,10 @@ const CheckoutPage = () => {
               <div className="space-y-4">
 
                 {cartItems.map(
-                  (item, index) => {
+                  (
+                    item,
+                    index
+                  ) => {
                     const productId =
                       getProductId(
                         item
@@ -1551,15 +1528,11 @@ const CheckoutPage = () => {
                         className="flex gap-3 border-b border-slate-100 pb-4"
                       >
 
-                        {/* IMAGE */}
-
                         <img
                           src={image}
                           alt={name}
                           className="w-16 h-16 rounded-lg object-cover bg-slate-100"
                         />
-
-                        {/* DETAILS */}
 
                         <div className="flex-1 min-w-0">
 
@@ -1568,7 +1541,8 @@ const CheckoutPage = () => {
                           </p>
 
                           <p className="text-xs text-slate-500 mt-1">
-                            Qty: {quantity}
+                            Qty:{" "}
+                            {quantity}
                           </p>
 
                           <p className="text-xs text-slate-500">
@@ -1580,8 +1554,6 @@ const CheckoutPage = () => {
                           </p>
 
                         </div>
-
-                        {/* SUBTOTAL */}
 
                         <div className="text-sm font-semibold text-slate-800 whitespace-nowrap">
                           ₹
@@ -1603,8 +1575,6 @@ const CheckoutPage = () => {
 
               <div className="border-t border-slate-200 mt-5 pt-5 space-y-3">
 
-                {/* PRODUCTS */}
-
                 <div className="flex justify-between text-sm text-slate-600">
                   <span>
                     Products
@@ -1617,8 +1587,6 @@ const CheckoutPage = () => {
                     )}
                   </span>
                 </div>
-
-                {/* SHIPPING */}
 
                 <div className="flex justify-between text-sm text-slate-600">
                   <span>
@@ -1633,9 +1601,8 @@ const CheckoutPage = () => {
                   </span>
                 </div>
 
-                {/* TOTAL */}
-
                 <div className="border-t border-slate-200 pt-4 flex justify-between">
+
                   <span className="text-lg font-bold text-slate-800">
                     Total
                   </span>
@@ -1646,6 +1613,7 @@ const CheckoutPage = () => {
                       "en-IN"
                     )}
                   </span>
+
                 </div>
 
               </div>

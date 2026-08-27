@@ -1,10 +1,12 @@
 // ============================================================
 // SHANTI ENTERPRISES
 // Add Product Page
-// Frontend Phase 5 - Admin
+// Frontend Phase 6 - Admin
 // ============================================================
 
 import {
+  useEffect,
+  useRef,
   useState,
 } from "react";
 
@@ -17,9 +19,24 @@ import {
   createProduct,
 } from "../../api/productApi";
 
+import {
+  uploadImage,
+} from "../../api/uploadApi";
+
+// ============================================================
+// ADD PRODUCT PAGE
+// ============================================================
+
 function AddProductPage() {
   const navigate =
     useNavigate();
+
+  const fileInputRef =
+    useRef(null);
+
+  // ==========================================================
+  // FORM
+  // ==========================================================
 
   const [
     form,
@@ -35,6 +52,34 @@ function AddProductPage() {
     brand: "",
     image: "",
   });
+
+  // ==========================================================
+  // SELECTED IMAGE
+  // ==========================================================
+
+  const [
+    selectedImage,
+    setSelectedImage,
+  ] = useState(null);
+
+  const [
+    imagePreview,
+    setImagePreview,
+  ] = useState("");
+
+  const [
+    imageUploading,
+    setImageUploading,
+  ] = useState(false);
+
+  const [
+    uploadedImageUrl,
+    setUploadedImageUrl,
+  ] = useState("");
+
+  // ==========================================================
+  // PAGE STATE
+  // ==========================================================
 
   const [
     loading,
@@ -52,7 +97,28 @@ function AddProductPage() {
   ] = useState("");
 
   // ==========================================================
-  // HANDLE CHANGE
+  // CLEANUP IMAGE PREVIEW
+  // ==========================================================
+
+  useEffect(() => {
+    return () => {
+      if (
+        imagePreview &&
+        imagePreview.startsWith(
+          "blob:"
+        )
+      ) {
+        URL.revokeObjectURL(
+          imagePreview
+        );
+      }
+    };
+  }, [
+    imagePreview,
+  ]);
+
+  // ==========================================================
+  // HANDLE TEXT INPUT
   // ==========================================================
 
   const handleChange = (
@@ -73,6 +139,219 @@ function AddProductPage() {
     setError("");
     setSuccess("");
   };
+
+  // ==========================================================
+  // OPEN FILE SELECTOR
+  // ==========================================================
+
+  const handleChooseImage = () => {
+    if (
+      imageUploading ||
+      loading
+    ) {
+      return;
+    }
+
+    fileInputRef.current?.click();
+  };
+
+  // ==========================================================
+  // HANDLE IMAGE SELECTION
+  // ==========================================================
+
+  const handleImageChange = (
+    event
+  ) => {
+    const file =
+      event.target.files?.[0];
+
+    setError("");
+    setSuccess("");
+
+    if (!file) {
+      return;
+    }
+
+    // --------------------------------------------------------
+    // ALLOWED FILE TYPES
+    // --------------------------------------------------------
+
+    const allowedTypes = [
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/webp",
+      "image/gif",
+    ];
+
+    if (
+      !allowedTypes.includes(
+        file.type
+      )
+    ) {
+      setError(
+        "Only JPG, JPEG, PNG, WEBP and GIF images are allowed."
+      );
+
+      event.target.value = "";
+
+      return;
+    }
+
+    // --------------------------------------------------------
+    // FILE SIZE
+    // --------------------------------------------------------
+
+    const maxSize =
+      5 * 1024 * 1024;
+
+    if (
+      file.size >
+      maxSize
+    ) {
+      setError(
+        "Image size cannot exceed 5 MB."
+      );
+
+      event.target.value = "";
+
+      return;
+    }
+
+    // --------------------------------------------------------
+    // PREVIEW
+    // --------------------------------------------------------
+
+    const previewUrl =
+      URL.createObjectURL(
+        file
+      );
+
+    setSelectedImage(file);
+
+    setImagePreview(
+      previewUrl
+    );
+
+    setUploadedImageUrl("");
+
+    setForm(
+      (current) => ({
+        ...current,
+        image: "",
+      })
+    );
+  };
+
+  // ==========================================================
+  // REMOVE IMAGE
+  // ==========================================================
+
+  const handleRemoveImage = () => {
+    if (
+      imagePreview &&
+      imagePreview.startsWith(
+        "blob:"
+      )
+    ) {
+      URL.revokeObjectURL(
+        imagePreview
+      );
+    }
+
+    setSelectedImage(null);
+    setImagePreview("");
+    setUploadedImageUrl("");
+
+    setForm(
+      (current) => ({
+        ...current,
+        image: "",
+      })
+    );
+
+    if (
+      fileInputRef.current
+    ) {
+      fileInputRef.current.value =
+        "";
+    }
+
+    setError("");
+    setSuccess("");
+  };
+
+  // ==========================================================
+  // UPLOAD IMAGE
+  // ==========================================================
+
+  const handleUploadImage =
+    async () => {
+      if (!selectedImage) {
+        setError(
+          "Please choose an image first."
+        );
+
+        return;
+      }
+
+      try {
+        setImageUploading(true);
+        setError("");
+        setSuccess("");
+
+        const response =
+          await uploadImage(
+            selectedImage
+          );
+
+        const imageUrl =
+          response?.image?.url;
+
+        if (!imageUrl) {
+          throw new Error(
+            "Image uploaded but no image URL was returned."
+          );
+        }
+
+        setUploadedImageUrl(
+          imageUrl
+        );
+
+        setForm(
+          (current) => ({
+            ...current,
+            image: imageUrl,
+          })
+        );
+
+        setSuccess(
+          "Image uploaded successfully."
+        );
+      } catch (err) {
+        console.error(
+          "Image upload error:",
+          err
+        );
+
+        setUploadedImageUrl("");
+        setForm(
+          (current) => ({
+            ...current,
+            image: "",
+          })
+        );
+
+        setError(
+          err.response?.data
+            ?.message ||
+            err.message ||
+            "Unable to upload image."
+        );
+      } finally {
+        setImageUploading(false);
+      }
+    };
 
   // ==========================================================
   // VALIDATION
@@ -105,6 +384,13 @@ function AddProductPage() {
       Number(form.moq) < 1
     ) {
       return "MOQ must be at least 1.";
+    }
+
+    if (
+      selectedImage &&
+      !uploadedImageUrl
+    ) {
+      return "Please upload the selected image before creating the product.";
     }
 
     return "";
@@ -176,8 +462,7 @@ function AddProductPage() {
         navigate(
           "/admin/products"
         );
-      }, 800);
-
+      }, 1000);
     } catch (err) {
       console.error(
         "Create product error:",
@@ -208,7 +493,9 @@ function AddProductPage() {
 
       <div>
 
-        <Link to="/admin/products">
+        <Link
+          to="/admin/products"
+        >
           ← Product Management
         </Link>
 
@@ -453,43 +740,190 @@ function AddProductPage() {
 
         </div>
 
-        {/* IMAGE */}
+        {/* ==================================================
+            PRODUCT IMAGE
+            ================================================== */}
 
         <div>
 
-          <label htmlFor="image">
-            Image URL
+          <label>
+            Product Image
           </label>
 
+          {/* HIDDEN FILE INPUT */}
+
           <input
-            id="image"
-            name="image"
-            type="url"
-            value={
-              form.image
+            ref={
+              fileInputRef
             }
+            type="file"
+            accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
             onChange={
-              handleChange
+              handleImageChange
             }
-            placeholder="https://example.com/image.jpg"
+            style={{
+              display: "none",
+            }}
           />
+
+          {/* CHOOSE IMAGE */}
+
+          {!selectedImage && (
+            <button
+              type="button"
+              onClick={
+                handleChooseImage
+              }
+              disabled={
+                loading ||
+                imageUploading
+              }
+            >
+              Choose Image
+            </button>
+          )}
+
+          {/* IMAGE PREVIEW */}
+
+          {imagePreview && (
+            <div>
+
+              <div>
+                <img
+                  src={
+                    imagePreview
+                  }
+                  alt="Product preview"
+                  style={{
+                    width:
+                      "220px",
+                    height:
+                      "220px",
+                    objectFit:
+                      "cover",
+                    borderRadius:
+                      "12px",
+                    display:
+                      "block",
+                  }}
+                />
+              </div>
+
+              <p>
+                {selectedImage?.name}
+              </p>
+
+              <div>
+
+                <button
+                  type="button"
+                  onClick={
+                    handleChooseImage
+                  }
+                  disabled={
+                    loading ||
+                    imageUploading
+                  }
+                >
+                  Change Image
+                </button>
+
+                <button
+                  type="button"
+                  onClick={
+                    handleRemoveImage
+                  }
+                  disabled={
+                    loading ||
+                    imageUploading
+                  }
+                >
+                  Remove
+                </button>
+
+              </div>
+
+            </div>
+          )}
+
+          {/* UPLOAD IMAGE */}
+
+          {selectedImage &&
+            !uploadedImageUrl && (
+              <div>
+
+                <button
+                  type="button"
+                  onClick={
+                    handleUploadImage
+                  }
+                  disabled={
+                    imageUploading ||
+                    loading
+                  }
+                >
+                  {imageUploading
+                    ? "Uploading..."
+                    : "Upload Image"}
+                </button>
+
+              </div>
+            )}
+
+          {/* UPLOADED STATUS */}
+
+          {uploadedImageUrl && (
+            <div>
+
+              <p>
+                ✓ Image uploaded
+                successfully
+              </p>
+
+              <button
+                type="button"
+                onClick={
+                  handleChooseImage
+                }
+                disabled={
+                  loading ||
+                  imageUploading
+                }
+              >
+                Change Image
+              </button>
+
+            </div>
+          )}
+
+          <p>
+            JPG, JPEG, PNG, WEBP or GIF
+            · Maximum 5 MB
+          </p>
 
         </div>
 
-        {/* ACTIONS */}
+        {/* ==================================================
+            ACTIONS
+            ================================================== */}
 
         <div>
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={
+              loading ||
+              imageUploading
+            }
           >
             {loading
               ? "Creating..."
               : "Create Product"}
           </button>
 
-          <Link to="/admin/products">
+          <Link
+            to="/admin/products"
+          >
             Cancel
           </Link>
 
