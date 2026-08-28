@@ -57,60 +57,61 @@ const orderItemSchema = new mongoose.Schema(
 // SHIPPING ADDRESS
 // ============================================================
 
-const shippingAddressSchema = new mongoose.Schema(
-  {
-    name: {
-      type: String,
-      required: true,
-      trim: true,
-    },
+const shippingAddressSchema =
+  new mongoose.Schema(
+    {
+      name: {
+        type: String,
+        required: true,
+        trim: true,
+      },
 
-    phone: {
-      type: String,
-      required: true,
-      trim: true,
-    },
+      phone: {
+        type: String,
+        required: true,
+        trim: true,
+      },
 
-    addressLine1: {
-      type: String,
-      required: true,
-      trim: true,
-    },
+      addressLine1: {
+        type: String,
+        required: true,
+        trim: true,
+      },
 
-    addressLine2: {
-      type: String,
-      default: "",
-      trim: true,
-    },
+      addressLine2: {
+        type: String,
+        default: "",
+        trim: true,
+      },
 
-    city: {
-      type: String,
-      required: true,
-      trim: true,
-    },
+      city: {
+        type: String,
+        required: true,
+        trim: true,
+      },
 
-    state: {
-      type: String,
-      required: true,
-      trim: true,
-    },
+      state: {
+        type: String,
+        required: true,
+        trim: true,
+      },
 
-    postalCode: {
-      type: String,
-      required: true,
-      trim: true,
-    },
+      postalCode: {
+        type: String,
+        required: true,
+        trim: true,
+      },
 
-    country: {
-      type: String,
-      default: "India",
-      trim: true,
+      country: {
+        type: String,
+        default: "India",
+        trim: true,
+      },
     },
-  },
-  {
-    _id: false,
-  }
-);
+    {
+      _id: false,
+    }
+  );
 
 // ============================================================
 // ORDER SCHEMA
@@ -118,12 +119,20 @@ const shippingAddressSchema = new mongoose.Schema(
 
 const orderSchema = new mongoose.Schema(
   {
+    // --------------------------------------------------------
+    // ORDER NUMBER
+    // --------------------------------------------------------
+
     orderNumber: {
       type: String,
       required: true,
       unique: true,
       index: true,
     },
+
+    // --------------------------------------------------------
+    // USER
+    // --------------------------------------------------------
 
     user: {
       type: mongoose.Schema.Types.ObjectId,
@@ -132,19 +141,36 @@ const orderSchema = new mongoose.Schema(
       index: true,
     },
 
+    // --------------------------------------------------------
+    // ITEMS
+    // --------------------------------------------------------
+
     items: {
       type: [orderItemSchema],
+
       required: true,
+
       validate: {
-        validator: (items) => items.length > 0,
-        message: "Order must contain at least one item",
+        validator: (items) =>
+          items.length > 0,
+
+        message:
+          "Order must contain at least one item",
       },
     },
+
+    // --------------------------------------------------------
+    // SHIPPING ADDRESS
+    // --------------------------------------------------------
 
     shippingAddress: {
       type: shippingAddressSchema,
       required: true,
     },
+
+    // --------------------------------------------------------
+    // SUBTOTAL
+    // --------------------------------------------------------
 
     subtotal: {
       type: Number,
@@ -152,25 +178,63 @@ const orderSchema = new mongoose.Schema(
       min: 0,
     },
 
+    // --------------------------------------------------------
+    // TOTAL AMOUNT
+    // --------------------------------------------------------
+
     totalAmount: {
       type: Number,
       required: true,
       min: 0,
     },
 
+    // --------------------------------------------------------
+    // PAYMENT METHOD
+    // --------------------------------------------------------
+
+    paymentMethod: {
+      type: String,
+
+      enum: [
+        "razorpay",
+        "cod",
+      ],
+
+      default: "razorpay",
+
+      lowercase: true,
+
+      trim: true,
+
+      index: true,
+    },
+
+    // --------------------------------------------------------
+    // PAYMENT STATUS
+    // --------------------------------------------------------
+
     paymentStatus: {
       type: String,
+
       enum: [
         "pending",
         "paid",
         "failed",
         "refunded",
       ],
+
       default: "pending",
+
+      index: true,
     },
+
+    // --------------------------------------------------------
+    // ORDER STATUS
+    // --------------------------------------------------------
 
     orderStatus: {
       type: String,
+
       enum: [
         "pending",
         "confirmed",
@@ -179,17 +243,26 @@ const orderSchema = new mongoose.Schema(
         "delivered",
         "cancelled",
       ],
+
       default: "pending",
+
+      index: true,
     },
   },
+
   {
     timestamps: true,
   }
 );
 
-const Order = mongoose.model(
-  "Order",
-  orderSchema
-);
+// ============================================================
+// MODEL
+// ============================================================
+
+const Order =
+  mongoose.model(
+    "Order",
+    orderSchema
+  );
 
 module.exports = Order;

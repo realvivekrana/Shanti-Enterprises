@@ -26,6 +26,9 @@ import CartPage from "./pages/public/CartPage";
 import LoginPage from "./pages/public/LoginPage";
 import UnauthorizedPage from "./pages/public/UnauthorizedPage";
 
+// REGISTER PAGE
+import RegisterPage from "./pages/auth/RegisterPage";
+
 // ============================================================
 // CUSTOMER PAGES
 // ============================================================
@@ -198,6 +201,17 @@ function App() {
             path="/login"
             element={
               <LoginPage />
+            }
+          />
+
+          {/* ==================================================
+              CUSTOMER REGISTER
+              ================================================== */}
+
+          <Route
+            path="/register"
+            element={
+              <RegisterPage />
             }
           />
 

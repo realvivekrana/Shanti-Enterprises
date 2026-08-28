@@ -20,6 +20,10 @@ import {
   verifyPayment,
 } from "../../api/paymentApi";
 
+import {
+  useCart,
+} from "../../context/CartContext";
+
 // ============================================================
 // RAZORPAY SCRIPT
 // ============================================================
@@ -71,6 +75,10 @@ function PaymentPage() {
 
   const navigate =
     useNavigate();
+
+  const {
+    clearCart,
+  } = useCart();
 
   const [
     loading,
@@ -132,18 +140,7 @@ function PaymentPage() {
           );
 
         // ----------------------------------------------------
-        // BACKEND RESPONSE
-        // Backend returns:
-        //
-        // {
-        //   success: true,
-        //   payment: {
-        //     razorpayOrderId,
-        //     amount,
-        //     currency,
-        //     keyId
-        //   }
-        // }
+        // BACKEND PAYMENT RESPONSE
         // ----------------------------------------------------
 
         const paymentOrder =
@@ -232,9 +229,8 @@ function PaymentPage() {
         const options = {
           key: keyId,
 
-          amount: Number(
-            amount
-          ),
+          amount:
+            Number(amount),
 
           currency,
 
@@ -255,9 +251,9 @@ function PaymentPage() {
                 setLoading(true);
                 setError("");
 
-                // ------------------------------------------------
+                // --------------------------------------------
                 // VERIFY PAYMENT
-                // ------------------------------------------------
+                // --------------------------------------------
 
                 const verification =
                   await verifyPayment({
@@ -276,6 +272,10 @@ function PaymentPage() {
                         .razorpay_signature,
                   });
 
+                // --------------------------------------------
+                // VERIFY RESPONSE
+                // --------------------------------------------
+
                 if (
                   verification?.success ===
                   false
@@ -286,9 +286,19 @@ function PaymentPage() {
                   );
                 }
 
-                // ------------------------------------------------
+                // --------------------------------------------
+                // CLEAR CART
+                //
+                // IMPORTANT:
+                // Cart is cleared ONLY after successful
+                // payment verification.
+                // --------------------------------------------
+
+                clearCart();
+
+                // --------------------------------------------
                 // PAYMENT SUCCESS
-                // ------------------------------------------------
+                // --------------------------------------------
 
                 navigate(
                   `/order-success/${orderId}`,
@@ -308,10 +318,18 @@ function PaymentPage() {
                     err.message ||
                     "Payment verification failed."
                 );
+
+                setPaymentStarted(
+                  false
+                );
               } finally {
                 setLoading(false);
               }
             },
+
+          // --------------------------------------------------
+          // RAZORPAY MODAL DISMISSED
+          // --------------------------------------------------
 
           modal: {
             ondismiss:
@@ -323,6 +341,10 @@ function PaymentPage() {
                 );
               },
           },
+
+          // --------------------------------------------------
+          // RAZORPAY THEME
+          // --------------------------------------------------
 
           theme: {
             color: "#111827",

@@ -26,7 +26,7 @@ import {
 } from "../../api/orderApi";
 
 // ============================================================
-// ORDER SUMMARY
+// ORDER SUMMARY PAGE
 // ============================================================
 
 function OrderSummaryPage() {
@@ -42,6 +42,11 @@ function OrderSummaryPage() {
   const {
     selectedAddress,
   } = useAddress();
+
+  const [
+    paymentMethod,
+    setPaymentMethod,
+  ] = useState("razorpay");
 
   const [
     loading,
@@ -156,7 +161,7 @@ function OrderSummaryPage() {
         setError("");
 
         // ------------------------------------------------------
-        // BUILD ORDER ITEMS
+        // ORDER ITEMS
         // ------------------------------------------------------
 
         const orderItems =
@@ -225,11 +230,7 @@ function OrderSummaryPage() {
         }
 
         // ------------------------------------------------------
-        // BUILD SHIPPING ADDRESS
-        //
-        // AddressContext:
-        // address  -> addressLine1
-        // pincode  -> postalCode
+        // SHIPPING ADDRESS
         // ------------------------------------------------------
 
         const shippingAddress = {
@@ -277,36 +278,28 @@ function OrderSummaryPage() {
         }
 
         // ------------------------------------------------------
-        // ORDER DATA
-        // ------------------------------------------------------
-
-        const orderData = {
-          items:
-            orderItems,
-
-          shippingAddress,
-
-          subtotal:
-            Number(subtotal),
-
-          totalAmount:
-            Number(subtotal),
-
-          totalItems:
-            Number(totalItems),
-        };
-
-        // ------------------------------------------------------
         // CREATE ORDER
         // ------------------------------------------------------
 
         const response =
-          await createOrder(
-            orderData
-          );
+          await createOrder({
+            items:
+              orderItems,
+
+            shippingAddress,
+
+            subtotal:
+              Number(subtotal),
+
+            totalAmount:
+              Number(subtotal),
+
+            paymentMethod:
+              paymentMethod,
+          });
 
         // ------------------------------------------------------
-        // EXTRACT CREATED ORDER
+        // GET CREATED ORDER
         // ------------------------------------------------------
 
         const createdOrder =
@@ -328,12 +321,29 @@ function OrderSummaryPage() {
         }
 
         // ------------------------------------------------------
-        // IMPORTANT
-        //
-        // Do NOT clear cart here.
-        //
-        // Cart should be cleared after successful payment
-        // verification.
+        // COD
+        // ------------------------------------------------------
+
+        if (
+          paymentMethod ===
+          "cod"
+        ) {
+          navigate(
+            `/order-success/${orderId}`,
+            {
+              replace: true,
+              state: {
+                paymentMethod:
+                  "cod",
+              },
+            }
+          );
+
+          return;
+        }
+
+        // ------------------------------------------------------
+        // RAZORPAY
         // ------------------------------------------------------
 
         navigate(
@@ -383,7 +393,7 @@ function OrderSummaryPage() {
 
             <p>
               Check your products and delivery
-              details before payment.
+              details before placing your order.
             </p>
 
           </div>
@@ -504,7 +514,7 @@ function OrderSummaryPage() {
         <div className="order-summary-layout">
 
           {/* ==================================================
-              LEFT CONTENT
+              LEFT
               ================================================== */}
 
           <div className="order-summary-main">
@@ -628,8 +638,6 @@ function OrderSummaryPage() {
                         }
                       >
 
-                        {/* IMAGE */}
-
                         <Link
                           to={`/products/${item.productId}`}
                           className="order-summary-product-image"
@@ -651,8 +659,6 @@ function OrderSummaryPage() {
                           )}
 
                         </Link>
-
-                        {/* INFO */}
 
                         <div className="order-summary-product-info">
 
@@ -677,8 +683,6 @@ function OrderSummaryPage() {
                           </span>
 
                         </div>
-
-                        {/* TOTAL */}
 
                         <strong className="order-summary-product-total">
                           ₹
@@ -771,25 +775,121 @@ function OrderSummaryPage() {
 
             </div>
 
-            <div className="order-summary-payment-method">
+            {/* ==================================================
+                PAYMENT METHOD
+                ================================================== */}
 
-              <div>
+            <div className="order-summary-payment-section">
 
-                <span>
-                  Payment Method
-                </span>
-
-                <strong>
-                  Razorpay
-                </strong>
-
-              </div>
-
-              <span className="order-summary-payment-badge">
-                ONLINE
+              <span className="order-summary-payment-title">
+                PAYMENT METHOD
               </span>
 
+              {/* RAZORPAY */}
+
+              <label
+                className={`order-summary-payment-option ${
+                  paymentMethod ===
+                  "razorpay"
+                    ? "selected"
+                    : ""
+                }`}
+              >
+
+                <input
+                  type="radio"
+                  name="paymentMethod"
+                  value="razorpay"
+                  checked={
+                    paymentMethod ===
+                    "razorpay"
+                  }
+                  onChange={() =>
+                    setPaymentMethod(
+                      "razorpay"
+                    )
+                  }
+                />
+
+                <span className="order-summary-payment-radio">
+                  {paymentMethod ===
+                    "razorpay" &&
+                    "✓"}
+                </span>
+
+                <span className="order-summary-payment-option-content">
+
+                  <strong>
+                    Razorpay
+                  </strong>
+
+                  <small>
+                    Pay securely online
+                  </small>
+
+                </span>
+
+                <span className="order-summary-payment-badge">
+                  ONLINE
+                </span>
+
+              </label>
+
+              {/* COD */}
+
+              <label
+                className={`order-summary-payment-option ${
+                  paymentMethod ===
+                  "cod"
+                    ? "selected"
+                    : ""
+                }`}
+              >
+
+                <input
+                  type="radio"
+                  name="paymentMethod"
+                  value="cod"
+                  checked={
+                    paymentMethod ===
+                    "cod"
+                  }
+                  onChange={() =>
+                    setPaymentMethod(
+                      "cod"
+                    )
+                  }
+                />
+
+                <span className="order-summary-payment-radio">
+                  {paymentMethod ===
+                    "cod" &&
+                    "✓"}
+                </span>
+
+                <span className="order-summary-payment-option-content">
+
+                  <strong>
+                    Cash on Delivery
+                  </strong>
+
+                  <small>
+                    Pay when your order arrives
+                  </small>
+
+                </span>
+
+                <span className="order-summary-cod-badge">
+                  COD
+                </span>
+
+              </label>
+
             </div>
+
+            {/* ==================================================
+                ACTION
+                ================================================== */}
 
             <button
               type="button"
@@ -803,8 +903,11 @@ function OrderSummaryPage() {
             >
 
               {loading
-                ? "Creating Order..."
-                : "Continue to Payment"}
+                ? "Placing Order..."
+                : paymentMethod ===
+                    "cod"
+                  ? "Place COD Order"
+                  : "Continue to Payment"}
 
               {!loading && (
                 <span>
@@ -815,8 +918,12 @@ function OrderSummaryPage() {
             </button>
 
             <p className="order-summary-note">
-              Your order will be created
-              before proceeding to payment.
+
+              {paymentMethod ===
+              "cod"
+                ? "You will pay when the order is delivered."
+                : "You will be redirected to Razorpay for secure payment."}
+
             </p>
 
           </aside>

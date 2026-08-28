@@ -29,46 +29,70 @@ const router = express.Router();
 // ============================================================
 
 const checkoutValidation = [
-  body("name")
+  body("items")
+    .isArray({
+      min: 1,
+    })
+    .withMessage(
+      "At least one order item is required"
+    ),
+
+  body("shippingAddress")
+    .isObject()
+    .withMessage(
+      "Shipping address is required"
+    ),
+
+  body("shippingAddress.name")
     .trim()
     .notEmpty()
     .withMessage(
       "Name is required"
     ),
 
-  body("phone")
+  body("shippingAddress.phone")
     .trim()
     .notEmpty()
     .withMessage(
       "Phone is required"
     ),
 
-  body("addressLine1")
+  body("shippingAddress.addressLine1")
     .trim()
     .notEmpty()
     .withMessage(
       "Address is required"
     ),
 
-  body("city")
+  body("shippingAddress.city")
     .trim()
     .notEmpty()
     .withMessage(
       "City is required"
     ),
 
-  body("state")
+  body("shippingAddress.state")
     .trim()
     .notEmpty()
     .withMessage(
       "State is required"
     ),
 
-  body("postalCode")
+  body("shippingAddress.postalCode")
     .trim()
     .notEmpty()
     .withMessage(
       "Postal code is required"
+    ),
+
+  body("paymentMethod")
+    .optional()
+    .isIn([
+      "razorpay",
+      "cod",
+    ])
+    .withMessage(
+      "Invalid payment method"
     ),
 ];
 
@@ -83,26 +107,39 @@ router.use(protect);
 // ============================================================
 
 // GET /api/orders
+
 router.get(
   "/",
   getMyOrders
 );
 
+// ============================================================
+// GET SINGLE ORDER
+// ============================================================
+
 // GET /api/orders/:id
+
 router.get(
   "/:id",
   getOrderById
 );
 
 // ============================================================
-// CHECKOUT
+// CREATE ORDER
 // ============================================================
 
 // POST /api/orders
+
 router.post(
   "/",
-  validate(checkoutValidation),
+  validate(
+    checkoutValidation
+  ),
   createOrder
 );
+
+// ============================================================
+// EXPORT
+// ============================================================
 
 module.exports = router;
