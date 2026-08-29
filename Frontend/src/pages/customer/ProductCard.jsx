@@ -1,7 +1,7 @@
 // ============================================================
 // SHANTI ENTERPRISES
 // Product Card
-// Frontend Phase 6 - Complete UI/UX
+// Frontend Phase - UI/UX
 // ============================================================
 
 import {
@@ -36,6 +36,7 @@ const getImageUrl = (
   return (
     image.url ||
     image.secure_url ||
+    image.path ||
     ""
   );
 };
@@ -67,12 +68,16 @@ function ProductCard({
   ] = useState(false);
 
   // ==========================================================
-  // PRODUCT DATA
+  // SAFETY
   // ==========================================================
 
   if (!product) {
     return null;
   }
+
+  // ==========================================================
+  // PRODUCT DATA
+  // ==========================================================
 
   const productId =
     product?._id ||
@@ -118,6 +123,14 @@ function ProductCard({
       ? product?.brand?.name
       : product?.brand;
 
+  const description =
+    product?.description ||
+    "";
+
+  // ==========================================================
+  // IMAGES
+  // ==========================================================
+
   const images =
     Array.isArray(
       product?.images
@@ -131,6 +144,10 @@ function ProductCard({
     getImageUrl(
       images[0]
     );
+
+  // ==========================================================
+  // PRODUCT STATUS
+  // ==========================================================
 
   const isInStock =
     stock > 0;
@@ -148,6 +165,7 @@ function ProductCard({
     event
   ) => {
     event.preventDefault();
+
     event.stopPropagation();
 
     if (
@@ -160,6 +178,7 @@ function ProductCard({
 
     try {
       setAddingToCart(true);
+
       setAddedToCart(false);
 
       await addToCart(
@@ -183,15 +202,23 @@ function ProductCard({
   };
 
   // ==========================================================
+  // IMAGE ERROR
+  // ==========================================================
+
+  const handleImageError = () => {
+    setImageError(true);
+  };
+
+  // ==========================================================
   // PAGE
   // ==========================================================
 
   return (
     <article className="product-card">
 
-      {/* ==================================================
-          IMAGE
-          ================================================== */}
+      {/* ====================================================
+          PRODUCT IMAGE
+          ==================================================== */}
 
       <Link
         to={productPath}
@@ -207,25 +234,27 @@ function ProductCard({
               src={image}
               alt={productName}
               loading="lazy"
-              onError={() =>
-                setImageError(true)
+              onError={
+                handleImageError
               }
             />
           ) : (
             <div className="product-card-no-image">
 
-              <span>
+              <div className="product-card-no-image-logo">
                 SE
-              </span>
+              </div>
 
               <small>
-                No Image
+                Image unavailable
               </small>
 
             </div>
           )}
 
-          {/* STOCK BADGE */}
+          <div className="product-card-image-overlay" />
+
+          {/* STOCK */}
 
           <span
             className={`product-stock-badge ${
@@ -234,30 +263,57 @@ function ProductCard({
                 : "product-stock-badge-out"
             }`}
           >
+
+            <span className="product-stock-dot" />
+
             {isInStock
               ? "In Stock"
               : "Out of Stock"}
+
+          </span>
+
+          {/* QUICK VIEW LABEL */}
+
+          <span className="product-card-image-action">
+            View Product
+            <span>
+              →
+            </span>
           </span>
 
         </div>
 
       </Link>
 
-      {/* ==================================================
+      {/* ====================================================
           CONTENT
-          ================================================== */}
+          ==================================================== */}
 
       <div className="product-card-content">
 
-        {/* CATEGORY */}
+        {/* CATEGORY + BRAND */}
 
-        {category && (
-          <span className="product-card-category">
-            {category}
-          </span>
-        )}
+        <div className="product-card-category-row">
 
-        {/* NAME */}
+          {category ? (
+            <span className="product-card-category">
+              {category}
+            </span>
+          ) : (
+            <span className="product-card-category">
+              PRODUCT
+            </span>
+          )}
+
+          {brand && (
+            <span className="product-card-brand-mini">
+              {brand}
+            </span>
+          )}
+
+        </div>
+
+        {/* PRODUCT NAME */}
 
         <Link
           to={productPath}
@@ -266,19 +322,11 @@ function ProductCard({
           {productName}
         </Link>
 
-        {/* BRAND */}
-
-        {brand && (
-          <p className="product-card-brand">
-            {brand}
-          </p>
-        )}
-
         {/* DESCRIPTION */}
 
-        {product?.description && (
+        {description && (
           <p className="product-card-description">
-            {product.description}
+            {description}
           </p>
         )}
 
@@ -286,7 +334,7 @@ function ProductCard({
 
         <div className="product-card-price-row">
 
-          <div>
+          <div className="product-card-price-block">
 
             <span className="product-card-price">
               ₹
@@ -311,7 +359,7 @@ function ProductCard({
 
         <div className="product-card-meta">
 
-          <div>
+          <div className="product-card-meta-item">
 
             <span>
               MOQ
@@ -323,19 +371,25 @@ function ProductCard({
 
           </div>
 
-          {isInStock && (
-            <div>
+          <div className="product-card-meta-divider" />
 
-              <span>
-                Stock
-              </span>
+          <div className="product-card-meta-item">
 
-              <strong>
-                {stock}
-              </strong>
+            <span>
+              Stock
+            </span>
 
-            </div>
-          )}
+            <strong
+              className={
+                !isInStock
+                  ? "product-card-stock-zero"
+                  : ""
+              }
+            >
+              {stock}
+            </strong>
+
+          </div>
 
         </div>
 
@@ -347,12 +401,24 @@ function ProductCard({
             to={productPath}
             className="product-view-button"
           >
-            View Details
+
+            <span>
+              View Details
+            </span>
+
+            <span className="product-view-arrow">
+              →
+            </span>
+
           </Link>
 
           <button
             type="button"
-            className="product-add-button"
+            className={`product-add-button ${
+              addedToCart
+                ? "product-add-button-added"
+                : ""
+            }`}
             disabled={
               !isInStock ||
               !productId ||
@@ -367,6 +433,7 @@ function ProductCard({
                 : `${productName} is unavailable`
             }
           >
+
             {addingToCart
               ? "Adding..."
               : addedToCart
@@ -374,6 +441,7 @@ function ProductCard({
                 : isInStock
                   ? "Add to Cart"
                   : "Unavailable"}
+
           </button>
 
         </div>

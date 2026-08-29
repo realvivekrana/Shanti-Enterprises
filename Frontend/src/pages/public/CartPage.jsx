@@ -198,10 +198,6 @@ function CartPage() {
         nextQuantity = moq;
       }
 
-      // ------------------------------------------------------
-      // STOCK LIMIT
-      // ------------------------------------------------------
-
       if (
         Number.isFinite(stock) &&
         stock > 0
@@ -231,11 +227,9 @@ function CartPage() {
 
         <div className="cart-container">
 
-          {/* HEADER */}
+          <header className="cart-page-header">
 
-          <div className="cart-page-header">
-
-            <div>
+            <div className="cart-header-content">
 
               <span className="cart-eyebrow">
                 YOUR SHOPPING CART
@@ -246,15 +240,25 @@ function CartPage() {
               </h1>
 
               <p>
-                Review your selected
-                products before checkout.
+                Your cart is waiting for
+                some great products.
               </p>
 
             </div>
 
-          </div>
+            <div className="cart-items-count cart-items-count-empty">
 
-          {/* EMPTY CART */}
+              <strong>
+                0
+              </strong>
+
+              <span>
+                Items
+              </span>
+
+            </div>
+
+          </header>
 
           <div className="cart-empty-card">
 
@@ -264,14 +268,17 @@ function CartPage() {
 
             <EmptyState
               title="Your cart is empty"
-              message="Add products to your cart to continue."
+              message="Add products to your cart to continue shopping."
             />
 
             <Link
               to="/products"
               className="cart-primary-button"
             >
-              Continue Shopping
+              Browse Products
+              <span>
+                →
+              </span>
             </Link>
 
           </div>
@@ -283,7 +290,7 @@ function CartPage() {
   }
 
   // ==========================================================
-  // PAGE
+  // MAIN PAGE
   // ==========================================================
 
   return (
@@ -295,9 +302,9 @@ function CartPage() {
             HEADER
             ================================================== */}
 
-        <div className="cart-page-header">
+        <header className="cart-page-header">
 
-          <div>
+          <div className="cart-header-content">
 
             <span className="cart-eyebrow">
               YOUR SHOPPING CART
@@ -328,7 +335,7 @@ function CartPage() {
 
           </div>
 
-        </div>
+        </header>
 
         {/* ==================================================
             CART CONTENT
@@ -344,9 +351,17 @@ function CartPage() {
 
             <div className="cart-items-header">
 
-              <h2>
-                Cart Items
-              </h2>
+              <div>
+
+                <span className="cart-section-eyebrow">
+                  SELECTED PRODUCTS
+                </span>
+
+                <h2>
+                  Cart Items
+                </h2>
+
+              </div>
 
               <button
                 type="button"
@@ -369,6 +384,7 @@ function CartPage() {
 
               {cartItems.map(
                 (item) => {
+
                   const itemId =
                     item.productId;
 
@@ -429,9 +445,7 @@ function CartPage() {
                       key={itemId}
                     >
 
-                      {/* ====================================
-                          PRODUCT IMAGE
-                          ==================================== */}
+                      {/* PRODUCT IMAGE */}
 
                       <Link
                         to={`/products/${itemId}`}
@@ -474,11 +488,29 @@ function CartPage() {
 
                       </Link>
 
-                      {/* ====================================
-                          PRODUCT INFO
-                          ==================================== */}
+                      {/* PRODUCT INFORMATION */}
 
                       <div className="cart-item-info">
+
+                        <div className="cart-item-top-line">
+
+                          {item.category && (
+                            <span className="cart-item-category">
+                              {typeof item.category ===
+                              "object"
+                                ? item.category?.name
+                                : item.category}
+                            </span>
+                          )}
+
+                          {hasStockLimit && (
+                            <span className="cart-item-stock-badge">
+                              {itemStock}{" "}
+                              available
+                            </span>
+                          )}
+
+                        </div>
 
                         <Link
                           to={`/products/${itemId}`}
@@ -487,15 +519,6 @@ function CartPage() {
                           {item.name ||
                             "Product"}
                         </Link>
-
-                        {item.category && (
-                          <span className="cart-item-category">
-                            {typeof item.category ===
-                            "object"
-                              ? item.category?.name
-                              : item.category}
-                          </span>
-                        )}
 
                         <p className="cart-item-price">
 
@@ -528,9 +551,7 @@ function CartPage() {
 
                         </p>
 
-                        {/* ==================================
-                            QUANTITY
-                            ================================== */}
+                        {/* QUANTITY */}
 
                         <div className="cart-item-quantity-row">
 
@@ -604,26 +625,9 @@ function CartPage() {
 
                         </div>
 
-                        {/* STOCK INFORMATION */}
-
-                        {hasStockLimit && (
-                          <small className="cart-item-stock">
-
-                            {itemStock}{" "}
-                            {itemStock ===
-                            1
-                              ? "unit"
-                              : "units"}{" "}
-                            available
-
-                          </small>
-                        )}
-
                       </div>
 
-                      {/* ====================================
-                          TOTAL + REMOVE
-                          ==================================== */}
+                      {/* TOTAL + REMOVE */}
 
                       <div className="cart-item-actions">
 
@@ -634,7 +638,6 @@ function CartPage() {
                           </span>
 
                           <strong>
-
                             ₹
                             {itemTotal.toLocaleString(
                               "en-IN",
@@ -643,7 +646,6 @@ function CartPage() {
                                 maximumFractionDigits: 2,
                               }
                             )}
-
                           </strong>
 
                         </div>
@@ -676,21 +678,23 @@ function CartPage() {
 
             </div>
 
-            {/* ==================================================
-                CONTINUE SHOPPING
-                ================================================== */}
+            {/* CONTINUE SHOPPING */}
 
             <Link
               to="/products"
               className="cart-continue-link"
             >
-              ← Continue Shopping
+              <span>
+                ←
+              </span>
+
+              Continue Shopping
             </Link>
 
           </div>
 
           {/* ==================================================
-              SUMMARY
+              ORDER SUMMARY
               ================================================== */}
 
           <aside className="cart-summary">
@@ -707,10 +711,10 @@ function CartPage() {
 
             </div>
 
-            <div className="cart-summary-row">
+            <div className="cart-summary-highlight">
 
               <span>
-                Total Items
+                Items in cart
               </span>
 
               <strong>
@@ -726,7 +730,6 @@ function CartPage() {
               </span>
 
               <strong>
-
                 ₹
                 {Number(
                   subtotal || 0
@@ -737,7 +740,18 @@ function CartPage() {
                     maximumFractionDigits: 2,
                   }
                 )}
+              </strong>
 
+            </div>
+
+            <div className="cart-summary-row">
+
+              <span>
+                Shipping
+              </span>
+
+              <strong>
+                Calculated at checkout
               </strong>
 
             </div>
@@ -747,11 +761,10 @@ function CartPage() {
             <div className="cart-summary-total">
 
               <span>
-                Total
+                Estimated Total
               </span>
 
               <strong>
-
                 ₹
                 {Number(
                   subtotal || 0
@@ -762,7 +775,6 @@ function CartPage() {
                     maximumFractionDigits: 2,
                   }
                 )}
-
               </strong>
 
             </div>
@@ -773,10 +785,16 @@ function CartPage() {
               to="/checkout"
               className="cart-checkout-button"
             >
-              Proceed to Checkout
+              <span>
+                Proceed to Checkout
+              </span>
+
+              <span>
+                →
+              </span>
             </Link>
 
-            {/* VIEW CART */}
+            {/* CONTINUE */}
 
             <button
               type="button"
@@ -790,12 +808,19 @@ function CartPage() {
               Continue Shopping
             </button>
 
-            <p className="cart-summary-note">
+            <div className="cart-summary-trust">
 
-              Review your address and
-              order details during checkout.
+              <span>
+                ✓
+              </span>
 
-            </p>
+              <p>
+                Review your address,
+                quantities and order details
+                before placing the order.
+              </p>
+
+            </div>
 
           </aside>
 

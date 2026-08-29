@@ -1,7 +1,7 @@
+
 // ============================================================
 // SHANTI ENTERPRISES
 // Categories Page
-// Frontend Phase 6 - Complete UI/UX
 // ============================================================
 
 import {
@@ -22,6 +22,8 @@ import Loading from "../../components/common/Loading";
 import ErrorMessage from "../../components/common/ErrorMessage";
 
 import EmptyState from "../../components/common/EmptyState";
+
+import "./CategoriesPage.css";
 
 // ============================================================
 // HELPERS
@@ -62,7 +64,7 @@ const extractCategories = (
 };
 
 // ============================================================
-// GET IMAGE URL
+// IMAGE URL
 // ============================================================
 
 const getImageUrl = (
@@ -100,13 +102,36 @@ const CategoryImageFallback = ({
 
   return (
     <div className="categories-image-fallback">
-
       <span>
         {firstLetter}
       </span>
-
     </div>
   );
+};
+
+// ============================================================
+// CATEGORY SLUG
+// ============================================================
+
+const createCategorySlug = (
+  category,
+  name
+) => {
+  if (category?.slug) {
+    return category.slug;
+  }
+
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(
+      /[^a-z0-9\s-]/g,
+      ""
+    )
+    .replace(
+      /\s+/g,
+      "-"
+    );
 };
 
 // ============================================================
@@ -143,7 +168,9 @@ function CategoriesPage() {
           await getCategories();
 
         const categoryData =
-          extractCategories(data);
+          extractCategories(
+            data
+          );
 
         setCategories(
           categoryData
@@ -174,7 +201,7 @@ function CategoriesPage() {
   }, []);
 
   // ==========================================================
-  // LOADING
+  // LOADING STATE
   // ==========================================================
 
   if (loading) {
@@ -186,23 +213,49 @@ function CategoriesPage() {
           <div className="categories-page-header">
 
             <span className="categories-eyebrow">
-              EXPLORE
+              EXPLORE OUR STORE
             </span>
 
             <h1>
-              Categories
+              Product Categories
             </h1>
 
             <p>
-              Browse our products by
-              category.
+              Discover products by category
+              and find exactly what your
+              business needs.
             </p>
 
           </div>
 
-          <Loading
-            message="Loading categories..."
-          />
+          <div className="categories-loading-grid">
+
+            {[1, 2, 3, 4, 5, 6].map(
+              (item) => (
+                <div
+                  key={item}
+                  className="categories-skeleton-card"
+                >
+                  <div className="categories-skeleton-image" />
+
+                  <div className="categories-skeleton-content">
+
+                    <div className="categories-skeleton-number" />
+
+                    <div className="categories-skeleton-title" />
+
+                    <div className="categories-skeleton-line" />
+
+                    <div className="categories-skeleton-line categories-skeleton-line-short" />
+
+                    <div className="categories-skeleton-button" />
+
+                  </div>
+                </div>
+              )
+            )}
+
+          </div>
 
         </div>
 
@@ -211,7 +264,7 @@ function CategoriesPage() {
   }
 
   // ==========================================================
-  // ERROR
+  // ERROR STATE
   // ==========================================================
 
   if (error) {
@@ -223,26 +276,27 @@ function CategoriesPage() {
           <div className="categories-page-header">
 
             <span className="categories-eyebrow">
-              EXPLORE
+              EXPLORE OUR STORE
             </span>
 
             <h1>
-              Categories
+              Product Categories
             </h1>
 
             <p>
-              Browse our products by
-              category.
+              Discover products by category
+              and find exactly what your
+              business needs.
             </p>
 
           </div>
 
-          <ErrorMessage
-            message={error}
-            onRetry={loadCategories}
-          />
+          <div className="categories-state-wrapper">
 
-          <div className="categories-back-action">
+            <ErrorMessage
+              message={error}
+              onRetry={loadCategories}
+            />
 
             <Link
               to="/products"
@@ -260,7 +314,7 @@ function CategoriesPage() {
   }
 
   // ==========================================================
-  // EMPTY
+  // EMPTY STATE
   // ==========================================================
 
   if (categories.length === 0) {
@@ -272,26 +326,27 @@ function CategoriesPage() {
           <div className="categories-page-header">
 
             <span className="categories-eyebrow">
-              EXPLORE
+              EXPLORE OUR STORE
             </span>
 
             <h1>
-              Categories
+              Product Categories
             </h1>
 
             <p>
-              Browse our products by
-              category.
+              Discover products by category
+              and find exactly what your
+              business needs.
             </p>
 
           </div>
 
-          <EmptyState
-            title="No categories available"
-            message="Categories will appear here once they are added."
-          />
+          <div className="categories-empty-wrapper">
 
-          <div className="categories-back-action">
+            <EmptyState
+              title="No categories available"
+              message="Categories will appear here once they are added."
+            />
 
             <Link
               to="/products"
@@ -309,7 +364,7 @@ function CategoriesPage() {
   }
 
   // ==========================================================
-  // CATEGORY PAGE
+  // MAIN PAGE
   // ==========================================================
 
   return (
@@ -318,42 +373,73 @@ function CategoriesPage() {
       <div className="categories-container">
 
         {/* ==================================================
-            HEADER
+            PAGE HEADER
             ================================================== */}
 
-        <div className="categories-page-header">
+        <header className="categories-page-header">
 
-          <span className="categories-eyebrow">
-            EXPLORE OUR STORE
-          </span>
+          <div className="categories-heading-content">
 
-          <h1>
-            Product Categories
-          </h1>
+            <span className="categories-eyebrow">
+              EXPLORE OUR STORE
+            </span>
 
-          <p>
-            Discover products by category
-            and find exactly what your
-            business needs.
-          </p>
+            <h1>
+              Product Categories
+            </h1>
 
-        </div>
+            <p>
+              Discover products by category
+              and find exactly what your
+              business needs.
+            </p>
+
+          </div>
+
+          <Link
+            to="/products"
+            className="categories-header-button"
+          >
+            View All Products
+            <span>
+              →
+            </span>
+          </Link>
+
+        </header>
 
         {/* ==================================================
-            SUMMARY
+            SUMMARY BAR
             ================================================== */}
 
-        <div className="categories-summary">
+        <div className="categories-summary-bar">
 
-          <span>
-            {categories.length}
+          <div className="categories-summary-left">
+
+            <div className="categories-summary-icon">
+              C
+            </div>
+
+            <div>
+
+              <strong>
+                {categories.length}
+              </strong>
+
+              <span>
+                {categories.length === 1
+                  ? "category available"
+                  : "categories available"}
+              </span>
+
+            </div>
+
+          </div>
+
+          <span className="categories-summary-text">
+            Browse a category to explore
+            available products.
           </span>
-
-          <p>
-            {categories.length === 1
-              ? "category available"
-              : "categories available"}
-          </p>
 
         </div>
 
@@ -368,6 +454,7 @@ function CategoriesPage() {
               category,
               index
             ) => {
+
               const id =
                 category?._id ||
                 category?.id ||
@@ -381,18 +468,10 @@ function CategoriesPage() {
                 "Category";
 
               const slug =
-                category?.slug ||
-                name
-                  .toLowerCase()
-                  .trim()
-                  .replace(
-                    /[^a-z0-9\s-]/g,
-                    ""
-                  )
-                  .replace(
-                    /\s+/g,
-                    "-"
-                  );
+                createCategorySlug(
+                  category,
+                  name
+                );
 
               const image =
                 getImageUrl(
@@ -415,7 +494,10 @@ function CategoriesPage() {
                     aria-label={`View ${name} products`}
                   >
 
+                    <div className="categories-card-image-overlay" />
+
                     {image ? (
+
                       <img
                         src={image}
                         alt={`${name} category`}
@@ -425,13 +507,46 @@ function CategoriesPage() {
                         ) => {
                           event.currentTarget.style.display =
                             "none";
+
+                          const fallback =
+                            event.currentTarget
+                              .parentElement
+                              ?.querySelector(
+                                ".categories-image-fallback"
+                              );
+
+                          if (fallback) {
+                            fallback.style.display =
+                              "flex";
+                          }
                         }}
                       />
-                    ) : (
-                      <CategoryImageFallback
-                        name={name}
-                      />
-                    )}
+
+                    ) : null}
+
+                    <div
+                      className="categories-image-fallback"
+                      style={{
+                        display:
+                          image
+                            ? "none"
+                            : "flex",
+                      }}
+                    >
+                      <span>
+                        {name
+                          ?.charAt(0)
+                          ?.toUpperCase() ||
+                          "C"}
+                      </span>
+                    </div>
+
+                    <span className="categories-image-label">
+                      Explore Category
+                      <span>
+                        →
+                      </span>
+                    </span>
 
                   </Link>
 
@@ -439,32 +554,31 @@ function CategoriesPage() {
 
                   <div className="categories-card-content">
 
-                    <span className="categories-card-number">
-                      {String(
-                        index + 1
-                      ).padStart(
-                        2,
-                        "0"
-                      )}
-                    </span>
+                    <div className="categories-card-top">
+
+                      <span className="categories-card-number">
+                        {String(
+                          index + 1
+                        ).padStart(
+                          2,
+                          "0"
+                        )}
+                      </span>
+
+                      <span className="categories-card-type">
+                        CATEGORY
+                      </span>
+
+                    </div>
 
                     <h2>
                       {name}
                     </h2>
 
-                    {category?.description ? (
-                      <p>
-                        {
-                          category.description
-                        }
-                      </p>
-                    ) : (
-                      <p>
-                        Explore products
-                        available in the{" "}
-                        {name} category.
-                      </p>
-                    )}
+                    <p>
+                      {category?.description ||
+                        `Explore products available in the ${name} category.`}
+                    </p>
 
                     <Link
                       to={`/products?category=${encodeURIComponent(
@@ -472,8 +586,11 @@ function CategoriesPage() {
                       )}`}
                       className="categories-card-link"
                     >
-                      View Products
                       <span>
+                        View Products
+                      </span>
+
+                      <span className="categories-card-link-arrow">
                         →
                       </span>
                     </Link>
@@ -491,22 +608,22 @@ function CategoriesPage() {
             BOTTOM CTA
             ================================================== */}
 
-        <div className="categories-bottom-cta">
+        <section className="categories-bottom-cta">
 
-          <div>
+          <div className="categories-bottom-content">
 
             <span>
               CAN'T FIND WHAT YOU NEED?
             </span>
 
             <h2>
-              Browse all products
+              Explore the complete collection
             </h2>
 
             <p>
-              Explore the complete product
-              collection and find the right
-              products for your requirements.
+              Browse all available products
+              and find the right solution for
+              your requirements.
             </p>
 
           </div>
@@ -516,9 +633,12 @@ function CategoriesPage() {
             className="categories-primary-button"
           >
             View All Products
+            <span>
+              →
+            </span>
           </Link>
 
-        </div>
+        </section>
 
       </div>
 

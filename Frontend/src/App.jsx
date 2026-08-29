@@ -26,7 +26,10 @@ import CartPage from "./pages/public/CartPage";
 import LoginPage from "./pages/public/LoginPage";
 import UnauthorizedPage from "./pages/public/UnauthorizedPage";
 
-// REGISTER PAGE
+// ============================================================
+// AUTH
+// ============================================================
+
 import RegisterPage from "./pages/auth/RegisterPage";
 
 // ============================================================
@@ -46,6 +49,21 @@ import AddressesPage from "./pages/customer/AddressesPage";
 import CustomerTestPage from "./pages/customer/CustomerTestPage";
 
 // ============================================================
+// CUSTOMER RFQ
+// ============================================================
+
+import RFQCreatePage from "./pages/customer/RFQCreatePage";
+import RFQsPage from "./pages/customer/RFQsPage";
+import RFQDetailsPage from "./pages/customer/RFQDetailsPage";
+
+// ============================================================
+// CUSTOMER QUOTATIONS
+// ============================================================
+
+import QuotationsPage from "./pages/customer/QuotationsPage";
+import QuotationDetailsPage from "./pages/customer/QuotationDetailsPage";
+
+// ============================================================
 // ADMIN PAGES
 // ============================================================
 
@@ -62,6 +80,21 @@ import AdminUsersPage from "./pages/admin/AdminUsersPage";
 import AdminAnalyticsPage from "./pages/admin/AdminAnalyticsPage";
 import AdminProfilePage from "./pages/admin/AdminProfilePage";
 import AdminTestPage from "./pages/admin/AdminTestPage";
+
+// ============================================================
+// ADMIN RFQ
+// ============================================================
+
+import AdminRFQsPage from "./pages/admin/AdminRFQsPage";
+import AdminRFQDetailsPage from "./pages/admin/AdminRFQDetailsPage";
+
+// ============================================================
+// ADMIN QUOTATIONS
+// ============================================================
+
+import AdminQuotationsPage from "./pages/admin/AdminQuotationsPage";
+import AdminQuotationDetailsPage from "./pages/admin/AdminQuotationDetailsPage";
+import CreateQuotationPage from "./pages/admin/CreateQuotationPage";
 
 // ============================================================
 // 404 PAGE
@@ -194,7 +227,7 @@ function App() {
           />
 
           {/* ==================================================
-              CUSTOMER LOGIN
+              LOGIN
               ================================================== */}
 
           <Route
@@ -205,7 +238,7 @@ function App() {
           />
 
           {/* ==================================================
-              CUSTOMER REGISTER
+              REGISTER
               ================================================== */}
 
           <Route
@@ -278,7 +311,9 @@ function App() {
               }
             />
 
-            {/* CHECKOUT */}
+            {/* ==================================================
+                CHECKOUT
+                ================================================== */}
 
             <Route
               path="/checkout"
@@ -301,7 +336,9 @@ function App() {
               }
             />
 
-            {/* PAYMENT */}
+            {/* ==================================================
+                PAYMENT
+                ================================================== */}
 
             <Route
               path="/payment/:orderId"
@@ -310,7 +347,9 @@ function App() {
               }
             />
 
-            {/* ORDER SUCCESS */}
+            {/* ==================================================
+                ORDER SUCCESS
+                ================================================== */}
 
             <Route
               path="/order-success/:orderId"
@@ -319,7 +358,9 @@ function App() {
               }
             />
 
-            {/* ORDERS */}
+            {/* ==================================================
+                ORDERS
+                ================================================== */}
 
             <Route
               path="/orders"
@@ -335,7 +376,52 @@ function App() {
               }
             />
 
-            {/* CUSTOMER TEST */}
+            {/* ==================================================
+                CUSTOMER RFQ
+                ================================================== */}
+
+            <Route
+              path="/rfq/create"
+              element={
+                <RFQCreatePage />
+              }
+            />
+
+            <Route
+              path="/rfqs"
+              element={
+                <RFQsPage />
+              }
+            />
+
+            <Route
+              path="/rfq/:rfqId"
+              element={
+                <RFQDetailsPage />
+              }
+            />
+
+            {/* ==================================================
+                CUSTOMER QUOTATIONS
+                ================================================== */}
+
+            <Route
+              path="/quotations"
+              element={
+                <QuotationsPage />
+              }
+            />
+
+            <Route
+              path="/quotations/:quotationId"
+              element={
+                <QuotationDetailsPage />
+              }
+            />
+
+            {/* ==================================================
+                CUSTOMER TEST
+                ================================================== */}
 
             <Route
               path="/customer/test"
@@ -360,7 +446,9 @@ function App() {
             }
           >
 
-            {/* ADMIN DASHBOARD */}
+            {/* ==================================================
+                ADMIN DASHBOARD
+                ================================================== */}
 
             <Route
               path="/admin"
@@ -376,7 +464,9 @@ function App() {
               }
             />
 
-            {/* ADMIN PRODUCTS */}
+            {/* ==================================================
+                ADMIN PRODUCTS
+                ================================================== */}
 
             <Route
               path="/admin/products"
@@ -399,7 +489,9 @@ function App() {
               }
             />
 
-            {/* ADMIN CATEGORIES */}
+            {/* ==================================================
+                ADMIN CATEGORIES
+                ================================================== */}
 
             <Route
               path="/admin/categories"
@@ -422,7 +514,9 @@ function App() {
               }
             />
 
-            {/* ADMIN ORDERS */}
+            {/* ==================================================
+                ADMIN ORDERS
+                ================================================== */}
 
             <Route
               path="/admin/orders"
@@ -438,7 +532,9 @@ function App() {
               }
             />
 
-            {/* ADMIN USERS */}
+            {/* ==================================================
+                ADMIN USERS
+                ================================================== */}
 
             <Route
               path="/admin/users"
@@ -447,7 +543,9 @@ function App() {
               }
             />
 
-            {/* ADMIN ANALYTICS */}
+            {/* ==================================================
+                ADMIN ANALYTICS
+                ================================================== */}
 
             <Route
               path="/admin/analytics"
@@ -456,7 +554,9 @@ function App() {
               }
             />
 
-            {/* ADMIN PROFILE */}
+            {/* ==================================================
+                ADMIN PROFILE
+                ================================================== */}
 
             <Route
               path="/admin/profile"
@@ -465,7 +565,52 @@ function App() {
               }
             />
 
-            {/* ADMIN TEST */}
+            {/* ==================================================
+                ADMIN RFQ
+                ================================================== */}
+
+            <Route
+              path="/admin/rfqs"
+              element={
+                <AdminRFQsPage />
+              }
+            />
+
+            <Route
+              path="/admin/rfqs/:rfqId"
+              element={
+                <AdminRFQDetailsPage />
+              }
+            />
+
+            {/* ==================================================
+                ADMIN QUOTATIONS
+                ================================================== */}
+
+            <Route
+              path="/admin/quotations"
+              element={
+                <AdminQuotationsPage />
+              }
+            />
+
+            <Route
+              path="/admin/quotations/create"
+              element={
+                <CreateQuotationPage />
+              }
+            />
+
+            <Route
+              path="/admin/quotations/:quotationId"
+              element={
+                <AdminQuotationDetailsPage />
+              }
+            />
+
+            {/* ==================================================
+                ADMIN TEST
+                ================================================== */}
 
             <Route
               path="/admin/test"

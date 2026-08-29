@@ -1,7 +1,7 @@
 // ============================================================
 // SHANTI ENTERPRISES
 // Order Details Page
-// Frontend Phase 6 - Complete Customer Order Details
+// Frontend Phase 6 - Complete Customer Order Details UI/UX
 // ============================================================
 
 import {
@@ -153,6 +153,21 @@ const getStatusClass = (
 };
 
 // ============================================================
+// PAYMENT STATUS CLASS
+// ============================================================
+
+const getPaymentStatusClass = (
+  value
+) => {
+  const status =
+    String(
+      value || "pending"
+    ).toLowerCase();
+
+  return `order-details-payment-status order-details-payment-status-${status}`;
+};
+
+// ============================================================
 // IMAGE URL
 // ============================================================
 
@@ -279,11 +294,14 @@ function OrderDetailsPage() {
       loadOrder(true);
     } else {
       setLoading(false);
+
       setError(
         "Order ID is missing."
       );
     }
-  }, [orderId]);
+  }, [
+    orderId,
+  ]);
 
   // ==========================================================
   // IMAGE ERROR
@@ -313,9 +331,17 @@ function OrderDetailsPage() {
 
         <div className="order-details-container">
 
-          <Loading
-            message="Loading order details..."
-          />
+          <div className="order-details-loading-card">
+
+            <span>
+              ORDER DETAILS
+            </span>
+
+            <Loading
+              message="Loading order details..."
+            />
+
+          </div>
 
         </div>
 
@@ -347,12 +373,16 @@ function OrderDetailsPage() {
 
           </div>
 
-          <ErrorMessage
-            message={error}
-            onRetry={() =>
-              loadOrder(true)
-            }
-          />
+          <div className="order-details-error-card">
+
+            <ErrorMessage
+              message={error}
+              onRetry={() =>
+                loadOrder(true)
+              }
+            />
+
+          </div>
 
         </div>
 
@@ -381,19 +411,26 @@ function OrderDetailsPage() {
 
           </div>
 
-          <EmptyState
-            title="Order not found"
-            message="The requested order could not be found."
-          />
+          <div className="order-details-empty-card">
 
-          <div className="order-details-empty-action">
+            <EmptyState
+              title="Order not found"
+              message="The requested order could not be found."
+            />
 
-            <Link
-              to="/products"
-              className="order-details-primary-button"
-            >
-              Continue Shopping
-            </Link>
+            <div className="order-details-empty-action">
+
+              <Link
+                to="/products"
+                className="order-details-primary-button"
+              >
+                Continue Shopping
+                <span>
+                  →
+                </span>
+              </Link>
+
+            </div>
 
           </div>
 
@@ -495,7 +532,9 @@ function OrderDetailsPage() {
           ),
         0
       );
-    }, [items]);
+    }, [
+      items,
+    ]);
 
   // ==========================================================
   // ADDRESS VALUES
@@ -550,7 +589,7 @@ function OrderDetailsPage() {
       <div className="order-details-container">
 
         {/* ==================================================
-            BACK
+            TOP NAVIGATION
             ================================================== */}
 
         <div className="order-details-back-row">
@@ -580,19 +619,32 @@ function OrderDetailsPage() {
         </div>
 
         {/* ==================================================
-            ERROR WHILE REFRESHING
+            INLINE ERROR
             ================================================== */}
 
         {error && (
           <div className="order-details-inline-error">
 
-            <strong>
-              Unable to refresh order
-            </strong>
+            <div>
 
-            <p>
-              {error}
-            </p>
+              <strong>
+                Unable to refresh order
+              </strong>
+
+              <p>
+                {error}
+              </p>
+
+            </div>
+
+            <button
+              type="button"
+              onClick={() =>
+                loadOrder(false)
+              }
+            >
+              Try Again
+            </button>
 
           </div>
         )}
@@ -616,6 +668,7 @@ function OrderDetailsPage() {
             {order.createdAt && (
               <p>
                 Placed on{" "}
+
                 <strong>
                   {formatDate(
                     order.createdAt,
@@ -648,10 +701,14 @@ function OrderDetailsPage() {
           <div className="order-details-overview-item">
 
             <span>
-              Order Status
+              ORDER STATUS
             </span>
 
-            <strong>
+            <strong
+              className={getStatusClass(
+                status
+              )}
+            >
               {getStatusLabel(
                 status
               )}
@@ -662,10 +719,14 @@ function OrderDetailsPage() {
           <div className="order-details-overview-item">
 
             <span>
-              Payment Status
+              PAYMENT STATUS
             </span>
 
-            <strong>
+            <strong
+              className={getPaymentStatusClass(
+                paymentStatus
+              )}
+            >
               {getStatusLabel(
                 paymentStatus
               )}
@@ -676,7 +737,7 @@ function OrderDetailsPage() {
           <div className="order-details-overview-item">
 
             <span>
-              Payment Method
+              PAYMENT METHOD
             </span>
 
             <strong>
@@ -690,7 +751,7 @@ function OrderDetailsPage() {
           <div className="order-details-overview-item">
 
             <span>
-              Total Items
+              TOTAL ITEMS
             </span>
 
             <strong>
@@ -753,6 +814,10 @@ function OrderDetailsPage() {
             0 ? (
               <div className="order-details-no-items">
 
+                <span>
+                  📦
+                </span>
+
                 <p>
                   No product items were found
                   for this order.
@@ -767,6 +832,7 @@ function OrderDetailsPage() {
                     item,
                     index
                   ) => {
+
                     const itemId =
                       item._id ||
                       item.productId ||
@@ -863,6 +929,7 @@ function OrderDetailsPage() {
                           {item.sku && (
                             <p>
                               SKU:{" "}
+
                               <strong>
                                 {
                                   item.sku
@@ -874,6 +941,7 @@ function OrderDetailsPage() {
                           {item.brand && (
                             <p>
                               Brand:{" "}
+
                               <strong>
                                 {
                                   typeof item.brand ===
@@ -887,6 +955,7 @@ function OrderDetailsPage() {
 
                           <p>
                             Price:{" "}
+
                             <strong>
                               {formatCurrency(
                                 itemPrice
@@ -1051,10 +1120,14 @@ function OrderDetailsPage() {
             <div className="order-details-payment-box">
 
               <span>
-                Payment
+                PAYMENT
               </span>
 
-              <strong>
+              <strong
+                className={getPaymentStatusClass(
+                  paymentStatus
+                )}
+              >
                 {getStatusLabel(
                   paymentStatus
                 )}
@@ -1190,6 +1263,9 @@ function OrderDetailsPage() {
             className="order-details-primary-button"
           >
             Continue Shopping
+            <span>
+              →
+            </span>
           </Link>
 
         </div>

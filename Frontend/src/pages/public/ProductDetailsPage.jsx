@@ -1,9 +1,3 @@
-// ============================================================
-// SHANTI ENTERPRISES
-// Product Details Page
-// Frontend Phase 6 - Complete UI/UX
-// ============================================================
-
 import {
   useEffect,
   useState,
@@ -167,7 +161,6 @@ function ProductDetailsPage() {
           productData
         );
 
-        // Quantity starts from MOQ.
         const productMoq =
           Number(
             productData.moq ??
@@ -510,12 +503,44 @@ function ProductDetailsPage() {
     };
 
   // ==========================================================
-  // BUY / GO TO CART
+  // GO TO CART
   // ==========================================================
 
   const handleGoToCart =
     () => {
       navigate("/cart");
+    };
+
+  // ==========================================================
+  // REQUEST QUOTE
+  // ==========================================================
+
+  const handleRequestQuote =
+    () => {
+      if (!product) {
+        return;
+      }
+
+      const finalQuantity =
+        Math.max(
+          moq,
+          Number(quantity) ||
+            moq
+        );
+
+      navigate(
+        "/rfq/create",
+        {
+          state: {
+            product: {
+              ...product,
+            },
+
+            quantity:
+              finalQuantity,
+          },
+        }
+      );
     };
 
   // ==========================================================
@@ -619,11 +644,12 @@ function ProductDetailsPage() {
                 <div className="product-details-no-image">
 
                   <span>
-                    SE
+                    No Image
                   </span>
 
                   <p>
-                    No Image Available
+                    Product image
+                    unavailable
                   </p>
 
                 </div>
@@ -631,7 +657,7 @@ function ProductDetailsPage() {
 
               {/* STOCK BADGE */}
 
-              <span
+              <div
                 className={`product-details-stock ${
                   isInStock
                     ? "product-details-stock-in"
@@ -641,7 +667,7 @@ function ProductDetailsPage() {
                 {isInStock
                   ? "In Stock"
                   : "Out of Stock"}
-              </span>
+              </div>
 
             </div>
 
@@ -691,11 +717,14 @@ function ProductDetailsPage() {
 
             {images.length > 0 && (
               <p className="product-details-image-count">
+
                 {images.length}{" "}
+
                 {images.length ===
                 1
                   ? "product image"
                   : "product images"}
+
               </p>
             )}
 
@@ -711,9 +740,7 @@ function ProductDetailsPage() {
 
             {category && (
               <span className="product-details-category">
-
                 {category}
-
               </span>
             )}
 
@@ -742,6 +769,7 @@ function ProductDetailsPage() {
             <div className="product-details-price-box">
 
               <span className="product-details-price">
+
                 ₹
                 {price.toLocaleString(
                   "en-IN",
@@ -750,6 +778,7 @@ function ProductDetailsPage() {
                     maximumFractionDigits: 2,
                   }
                 )}
+
               </span>
 
               <span className="product-details-price-unit">
@@ -913,7 +942,9 @@ function ProductDetailsPage() {
 
               </div>
 
-              {/* ADD TO CART */}
+              {/* ==================================================
+                  ADD TO CART
+                  ================================================== */}
 
               <button
                 type="button"
@@ -935,7 +966,23 @@ function ProductDetailsPage() {
                       : "Out of Stock"}
               </button>
 
-              {/* GO TO CART */}
+              {/* ==================================================
+                  REQUEST A QUOTE
+                  ================================================== */}
+
+              <button
+                type="button"
+                className="product-details-rfq-button"
+                onClick={
+                  handleRequestQuote
+                }
+              >
+                Request a Quote
+              </button>
+
+              {/* ==================================================
+                  GO TO CART
+                  ================================================== */}
 
               {addedToCart && (
                 <button
@@ -949,7 +996,9 @@ function ProductDetailsPage() {
                 </button>
               )}
 
-              {/* PURCHASE NOTE */}
+              {/* ==================================================
+                  PURCHASE NOTE
+                  ================================================== */}
 
               {isInStock ? (
                 <p className="product-details-cart-note">
@@ -962,8 +1011,7 @@ function ProductDetailsPage() {
 
                   {moq === 1
                     ? "unit"
-                    : "units"}
-                  .
+                    : "units"}.
 
                   {stock > 0 && (
                     <>
@@ -972,7 +1020,7 @@ function ProductDetailsPage() {
                       <strong>
                         {stock}
                       </strong>
-                        .
+                      .
                     </>
                   )}
 

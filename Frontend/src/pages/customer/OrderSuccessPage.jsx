@@ -1,3 +1,4 @@
+
 // ============================================================
 // SHANTI ENTERPRISES
 // Order Success Page
@@ -31,7 +32,10 @@ function OrderSuccessPage() {
 
           {/* SUCCESS ICON */}
 
-          <div className="order-success-icon">
+          <div
+            className="order-success-icon"
+            aria-hidden="true"
+          >
             ✓
           </div>
 
@@ -47,13 +51,17 @@ function OrderSuccessPage() {
             Order Placed Successfully!
           </h1>
 
+          {/* MESSAGE */}
+
           <p className="order-success-message">
             Thank you for shopping with
             Shanti Enterprises. Your order
             has been created successfully.
           </p>
 
-          {/* ORDER ID */}
+          {/* ==================================================
+              ORDER ID
+              ================================================== */}
 
           {orderId && (
             <div className="order-success-order-id">
@@ -62,18 +70,23 @@ function OrderSuccessPage() {
                 ORDER ID
               </span>
 
-              <strong>
+              <strong title={orderId}>
                 {orderId}
               </strong>
 
             </div>
           )}
 
-          {/* STATUS */}
+          {/* ==================================================
+              PAYMENT STATUS
+              ================================================== */}
 
           <div className="order-success-status">
 
-            <div className="order-success-status-icon">
+            <div
+              className="order-success-status-icon"
+              aria-hidden="true"
+            >
               ✓
             </div>
 
@@ -92,9 +105,13 @@ function OrderSuccessPage() {
 
           </div>
 
-          {/* ACTIONS */}
+          {/* ==================================================
+              ACTIONS
+              ================================================== */}
 
           <div className="order-success-actions">
+
+            {/* TRACK ORDER */}
 
             {orderId && (
               <Link
@@ -102,11 +119,14 @@ function OrderSuccessPage() {
                 className="order-success-primary-button"
               >
                 Track Order
-                <span>
+
+                <span aria-hidden="true">
                   →
                 </span>
               </Link>
             )}
+
+            {/* MY ORDERS */}
 
             <Link
               to="/orders"
@@ -114,6 +134,8 @@ function OrderSuccessPage() {
             >
               My Orders
             </Link>
+
+            {/* CONTINUE SHOPPING */}
 
             <Link
               to="/products"
@@ -127,14 +149,16 @@ function OrderSuccessPage() {
         </div>
 
         {/* ==================================================
-            HELP INFO
+            HELP / INFORMATION CARDS
             ================================================== */}
 
         <div className="order-success-info">
 
+          {/* ORDER PROCESSING */}
+
           <div className="order-success-info-item">
 
-            <span>
+            <span aria-hidden="true">
               📦
             </span>
 
@@ -153,9 +177,11 @@ function OrderSuccessPage() {
 
           </div>
 
+          {/* TRACK ORDER */}
+
           <div className="order-success-info-item">
 
-            <span>
+            <span aria-hidden="true">
               🚚
             </span>
 
@@ -174,9 +200,11 @@ function OrderSuccessPage() {
 
           </div>
 
+          {/* SECURE TRANSACTION */}
+
           <div className="order-success-info-item">
 
-            <span>
+            <span aria-hidden="true">
               🔒
             </span>
 
@@ -202,5 +230,9 @@ function OrderSuccessPage() {
     </section>
   );
 }
+
+// ============================================================
+// EXPORT
+// ============================================================
 
 export default OrderSuccessPage;

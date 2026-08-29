@@ -21,6 +21,8 @@ import {
   getCategories,
 } from "../../api/categoryApi";
 
+import "./HomePage.css";
+
 // ============================================================
 // HELPERS
 // ============================================================
@@ -324,34 +326,52 @@ function HomePage() {
 
             <div className="home-hero-trust">
 
-              <div>
-                <strong>
-                  Quality
-                </strong>
-
-                <span>
-                  Products
+              <div className="home-trust-item">
+                <span className="home-trust-icon">
+                  ✓
                 </span>
+
+                <div>
+                  <strong>
+                    Quality
+                  </strong>
+
+                  <span>
+                    Products
+                  </span>
+                </div>
               </div>
 
-              <div>
-                <strong>
-                  Reliable
-                </strong>
-
-                <span>
-                  Service
+              <div className="home-trust-item">
+                <span className="home-trust-icon">
+                  ⚡
                 </span>
+
+                <div>
+                  <strong>
+                    Reliable
+                  </strong>
+
+                  <span>
+                    Service
+                  </span>
+                </div>
               </div>
 
-              <div>
-                <strong>
-                  Secure
-                </strong>
-
-                <span>
-                  Checkout
+              <div className="home-trust-item">
+                <span className="home-trust-icon">
+                  🔒
                 </span>
+
+                <div>
+                  <strong>
+                    Secure
+                  </strong>
+
+                  <span>
+                    Checkout
+                  </span>
+                </div>
               </div>
 
             </div>
@@ -422,6 +442,7 @@ function HomePage() {
           <div className="home-section-heading home-section-heading-row">
 
             <div>
+
               <span>
                 SHOP BY CATEGORY
               </span>
@@ -435,6 +456,7 @@ function HomePage() {
                 by browsing our available
                 categories.
               </p>
+
             </div>
 
             <Link
@@ -447,26 +469,37 @@ function HomePage() {
           </div>
 
           {loadingCategories ? (
-            <div className="home-loading-grid">
+            <div className="home-category-grid">
 
-              {[1, 2, 3, 4].map(
+              {[1, 2, 3, 4, 5, 6].map(
                 (item) => (
                   <div
                     key={item}
-                    className="home-skeleton-card"
+                    className="home-category-card home-skeleton-card"
                   >
                     <div className="home-skeleton-image" />
 
-                    <div className="home-skeleton-line" />
+                    <div className="home-skeleton-content">
 
-                    <div className="home-skeleton-small" />
+                      <div className="home-skeleton-line" />
+
+                      <div className="home-skeleton-small" />
+
+                      <div className="home-skeleton-small home-skeleton-short" />
+
+                    </div>
                   </div>
                 )
               )}
 
             </div>
           ) : categoryError ? (
+
             <div className="home-message-card">
+
+              <div className="home-message-icon">
+                !
+              </div>
 
               <strong>
                 Unable to load categories
@@ -484,8 +517,14 @@ function HomePage() {
               </Link>
 
             </div>
+
           ) : featuredCategories.length === 0 ? (
+
             <div className="home-message-card">
+
+              <div className="home-message-icon">
+                C
+              </div>
 
               <strong>
                 Categories coming soon
@@ -497,11 +536,14 @@ function HomePage() {
               </p>
 
             </div>
+
           ) : (
+
             <div className="home-category-grid">
 
               {featuredCategories.map(
                 (category) => {
+
                   const categoryId =
                     getCategoryId(
                       category
@@ -531,6 +573,7 @@ function HomePage() {
                       <div className="home-category-image">
 
                         {image ? (
+
                           <img
                             src={image}
                             alt={
@@ -539,15 +582,22 @@ function HomePage() {
                             }
                             loading="lazy"
                           />
+
                         ) : (
-                          <span>
-                            {(
-                              category.name ||
-                              "C"
-                            )
-                              .charAt(0)
-                              .toUpperCase()}
-                          </span>
+
+                          <div className="home-category-placeholder">
+
+                            <span>
+                              {(
+                                category.name ||
+                                "C"
+                              )
+                                .charAt(0)
+                                .toUpperCase()}
+                            </span>
+
+                          </div>
+
                         )}
 
                       </div>
@@ -566,8 +616,11 @@ function HomePage() {
                           </p>
                         )}
 
-                        <span>
-                          Explore →
+                        <span className="home-category-link">
+                          Explore
+                          <span>
+                            →
+                          </span>
                         </span>
 
                       </div>
@@ -578,6 +631,7 @@ function HomePage() {
               )}
 
             </div>
+
           )}
 
         </div>
@@ -588,13 +642,14 @@ function HomePage() {
           FEATURED PRODUCTS
           ==================================================== */}
 
-      <section className="home-section">
+      <section className="home-section home-products-section">
 
         <div className="home-container">
 
           <div className="home-section-heading home-section-heading-row">
 
             <div>
+
               <span>
                 FEATURED PRODUCTS
               </span>
@@ -607,6 +662,7 @@ function HomePage() {
                 Explore products currently
                 available from Shanti Enterprises.
               </p>
+
             </div>
 
             <Link
@@ -619,28 +675,45 @@ function HomePage() {
           </div>
 
           {loadingProducts ? (
+
             <div className="home-product-grid">
 
-              {[1, 2, 3, 4].map(
+              {[1, 2, 3, 4, 5, 6, 7, 8].map(
                 (item) => (
                   <div
                     key={item}
                     className="home-product-card home-product-skeleton"
                   >
+
                     <div className="home-skeleton-product-image" />
 
-                    <div className="home-skeleton-line" />
+                    <div className="home-product-skeleton-body">
 
-                    <div className="home-skeleton-small" />
+                      <div className="home-skeleton-small home-skeleton-category" />
 
-                    <div className="home-skeleton-price" />
+                      <div className="home-skeleton-line" />
+
+                      <div className="home-skeleton-line home-skeleton-medium" />
+
+                      <div className="home-skeleton-price" />
+
+                      <div className="home-skeleton-button" />
+
+                    </div>
+
                   </div>
                 )
               )}
 
             </div>
+
           ) : productError ? (
+
             <div className="home-message-card">
+
+              <div className="home-message-icon">
+                !
+              </div>
 
               <strong>
                 Unable to load products
@@ -658,8 +731,14 @@ function HomePage() {
               </Link>
 
             </div>
+
           ) : featuredProducts.length === 0 ? (
+
             <div className="home-message-card">
+
+              <div className="home-message-icon">
+                P
+              </div>
 
               <strong>
                 Products coming soon
@@ -678,11 +757,14 @@ function HomePage() {
               </Link>
 
             </div>
+
           ) : (
+
             <div className="home-product-grid">
 
               {featuredProducts.map(
                 (product) => {
+
                   const productId =
                     product._id ||
                     product.id;
@@ -711,6 +793,7 @@ function HomePage() {
                       >
 
                         {image ? (
+
                           <img
                             src={image}
                             alt={
@@ -718,12 +801,15 @@ function HomePage() {
                             }
                             loading="lazy"
                           />
+
                         ) : (
+
                           <div className="home-product-image-placeholder">
                             <span>
                               SE
                             </span>
                           </div>
+
                         )}
 
                       </Link>
@@ -738,6 +824,7 @@ function HomePage() {
 
                         <Link
                           to={`/products/${productId}`}
+                          className="home-product-title-link"
                         >
                           <h3>
                             {product.name}
@@ -754,7 +841,8 @@ function HomePage() {
 
                         <div className="home-product-meta">
 
-                          <div>
+                          <div className="home-product-price">
+
                             <strong>
                               ₹
                               {Number(
@@ -769,10 +857,12 @@ function HomePage() {
                             </strong>
 
                             <span>
-                              /{" "}
+                              /
+                              {" "}
                               {product.unit ||
                                 "piece"}
                             </span>
+
                           </div>
 
                           <span className="home-product-moq">
@@ -788,6 +878,9 @@ function HomePage() {
                           className="home-product-button"
                         >
                           View Product
+                          <span>
+                            →
+                          </span>
                         </Link>
 
                       </div>
@@ -798,6 +891,7 @@ function HomePage() {
               )}
 
             </div>
+
           )}
 
         </div>
@@ -1028,7 +1122,7 @@ function HomePage() {
 
           <div className="home-business-card">
 
-            <div>
+            <div className="home-business-content">
 
               <span className="home-eyebrow">
                 BUSINESS ORDERS

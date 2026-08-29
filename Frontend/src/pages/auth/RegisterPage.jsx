@@ -381,6 +381,7 @@ function RegisterPage() {
               onSubmit={
                 handleSubmit
               }
+              noValidate
             >
 
               {/* NAME */}
@@ -398,12 +399,14 @@ function RegisterPage() {
                   value={
                     form.name
                   }
+                  inputMode="text"
                   onChange={
                     handleChange
                   }
                   placeholder="Enter your full name"
                   autoComplete="name"
                   disabled={loading}
+                  aria-required="true"
                 />
 
               </div>
@@ -429,6 +432,7 @@ function RegisterPage() {
                   placeholder="Enter your email"
                   autoComplete="email"
                   disabled={loading}
+                  aria-required="true"
                 />
 
               </div>
@@ -452,6 +456,7 @@ function RegisterPage() {
                   value={
                     form.phone
                   }
+                  inputMode="tel"
                   onChange={
                     handleChange
                   }
@@ -489,6 +494,7 @@ function RegisterPage() {
                     placeholder="Create a password"
                     autoComplete="new-password"
                     disabled={loading}
+                    aria-required="true"
                   />
 
                   <button
@@ -547,6 +553,7 @@ function RegisterPage() {
                     placeholder="Confirm your password"
                     autoComplete="new-password"
                     disabled={loading}
+                    aria-required="true"
                   />
 
                   <button
@@ -580,6 +587,7 @@ function RegisterPage() {
                 type="submit"
                 className="auth-submit-button"
                 disabled={loading}
+                aria-busy={loading}
               >
 
                 {loading
