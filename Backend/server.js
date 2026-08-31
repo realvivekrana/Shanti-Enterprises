@@ -23,6 +23,7 @@ const rfqRoutes = require("./routes/rfqRoutes");
 const quotationRoutes = require("./routes/quotationRoutes");
 const wishlistRoutes = require("./routes/wishlistRoutes");
 const profileRoutes = require("./routes/profileRoutes");
+const addressRoutes = require("./routes/addressRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const bulkQuoteRoutes = require("./routes/bulkQuoteRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
@@ -247,6 +248,15 @@ app.use(
 );
 
 // ============================================================
+// ADDRESSES
+// ============================================================
+
+app.use(
+  "/api/addresses",
+  addressRoutes
+);
+
+// ============================================================
 // NOTIFICATIONS
 // ============================================================
 
@@ -303,7 +313,6 @@ app.use(
 // ============================================================
 // IMAGE UPLOAD
 // ============================================================
-// IMPORTANT:
 // Frontend calls:
 // POST /api/upload/image
 //
@@ -487,6 +496,10 @@ app.listen(
 
     console.log(
       `Profile     : http://localhost:${PORT}/api/profile`
+    );
+
+    console.log(
+      `Addresses   : http://localhost:${PORT}/api/addresses`
     );
 
     console.log(

@@ -41,9 +41,9 @@ const getImageUrl = (
   }
 
   return (
-    image.url ||
-    image.secure_url ||
-    image.src ||
+    image?.url ||
+    image?.secure_url ||
+    image?.src ||
     ""
   );
 };
@@ -132,17 +132,38 @@ function ProductDetailsPage() {
     setAddedToCart,
   ] = useState(false);
 
+  const [
+    cartError,
+    setCartError,
+  ] = useState("");
+
+  const [
+    imageErrors,
+    setImageErrors,
+  ] = useState({});
+
   // ==========================================================
   // LOAD PRODUCT
   // ==========================================================
 
   const loadProduct =
     async () => {
+      if (!productId) {
+        setLoading(false);
+        setError(
+          "Product ID is missing."
+        );
+        return;
+      }
+
       try {
         setLoading(true);
         setError("");
         setProduct(null);
         setSelectedImage(0);
+        setImageErrors({});
+        setCartError("");
+        setAddedToCart(false);
 
         const data =
           await getProductById(
@@ -162,16 +183,39 @@ function ProductDetailsPage() {
         );
 
         const productMoq =
-          Number(
-            productData.moq ??
-              productData.minimumOrderQuantity ??
-              productData.minOrderQuantity ??
-              1
-          ) || 1;
+          Math.max(
+            1,
+            Number(
+              productData.moq ??
+                productData.minimumOrderQuantity ??
+                productData.minOrderQuantity ??
+                1
+            ) || 1
+          );
 
-        setQuantity(
-          productMoq
-        );
+        const productStock =
+          Number(
+            productData.stock ??
+              productData.countInStock ??
+              productData.inventory ??
+              productData.quantity ??
+              0
+          );
+
+        if (
+          productStock > 0
+        ) {
+          setQuantity(
+            Math.min(
+              productMoq,
+              productStock
+            )
+          );
+        } else {
+          setQuantity(
+            productMoq
+          );
+        }
       } catch (err) {
         console.error(
           "Product details error:",
@@ -179,9 +223,9 @@ function ProductDetailsPage() {
         );
 
         setError(
-          err.response?.data
+          err?.response?.data
             ?.message ||
-            err.message ||
+            err?.message ||
             "Unable to load product."
         );
       } finally {
@@ -194,14 +238,7 @@ function ProductDetailsPage() {
   // ==========================================================
 
   useEffect(() => {
-    if (productId) {
-      loadProduct();
-    } else {
-      setLoading(false);
-      setError(
-        "Product ID is missing."
-      );
-    }
+    loadProduct();
   }, [productId]);
 
   // ==========================================================
@@ -304,41 +341,49 @@ function ProductDetailsPage() {
   // ==========================================================
 
   const productName =
-    product.name ||
-    product.title ||
+    product?.name ||
+    product?.title ||
     "Product";
 
-  const price = Number(
-    product.price ??
-      product.sellingPrice ??
-      product.salePrice ??
-      0
-  );
+  const price =
+    Number(
+      product?.price ??
+        product?.sellingPrice ??
+        product?.salePrice ??
+        0
+    ) || 0;
 
-  const stock = Number(
-    product.stock ??
-      product.countInStock ??
-      product.inventory ??
-      product.quantity ??
-      0
-  );
+  const stock =
+    Math.max(
+      0,
+      Number(
+        product?.stock ??
+          product?.countInStock ??
+          product?.inventory ??
+          product?.quantity ??
+          0
+      ) || 0
+    );
 
   const moq =
-    Number(
-      product.moq ??
-        product.minimumOrderQuantity ??
-        product.minOrderQuantity ??
-        1
-    ) || 1;
+    Math.max(
+      1,
+      Number(
+        product?.moq ??
+          product?.minimumOrderQuantity ??
+          product?.minOrderQuantity ??
+          1
+      ) || 1
+    );
 
   const category =
-    typeof product.category ===
+    typeof product?.category ===
     "object"
       ? product.category?.name
-      : product.category;
+      : product?.category;
 
   const categoryId =
-    typeof product.category ===
+    typeof product?.category ===
     "object"
       ? product.category?._id ||
         product.category?.id ||
@@ -346,17 +391,21 @@ function ProductDetailsPage() {
       : "";
 
   const brand =
-    typeof product.brand ===
+    typeof product?.brand ===
     "object"
       ? product.brand?.name
-      : product.brand;
+      : product?.brand;
+
+  // ==========================================================
+  // IMAGES
+  // ==========================================================
 
   const rawImages =
     Array.isArray(
-      product.images
+      product?.images
     )
       ? product.images
-      : product.image
+      : product?.image
         ? [product.image]
         : [];
 
@@ -375,12 +424,41 @@ function ProductDetailsPage() {
   // QUANTITY LIMITS
   // ==========================================================
 
+  const effectiveMinimum =
+    stock > 0
+      ? Math.min(
+          moq,
+          stock
+        )
+      : moq;
+
   const canIncreaseQuantity =
     isInStock &&
     quantity < stock;
 
   const canDecreaseQuantity =
-    quantity > moq;
+    isInStock &&
+    quantity >
+      effectiveMinimum;
+
+  // ==========================================================
+  // IMAGE ERROR
+  // ==========================================================
+
+  const handleImageError =
+    (imageIndex) => {
+      setImageErrors(
+        (current) => ({
+          ...current,
+          [imageIndex]: true,
+        })
+      );
+    };
+
+  const selectedImageFailed =
+    imageErrors[
+      selectedImage
+    ];
 
   // ==========================================================
   // INCREASE QUANTITY
@@ -388,6 +466,10 @@ function ProductDetailsPage() {
 
   const increaseQuantity =
     () => {
+      if (!isInStock) {
+        return;
+      }
+
       setQuantity(
         (currentQuantity) =>
           Math.min(
@@ -395,6 +477,8 @@ function ProductDetailsPage() {
             currentQuantity + 1
           )
       );
+
+      setCartError("");
     };
 
   // ==========================================================
@@ -403,13 +487,19 @@ function ProductDetailsPage() {
 
   const decreaseQuantity =
     () => {
+      if (!isInStock) {
+        return;
+      }
+
       setQuantity(
         (currentQuantity) =>
           Math.max(
-            moq,
+            effectiveMinimum,
             currentQuantity - 1
           )
       );
+
+      setCartError("");
     };
 
   // ==========================================================
@@ -424,7 +514,10 @@ function ProductDetailsPage() {
       if (
         rawValue === ""
       ) {
-        setQuantity(moq);
+        setQuantity(
+          effectiveMinimum
+        );
+
         return;
       }
 
@@ -432,20 +525,27 @@ function ProductDetailsPage() {
         Number(rawValue);
 
       if (
-        Number.isNaN(value)
+        !Number.isFinite(
+          value
+        )
       ) {
         return;
       }
+
+      const safeValue =
+        Math.floor(value);
 
       setQuantity(
         Math.min(
           stock,
           Math.max(
-            moq,
-            value
+            effectiveMinimum,
+            safeValue
           )
         )
       );
+
+      setCartError("");
     };
 
   // ==========================================================
@@ -461,19 +561,49 @@ function ProductDetailsPage() {
         return;
       }
 
+      setCartError("");
+      setAddedToCart(false);
+
       const finalQuantity =
         Math.min(
           stock,
           Math.max(
-            moq,
-            Number(quantity) ||
-              moq
+            effectiveMinimum,
+            Math.floor(
+              Number(
+                quantity
+              ) ||
+                effectiveMinimum
+            )
           )
         );
 
+      if (
+        finalQuantity >
+        stock
+      ) {
+        setCartError(
+          `Only ${stock} units are available.`
+        );
+
+        return;
+      }
+
+      if (
+        finalQuantity <
+        moq
+      ) {
+        setCartError(
+          `Minimum order quantity is ${moq} units.`
+        );
+
+        return;
+      }
+
       try {
-        setAddingToCart(true);
-        setAddedToCart(false);
+        setAddingToCart(
+          true
+        );
 
         await addToCart(
           product,
@@ -484,21 +614,34 @@ function ProductDetailsPage() {
           finalQuantity
         );
 
-        setAddedToCart(true);
+        setAddedToCart(
+          true
+        );
 
         window.setTimeout(
           () => {
-            setAddedToCart(false);
+            setAddedToCart(
+              false
+            );
           },
-          2000
+          2500
         );
       } catch (err) {
         console.error(
           "Add to cart error:",
           err
         );
+
+        setCartError(
+          err?.response?.data
+            ?.message ||
+            err?.message ||
+            "Unable to add this product to cart."
+        );
       } finally {
-        setAddingToCart(false);
+        setAddingToCart(
+          false
+        );
       }
     };
 
@@ -508,7 +651,9 @@ function ProductDetailsPage() {
 
   const handleGoToCart =
     () => {
-      navigate("/cart");
+      navigate(
+        "/cart"
+      );
     };
 
   // ==========================================================
@@ -524,8 +669,12 @@ function ProductDetailsPage() {
       const finalQuantity =
         Math.max(
           moq,
-          Number(quantity) ||
-            moq
+          Math.floor(
+            Number(
+              quantity
+            ) ||
+              moq
+          )
         );
 
       navigate(
@@ -621,7 +770,8 @@ function ProductDetailsPage() {
 
             <div className="product-details-image-box">
 
-              {images.length > 0 ? (
+              {images.length > 0 &&
+              !selectedImageFailed ? (
                 <img
                   src={
                     images[
@@ -633,12 +783,11 @@ function ProductDetailsPage() {
                     productName
                   }
                   className="product-details-image"
-                  onError={(
-                    event
-                  ) => {
-                    event.currentTarget.style.display =
-                      "none";
-                  }}
+                  onError={() =>
+                    handleImageError(
+                      selectedImage
+                    )
+                  }
                 />
               ) : (
                 <div className="product-details-no-image">
@@ -682,32 +831,57 @@ function ProductDetailsPage() {
                   (
                     image,
                     index
-                  ) => (
-                    <button
-                      key={`${image}-${index}`}
-                      type="button"
-                      className={`product-details-thumbnail ${
-                        selectedImage ===
+                  ) => {
+
+                    const thumbnailFailed =
+                      imageErrors[
                         index
-                          ? "product-details-thumbnail-active"
-                          : ""
-                      }`}
-                      onClick={() =>
-                        setSelectedImage(
+                      ];
+
+                    return (
+                      <button
+                        key={`${image}-${index}`}
+                        type="button"
+                        className={`product-details-thumbnail ${
+                          selectedImage ===
                           index
-                        )
-                      }
-                      aria-label={`View product image ${
-                        index + 1
-                      }`}
-                    >
-                      <img
-                        src={image}
-                        alt={`${productName} ${index + 1}`}
-                        loading="lazy"
-                      />
-                    </button>
-                  )
+                            ? "product-details-thumbnail-active"
+                            : ""
+                        }`}
+                        onClick={() =>
+                          setSelectedImage(
+                            index
+                          )
+                        }
+                        aria-label={`View product image ${
+                          index + 1
+                        }`}
+                      >
+
+                        {!thumbnailFailed ? (
+                          <img
+                            src={
+                              image
+                            }
+                            alt={`${productName} ${
+                              index + 1
+                            }`}
+                            loading="lazy"
+                            onError={() =>
+                              handleImageError(
+                                index
+                              )
+                            }
+                          />
+                        ) : (
+                          <span>
+                            SE
+                          </span>
+                        )}
+
+                      </button>
+                    );
+                  }
                 )}
 
               </div>
@@ -796,7 +970,7 @@ function ProductDetailsPage() {
               </h2>
 
               <p>
-                {product.description ||
+                {product?.description ||
                   "No product description is available for this product."}
               </p>
 
@@ -830,14 +1004,12 @@ function ProductDetailsPage() {
                 </span>
 
                 <strong>
-                  {stock > 0
-                    ? stock
-                    : 0}
+                  {stock}
                 </strong>
 
               </div>
 
-              {product.sku && (
+              {product?.sku && (
                 <div className="product-details-meta-item">
 
                   <span>
@@ -851,7 +1023,7 @@ function ProductDetailsPage() {
                 </div>
               )}
 
-              {product.unit && (
+              {product?.unit && (
                 <div className="product-details-meta-item">
 
                   <span>
@@ -907,12 +1079,15 @@ function ProductDetailsPage() {
 
                   <input
                     type="number"
-                    min={moq}
+                    min={
+                      effectiveMinimum
+                    }
                     max={
                       stock > 0
                         ? stock
                         : undefined
                     }
+                    step="1"
                     value={
                       quantity
                     }
@@ -941,6 +1116,48 @@ function ProductDetailsPage() {
                 </div>
 
               </div>
+
+              {/* ==================================================
+                  QUANTITY INFO
+                  ================================================== */}
+
+              {isInStock && (
+                <p className="product-details-cart-note">
+
+                  Minimum order quantity is{" "}
+
+                  <strong>
+                    {moq}
+                  </strong>{" "}
+
+                  {moq === 1
+                    ? "unit"
+                    : "units"}.
+
+                  {" "}
+                  Maximum available quantity is{" "}
+
+                  <strong>
+                    {stock}
+                  </strong>
+                  .
+
+                </p>
+              )}
+
+              {/* ==================================================
+                  CART ERROR
+                  ================================================== */}
+
+              {cartError && (
+                <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3">
+
+                  <p className="text-sm text-red-700">
+                    {cartError}
+                  </p>
+
+                </div>
+              )}
 
               {/* ==================================================
                   ADD TO CART
@@ -994,44 +1211,6 @@ function ProductDetailsPage() {
                 >
                   Go to Cart
                 </button>
-              )}
-
-              {/* ==================================================
-                  PURCHASE NOTE
-                  ================================================== */}
-
-              {isInStock ? (
-                <p className="product-details-cart-note">
-
-                  Minimum order quantity is{" "}
-
-                  <strong>
-                    {moq}
-                  </strong>{" "}
-
-                  {moq === 1
-                    ? "unit"
-                    : "units"}.
-
-                  {stock > 0 && (
-                    <>
-                      {" "}
-                      Maximum available quantity is{" "}
-                      <strong>
-                        {stock}
-                      </strong>
-                      .
-                    </>
-                  )}
-
-                </p>
-              ) : (
-                <p className="product-details-cart-note">
-
-                  This product is currently
-                  unavailable.
-
-                </p>
               )}
 
             </div>

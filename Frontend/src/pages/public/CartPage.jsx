@@ -37,9 +37,9 @@ const getImageUrl = (
   }
 
   return (
-    image.url ||
-    image.secure_url ||
-    image.src ||
+    image?.url ||
+    image?.secure_url ||
+    image?.src ||
     ""
   );
 };
@@ -50,9 +50,9 @@ const getImageUrl = (
 
 function CartPage() {
   const {
-    cartItems,
-    totalItems,
-    subtotal,
+    cartItems = [],
+    totalItems = 0,
+    subtotal = 0,
     updateQuantity,
     removeFromCart,
     clearCart,
@@ -60,6 +60,10 @@ function CartPage() {
 
   const navigate =
     useNavigate();
+
+  // ==========================================================
+  // UI STATE
+  // ==========================================================
 
   const [
     imageErrors,
@@ -76,6 +80,29 @@ function CartPage() {
     setClearingCart,
   ] = useState(false);
 
+  const [
+    quantityErrors,
+    setQuantityErrors,
+  ] = useState({});
+
+  // ==========================================================
+  // GET PRODUCT ID
+  // ==========================================================
+
+  const getProductId = (
+    item
+  ) => {
+    return (
+      item?.productId ||
+      item?._id ||
+      item?.product?._id ||
+      item?.product?.id ||
+      item?.product ||
+      item?.id ||
+      ""
+    );
+  };
+
   // ==========================================================
   // REMOVE ITEM
   // ==========================================================
@@ -84,6 +111,7 @@ function CartPage() {
     productId
   ) => {
     if (
+      !productId ||
       removingProductId
     ) {
       return;
@@ -92,6 +120,20 @@ function CartPage() {
     try {
       setRemovingProductId(
         productId
+      );
+
+      setQuantityErrors(
+        (current) => {
+          const updated = {
+            ...current,
+          };
+
+          delete updated[
+            productId
+          ];
+
+          return updated;
+        }
       );
 
       await removeFromCart(
@@ -137,6 +179,9 @@ function CartPage() {
         );
 
         await clearCart();
+
+        setQuantityErrors({});
+        setImageErrors({});
       } catch (error) {
         console.error(
           "Clear cart error:",
@@ -155,6 +200,10 @@ function CartPage() {
 
   const handleImageError =
     (productId) => {
+      if (!productId) {
+        return;
+      }
+
       setImageErrors(
         (current) => ({
           ...current,
@@ -164,7 +213,7 @@ function CartPage() {
     };
 
   // ==========================================================
-  // UPDATE QUANTITY
+  // QUANTITY CHANGE
   // ==========================================================
 
   const handleQuantityChange =
@@ -172,46 +221,219 @@ function CartPage() {
       item,
       requestedQuantity
     ) => {
-      const moq =
-        Number(
-          item.moq
-        ) || 1;
+      const productId =
+        getProductId(item);
 
-      const stock =
-        Number(
-          item.stock ??
-            item.countInStock ??
-            item.inventory
+      if (!productId) {
+        return;
+      }
+
+      const moq =
+        Math.max(
+          1,
+          Number(
+            item?.moq ??
+              item?.minimumOrderQuantity ??
+              item?.minOrderQuantity ??
+              1
+          ) || 1
         );
+
+      const rawStock =
+        Number(
+          item?.stock ??
+            item?.countInStock ??
+            item?.inventory
+        );
+
+      const hasStockLimit =
+        Number.isFinite(
+          rawStock
+        ) &&
+        rawStock >= 0;
 
       let nextQuantity =
         Number(
           requestedQuantity
         );
 
+      // --------------------------------------------------------
+      // INVALID VALUE
+      // --------------------------------------------------------
+
       if (
-        Number.isNaN(
+        !Number.isFinite(
           nextQuantity
-        ) ||
+        )
+      ) {
+        setQuantityErrors(
+          (current) => ({
+            ...current,
+            [productId]:
+              `Quantity must be at least ${moq}.`,
+          })
+        );
+
+        return;
+      }
+
+      // --------------------------------------------------------
+      // MOQ
+      // --------------------------------------------------------
+
+      if (
         nextQuantity < moq
       ) {
         nextQuantity = moq;
       }
 
+      // --------------------------------------------------------
+      // STOCK
+      // --------------------------------------------------------
+
       if (
-        Number.isFinite(stock) &&
-        stock > 0
+        hasStockLimit
       ) {
-        nextQuantity =
-          Math.min(
-            nextQuantity,
-            stock
+        if (rawStock <= 0) {
+          setQuantityErrors(
+            (current) => ({
+              ...current,
+              [productId]:
+                "This product is currently out of stock.",
+            })
           );
+
+          return;
+        }
+
+        if (
+          nextQuantity >
+          rawStock
+        ) {
+          nextQuantity =
+            rawStock;
+
+          setQuantityErrors(
+            (current) => ({
+              ...current,
+              [productId]:
+                `Only ${rawStock} unit${
+                  rawStock === 1
+                    ? ""
+                    : "s"
+                } available.`,
+            })
+          );
+        } else {
+          setQuantityErrors(
+            (current) => {
+              const updated = {
+                ...current,
+              };
+
+              delete updated[
+                productId
+              ];
+
+              return updated;
+            }
+          );
+        }
+      } else {
+        setQuantityErrors(
+          (current) => {
+            const updated = {
+              ...current,
+            };
+
+            delete updated[
+              productId
+            ];
+
+            return updated;
+          }
+        );
       }
 
       updateQuantity(
-        item.productId,
+        productId,
         nextQuantity
+      );
+    };
+
+  // ==========================================================
+  // INCREASE QUANTITY
+  // ==========================================================
+
+  const handleIncrease =
+    (item) => {
+      const currentQuantity =
+        Number(
+          item?.quantity
+        ) || 0;
+
+      handleQuantityChange(
+        item,
+        currentQuantity + 1
+      );
+    };
+
+  // ==========================================================
+  // DECREASE QUANTITY
+  // ==========================================================
+
+  const handleDecrease =
+    (item) => {
+      const currentQuantity =
+        Number(
+          item?.quantity
+        ) || 0;
+
+      const moq =
+        Math.max(
+          1,
+          Number(
+            item?.moq ??
+              item?.minimumOrderQuantity ??
+              1
+          ) || 1
+        );
+
+      if (
+        currentQuantity <=
+        moq
+      ) {
+        return;
+      }
+
+      handleQuantityChange(
+        item,
+        currentQuantity - 1
+      );
+    };
+
+  // ==========================================================
+  // CHECKOUT
+  // ==========================================================
+
+  const handleCheckout =
+    (event) => {
+      event.preventDefault();
+
+      if (
+        cartItems.length === 0
+      ) {
+        return;
+      }
+
+      if (
+        Number(subtotal) <= 0
+      ) {
+        return;
+      }
+
+      navigate(
+        "/checkout"
       );
     };
 
@@ -276,6 +498,7 @@ function CartPage() {
               className="cart-primary-button"
             >
               Browse Products
+
               <span>
                 →
               </span>
@@ -380,41 +603,59 @@ function CartPage() {
 
             </div>
 
+            {/* ==================================================
+                ITEMS LIST
+                ================================================== */}
+
             <div className="cart-items-list">
 
               {cartItems.map(
-                (item) => {
-
+                (item, index) => {
                   const itemId =
-                    item.productId;
+                    getProductId(
+                      item
+                    );
 
                   const itemPrice =
                     Number(
-                      item.price
+                      item?.price ??
+                        item?.product
+                          ?.price ??
+                        0
                     ) || 0;
 
                   const itemQuantity =
                     Number(
-                      item.quantity
+                      item?.quantity
                     ) || 0;
 
                   const itemMoq =
-                    Number(
-                      item.moq
-                    ) || 1;
+                    Math.max(
+                      1,
+                      Number(
+                        item?.moq ??
+                          item?.minimumOrderQuantity ??
+                          item?.minOrderQuantity ??
+                          1
+                      ) || 1
+                    );
 
                   const itemStock =
                     Number(
-                      item.stock ??
-                        item.countInStock ??
-                        item.inventory
+                      item?.stock ??
+                        item?.countInStock ??
+                        item?.inventory
                     );
 
                   const hasStockLimit =
                     Number.isFinite(
                       itemStock
                     ) &&
-                    itemStock > 0;
+                    itemStock >= 0;
+
+                  const isOutOfStock =
+                    hasStockLimit &&
+                    itemStock <= 0;
 
                   const itemTotal =
                     itemPrice *
@@ -422,13 +663,29 @@ function CartPage() {
 
                   const image =
                     getImageUrl(
-                      item.image
+                      item?.image ||
+                        item?.images?.[0] ||
+                        item?.product
+                          ?.image ||
+                        item?.product
+                          ?.images?.[0]
                     );
 
                   const imageFailed =
                     imageErrors[
                       itemId
                     ];
+
+                  const quantityError =
+                    quantityErrors[
+                      itemId
+                    ];
+
+                  const productName =
+                    item?.name ||
+                    item?.product
+                      ?.name ||
+                    "Product";
 
                   const canDecrease =
                     itemQuantity >
@@ -442,15 +699,24 @@ function CartPage() {
                   return (
                     <article
                       className="cart-item"
-                      key={itemId}
+                      key={
+                        itemId ||
+                        index
+                      }
                     >
 
-                      {/* PRODUCT IMAGE */}
+                      {/* ==================================================
+                          PRODUCT IMAGE
+                          ================================================== */}
 
                       <Link
-                        to={`/products/${itemId}`}
+                        to={
+                          itemId
+                            ? `/products/${itemId}`
+                            : "/products"
+                        }
                         className="cart-item-image-link"
-                        aria-label={`View ${item.name}`}
+                        aria-label={`View ${productName}`}
                       >
 
                         <div className="cart-item-image">
@@ -458,10 +724,11 @@ function CartPage() {
                           {image &&
                           !imageFailed ? (
                             <img
-                              src={image}
+                              src={
+                                image
+                              }
                               alt={
-                                item.name ||
-                                "Product"
+                                productName
                               }
                               loading="lazy"
                               onError={() =>
@@ -488,36 +755,48 @@ function CartPage() {
 
                       </Link>
 
-                      {/* PRODUCT INFORMATION */}
+                      {/* ==================================================
+                          PRODUCT INFORMATION
+                          ================================================== */}
 
                       <div className="cart-item-info">
 
                         <div className="cart-item-top-line">
 
-                          {item.category && (
+                          {item?.category && (
                             <span className="cart-item-category">
                               {typeof item.category ===
                               "object"
-                                ? item.category?.name
+                                ? item.category?.name ||
+                                  "Category"
                                 : item.category}
                             </span>
                           )}
 
-                          {hasStockLimit && (
-                            <span className="cart-item-stock-badge">
-                              {itemStock}{" "}
-                              available
+                          {isOutOfStock ? (
+                            <span className="cart-item-stock-badge cart-item-stock-badge-out">
+                              Out of stock
                             </span>
+                          ) : (
+                            hasStockLimit && (
+                              <span className="cart-item-stock-badge">
+                                {itemStock}{" "}
+                                available
+                              </span>
+                            )
                           )}
 
                         </div>
 
                         <Link
-                          to={`/products/${itemId}`}
+                          to={
+                            itemId
+                              ? `/products/${itemId}`
+                              : "/products"
+                          }
                           className="cart-item-name"
                         >
-                          {item.name ||
-                            "Product"}
+                          {productName}
                         </Link>
 
                         <p className="cart-item-price">
@@ -551,7 +830,9 @@ function CartPage() {
 
                         </p>
 
-                        {/* QUANTITY */}
+                        {/* ==================================================
+                            QUANTITY
+                            ================================================== */}
 
                         <div className="cart-item-quantity-row">
 
@@ -564,16 +845,15 @@ function CartPage() {
                             <button
                               type="button"
                               disabled={
-                                !canDecrease
+                                !canDecrease ||
+                                isOutOfStock
                               }
                               onClick={() =>
-                                handleQuantityChange(
-                                  item,
-                                  itemQuantity -
-                                    1
+                                handleDecrease(
+                                  item
                                 )
                               }
-                              aria-label={`Decrease ${item.name} quantity`}
+                              aria-label={`Decrease ${productName} quantity`}
                             >
                               −
                             </button>
@@ -591,6 +871,9 @@ function CartPage() {
                               value={
                                 itemQuantity
                               }
+                              disabled={
+                                isOutOfStock
+                              }
                               onChange={(
                                 event
                               ) =>
@@ -601,22 +884,21 @@ function CartPage() {
                                     .value
                                 )
                               }
-                              aria-label={`${item.name} quantity`}
+                              aria-label={`${productName} quantity`}
                             />
 
                             <button
                               type="button"
                               disabled={
-                                !canIncrease
+                                !canIncrease ||
+                                isOutOfStock
                               }
                               onClick={() =>
-                                handleQuantityChange(
-                                  item,
-                                  itemQuantity +
-                                    1
+                                handleIncrease(
+                                  item
                                 )
                               }
-                              aria-label={`Increase ${item.name} quantity`}
+                              aria-label={`Increase ${productName} quantity`}
                             >
                               +
                             </button>
@@ -625,9 +907,21 @@ function CartPage() {
 
                         </div>
 
+                        {/* ==================================================
+                            QUANTITY ERROR
+                            ================================================== */}
+
+                        {quantityError && (
+                          <p className="text-xs text-red-600 mt-2">
+                            {quantityError}
+                          </p>
+                        )}
+
                       </div>
 
-                      {/* TOTAL + REMOVE */}
+                      {/* ==================================================
+                          TOTAL + REMOVE
+                          ================================================== */}
 
                       <div className="cart-item-actions">
 
@@ -659,8 +953,9 @@ function CartPage() {
                             )
                           }
                           disabled={
+                            !itemId ||
                             removingProductId ===
-                            itemId
+                              itemId
                           }
                         >
                           {removingProductId ===
@@ -678,7 +973,9 @@ function CartPage() {
 
             </div>
 
-            {/* CONTINUE SHOPPING */}
+            {/* ==================================================
+                CONTINUE SHOPPING
+                ================================================== */}
 
             <Link
               to="/products"
@@ -711,6 +1008,10 @@ function CartPage() {
 
             </div>
 
+            {/* ==================================================
+                ITEMS COUNT
+                ================================================== */}
+
             <div className="cart-summary-highlight">
 
               <span>
@@ -722,6 +1023,10 @@ function CartPage() {
               </strong>
 
             </div>
+
+            {/* ==================================================
+                SUBTOTAL
+                ================================================== */}
 
             <div className="cart-summary-row">
 
@@ -744,6 +1049,10 @@ function CartPage() {
 
             </div>
 
+            {/* ==================================================
+                SHIPPING
+                ================================================== */}
+
             <div className="cart-summary-row">
 
               <span>
@@ -757,6 +1066,10 @@ function CartPage() {
             </div>
 
             <div className="cart-summary-divider" />
+
+            {/* ==================================================
+                TOTAL
+                ================================================== */}
 
             <div className="cart-summary-total">
 
@@ -779,22 +1092,41 @@ function CartPage() {
 
             </div>
 
-            {/* CHECKOUT */}
+            {/* ==================================================
+                CHECKOUT
+                ================================================== */}
 
-            <Link
-              to="/checkout"
-              className="cart-checkout-button"
-            >
-              <span>
-                Proceed to Checkout
-              </span>
+            {Number(
+              subtotal || 0
+            ) > 0 ? (
+              <button
+                type="button"
+                className="cart-checkout-button"
+                onClick={
+                  handleCheckout
+                }
+              >
+                <span>
+                  Proceed to Checkout
+                </span>
 
-              <span>
-                →
-              </span>
-            </Link>
+                <span>
+                  →
+                </span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="cart-checkout-button"
+                disabled
+              >
+                Cart Total Unavailable
+              </button>
+            )}
 
-            {/* CONTINUE */}
+            {/* ==================================================
+                CONTINUE SHOPPING
+                ================================================== */}
 
             <button
               type="button"
@@ -807,6 +1139,10 @@ function CartPage() {
             >
               Continue Shopping
             </button>
+
+            {/* ==================================================
+                TRUST MESSAGE
+                ================================================== */}
 
             <div className="cart-summary-trust">
 

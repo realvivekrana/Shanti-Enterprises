@@ -1,9 +1,3 @@
-// ============================================================
-// SHANTI ENTERPRISES
-// Product Card
-// Frontend Phase - UI/UX
-// ============================================================
-
 import {
   useState,
 } from "react";
@@ -34,9 +28,10 @@ const getImageUrl = (
   }
 
   return (
-    image.url ||
-    image.secure_url ||
-    image.path ||
+    image?.url ||
+    image?.secure_url ||
+    image?.path ||
+    image?.src ||
     ""
   );
 };
@@ -51,6 +46,10 @@ function ProductCard({
   const {
     addToCart,
   } = useCart();
+
+  // ==========================================================
+  // STATE
+  // ==========================================================
 
   const [
     imageError,
@@ -67,6 +66,11 @@ function ProductCard({
     setAddedToCart,
   ] = useState(false);
 
+  const [
+    cartError,
+    setCartError,
+  ] = useState("");
+
   // ==========================================================
   // SAFETY
   // ==========================================================
@@ -76,40 +80,71 @@ function ProductCard({
   }
 
   // ==========================================================
-  // PRODUCT DATA
+  // PRODUCT ID
   // ==========================================================
 
   const productId =
     product?._id ||
     product?.id;
 
+  // ==========================================================
+  // PRODUCT DATA
+  // ==========================================================
+
   const productName =
     product?.name ||
     product?.title ||
     "Product";
 
-  const price = Number(
-    product?.price ??
-      product?.sellingPrice ??
-      product?.salePrice ??
-      0
-  );
+  const rawPrice =
+    Number(
+      product?.price ??
+        product?.sellingPrice ??
+        product?.salePrice ??
+        0
+    );
 
-  const stock = Number(
-    product?.stock ??
-      product?.countInStock ??
-      product?.inventory ??
-      product?.quantity ??
-      0
-  );
+  const price =
+    Number.isFinite(
+      rawPrice
+    ) && rawPrice >= 0
+      ? rawPrice
+      : 0;
 
-  const moq =
+  const rawStock =
+    Number(
+      product?.stock ??
+        product?.countInStock ??
+        product?.inventory ??
+        product?.quantity ??
+        0
+    );
+
+  const stock =
+    Number.isFinite(
+      rawStock
+    ) && rawStock >= 0
+      ? Math.floor(
+          rawStock
+        )
+      : 0;
+
+  const rawMoq =
     Number(
       product?.moq ??
         product?.minimumOrderQuantity ??
         product?.minOrderQuantity ??
         1
-    ) || 1;
+    );
+
+  const moq =
+    Number.isFinite(
+      rawMoq
+    ) && rawMoq > 0
+      ? Math.floor(
+          rawMoq
+        )
+      : 1;
 
   const category =
     typeof product?.category ===
@@ -161,56 +196,114 @@ function ProductCard({
   // ADD TO CART
   // ==========================================================
 
-  const handleAddToCart = async (
-    event
-  ) => {
-    event.preventDefault();
+  const handleAddToCart =
+    async (
+      event
+    ) => {
+      event.preventDefault();
+      event.stopPropagation();
 
-    event.stopPropagation();
+      if (
+        !productId ||
+        !isInStock ||
+        addingToCart
+      ) {
+        return;
+      }
 
-    if (
-      !productId ||
-      !isInStock ||
-      addingToCart
-    ) {
-      return;
-    }
-
-    try {
-      setAddingToCart(true);
-
+      setCartError("");
       setAddedToCart(false);
 
-      await addToCart(
-        product,
+      // --------------------------------------------------------
+      // FINAL QUANTITY
+      // --------------------------------------------------------
+
+      const finalQuantity =
+        Math.min(
+          stock,
+          Math.max(
+            1,
+            moq
+          )
+        );
+
+      if (
+        finalQuantity <= 0
+      ) {
+        setCartError(
+          "This product is currently unavailable."
+        );
+
+        return;
+      }
+
+      if (
+        finalQuantity <
         moq
-      );
+      ) {
+        setCartError(
+          `Minimum order quantity is ${moq} units.`
+        );
 
-      setAddedToCart(true);
+        return;
+      }
 
-      window.setTimeout(() => {
-        setAddedToCart(false);
-      }, 1800);
-    } catch (error) {
-      console.error(
-        "Add to cart error:",
+      try {
+        setAddingToCart(
+          true
+        );
+
+        await addToCart(
+          product,
+          finalQuantity
+        );
+
+        setAddedToCart(
+          true
+        );
+
+        window.setTimeout(
+          () => {
+            setAddedToCart(
+              false
+            );
+          },
+          1800
+        );
+      } catch (
         error
-      );
-    } finally {
-      setAddingToCart(false);
-    }
-  };
+      ) {
+        console.error(
+          "Add to cart error:",
+          error
+        );
+
+        setCartError(
+          error?.response
+            ?.data?.message ||
+            error?.message ||
+            "Unable to add product to cart."
+        );
+      } finally {
+        setAddingToCart(
+          false
+        );
+      }
+    };
 
   // ==========================================================
   // IMAGE ERROR
   // ==========================================================
 
-  const handleImageError = () => {
-    setImageError(true);
-  };
+  const handleImageError =
+    () => {
+      setImageError(
+        true
+      );
+    };
 
   // ==========================================================
-  // PAGE
+  // RENDER
   // ==========================================================
 
   return (
@@ -232,7 +325,9 @@ function ProductCard({
           !imageError ? (
             <img
               src={image}
-              alt={productName}
+              alt={
+                productName
+              }
               loading="lazy"
               onError={
                 handleImageError
@@ -254,7 +349,9 @@ function ProductCard({
 
           <div className="product-card-image-overlay" />
 
-          {/* STOCK */}
+          {/* ==================================================
+              STOCK BADGE
+              ================================================== */}
 
           <span
             className={`product-stock-badge ${
@@ -272,13 +369,18 @@ function ProductCard({
 
           </span>
 
-          {/* QUICK VIEW LABEL */}
+          {/* ==================================================
+              VIEW PRODUCT
+              ================================================== */}
 
           <span className="product-card-image-action">
+
             View Product
+
             <span>
               →
             </span>
+
           </span>
 
         </div>
@@ -291,19 +393,18 @@ function ProductCard({
 
       <div className="product-card-content">
 
-        {/* CATEGORY + BRAND */}
+        {/* ==================================================
+            CATEGORY + BRAND
+            ================================================== */}
 
         <div className="product-card-category-row">
 
-          {category ? (
-            <span className="product-card-category">
-              {category}
-            </span>
-          ) : (
-            <span className="product-card-category">
-              PRODUCT
-            </span>
-          )}
+          <span className="product-card-category">
+
+            {category ||
+              "PRODUCT"}
+
+          </span>
 
           {brand && (
             <span className="product-card-brand-mini">
@@ -313,7 +414,9 @@ function ProductCard({
 
         </div>
 
-        {/* PRODUCT NAME */}
+        {/* ==================================================
+            PRODUCT NAME
+            ================================================== */}
 
         <Link
           to={productPath}
@@ -322,7 +425,9 @@ function ProductCard({
           {productName}
         </Link>
 
-        {/* DESCRIPTION */}
+        {/* ==================================================
+            DESCRIPTION
+            ================================================== */}
 
         {description && (
           <p className="product-card-description">
@@ -330,13 +435,16 @@ function ProductCard({
           </p>
         )}
 
-        {/* PRICE */}
+        {/* ==================================================
+            PRICE
+            ================================================== */}
 
         <div className="product-card-price-row">
 
           <div className="product-card-price-block">
 
             <span className="product-card-price">
+
               ₹
               {price.toLocaleString(
                 "en-IN",
@@ -345,6 +453,7 @@ function ProductCard({
                   maximumFractionDigits: 2,
                 }
               )}
+
             </span>
 
             <span className="product-card-unit">
@@ -355,7 +464,9 @@ function ProductCard({
 
         </div>
 
-        {/* META */}
+        {/* ==================================================
+            META
+            ================================================== */}
 
         <div className="product-card-meta">
 
@@ -393,7 +504,19 @@ function ProductCard({
 
         </div>
 
-        {/* ACTIONS */}
+        {/* ==================================================
+            CART ERROR
+            ================================================== */}
+
+        {cartError && (
+          <p className="text-xs text-red-600 mt-2">
+            {cartError}
+          </p>
+        )}
+
+        {/* ==================================================
+            ACTIONS
+            ================================================== */}
 
         <div className="product-card-actions">
 

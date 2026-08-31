@@ -1,25 +1,36 @@
-import { useState, useEffect } from "react";
+// ============================================================
+// SHANTI ENTERPRISES
+// CHECKOUT PAGE
+// Customer Portal
+// Razorpay Payment Integration
+// ============================================================
+
+import {
+  useEffect,
+  useState,
+} from "react";
+
 import {
   useNavigate,
   useSearchParams,
 } from "react-router-dom";
 
 import API from "../../api/axios";
+
 import {
   getQuotationById,
 } from "../../api/quotationApi";
+
 import {
   createOrderFromQuotation,
 } from "../../api/orderApi";
+
 import {
   useCart,
 } from "../../context/CartContext";
 
 // ============================================================
-// SHANTI ENTERPRISES
 // CHECKOUT PAGE
-// Customer Portal
-// Razorpay Payment Integration
 // ============================================================
 
 const CheckoutPage = () => {
@@ -28,20 +39,26 @@ const CheckoutPage = () => {
     clearCart,
   } = useCart();
 
-  const navigate = useNavigate();
+  const navigate =
+    useNavigate();
 
-  const [searchParams] =
-    useSearchParams();
+  const [
+    searchParams,
+  ] = useSearchParams();
 
   const quotationId =
-    searchParams.get("quotationId");
+    searchParams.get(
+      "quotationId"
+    );
 
   const isWholesaleOrder =
-    Boolean(quotationId);
+    Boolean(
+      quotationId
+    );
 
-  // ============================================================
+  // ==========================================================
   // USER
-  // ============================================================
+  // ==========================================================
 
   const userInfo =
     localStorage.getItem(
@@ -49,15 +66,21 @@ const CheckoutPage = () => {
     );
 
   const isLoggedIn =
-    Boolean(userInfo);
+    Boolean(
+      userInfo
+    );
 
   let user = null;
 
   try {
     user = userInfo
-      ? JSON.parse(userInfo)
+      ? JSON.parse(
+          userInfo
+        )
       : null;
-  } catch (error) {
+  } catch (
+    error
+  ) {
     console.error(
       "Failed to parse userInfo:",
       error
@@ -66,68 +89,101 @@ const CheckoutPage = () => {
     user = null;
   }
 
-  // ============================================================
+  // ==========================================================
   // ADDRESS
-  // ============================================================
+  // ==========================================================
 
-  const [address, setAddress] =
-    useState({
-      name:
-        user?.name || "",
-      phone:
-        user?.phone || "",
-      addressLine1: "",
-      addressLine2: "",
-      city: "",
-      state: "",
-      postalCode: "",
-      country: "India",
-    });
+  const [
+    address,
+    setAddress,
+  ] = useState({
+    name:
+      user?.name || "",
 
-  // ============================================================
+    phone:
+      user?.phone || "",
+
+    addressLine1:
+      "",
+
+    addressLine2:
+      "",
+
+    city:
+      "",
+
+    state:
+      "",
+
+    postalCode:
+      "",
+
+    country:
+      "India",
+  });
+
+  // ==========================================================
   // PAYMENT
-  // ============================================================
+  // ==========================================================
 
   const [
     paymentMethod,
     setPaymentMethod,
-  ] = useState("COD");
+  ] = useState(
+    "COD"
+  );
 
-  // ============================================================
+  // ==========================================================
   // PRICING
-  // ============================================================
+  // ==========================================================
 
-  const [pricing, setPricing] =
-    useState({});
+  const [
+    pricing,
+    setPricing,
+  ] = useState({});
 
   const [
     loadingPricing,
     setLoadingPricing,
-  ] = useState(true);
+  ] = useState(
+    true
+  );
 
-  // ============================================================
+  // ==========================================================
   // GENERAL STATE
-  // ============================================================
+  // ==========================================================
 
-  const [loading, setLoading] =
-    useState(false);
+  const [
+    loading,
+    setLoading,
+  ] = useState(
+    false
+  );
 
-  const [error, setError] =
-    useState("");
+  const [
+    error,
+    setError,
+  ] = useState(
+    ""
+  );
 
   const [
     successMessage,
     setSuccessMessage,
-  ] = useState("");
+  ] = useState(
+    ""
+  );
 
-  // ============================================================
+  // ==========================================================
   // WHOLESALE QUOTATION
-  // ============================================================
+  // ==========================================================
 
   const [
     quotation,
     setQuotation,
-  ] = useState(null);
+  ] = useState(
+    null
+  );
 
   const [
     loadingQuotation,
@@ -136,24 +192,37 @@ const CheckoutPage = () => {
     isWholesaleOrder
   );
 
-  // ============================================================
-  // LOAD ACCEPTED QUOTATION
-  // ============================================================
+  // ==========================================================
+  // LOAD QUOTATION
+  // ==========================================================
 
   useEffect(() => {
     let cancelled = false;
 
     const loadQuotation =
       async () => {
-        if (!quotationId) {
-          setQuotation(null);
-          setLoadingQuotation(false);
+        if (
+          !quotationId
+        ) {
+          setQuotation(
+            null
+          );
+
+          setLoadingQuotation(
+            false
+          );
+
           return;
         }
 
         try {
-          setLoadingQuotation(true);
-          setError("");
+          setLoadingQuotation(
+            true
+          );
+
+          setError(
+            ""
+          );
 
           const response =
             await getQuotationById(
@@ -166,7 +235,9 @@ const CheckoutPage = () => {
             response?.data ||
             null;
 
-          if (!receivedQuotation) {
+          if (
+            !receivedQuotation
+          ) {
             throw new Error(
               "Quotation could not be found."
             );
@@ -205,19 +276,27 @@ const CheckoutPage = () => {
             );
           }
 
-          if (!cancelled) {
+          if (
+            !cancelled
+          ) {
             setQuotation(
               receivedQuotation
             );
           }
-        } catch (err) {
+        } catch (
+          err
+        ) {
           console.error(
             "Wholesale quotation load error:",
             err
           );
 
-          if (!cancelled) {
-            setQuotation(null);
+          if (
+            !cancelled
+          ) {
+            setQuotation(
+              null
+            );
 
             setError(
               err?.response?.data
@@ -227,7 +306,9 @@ const CheckoutPage = () => {
             );
           }
         } finally {
-          if (!cancelled) {
+          if (
+            !cancelled
+          ) {
             setLoadingQuotation(
               false
             );
@@ -240,37 +321,46 @@ const CheckoutPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [quotationId]);
+  }, [
+    quotationId,
+  ]);
 
-  // ============================================================
-  // FETCH WHOLESALE PRICES
-  // ============================================================
+  // ==========================================================
+  // CALCULATE PRICES
+  // ==========================================================
 
   useEffect(() => {
     let cancelled = false;
 
     const calculatePrices =
       async () => {
-        // --------------------------------------------------------
-        // NORMAL ORDER EMPTY CART
-        // --------------------------------------------------------
+        // ------------------------------------------------------
+        // NORMAL ORDER - EMPTY CART
+        // ------------------------------------------------------
 
         if (
           !isWholesaleOrder &&
           (!cartItems ||
             cartItems.length === 0)
         ) {
-          if (!cancelled) {
-            setPricing({});
-            setLoadingPricing(false);
+          if (
+            !cancelled
+          ) {
+            setPricing(
+              {}
+            );
+
+            setLoadingPricing(
+              false
+            );
           }
 
           return;
         }
 
-        // --------------------------------------------------------
-        // WHOLESALE ORDER DOES NOT NEED CART
-        // --------------------------------------------------------
+        // ------------------------------------------------------
+        // WHOLESALE ORDER
+        // ------------------------------------------------------
 
         if (
           isWholesaleOrder &&
@@ -279,8 +369,13 @@ const CheckoutPage = () => {
               quotation.items
             ))
         ) {
-          if (!cancelled) {
-            setPricing({});
+          if (
+            !cancelled
+          ) {
+            setPricing(
+              {}
+            );
+
             setLoadingPricing(
               loadingQuotation
             );
@@ -289,24 +384,36 @@ const CheckoutPage = () => {
           return;
         }
 
-        setLoadingPricing(true);
-        setError("");
+        setLoadingPricing(
+          true
+        );
+
+        setError(
+          ""
+        );
 
         try {
           const results = {};
 
-          // ------------------------------------------------------
-          // NORMAL CART PRICING
-          // ------------------------------------------------------
+          // ====================================================
+          // NORMAL CART
+          // ====================================================
 
-          if (!isWholesaleOrder) {
-            for (const item of cartItems) {
+          if (
+            !isWholesaleOrder
+          ) {
+            for (
+              const item of cartItems
+            ) {
               const productId =
+                item?.productId ||
                 item?._id ||
                 item?.product?._id ||
                 item?.product;
 
-              if (!productId) {
+              if (
+                !productId
+              ) {
                 continue;
               }
 
@@ -318,7 +425,7 @@ const CheckoutPage = () => {
                       params: {
                         quantity:
                           Number(
-                            item.quantity ||
+                            item?.quantity ||
                               1
                           ),
                       },
@@ -336,7 +443,8 @@ const CheckoutPage = () => {
 
                 results[
                   productId
-                ] = priceData;
+                ] =
+                  priceData;
               } catch (
                 priceError
               ) {
@@ -346,52 +454,63 @@ const CheckoutPage = () => {
                   priceError
                 );
 
-                // ------------------------------------------------
-                // FALLBACK TO NORMAL PRICE
-                // ------------------------------------------------
+                const itemPrice =
+                  Number(
+                    item?.price ||
+                      item?.product
+                        ?.price ||
+                      0
+                  );
+
+                const quantity =
+                  Number(
+                    item?.quantity ||
+                      1
+                  );
 
                 results[
                   productId
                 ] = {
                   unitPrice:
-                    Number(
-                      item?.price ||
-                        0
-                    ),
+                    itemPrice,
 
                   subtotal:
-                    Number(
-                      item?.price ||
-                        0
-                    ) *
-                    Number(
-                      item?.quantity ||
-                        1
-                    ),
+                    itemPrice *
+                    quantity,
                 };
               }
             }
           }
 
-          if (!cancelled) {
-            setPricing(results);
+          if (
+            !cancelled
+          ) {
+            setPricing(
+              results
+            );
           }
-        } catch (err) {
+        } catch (
+          err
+        ) {
           console.error(
-            "Calculate wholesale prices error:",
+            "Calculate prices error:",
             err
           );
 
-          if (!cancelled) {
+          if (
+            !cancelled
+          ) {
             setError(
               err?.response?.data
                 ?.message ||
                 err?.message ||
-                "Failed to calculate wholesale prices"
+                "Failed to calculate product prices."
             );
           }
         } finally {
-          if (!cancelled) {
+          if (
+            !cancelled
+          ) {
             setLoadingPricing(
               false
             );
@@ -411,103 +530,112 @@ const CheckoutPage = () => {
     loadingQuotation,
   ]);
 
-  // ============================================================
+  // ==========================================================
   // ADDRESS CHANGE
-  // ============================================================
+  // ==========================================================
 
   const handleChange = (
-    e
+    event
   ) => {
     const {
       name,
       value,
-    } = e.target;
+    } = event.target;
 
     setAddress(
       (previous) => ({
         ...previous,
-        [name]: value,
+        [name]:
+          value,
       })
     );
   };
 
-  // ============================================================
+  // ==========================================================
   // GET PRODUCT ID
-  // ============================================================
+  // ==========================================================
 
   const getProductId = (
     item
   ) => {
     return (
+      item?.productId ||
       item?._id ||
       item?.product?._id ||
       item?.product ||
-      item?.productId ||
       ""
     );
   };
 
-  // ============================================================
+  // ==========================================================
   // CHECKOUT ITEMS
-  // ============================================================
+  // ==========================================================
 
   const checkoutItems =
     isWholesaleOrder
       ? (
           quotation?.items ||
           []
-        ).map((item) => ({
-          _id:
-            item?.product?._id ||
-            item?.product ||
-            item?.productId,
+        ).map(
+          (item) => ({
+            _id:
+              item?.product?._id ||
+              item?.product ||
+              item?.productId,
 
-          product:
-            item?.product,
+            product:
+              item?.product,
 
-          name:
-            item?.productName ||
-            item?.product?.name ||
-            "Product",
+            name:
+              item?.productName ||
+              item?.product?.name ||
+              "Product",
 
-          image:
-            item?.product
-              ?.images?.[0] ||
-            item?.product
-              ?.image ||
-            item?.image ||
-            "https://via.placeholder.com/100",
+            image:
+              item?.product
+                ?.images?.[0] ||
+              item?.product
+                ?.image ||
+              item?.image ||
+              "",
 
-          quantity:
-            Number(
-              item?.quantity ||
-                1
-            ),
+            quantity:
+              Number(
+                item?.quantity ||
+                  1
+              ),
 
-          price:
-            Number(
-              item?.unitPrice ||
-                0
-            ),
+            price:
+              Number(
+                item?.unitPrice ||
+                  0
+              ),
 
-          unit:
-            item?.unit ||
-            "piece",
+            unit:
+              item?.unit ||
+              "piece",
 
-          quotationItem:
-            true,
-        }))
-      : cartItems || [];
+            quotationItem:
+              true,
+          })
+        )
+      : cartItems ||
+        [];
 
-  // ============================================================
+  // ==========================================================
   // ITEMS PRICE
-  // ============================================================
+  // ==========================================================
 
   const itemsPrice =
     checkoutItems.reduce(
-      (sum, item) => {
+      (
+        sum,
+        item
+      ) => {
         const productId =
-          getProductId(item);
+          getProductId(
+            item
+          );
 
         const itemPricing =
           isWholesaleOrder
@@ -532,42 +660,51 @@ const CheckoutPage = () => {
               0
           );
 
+        const calculatedSubtotal =
+          unitPrice *
+          quantity;
+
         const subtotal =
           Number(
             itemPricing
               ?.subtotal ??
               itemPricing
                 ?.total ??
-              unitPrice *
-                quantity
+              calculatedSubtotal
           );
 
         return (
           sum +
-          subtotal
+          (
+            Number.isFinite(
+              subtotal
+            )
+              ? subtotal
+              : 0
+          )
         );
       },
       0
     );
 
-  // ============================================================
+  // ==========================================================
   // SHIPPING
-  // ============================================================
+  // ==========================================================
 
   const shippingPrice =
     0;
 
-  // ============================================================
+  // ==========================================================
   // TOTAL
-  // ============================================================
+  // ==========================================================
 
   const totalPrice =
     itemsPrice +
     shippingPrice;
 
-  // ============================================================
+  // ==========================================================
   // VALIDATE ADDRESS
-  // ============================================================
+  // ==========================================================
 
   const validateAddress =
     () => {
@@ -613,29 +750,68 @@ const CheckoutPage = () => {
         return "Country is required.";
       }
 
+      // --------------------------------------------------------
+      // PHONE VALIDATION
+      // --------------------------------------------------------
+
+      const cleanPhone =
+        address.phone.replace(
+          /\D/g,
+          ""
+        );
+
+      if (
+        cleanPhone.length <
+          10 ||
+        cleanPhone.length >
+          15
+      ) {
+        return "Please enter a valid phone number.";
+      }
+
+      // --------------------------------------------------------
+      // POSTAL CODE VALIDATION
+      // --------------------------------------------------------
+
+      const cleanPostalCode =
+        address.postalCode.trim();
+
+      if (
+        cleanPostalCode.length <
+          4 ||
+        cleanPostalCode.length >
+          10
+      ) {
+        return "Please enter a valid postal code.";
+      }
+
       return null;
     };
 
-  // ============================================================
+  // ==========================================================
   // CREATE DATABASE ORDER
-  // ============================================================
+  // ==========================================================
 
   const createOrderInDB =
     async () => {
       // ========================================================
-      // WHOLESALE QUOTATION ORDER
+      // WHOLESALE ORDER
       // ========================================================
 
       if (
         isWholesaleOrder
       ) {
-        if (!quotationId) {
+        if (
+          !quotationId
+        ) {
           throw new Error(
             "Quotation ID is missing."
           );
         }
 
-        if (!quotation) {
+        if (
+          !quotation
+        ) {
           throw new Error(
             "Quotation is still loading. Please try again."
           );
@@ -694,7 +870,9 @@ const CheckoutPage = () => {
           createdOrder?._id ||
           createdOrder?.id;
 
-        if (!orderId) {
+        if (
+          !orderId
+        ) {
           throw new Error(
             "Order was created but Order ID was not returned by the server."
           );
@@ -705,7 +883,9 @@ const CheckoutPage = () => {
             createdOrder,
 
           orderId:
-            String(orderId),
+            String(
+              orderId
+            ),
         };
       }
 
@@ -737,6 +917,12 @@ const CheckoutPage = () => {
 
         country:
           address.country.trim(),
+
+        paymentMethod:
+          paymentMethod ===
+          "Razorpay"
+            ? "razorpay"
+            : "cod",
       };
 
       const response =
@@ -759,7 +945,9 @@ const CheckoutPage = () => {
         createdOrder?._id ||
         createdOrder?.id;
 
-      if (!orderId) {
+      if (
+        !orderId
+      ) {
         throw new Error(
           "Order was created but Order ID was not returned by the server."
         );
@@ -770,19 +958,23 @@ const CheckoutPage = () => {
           createdOrder,
 
         orderId:
-          String(orderId),
+          String(
+            orderId
+          ),
       };
     };
 
-  // ============================================================
+  // ==========================================================
   // CREATE RAZORPAY ORDER
-  // ============================================================
+  // ==========================================================
 
   const createRazorpayOrder =
     async (
       orderId
     ) => {
-      if (!orderId) {
+      if (
+        !orderId
+      ) {
         throw new Error(
           "Order ID is missing. Cannot create payment order."
         );
@@ -793,7 +985,9 @@ const CheckoutPage = () => {
           "/payments/create-order",
           {
             orderId:
-              String(orderId),
+              String(
+                orderId
+              ),
           }
         );
 
@@ -819,14 +1013,17 @@ const CheckoutPage = () => {
 
       const razorpayOrderId =
         paymentData?.razorpayOrderId ||
+        paymentData?.razorpay_order_id ||
         paymentData?.razorpayOrder?.id ||
-        responseData?.razorpayOrder
-          ?.id ||
+        responseData?.razorpayOrder?.id ||
+        responseData?.razorpay_order_id ||
         responseData?.order?.id;
 
       const amount =
         paymentData?.amountInPaise ??
-        responseData?.amountInPaise;
+        paymentData?.amount ??
+        responseData?.amountInPaise ??
+        responseData?.amount;
 
       const currency =
         paymentData?.currency ||
@@ -835,11 +1032,15 @@ const CheckoutPage = () => {
 
       const keyId =
         paymentData?.keyId ||
+        paymentData?.key_id ||
         responseData?.keyId ||
+        responseData?.key_id ||
         import.meta.env
           .VITE_RAZORPAY_KEY_ID;
 
-      if (!razorpayOrderId) {
+      if (
+        !razorpayOrderId
+      ) {
         throw new Error(
           "Razorpay order ID was not returned by the server."
         );
@@ -848,14 +1049,17 @@ const CheckoutPage = () => {
       if (
         amount ===
           undefined ||
-        amount === null
+        amount ===
+          null
       ) {
         throw new Error(
           "Razorpay amount was not returned by the server."
         );
       }
 
-      if (!keyId) {
+      if (
+        !keyId
+      ) {
         throw new Error(
           "Razorpay Key ID is missing."
         );
@@ -866,7 +1070,9 @@ const CheckoutPage = () => {
           razorpayOrderId,
 
         amount:
-          Number(amount),
+          Number(
+            amount
+          ),
 
         currency,
 
@@ -874,13 +1080,14 @@ const CheckoutPage = () => {
       };
     };
 
-  // ============================================================
+  // ==========================================================
   // VERIFY RAZORPAY PAYMENT
-  // ============================================================
+  // ==========================================================
 
   const verifyRazorpayPayment =
     async (
-      paymentResponse
+      paymentResponse,
+      databaseOrderId
     ) => {
       const razorpayOrderId =
         paymentResponse
@@ -894,21 +1101,35 @@ const CheckoutPage = () => {
         paymentResponse
           ?.razorpay_signature;
 
-      if (!razorpayOrderId) {
+      if (
+        !razorpayOrderId
+      ) {
         throw new Error(
           "Razorpay Order ID is missing."
         );
       }
 
-      if (!razorpayPaymentId) {
+      if (
+        !razorpayPaymentId
+      ) {
         throw new Error(
           "Razorpay Payment ID is missing."
         );
       }
 
-      if (!razorpaySignature) {
+      if (
+        !razorpaySignature
+      ) {
         throw new Error(
           "Razorpay payment signature is missing."
+        );
+      }
+
+      if (
+        !databaseOrderId
+      ) {
+        throw new Error(
+          "Database Order ID is missing."
         );
       }
 
@@ -916,13 +1137,18 @@ const CheckoutPage = () => {
         await API.post(
           "/payments/verify",
           {
-            razorpayOrderId:
+            orderId:
+              String(
+                databaseOrderId
+              ),
+
+            razorpay_order_id:
               razorpayOrderId,
 
-            razorpayPaymentId:
+            razorpay_payment_id:
               razorpayPaymentId,
 
-            razorpaySignature:
+            razorpay_signature:
               razorpaySignature,
           }
         );
@@ -944,9 +1170,9 @@ const CheckoutPage = () => {
       return responseData;
     };
 
-  // ============================================================
+  // ==========================================================
   // OPEN RAZORPAY CHECKOUT
-  // ============================================================
+  // ==========================================================
 
   const openRazorpayCheckout =
     async (
@@ -1027,10 +1253,13 @@ const CheckoutPage = () => {
                 true
               );
 
-              setError("");
+              setError(
+                ""
+              );
 
               await verifyRazorpayPayment(
-                paymentResponse
+                paymentResponse,
+                databaseOrderId
               );
 
               clearCart();
@@ -1040,7 +1269,11 @@ const CheckoutPage = () => {
               );
 
               navigate(
-                `/order-success/${databaseOrderId}`
+                `/order-success/${databaseOrderId}`,
+                {
+                  replace:
+                    true,
+                }
               );
             } catch (
               err
@@ -1051,7 +1284,8 @@ const CheckoutPage = () => {
               );
 
               setError(
-                err?.response?.data
+                err?.response
+                  ?.data
                   ?.message ||
                   err?.message ||
                   "Payment verification failed."
@@ -1092,7 +1326,9 @@ const CheckoutPage = () => {
 
       razorpay.on(
         "payment.failed",
-        (response) => {
+        (
+          response
+        ) => {
           console.error(
             "Razorpay payment failed:",
             response
@@ -1113,24 +1349,37 @@ const CheckoutPage = () => {
       razorpay.open();
     };
 
-  // ============================================================
+  // ==========================================================
   // PLACE ORDER
-  // ============================================================
+  // ==========================================================
 
   const handlePlaceOrder =
     async (
-      e
+      event
     ) => {
-      e.preventDefault();
+      event.preventDefault();
 
-      setError("");
-      setSuccessMessage("");
+      if (
+        loading
+      ) {
+        return;
+      }
+
+      setError(
+        ""
+      );
+
+      setSuccessMessage(
+        ""
+      );
 
       // --------------------------------------------------------
-      // LOGIN CHECK
+      // LOGIN
       // --------------------------------------------------------
 
-      if (!isLoggedIn) {
+      if (
+        !isLoggedIn
+      ) {
         setError(
           "Please login to place an order."
         );
@@ -1139,15 +1388,14 @@ const CheckoutPage = () => {
       }
 
       // --------------------------------------------------------
-      // NORMAL CART CHECK
-      // --------------------------------------------------------
-      // Wholesale quotation orders do not depend on cartItems.
+      // NORMAL CART
       // --------------------------------------------------------
 
       if (
         !isWholesaleOrder &&
         (!cartItems ||
-          cartItems.length === 0)
+          cartItems.length ===
+            0)
       ) {
         setError(
           "Your cart is empty."
@@ -1157,22 +1405,7 @@ const CheckoutPage = () => {
       }
 
       // --------------------------------------------------------
-      // ADDRESS CHECK
-      // --------------------------------------------------------
-
-      const addressError =
-        validateAddress();
-
-      if (addressError) {
-        setError(
-          addressError
-        );
-
-        return;
-      }
-
-      // --------------------------------------------------------
-      // QUOTATION CHECK
+      // WHOLESALE
       // --------------------------------------------------------
 
       if (
@@ -1198,7 +1431,7 @@ const CheckoutPage = () => {
       }
 
       // --------------------------------------------------------
-      // NORMAL PRICE CHECK
+      // PRICING
       // --------------------------------------------------------
 
       if (
@@ -1213,24 +1446,36 @@ const CheckoutPage = () => {
       }
 
       // --------------------------------------------------------
-      // AMOUNT CHECK
+      // ADDRESS
       // --------------------------------------------------------
 
+      const addressError =
+        validateAddress();
+
       if (
-        itemsPrice <= 0
+        addressError
       ) {
         setError(
-          "Unable to calculate the order amount."
+          addressError
         );
 
         return;
       }
 
       // --------------------------------------------------------
-      // PREVENT DOUBLE SUBMISSION
+      // TOTAL
       // --------------------------------------------------------
 
-      if (loading) {
+      if (
+        !Number.isFinite(
+          totalPrice
+        ) ||
+        totalPrice <= 0
+      ) {
+        setError(
+          "Unable to calculate the order amount."
+        );
+
         return;
       }
 
@@ -1245,15 +1490,17 @@ const CheckoutPage = () => {
         // ======================================================
 
         const {
-          order,
           orderId,
         } =
           await createOrderInDB();
 
-        console.log(
-          "DATABASE ORDER CREATED:",
-          order
-        );
+        if (
+          !orderId
+        ) {
+          throw new Error(
+            "Order ID was not generated."
+          );
+        }
 
         // ======================================================
         // COD
@@ -1266,7 +1513,11 @@ const CheckoutPage = () => {
           clearCart();
 
           navigate(
-            `/order-success/${orderId}`
+            `/order-success/${orderId}`,
+            {
+              replace:
+                true,
+            }
           );
 
           return;
@@ -1298,12 +1549,9 @@ const CheckoutPage = () => {
           err
         );
 
-        const backendMessage =
-          err?.response?.data
-            ?.message;
-
         setError(
-          backendMessage ||
+          err?.response
+            ?.data?.message ||
             err?.message ||
             "Failed to place order."
         );
@@ -1314,20 +1562,19 @@ const CheckoutPage = () => {
       }
     };
 
-  // ============================================================
+  // ==========================================================
   // EMPTY CART
-  // ============================================================
-  // IMPORTANT:
-  // Wholesale quotation checkout can work without cartItems.
-  // ============================================================
+  // ==========================================================
 
   if (
     !isWholesaleOrder &&
     (!cartItems ||
-      cartItems.length === 0)
+      cartItems.length ===
+        0)
   ) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-20">
+
         <div className="bg-white border border-slate-200 rounded-2xl p-10 text-center shadow-sm">
 
           <div className="text-5xl mb-4">
@@ -1356,13 +1603,14 @@ const CheckoutPage = () => {
           </button>
 
         </div>
+
       </div>
     );
   }
 
-  // ============================================================
+  // ==========================================================
   // LOADING WHOLESALE QUOTATION
-  // ============================================================
+  // ==========================================================
 
   if (
     isWholesaleOrder &&
@@ -1370,7 +1618,9 @@ const CheckoutPage = () => {
   ) {
     return (
       <section className="min-h-screen bg-slate-50 py-20">
+
         <div className="max-w-3xl mx-auto px-4">
+
           <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-10 text-center">
 
             <div className="w-10 h-10 border-4 border-slate-200 border-t-teal-600 rounded-full animate-spin mx-auto" />
@@ -1385,30 +1635,32 @@ const CheckoutPage = () => {
             </p>
 
           </div>
+
         </div>
+
       </section>
     );
   }
 
-  // ============================================================
+  // ==========================================================
   // INPUT CLASS
-  // ============================================================
+  // ==========================================================
 
   const inputClass =
     "w-full border border-slate-300 rounded-lg px-4 py-3 text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent";
 
-  // ============================================================
+  // ==========================================================
   // UI
-  // ============================================================
+  // ==========================================================
 
   return (
     <section className="min-h-screen bg-slate-50 py-10">
 
       <div className="max-w-6xl mx-auto px-4">
 
-        {/* ======================================================
+        {/* ==================================================
             HEADER
-        ====================================================== */}
+            ================================================== */}
 
         <div className="mb-8">
 
@@ -1428,9 +1680,9 @@ const CheckoutPage = () => {
 
         </div>
 
-        {/* ======================================================
+        {/* ==================================================
             ERROR
-        ====================================================== */}
+            ================================================== */}
 
         {error && (
           <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
@@ -1442,9 +1694,9 @@ const CheckoutPage = () => {
           </div>
         )}
 
-        {/* ======================================================
+        {/* ==================================================
             SUCCESS
-        ====================================================== */}
+            ================================================== */}
 
         {successMessage && (
           <div className="mb-6 rounded-xl border border-green-200 bg-green-50 px-4 py-3">
@@ -1456,15 +1708,15 @@ const CheckoutPage = () => {
           </div>
         )}
 
-        {/* ======================================================
+        {/* ==================================================
             MAIN GRID
-        ====================================================== */}
+            ================================================== */}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-          {/* ====================================================
+          {/* ==================================================
               CHECKOUT FORM
-          ==================================================== */}
+              ================================================== */}
 
           <div className="lg:col-span-2">
 
@@ -1477,7 +1729,7 @@ const CheckoutPage = () => {
 
               {/* ==================================================
                   SHIPPING ADDRESS
-              ================================================== */}
+                  ================================================== */}
 
               <div className="mb-8">
 
@@ -1513,6 +1765,7 @@ const CheckoutPage = () => {
                   className={
                     inputClass
                   }
+                  autoComplete="name"
                   required
                 />
 
@@ -1539,6 +1792,7 @@ const CheckoutPage = () => {
                   className={
                     inputClass
                   }
+                  autoComplete="tel"
                   required
                 />
 
@@ -1565,6 +1819,7 @@ const CheckoutPage = () => {
                   className={
                     inputClass
                   }
+                  autoComplete="street-address"
                   required
                 />
 
@@ -1598,6 +1853,7 @@ const CheckoutPage = () => {
                   className={
                     inputClass
                   }
+                  autoComplete="address-line2"
                 />
 
               </div>
@@ -1625,6 +1881,7 @@ const CheckoutPage = () => {
                     className={
                       inputClass
                     }
+                    autoComplete="address-level2"
                     required
                   />
 
@@ -1649,6 +1906,7 @@ const CheckoutPage = () => {
                     className={
                       inputClass
                     }
+                    autoComplete="address-level1"
                     required
                   />
 
@@ -1679,6 +1937,7 @@ const CheckoutPage = () => {
                     className={
                       inputClass
                     }
+                    autoComplete="postal-code"
                     required
                   />
 
@@ -1702,6 +1961,7 @@ const CheckoutPage = () => {
                     className={
                       inputClass
                     }
+                    autoComplete="country-name"
                     required
                   />
 
@@ -1710,8 +1970,8 @@ const CheckoutPage = () => {
               </div>
 
               {/* ==================================================
-                  PAYMENT METHOD
-              ================================================== */}
+                  PAYMENT
+                  ================================================== */}
 
               <div className="border-t border-slate-200 pt-8">
 
@@ -1746,9 +2006,11 @@ const CheckoutPage = () => {
                           paymentMethod ===
                           "COD"
                         }
-                        onChange={(e) =>
+                        onChange={(
+                          event
+                        ) =>
                           setPaymentMethod(
-                            e.target.value
+                            event.target.value
                           )
                         }
                         className="mt-1"
@@ -1792,9 +2054,11 @@ const CheckoutPage = () => {
                           paymentMethod ===
                           "Razorpay"
                         }
-                        onChange={(e) =>
+                        onChange={(
+                          event
+                        ) =>
                           setPaymentMethod(
-                            e.target.value
+                            event.target.value
                           )
                         }
                         className="mt-1"
@@ -1823,7 +2087,7 @@ const CheckoutPage = () => {
 
               {/* ==================================================
                   PLACE ORDER
-              ================================================== */}
+                  ================================================== */}
 
               <button
                 type="submit"
@@ -1853,9 +2117,9 @@ const CheckoutPage = () => {
 
           </div>
 
-          {/* ====================================================
+          {/* ==================================================
               ORDER SUMMARY
-          ==================================================== */}
+              ================================================== */}
 
           <aside className="lg:col-span-1">
 
@@ -1865,7 +2129,7 @@ const CheckoutPage = () => {
                 Order Summary
               </h2>
 
-              {/* WHOLESALE QUOTATION */}
+              {/* WHOLESALE */}
 
               {isWholesaleOrder &&
                 quotation && (
@@ -1929,6 +2193,8 @@ const CheckoutPage = () => {
                       Number(
                         itemPricing
                           ?.subtotal ??
+                          itemPricing
+                            ?.total ??
                           unitPrice *
                             quantity
                       );
@@ -1939,7 +2205,7 @@ const CheckoutPage = () => {
                         ?.image ||
                       item?.product
                         ?.images?.[0] ||
-                      "https://via.placeholder.com/100";
+                      "";
 
                     const name =
                       item?.name ||
@@ -1951,20 +2217,38 @@ const CheckoutPage = () => {
                       <div
                         key={
                           productId ||
-                          index
+                          `checkout-item-${index}`
                         }
                         className="flex gap-3 border-b border-slate-100 pb-4"
                       >
 
-                        <img
-                          src={
-                            image
-                          }
-                          alt={
-                            name
-                          }
-                          className="w-16 h-16 rounded-lg object-cover bg-slate-100"
-                        />
+                        {/* IMAGE */}
+
+                        <div className="w-16 h-16 rounded-lg overflow-hidden bg-slate-100 flex-shrink-0">
+
+                          {typeof image ===
+                            "string" &&
+                          image ? (
+                            <img
+                              src={image}
+                              alt={name}
+                              className="w-full h-full object-cover"
+                              onError={(
+                                event
+                              ) => {
+                                event.currentTarget.style.display =
+                                  "none";
+                              }}
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-xs text-slate-400">
+                              SE
+                            </div>
+                          )}
+
+                        </div>
+
+                        {/* INFO */}
 
                         <div className="flex-1 min-w-0">
 
@@ -1980,17 +2264,33 @@ const CheckoutPage = () => {
                           <p className="text-xs text-slate-500">
                             ₹
                             {unitPrice.toLocaleString(
-                              "en-IN"
+                              "en-IN",
+                              {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              }
                             )}{" "}
                             / unit
                           </p>
 
                         </div>
 
+                        {/* SUBTOTAL */}
+
                         <div className="text-sm font-semibold text-slate-800 whitespace-nowrap">
                           ₹
-                          {subtotal.toLocaleString(
-                            "en-IN"
+                          {(
+                            Number.isFinite(
+                              subtotal
+                            )
+                              ? subtotal
+                              : 0
+                          ).toLocaleString(
+                            "en-IN",
+                            {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            }
                           )}
                         </div>
 
@@ -2014,7 +2314,11 @@ const CheckoutPage = () => {
                   <span>
                     ₹
                     {itemsPrice.toLocaleString(
-                      "en-IN"
+                      "en-IN",
+                      {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      }
                     )}
                   </span>
 
@@ -2029,7 +2333,11 @@ const CheckoutPage = () => {
                   <span>
                     ₹
                     {shippingPrice.toLocaleString(
-                      "en-IN"
+                      "en-IN",
+                      {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      }
                     )}
                   </span>
 
@@ -2044,7 +2352,11 @@ const CheckoutPage = () => {
                   <span className="text-lg font-bold text-teal-700">
                     ₹
                     {totalPrice.toLocaleString(
-                      "en-IN"
+                      "en-IN",
+                      {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      }
                     )}
                   </span>
 

@@ -1,10 +1,11 @@
 // ============================================================
 // SHANTI ENTERPRISES
 // Products Page
-// Frontend Phase 6 - UI/UX
+// Frontend Phase 6 - Complete UI/UX
 // ============================================================
 
 import {
+  useCallback,
   useEffect,
   useState,
 } from "react";
@@ -35,6 +36,10 @@ function ProductsPage() {
     setSearchParams,
   ] = useSearchParams();
 
+  // ==========================================================
+  // STATE
+  // ==========================================================
+
   const [
     products,
     setProducts,
@@ -60,122 +65,232 @@ function ProductsPage() {
     totalPages: 0,
   });
 
+  // ==========================================================
+  // URL FILTERS
+  // ==========================================================
+
   const search =
-    searchParams.get("search") || "";
+    searchParams.get(
+      "search"
+    ) || "";
 
   const category =
-    searchParams.get("category") || "";
+    searchParams.get(
+      "category"
+    ) || "";
 
   const sort =
-    searchParams.get("sort") || "";
+    searchParams.get(
+      "sort"
+    ) || "";
 
-  const page = Number(
-    searchParams.get("page") || 1
+  const rawPage = Number(
+    searchParams.get(
+      "page"
+    ) || 1
   );
+
+  const page =
+    Number.isFinite(
+      rawPage
+    ) &&
+    rawPage >= 1
+      ? Math.floor(
+          rawPage
+        )
+      : 1;
 
   // ==========================================================
   // LOAD PRODUCTS
   // ==========================================================
 
-  const loadProducts = async () => {
-    try {
-      setLoading(true);
-      setError("");
+  const loadProducts =
+    useCallback(
+      async () => {
+        try {
+          setLoading(true);
+          setError("");
 
-      const params = {
-        page,
-        limit: 12,
-      };
-
-      if (search.trim()) {
-        params.search =
-          search.trim();
-      }
-
-      if (category.trim()) {
-        params.category =
-          category.trim();
-      }
-
-      if (sort.trim()) {
-        params.sort =
-          sort.trim();
-      }
-
-      const data =
-        await getProducts(params);
-
-      let productData = [];
-
-      if (Array.isArray(data)) {
-        productData = data;
-      } else if (
-        Array.isArray(data?.products)
-      ) {
-        productData =
-          data.products;
-      } else if (
-        Array.isArray(data?.data)
-      ) {
-        productData =
-          data.data;
-      } else if (
-        Array.isArray(
-          data?.data?.products
-        )
-      ) {
-        productData =
-          data.data.products;
-      }
-
-      setProducts(
-        productData
-      );
-
-      if (data?.pagination) {
-        setPagination({
-          page:
-            data.pagination.page ||
+          const params = {
             page,
+            limit: 12,
+          };
 
-          limit:
-            data.pagination.limit ||
-            12,
+          if (
+            search.trim()
+          ) {
+            params.search =
+              search.trim();
+          }
 
-          totalProducts:
-            data.pagination.totalProducts ||
-            0,
+          if (
+            category.trim()
+          ) {
+            params.category =
+              category.trim();
+          }
 
-          totalPages:
-            data.pagination.totalPages ||
-            0,
-        });
-      } else {
-        setPagination({
-          page,
-          limit: 12,
-          totalProducts:
-            productData.length,
-          totalPages:
-            productData.length > 0
-              ? 1
-              : 0,
-        });
-      }
-    } catch (err) {
-      console.error(
-        "Products fetch error:",
-        err
-      );
+          if (
+            sort.trim()
+          ) {
+            params.sort =
+              sort.trim();
+          }
 
-      setError(
-        err.message ||
-          "Unable to load products."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+          const data =
+            await getProducts(
+              params
+            );
+
+          // ----------------------------------------------------
+          // EXTRACT PRODUCTS
+          // ----------------------------------------------------
+
+          let productData = [];
+
+          if (
+            Array.isArray(
+              data
+            )
+          ) {
+            productData =
+              data;
+          } else if (
+            Array.isArray(
+              data?.products
+            )
+          ) {
+            productData =
+              data.products;
+          } else if (
+            Array.isArray(
+              data?.data
+            )
+          ) {
+            productData =
+              data.data;
+          } else if (
+            Array.isArray(
+              data?.data?.products
+            )
+          ) {
+            productData =
+              data.data.products;
+          }
+
+          setProducts(
+            productData
+          );
+
+          // ----------------------------------------------------
+          // PAGINATION
+          // ----------------------------------------------------
+
+          const backendPagination =
+            data?.pagination ||
+            data?.data
+              ?.pagination;
+
+          if (
+            backendPagination
+          ) {
+            const currentPage =
+              Number(
+                backendPagination.page
+              ) || page;
+
+            const limit =
+              Number(
+                backendPagination.limit
+              ) || 12;
+
+            const totalProducts =
+              Number(
+                backendPagination.totalProducts ??
+                  backendPagination.total ??
+                  backendPagination.count
+              );
+
+            const totalPages =
+              Number(
+                backendPagination.totalPages
+              );
+
+            setPagination({
+              page:
+                currentPage,
+
+              limit,
+
+              totalProducts:
+                Number.isFinite(
+                  totalProducts
+                )
+                  ? totalProducts
+                  : productData.length,
+
+              totalPages:
+                Number.isFinite(
+                  totalPages
+                ) &&
+                totalPages >= 0
+                  ? totalPages
+                  : productData.length >
+                    0
+                    ? 1
+                    : 0,
+            });
+          } else {
+            // --------------------------------------------------
+            // FALLBACK PAGINATION
+            // --------------------------------------------------
+
+            setPagination({
+              page,
+              limit: 12,
+              totalProducts:
+                productData.length,
+              totalPages:
+                productData.length >
+                0
+                  ? 1
+                  : 0,
+            });
+          }
+        } catch (
+          err
+        ) {
+          console.error(
+            "Products fetch error:",
+            err
+          );
+
+          setProducts([]);
+
+          setPagination({
+            page,
+            limit: 12,
+            totalProducts: 0,
+            totalPages: 0,
+          });
+
+          setError(
+            err?.response?.data
+              ?.message ||
+              err?.message ||
+              "Unable to load products."
+          );
+        } finally {
+          setLoading(false);
+        }
+      },
+      [
+        search,
+        category,
+        sort,
+        page,
+      ]
+    );
 
   // ==========================================================
   // LOAD WHEN FILTERS CHANGE
@@ -184,10 +299,7 @@ function ProductsPage() {
   useEffect(() => {
     loadProducts();
   }, [
-    search,
-    category,
-    sort,
-    page,
+    loadProducts,
   ]);
 
   // ==========================================================
@@ -227,7 +339,8 @@ function ProductsPage() {
         sort;
     }
 
-    params.page = "1";
+    params.page =
+      "1";
 
     setSearchParams(
       params
@@ -261,7 +374,8 @@ function ProductsPage() {
         value;
     }
 
-    params.page = "1";
+    params.page =
+      "1";
 
     setSearchParams(
       params
@@ -284,12 +398,29 @@ function ProductsPage() {
     nextPage
   ) => {
     if (
-      nextPage < 1 ||
-      (
-        pagination.totalPages > 0 &&
-        nextPage >
-          pagination.totalPages
+      !Number.isFinite(
+        nextPage
       )
+    ) {
+      return;
+    }
+
+    const safePage =
+      Math.floor(
+        nextPage
+      );
+
+    if (
+      safePage < 1
+    ) {
+      return;
+    }
+
+    if (
+      pagination.totalPages >
+        0 &&
+      safePage >
+        pagination.totalPages
     ) {
       return;
     }
@@ -312,7 +443,9 @@ function ProductsPage() {
     }
 
     params.page =
-      String(nextPage);
+      String(
+        safePage
+      );
 
     setSearchParams(
       params
@@ -331,11 +464,15 @@ function ProductsPage() {
   if (loading) {
     return (
       <section className="products-page">
+
         <div className="products-container">
+
           <Loading
             message="Loading products..."
           />
+
         </div>
+
       </section>
     );
   }
@@ -347,14 +484,20 @@ function ProductsPage() {
   if (error) {
     return (
       <section className="products-page">
+
         <div className="products-container">
+
           <ErrorMessage
-            message={error}
+            message={
+              error
+            }
             onRetry={
               loadProducts
             }
           />
+
         </div>
+
       </section>
     );
   }
@@ -394,7 +537,9 @@ function ProductsPage() {
           <div className="products-count-box">
 
             <strong>
-              {pagination.totalProducts}
+              {
+                pagination.totalProducts
+              }
             </strong>
 
             <span>
@@ -432,6 +577,7 @@ function ProductsPage() {
                 }
                 placeholder="Search products..."
                 aria-label="Search products"
+                autoComplete="off"
               />
 
             </div>
@@ -454,11 +600,15 @@ function ProductsPage() {
               </span>
 
               <select
-                value={sort}
+                value={
+                  sort
+                }
                 onChange={
                   handleSort
                 }
+                aria-label="Sort products"
               >
+
                 <option value="">
                   Default
                 </option>
@@ -533,7 +683,9 @@ function ProductsPage() {
           <p>
             Showing{" "}
             <strong>
-              {products.length}
+              {
+                products.length
+              }
             </strong>{" "}
             products
           </p>
@@ -547,7 +699,9 @@ function ProductsPage() {
               </strong>{" "}
               of{" "}
               <strong>
-                {pagination.totalPages}
+                {
+                  pagination.totalPages
+                }
               </strong>
             </p>
           )}
@@ -558,7 +712,8 @@ function ProductsPage() {
             PRODUCTS
             ================================================== */}
 
-        {products.length === 0 ? (
+        {products.length ===
+        0 ? (
           <div className="products-empty">
 
             <EmptyState
@@ -585,21 +740,33 @@ function ProductsPage() {
           <div className="products-grid">
 
             {products.map(
-              (product) => (
-                <div
-                  className="product-grid-item"
-                  key={
-                    product._id ||
-                    product.id
-                  }
-                >
-                  <ProductCard
-                    product={
-                      product
+              (
+                product,
+                index
+              ) => {
+
+                const productId =
+                  product?._id ||
+                  product?.id;
+
+                return (
+                  <div
+                    className="product-grid-item"
+                    key={
+                      productId ||
+                      `product-${index}`
                     }
-                  />
-                </div>
-              )
+                  >
+
+                    <ProductCard
+                      product={
+                        product
+                      }
+                    />
+
+                  </div>
+                );
+              }
             )}
 
           </div>
@@ -629,14 +796,21 @@ function ProductsPage() {
             </button>
 
             <div className="products-page-number">
+
               Page{" "}
+
               <strong>
                 {page}
               </strong>{" "}
+
               of{" "}
+
               <strong>
-                {pagination.totalPages}
+                {
+                  pagination.totalPages
+                }
               </strong>
+
             </div>
 
             <button
@@ -653,6 +827,7 @@ function ProductsPage() {
               }
             >
               Next →
+
             </button>
 
           </div>
