@@ -7,14 +7,15 @@
 import api from "./axios";
 
 // ============================================================
-// GET ALL ORDERS
+// GET ALL ADMIN ORDERS
+// GET /api/admin/orders
 // ============================================================
 
 export const getAdminOrders = async (
   params = {}
 ) => {
   const response = await api.get(
-    "/orders",
+    "/admin/orders",
     {
       params,
     }
@@ -24,7 +25,8 @@ export const getAdminOrders = async (
 };
 
 // ============================================================
-// GET SINGLE ORDER
+// GET SINGLE ADMIN ORDER
+// GET /api/admin/orders/:id
 // ============================================================
 
 export const getAdminOrderById = async (
@@ -37,7 +39,7 @@ export const getAdminOrderById = async (
   }
 
   const response = await api.get(
-    `/orders/${orderId}`
+    `/admin/orders/${orderId}`
   );
 
   return response.data;
@@ -45,6 +47,7 @@ export const getAdminOrderById = async (
 
 // ============================================================
 // UPDATE ORDER STATUS
+// PATCH /api/admin/orders/:id/status
 // ============================================================
 
 export const updateOrderStatus = async (
@@ -63,11 +66,63 @@ export const updateOrderStatus = async (
     );
   }
 
-  const response = await api.put(
-    `/orders/${orderId}/status`,
+  const response = await api.patch(
+    `/admin/orders/${orderId}/status`,
     {
       status,
     }
+  );
+
+  return response.data;
+};
+
+// ============================================================
+// UPDATE PAYMENT STATUS
+// PATCH /api/admin/orders/:id/payment-status
+// ============================================================
+
+export const updatePaymentStatus = async (
+  orderId,
+  paymentStatus
+) => {
+  if (!orderId) {
+    throw new Error(
+      "Order ID is required."
+    );
+  }
+
+  if (!paymentStatus) {
+    throw new Error(
+      "Payment status is required."
+    );
+  }
+
+  const response = await api.patch(
+    `/admin/orders/${orderId}/payment-status`,
+    {
+      paymentStatus,
+    }
+  );
+
+  return response.data;
+};
+
+// ============================================================
+// CANCEL ORDER
+// PATCH /api/admin/orders/:id/cancel
+// ============================================================
+
+export const cancelAdminOrder = async (
+  orderId
+) => {
+  if (!orderId) {
+    throw new Error(
+      "Order ID is required."
+    );
+  }
+
+  const response = await api.patch(
+    `/admin/orders/${orderId}/cancel`
   );
 
   return response.data;

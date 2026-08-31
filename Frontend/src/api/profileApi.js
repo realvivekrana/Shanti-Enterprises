@@ -25,6 +25,12 @@ export const getMyProfile = async () => {
 export const updateMyProfile = async (
   profileData
 ) => {
+  if (!profileData) {
+    throw new Error(
+      "Profile data is required."
+    );
+  }
+
   const response = await api.put(
     "/auth/profile",
     profileData

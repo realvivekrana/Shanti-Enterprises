@@ -29,69 +29,67 @@ export const getMyQuotations = async (
 };
 
 // ------------------------------------------------------------
-// GET QUOTATIONS
-// Alias for customer quotation list
-// ------------------------------------------------------------
-
-export const getQuotations =
-  async (
-    params = {}
-  ) => {
-    return getMyQuotations(
-      params
-    );
-  };
-
-// ------------------------------------------------------------
 // GET SINGLE QUOTATION
 // GET /api/quotations/:id
 // ------------------------------------------------------------
 
-export const getQuotationById =
-  async (
-    quotationId
-  ) => {
-    const response =
-      await api.get(
-        `/quotations/${quotationId}`
-      );
+export const getQuotationById = async (
+  quotationId
+) => {
+  if (!quotationId) {
+    throw new Error(
+      "Quotation ID is required."
+    );
+  }
 
-    return response.data;
-  };
+  const response = await api.get(
+    `/quotations/${quotationId}`
+  );
+
+  return response.data;
+};
 
 // ------------------------------------------------------------
 // ACCEPT QUOTATION
 // PATCH /api/quotations/:id/accept
 // ------------------------------------------------------------
 
-export const acceptQuotation =
-  async (
-    quotationId
-  ) => {
-    const response =
-      await api.patch(
-        `/quotations/${quotationId}/accept`
-      );
+export const acceptQuotation = async (
+  quotationId
+) => {
+  if (!quotationId) {
+    throw new Error(
+      "Quotation ID is required."
+    );
+  }
 
-    return response.data;
-  };
+  const response = await api.patch(
+    `/quotations/${quotationId}/accept`
+  );
+
+  return response.data;
+};
 
 // ------------------------------------------------------------
 // REJECT QUOTATION
 // PATCH /api/quotations/:id/reject
 // ------------------------------------------------------------
 
-export const rejectQuotation =
-  async (
-    quotationId
-  ) => {
-    const response =
-      await api.patch(
-        `/quotations/${quotationId}/reject`
-      );
+export const rejectQuotation = async (
+  quotationId
+) => {
+  if (!quotationId) {
+    throw new Error(
+      "Quotation ID is required."
+    );
+  }
 
-    return response.data;
-  };
+  const response = await api.patch(
+    `/quotations/${quotationId}/reject`
+  );
+
+  return response.data;
+};
 
 // ============================================================
 // ADMIN QUOTATION APIs
@@ -102,90 +100,110 @@ export const rejectQuotation =
 // GET /api/admin/quotations
 // ------------------------------------------------------------
 
-export const getAdminQuotations =
-  async (
-    params = {}
-  ) => {
-    const response =
-      await api.get(
-        "/admin/quotations",
-        {
-          params,
-        }
-      );
+export const getAdminQuotations = async (
+  params = {}
+) => {
+  const response = await api.get(
+    "/admin/quotations",
+    {
+      params,
+    }
+  );
 
-    return response.data;
-  };
+  return response.data;
+};
 
 // ------------------------------------------------------------
 // GET SINGLE ADMIN QUOTATION
 // GET /api/admin/quotations/:id
 // ------------------------------------------------------------
 
-export const getAdminQuotationById =
-  async (
-    quotationId
-  ) => {
-    const response =
-      await api.get(
-        `/admin/quotations/${quotationId}`
-      );
+export const getAdminQuotationById = async (
+  quotationId
+) => {
+  if (!quotationId) {
+    throw new Error(
+      "Quotation ID is required."
+    );
+  }
 
-    return response.data;
-  };
+  const response = await api.get(
+    `/admin/quotations/${quotationId}`
+  );
+
+  return response.data;
+};
 
 // ------------------------------------------------------------
 // CREATE ADMIN QUOTATION
 // POST /api/admin/quotations
 // ------------------------------------------------------------
 
-export const createAdminQuotation =
-  async (
-    payload
-  ) => {
-    const response =
-      await api.post(
-        "/admin/quotations",
-        payload
-      );
+export const createQuotation = async (
+  quotationData
+) => {
+  if (!quotationData) {
+    throw new Error(
+      "Quotation data is required."
+    );
+  }
 
-    return response.data;
-  };
+  const response = await api.post(
+    "/admin/quotations",
+    quotationData
+  );
+
+  return response.data;
+};
 
 // ------------------------------------------------------------
-// UPDATE ADMIN QUOTATION STATUS
+// UPDATE QUOTATION STATUS
 // PATCH /api/admin/quotations/:id/status
 // ------------------------------------------------------------
 
-export const updateAdminQuotationStatus =
-  async (
-    quotationId,
-    status
-  ) => {
-    const response =
-      await api.patch(
-        `/admin/quotations/${quotationId}/status`,
-        {
-          status,
-        }
-      );
+export const updateQuotationStatus = async (
+  quotationId,
+  status
+) => {
+  if (!quotationId) {
+    throw new Error(
+      "Quotation ID is required."
+    );
+  }
 
-    return response.data;
-  };
+  if (!status) {
+    throw new Error(
+      "Quotation status is required."
+    );
+  }
+
+  const response = await api.patch(
+    `/admin/quotations/${quotationId}/status`,
+    {
+      status,
+    }
+  );
+
+  return response.data;
+};
 
 // ------------------------------------------------------------
 // CANCEL ADMIN QUOTATION
 // PATCH /api/admin/quotations/:id/cancel
 // ------------------------------------------------------------
 
-export const cancelAdminQuotation =
-  async (
-    quotationId
-  ) => {
-    const response =
-      await api.patch(
-        `/admin/quotations/${quotationId}/cancel`
-      );
+export const cancelQuotation = async (
+  quotationId
+) => {
+  if (!quotationId) {
+    throw new Error(
+      "Quotation ID is required."
+    );
+  }
 
-    return response.data;
-  };
+  const response = await api.patch(
+    `/admin/quotations/${quotationId}/cancel`
+  );
+
+  return response.data;
+};

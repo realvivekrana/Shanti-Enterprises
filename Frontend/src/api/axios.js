@@ -36,8 +36,35 @@ const api = axios.create({
 
 api.interceptors.request.use(
   (config) => {
+    // --------------------------------------------------------
+    // FormData requests
+    // --------------------------------------------------------
+    // Browser automatically adds the correct multipart
+    // boundary. Therefore we remove the default JSON
+    // content type when FormData is being sent.
+    // --------------------------------------------------------
+
+    if (
+      config.data instanceof FormData
+    ) {
+      if (
+        config.headers &&
+        typeof config.headers.delete ===
+          "function"
+      ) {
+        config.headers.delete(
+          "Content-Type"
+        );
+      } else if (config.headers) {
+        delete config.headers[
+          "Content-Type"
+        ];
+      }
+    }
+
     return config;
   },
+
   (error) => {
     return Promise.reject(error);
   }
@@ -61,8 +88,16 @@ api.interceptors.response.use(
       const status =
         error.response.status;
 
+      const responseData =
+        error.response.data;
+
       const serverMessage =
-        error.response.data?.message;
+        responseData?.message ||
+        responseData?.error;
+
+      // ------------------------------------------------------
+      // USE BACKEND ERROR MESSAGE
+      // ------------------------------------------------------
 
       if (serverMessage) {
         error.message =
@@ -100,6 +135,18 @@ api.interceptors.response.use(
       }
 
       // ------------------------------------------------------
+      // VALIDATION ERROR
+      // ------------------------------------------------------
+
+      if (status === 400) {
+        console.warn(
+          "Invalid request:",
+          serverMessage ||
+            "Please check the submitted data."
+        );
+      }
+
+      // ------------------------------------------------------
       // SERVER ERROR
       // ------------------------------------------------------
 
@@ -107,7 +154,7 @@ api.interceptors.response.use(
         console.error(
           "Server error:",
           serverMessage ||
-            "Internal server error"
+            "Internal server error."
         );
       }
     }
@@ -118,7 +165,7 @@ api.interceptors.response.use(
 
     else if (error.request) {
       error.message =
-        "Unable to connect to the server.";
+        "Unable to connect to the server. Please check your connection.";
     }
 
     // --------------------------------------------------------

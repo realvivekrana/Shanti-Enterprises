@@ -16,6 +16,12 @@ import api from "./axios";
 // ------------------------------------------------------------
 
 export const createRFQ = async (payload) => {
+  if (!payload) {
+    throw new Error(
+      "RFQ data is required."
+    );
+  }
+
   const response = await api.post(
     "/rfqs",
     payload
@@ -50,6 +56,12 @@ export const getMyRFQs = async (
 export const getRFQById = async (
   rfqId
 ) => {
+  if (!rfqId) {
+    throw new Error(
+      "RFQ ID is required."
+    );
+  }
+
   const response = await api.get(
     `/rfqs/${rfqId}`
   );
@@ -65,6 +77,12 @@ export const getRFQById = async (
 export const cancelRFQ = async (
   rfqId
 ) => {
+  if (!rfqId) {
+    throw new Error(
+      "RFQ ID is required."
+    );
+  }
+
   const response = await api.patch(
     `/rfqs/${rfqId}/cancel`
   );
@@ -102,6 +120,12 @@ export const getAdminRFQs = async (
 export const getAdminRFQById = async (
   rfqId
 ) => {
+  if (!rfqId) {
+    throw new Error(
+      "RFQ ID is required."
+    );
+  }
+
   const response = await api.get(
     `/admin/rfqs/${rfqId}`
   );
@@ -118,6 +142,18 @@ export const updateAdminRFQStatus = async (
   rfqId,
   status
 ) => {
+  if (!rfqId) {
+    throw new Error(
+      "RFQ ID is required."
+    );
+  }
+
+  if (!status) {
+    throw new Error(
+      "RFQ status is required."
+    );
+  }
+
   const response = await api.patch(
     `/admin/rfqs/${rfqId}/status`,
     {
@@ -136,6 +172,12 @@ export const updateAdminRFQStatus = async (
 export const cancelAdminRFQ = async (
   rfqId
 ) => {
+  if (!rfqId) {
+    throw new Error(
+      "RFQ ID is required."
+    );
+  }
+
   const response = await api.patch(
     `/admin/rfqs/${rfqId}/cancel`
   );

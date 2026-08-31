@@ -87,6 +87,12 @@ export const updateUserStatus = async (
     );
   }
 
+  if (!status) {
+    throw new Error(
+      "User status is required."
+    );
+  }
+
   const response = await api.put(
     `/users/${userId}/status`,
     {
@@ -116,3 +122,13 @@ export const deleteAdminUser = async (
 
   return response.data;
 };
+
+// ============================================================
+// BACKWARD COMPATIBILITY ALIASES
+// ============================================================
+
+export const updateAdminUserRole =
+  updateUserRole;
+
+export const updateAdminUserStatus =
+  updateUserStatus;

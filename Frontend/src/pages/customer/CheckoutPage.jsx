@@ -1,54 +1,81 @@
-  import { useState, useEffect } from "react";
-  import { useNavigate, useSearchParams } from "react-router-dom";
-  import API from "../../api/axios";
-import { getQuotationById } from "../../api/quotationApi";
-import { createOrderFromQuotation } from "../../api/orderApi";
-  import { useCart } from "../../context/CartContext";
+import { useState, useEffect } from "react";
+import {
+  useNavigate,
+  useSearchParams,
+} from "react-router-dom";
+
+import API from "../../api/axios";
+import {
+  getQuotationById,
+} from "../../api/quotationApi";
+import {
+  createOrderFromQuotation,
+} from "../../api/orderApi";
+import {
+  useCart,
+} from "../../context/CartContext";
+
+// ============================================================
+// SHANTI ENTERPRISES
+// CHECKOUT PAGE
+// Customer Portal
+// Razorpay Payment Integration
+// ============================================================
+
+const CheckoutPage = () => {
+  const {
+    cartItems,
+    clearCart,
+  } = useCart();
+
+  const navigate = useNavigate();
+
+  const [searchParams] =
+    useSearchParams();
+
+  const quotationId =
+    searchParams.get("quotationId");
+
+  const isWholesaleOrder =
+    Boolean(quotationId);
 
   // ============================================================
-  // SHANTI ENTERPRISES
-  // CHECKOUT PAGE
-  // Customer Portal
-  // Razorpay Payment Integration
+  // USER
   // ============================================================
 
-  const CheckoutPage = () => {
-    const { cartItems, clearCart } = useCart();
-    const navigate = useNavigate();
-    const [searchParams] = useSearchParams();
-    const quotationId = searchParams.get("quotationId");
-    const isWholesaleOrder = Boolean(quotationId);
+  const userInfo =
+    localStorage.getItem(
+      "userInfo"
+    );
 
-    // ============================================================
-    // USER
-    // ============================================================
+  const isLoggedIn =
+    Boolean(userInfo);
 
-    const userInfo = localStorage.getItem("userInfo");
+  let user = null;
 
-    const isLoggedIn = Boolean(userInfo);
+  try {
+    user = userInfo
+      ? JSON.parse(userInfo)
+      : null;
+  } catch (error) {
+    console.error(
+      "Failed to parse userInfo:",
+      error
+    );
 
-    let user = null;
+    user = null;
+  }
 
-    try {
-      user = userInfo
-        ? JSON.parse(userInfo)
-        : null;
-    } catch (error) {
-      console.error(
-        "Failed to parse userInfo:",
-        error
-      );
+  // ============================================================
+  // ADDRESS
+  // ============================================================
 
-      user = null;
-    }
-
-    // ============================================================
-    // ADDRESS
-    // ============================================================
-
-    const [address, setAddress] = useState({
-      name: user?.name || "",
-      phone: user?.phone || "",
+  const [address, setAddress] =
+    useState({
+      name:
+        user?.name || "",
+      phone:
+        user?.phone || "",
       addressLine1: "",
       addressLine2: "",
       city: "",
@@ -57,52 +84,67 @@ import { createOrderFromQuotation } from "../../api/orderApi";
       country: "India",
     });
 
-    // ============================================================
-    // PAYMENT
-    // ============================================================
+  // ============================================================
+  // PAYMENT
+  // ============================================================
 
-    const [paymentMethod, setPaymentMethod] =
-      useState("COD");
+  const [
+    paymentMethod,
+    setPaymentMethod,
+  ] = useState("COD");
 
-    // ============================================================
-    // PRICING
-    // ============================================================
+  // ============================================================
+  // PRICING
+  // ============================================================
 
-    const [pricing, setPricing] = useState({});
+  const [pricing, setPricing] =
+    useState({});
 
-    const [loadingPricing, setLoadingPricing] =
-      useState(true);
+  const [
+    loadingPricing,
+    setLoadingPricing,
+  ] = useState(true);
 
-    // ============================================================
-    // GENERAL STATE
-    // ============================================================
+  // ============================================================
+  // GENERAL STATE
+  // ============================================================
 
-    const [loading, setLoading] =
-      useState(false);
+  const [loading, setLoading] =
+    useState(false);
 
-    const [error, setError] =
-      useState("");
+  const [error, setError] =
+    useState("");
 
-    const [successMessage, setSuccessMessage] =
-      useState("");
+  const [
+    successMessage,
+    setSuccessMessage,
+  ] = useState("");
 
-    // ============================================================
-    // WHOLESALE QUOTATION
-    // ============================================================
+  // ============================================================
+  // WHOLESALE QUOTATION
+  // ============================================================
 
-    const [quotation, setQuotation] = useState(null);
-    const [loadingQuotation, setLoadingQuotation] = useState(
-      isWholesaleOrder
-    );
+  const [
+    quotation,
+    setQuotation,
+  ] = useState(null);
 
-    // ============================================================
-    // LOAD ACCEPTED QUOTATION
-    // ============================================================
+  const [
+    loadingQuotation,
+    setLoadingQuotation,
+  ] = useState(
+    isWholesaleOrder
+  );
 
-    useEffect(() => {
-      let cancelled = false;
+  // ============================================================
+  // LOAD ACCEPTED QUOTATION
+  // ============================================================
 
-      const loadQuotation = async () => {
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadQuotation =
+      async () => {
         if (!quotationId) {
           setQuotation(null);
           setLoadingQuotation(false);
@@ -113,7 +155,11 @@ import { createOrderFromQuotation } from "../../api/orderApi";
           setLoadingQuotation(true);
           setError("");
 
-          const response = await getQuotationById(quotationId);
+          const response =
+            await getQuotationById(
+              quotationId
+            );
+
           const receivedQuotation =
             response?.quotation ||
             response?.data?.quotation ||
@@ -121,10 +167,15 @@ import { createOrderFromQuotation } from "../../api/orderApi";
             null;
 
           if (!receivedQuotation) {
-            throw new Error("Quotation could not be found.");
+            throw new Error(
+              "Quotation could not be found."
+            );
           }
 
-          if (receivedQuotation.status !== "accepted") {
+          if (
+            receivedQuotation.status !==
+            "accepted"
+          ) {
             throw new Error(
               "Only an accepted quotation can be converted into an order."
             );
@@ -132,61 +183,107 @@ import { createOrderFromQuotation } from "../../api/orderApi";
 
           if (
             receivedQuotation.validUntil &&
-            new Date() > new Date(receivedQuotation.validUntil)
+            new Date() >
+              new Date(
+                receivedQuotation.validUntil
+              )
           ) {
-            throw new Error("This quotation has expired.");
+            throw new Error(
+              "This quotation has expired."
+            );
           }
 
           if (
-            !Array.isArray(receivedQuotation.items) ||
-            receivedQuotation.items.length === 0
+            !Array.isArray(
+              receivedQuotation.items
+            ) ||
+            receivedQuotation.items.length ===
+              0
           ) {
-            throw new Error("Quotation does not contain any items.");
+            throw new Error(
+              "Quotation does not contain any items."
+            );
           }
 
           if (!cancelled) {
-            setQuotation(receivedQuotation);
+            setQuotation(
+              receivedQuotation
+            );
           }
         } catch (err) {
-          console.error("Wholesale quotation load error:", err);
+          console.error(
+            "Wholesale quotation load error:",
+            err
+          );
 
           if (!cancelled) {
             setQuotation(null);
+
             setError(
-              err?.response?.data?.message ||
+              err?.response?.data
+                ?.message ||
                 err?.message ||
                 "Unable to load quotation."
             );
           }
         } finally {
           if (!cancelled) {
-            setLoadingQuotation(false);
+            setLoadingQuotation(
+              false
+            );
           }
         }
       };
 
-      loadQuotation();
+    loadQuotation();
 
-      return () => {
-        cancelled = true;
-      };
-    }, [quotationId]);
+    return () => {
+      cancelled = true;
+    };
+  }, [quotationId]);
 
-    // ============================================================
-    // FETCH WHOLESALE PRICES
-    // ============================================================
+  // ============================================================
+  // FETCH WHOLESALE PRICES
+  // ============================================================
 
-    useEffect(() => {
-      let cancelled = false;
+  useEffect(() => {
+    let cancelled = false;
 
-      const calculatePrices = async () => {
+    const calculatePrices =
+      async () => {
+        // --------------------------------------------------------
+        // NORMAL ORDER EMPTY CART
+        // --------------------------------------------------------
+
         if (
           !isWholesaleOrder &&
-          (!cartItems || cartItems.length === 0)
+          (!cartItems ||
+            cartItems.length === 0)
         ) {
           if (!cancelled) {
             setPricing({});
             setLoadingPricing(false);
+          }
+
+          return;
+        }
+
+        // --------------------------------------------------------
+        // WHOLESALE ORDER DOES NOT NEED CART
+        // --------------------------------------------------------
+
+        if (
+          isWholesaleOrder &&
+          (!quotation ||
+            !Array.isArray(
+              quotation.items
+            ))
+        ) {
+          if (!cancelled) {
+            setPricing({});
+            setLoadingPricing(
+              loadingQuotation
+            );
           }
 
           return;
@@ -198,62 +295,81 @@ import { createOrderFromQuotation } from "../../api/orderApi";
         try {
           const results = {};
 
-          for (const item of cartItems) {
-            const productId =
-              item?._id ||
-              item?.product?._id ||
-              item?.product;
+          // ------------------------------------------------------
+          // NORMAL CART PRICING
+          // ------------------------------------------------------
 
-            if (!productId) {
-              continue;
-            }
+          if (!isWholesaleOrder) {
+            for (const item of cartItems) {
+              const productId =
+                item?._id ||
+                item?.product?._id ||
+                item?.product;
 
-            try {
-              const response =
-                await API.get(
-                  `/products/${productId}/wholesale-price`,
-                  {
-                    params: {
-                      quantity:
-                        Number(
-                          item.quantity || 1
-                        ),
-                    },
-                  }
+              if (!productId) {
+                continue;
+              }
+
+              try {
+                const response =
+                  await API.get(
+                    `/products/${productId}/wholesale-price`,
+                    {
+                      params: {
+                        quantity:
+                          Number(
+                            item.quantity ||
+                              1
+                          ),
+                      },
+                    }
+                  );
+
+                const data =
+                  response?.data ??
+                  response;
+
+                const priceData =
+                  data?.data ||
+                  data?.pricing ||
+                  data;
+
+                results[
+                  productId
+                ] = priceData;
+              } catch (
+                priceError
+              ) {
+                console.error(
+                  "Wholesale price error:",
+                  productId,
+                  priceError
                 );
 
-              const data =
-                response?.data ?? response;
+                // ------------------------------------------------
+                // FALLBACK TO NORMAL PRICE
+                // ------------------------------------------------
 
-              const priceData =
-                data?.data ||
-                data?.pricing ||
-                data;
+                results[
+                  productId
+                ] = {
+                  unitPrice:
+                    Number(
+                      item?.price ||
+                        0
+                    ),
 
-              results[productId] =
-                priceData;
-            } catch (priceError) {
-              console.error(
-                "Wholesale price error:",
-                productId,
-                priceError
-              );
-
-              // Fallback to normal product price
-              results[productId] = {
-                unitPrice:
-                  Number(
-                    item?.price || 0
-                  ),
-
-                subtotal:
-                  Number(
-                    item?.price || 0
-                  ) *
-                  Number(
-                    item?.quantity || 1
-                  ),
-              };
+                  subtotal:
+                    Number(
+                      item?.price ||
+                        0
+                    ) *
+                    Number(
+                      item?.quantity ||
+                        1
+                    ),
+                };
+              }
             }
           }
 
@@ -268,222 +384,315 @@ import { createOrderFromQuotation } from "../../api/orderApi";
 
           if (!cancelled) {
             setError(
-              err?.response?.data?.message ||
+              err?.response?.data
+                ?.message ||
                 err?.message ||
                 "Failed to calculate wholesale prices"
             );
           }
         } finally {
           if (!cancelled) {
-            setLoadingPricing(false);
+            setLoadingPricing(
+              false
+            );
           }
         }
       };
 
-      calculatePrices();
+    calculatePrices();
 
-      return () => {
-        cancelled = true;
-      };
-    }, [cartItems]);
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    cartItems,
+    quotation,
+    isWholesaleOrder,
+    loadingQuotation,
+  ]);
 
-    // ============================================================
-    // ADDRESS CHANGE
-    // ============================================================
+  // ============================================================
+  // ADDRESS CHANGE
+  // ============================================================
 
-    const handleChange = (e) => {
-      const {
-        name,
-        value,
-      } = e.target;
+  const handleChange = (
+    e
+  ) => {
+    const {
+      name,
+      value,
+    } = e.target;
 
-      setAddress((previous) => ({
+    setAddress(
+      (previous) => ({
         ...previous,
         [name]: value,
-      }));
-    };
+      })
+    );
+  };
 
-    // ============================================================
-    // GET PRODUCT ID
-    // ============================================================
+  // ============================================================
+  // GET PRODUCT ID
+  // ============================================================
 
-    const getProductId = (item) => {
-      return (
-        item?._id ||
-        item?.product?._id ||
-        item?.product ||
-        ""
-      );
-    };
+  const getProductId = (
+    item
+  ) => {
+    return (
+      item?._id ||
+      item?.product?._id ||
+      item?.product ||
+      item?.productId ||
+      ""
+    );
+  };
 
-    // ============================================================
-    // CHECKOUT ITEMS
-    // ============================================================
+  // ============================================================
+  // CHECKOUT ITEMS
+  // ============================================================
 
-    const checkoutItems = isWholesaleOrder
-      ? (quotation?.items || []).map((item) => ({
-          _id: item?.product?._id || item?.product || item?.productId,
-          product: item?.product,
-          name: item?.productName || item?.product?.name || "Product",
+  const checkoutItems =
+    isWholesaleOrder
+      ? (
+          quotation?.items ||
+          []
+        ).map((item) => ({
+          _id:
+            item?.product?._id ||
+            item?.product ||
+            item?.productId,
+
+          product:
+            item?.product,
+
+          name:
+            item?.productName ||
+            item?.product?.name ||
+            "Product",
+
           image:
-            item?.product?.images?.[0] ||
-            item?.product?.image ||
+            item?.product
+              ?.images?.[0] ||
+            item?.product
+              ?.image ||
             item?.image ||
             "https://via.placeholder.com/100",
-          quantity: Number(item?.quantity || 1),
-          price: Number(item?.unitPrice || 0),
-          unit: item?.unit || "piece",
-          quotationItem: true,
+
+          quantity:
+            Number(
+              item?.quantity ||
+                1
+            ),
+
+          price:
+            Number(
+              item?.unitPrice ||
+                0
+            ),
+
+          unit:
+            item?.unit ||
+            "piece",
+
+          quotationItem:
+            true,
         }))
       : cartItems || [];
 
-    // ============================================================
-    // ITEMS PRICE
-    // ============================================================
+  // ============================================================
+  // ITEMS PRICE
+  // ============================================================
 
-    const itemsPrice = (
-      checkoutItems || []
-    ).reduce((sum, item) => {
-      const productId =
-        getProductId(item);
+  const itemsPrice =
+    checkoutItems.reduce(
+      (sum, item) => {
+        const productId =
+          getProductId(item);
 
-      const itemPricing =
-        pricing[productId];
+        const itemPricing =
+          isWholesaleOrder
+            ? null
+            : pricing[
+                productId
+              ];
 
-      const quantity =
-        Number(
-          item?.quantity || 1
+        const quantity =
+          Number(
+            item?.quantity ||
+              1
+          );
+
+        const unitPrice =
+          Number(
+            itemPricing
+              ?.unitPrice ??
+              item?.price ??
+              item?.product
+                ?.price ??
+              0
+          );
+
+        const subtotal =
+          Number(
+            itemPricing
+              ?.subtotal ??
+              itemPricing
+                ?.total ??
+              unitPrice *
+                quantity
+          );
+
+        return (
+          sum +
+          subtotal
         );
+      },
+      0
+    );
 
-      const subtotal =
-        Number(
-          itemPricing?.subtotal ??
-            itemPricing?.total ??
-            Number(
-              item?.price || 0
-            ) * quantity
-        );
+  // ============================================================
+  // SHIPPING
+  // ============================================================
 
-      return sum + subtotal;
-    }, 0);
+  const shippingPrice =
+    0;
 
-    // ============================================================
-    // SHIPPING
-    //
-    // NOTE:
-    // Current backend createOrder calculates totalAmount
-    // from cart subtotal and does NOT add shippingPrice.
-    //
-    // Therefore Razorpay amount currently remains itemsPrice.
-    // ============================================================
+  // ============================================================
+  // TOTAL
+  // ============================================================
 
-    const shippingPrice = 0;
+  const totalPrice =
+    itemsPrice +
+    shippingPrice;
 
-    // ============================================================
-    // TOTAL
-    // ============================================================
+  // ============================================================
+  // VALIDATE ADDRESS
+  // ============================================================
 
-    const totalPrice =
-      itemsPrice + shippingPrice;
-
-    // ============================================================
-    // VALIDATE ADDRESS
-    // ============================================================
-
-    const validateAddress = () => {
-      if (!address.name.trim()) {
+  const validateAddress =
+    () => {
+      if (
+        !address.name.trim()
+      ) {
         return "Name is required.";
       }
 
-      if (!address.phone.trim()) {
+      if (
+        !address.phone.trim()
+      ) {
         return "Phone is required.";
       }
 
-      if (!address.addressLine1.trim()) {
+      if (
+        !address.addressLine1.trim()
+      ) {
         return "Address is required.";
       }
 
-      if (!address.city.trim()) {
+      if (
+        !address.city.trim()
+      ) {
         return "City is required.";
       }
 
-      if (!address.state.trim()) {
+      if (
+        !address.state.trim()
+      ) {
         return "State is required.";
       }
 
-      if (!address.postalCode.trim()) {
+      if (
+        !address.postalCode.trim()
+      ) {
         return "Postal code is required.";
       }
 
-      if (!address.country.trim()) {
+      if (
+        !address.country.trim()
+      ) {
         return "Country is required.";
       }
 
       return null;
     };
 
-    // ============================================================
-    // CREATE DATABASE ORDER
-    //
-    // IMPORTANT:
-    //
-    // Backend expects these fields directly:
-    //
-    // name
-    // phone
-    // addressLine1
-    // addressLine2
-    // city
-    // state
-    // postalCode
-    // country
-    //
-    // NOT:
-    //
-    // shippingAddress: {}
-    // orderItems: []
-    //
-    // Backend creates order items from the logged-in user's cart.
-    // ============================================================
+  // ============================================================
+  // CREATE DATABASE ORDER
+  // ============================================================
 
-    const createOrderInDB = async () => {
+  const createOrderInDB =
+    async () => {
       // ========================================================
       // WHOLESALE QUOTATION ORDER
       // ========================================================
 
-      if (isWholesaleOrder) {
+      if (
+        isWholesaleOrder
+      ) {
         if (!quotationId) {
-          throw new Error("Quotation ID is missing.");
+          throw new Error(
+            "Quotation ID is missing."
+          );
         }
 
         if (!quotation) {
-          throw new Error("Quotation is still loading. Please try again.");
+          throw new Error(
+            "Quotation is still loading. Please try again."
+          );
         }
 
-        const response = await createOrderFromQuotation({
-          quotationId,
-          shippingAddress: {
-            name: address.name.trim(),
-            phone: address.phone.trim(),
-            addressLine1: address.addressLine1.trim(),
-            addressLine2: address.addressLine2.trim(),
-            city: address.city.trim(),
-            state: address.state.trim(),
-            postalCode: address.postalCode.trim(),
-            country: address.country.trim(),
-          },
-          paymentMethod:
-            paymentMethod === "Razorpay" ? "razorpay" : "cod",
-        });
+        const response =
+          await createOrderFromQuotation(
+            {
+              quotationId,
 
-        const responseData = response?.data ?? response;
+              shippingAddress: {
+                name:
+                  address.name.trim(),
+
+                phone:
+                  address.phone.trim(),
+
+                addressLine1:
+                  address.addressLine1.trim(),
+
+                addressLine2:
+                  address.addressLine2.trim(),
+
+                city:
+                  address.city.trim(),
+
+                state:
+                  address.state.trim(),
+
+                postalCode:
+                  address.postalCode.trim(),
+
+                country:
+                  address.country.trim(),
+              },
+
+              paymentMethod:
+                paymentMethod ===
+                "Razorpay"
+                  ? "razorpay"
+                  : "cod",
+            }
+          );
+
+        const responseData =
+          response?.data ??
+          response;
+
         const createdOrder =
           responseData?.order ||
           responseData?.data?.order ||
           responseData?.data ||
           responseData;
 
-        const orderId = createdOrder?._id || createdOrder?.id;
+        const orderId =
+          createdOrder?._id ||
+          createdOrder?.id;
 
         if (!orderId) {
           throw new Error(
@@ -492,23 +701,17 @@ import { createOrderFromQuotation } from "../../api/orderApi";
         }
 
         return {
-          order: createdOrder,
-          orderId: String(orderId),
+          order:
+            createdOrder,
+
+          orderId:
+            String(orderId),
         };
       }
 
-      console.log("");
-      console.log(
-        "========================================"
-      );
-
-      console.log(
-        "CREATING DATABASE ORDER"
-      );
-
-      console.log(
-        "========================================"
-      );
+      // ========================================================
+      // NORMAL ORDER
+      // ========================================================
 
       const payload = {
         name:
@@ -536,11 +739,6 @@ import { createOrderFromQuotation } from "../../api/orderApi";
           address.country.trim(),
       };
 
-      console.log(
-        "Order Payload:",
-        payload
-      );
-
       const response =
         await API.post(
           "/orders",
@@ -548,12 +746,8 @@ import { createOrderFromQuotation } from "../../api/orderApi";
         );
 
       const responseData =
-        response?.data ?? response;
-
-      console.log(
-        "CREATE ORDER RESPONSE:",
-        responseData
-      );
+        response?.data ??
+        response;
 
       const createdOrder =
         responseData?.order ||
@@ -566,20 +760,10 @@ import { createOrderFromQuotation } from "../../api/orderApi";
         createdOrder?.id;
 
       if (!orderId) {
-        console.error(
-          "Order ID missing:",
-          responseData
-        );
-
         throw new Error(
           "Order was created but Order ID was not returned by the server."
         );
       }
-
-      console.log(
-        "DATABASE ORDER ID:",
-        orderId
-      );
 
       return {
         order:
@@ -590,1257 +774,1311 @@ import { createOrderFromQuotation } from "../../api/orderApi";
       };
     };
 
-    // ============================================================
-    // CREATE RAZORPAY ORDER
-    //
-    // POST /api/payments/create-order
-    //
-    // Body:
-    //
-    // {
-    //   orderId: "MongoDB Order ID"
-    // }
-    //
-    // ============================================================
+  // ============================================================
+  // CREATE RAZORPAY ORDER
+  // ============================================================
 
-    const createRazorpayOrder =
-      async (orderId) => {
-        if (!orderId) {
-          throw new Error(
-            "Order ID is missing. Cannot create payment order."
-          );
-        }
+  const createRazorpayOrder =
+    async (
+      orderId
+    ) => {
+      if (!orderId) {
+        throw new Error(
+          "Order ID is missing. Cannot create payment order."
+        );
+      }
 
-        console.log("");
-        console.log(
-          "========================================"
+      const response =
+        await API.post(
+          "/payments/create-order",
+          {
+            orderId:
+              String(orderId),
+          }
         );
 
-        console.log(
-          "CREATING RAZORPAY ORDER"
+      const responseData =
+        response?.data ??
+        response;
+
+      if (
+        responseData?.success ===
+        false
+      ) {
+        throw new Error(
+          responseData?.message ||
+            "Unable to create Razorpay order."
         );
+      }
 
-        console.log(
-          "Database Order ID:",
-          orderId
+      const paymentData =
+        responseData?.payment ||
+        responseData?.data?.payment ||
+        responseData?.data ||
+        responseData;
+
+      const razorpayOrderId =
+        paymentData?.razorpayOrderId ||
+        paymentData?.razorpayOrder?.id ||
+        responseData?.razorpayOrder
+          ?.id ||
+        responseData?.order?.id;
+
+      const amount =
+        paymentData?.amountInPaise ??
+        responseData?.amountInPaise;
+
+      const currency =
+        paymentData?.currency ||
+        responseData?.currency ||
+        "INR";
+
+      const keyId =
+        paymentData?.keyId ||
+        responseData?.keyId ||
+        import.meta.env
+          .VITE_RAZORPAY_KEY_ID;
+
+      if (!razorpayOrderId) {
+        throw new Error(
+          "Razorpay order ID was not returned by the server."
         );
+      }
 
-        console.log(
-          "========================================"
+      if (
+        amount ===
+          undefined ||
+        amount === null
+      ) {
+        throw new Error(
+          "Razorpay amount was not returned by the server."
         );
+      }
 
-        const response =
-          await API.post(
-            "/payments/create-order",
-            {
-              orderId:
-                String(orderId),
-            }
-          );
-
-        const responseData =
-          response?.data ?? response;
-
-        console.log(
-          "RAZORPAY ORDER RESPONSE:",
-          responseData
+      if (!keyId) {
+        throw new Error(
+          "Razorpay Key ID is missing."
         );
+      }
 
-        const paymentData =
-          responseData?.payment ||
-          responseData?.data?.payment ||
-          responseData?.data ||
-          responseData;
+      return {
+        id:
+          razorpayOrderId,
 
-        const razorpayOrderId =
-          paymentData?.razorpayOrderId ||
-          paymentData?.razorpayOrder?.id ||
-          responseData?.razorpayOrder?.id;
+        amount:
+          Number(amount),
 
-        const amount =
-          paymentData?.amountInPaise ??
-          responseData?.amountInPaise;
+        currency,
 
-        const currency =
-          paymentData?.currency ||
-          responseData?.currency ||
-          "INR";
-
-        const keyId =
-          paymentData?.keyId ||
-          responseData?.keyId ||
-          import.meta.env
-            .VITE_RAZORPAY_KEY_ID;
-
-        if (!razorpayOrderId) {
-          console.error(
-            "Razorpay Order ID missing:",
-            responseData
-          );
-
-          throw new Error(
-            "Razorpay order ID was not returned by the server."
-          );
-        }
-
-        if (
-          amount === undefined ||
-          amount === null
-        ) {
-          throw new Error(
-            "Razorpay amount was not returned by the server."
-          );
-        }
-
-        if (!keyId) {
-          throw new Error(
-            "Razorpay Key ID is missing."
-          );
-        }
-
-        return {
-          id:
-            razorpayOrderId,
-
-          amount:
-            Number(amount),
-
-          currency,
-
-          keyId,
-        };
+        keyId,
       };
+    };
 
-    // ============================================================
-    // VERIFY RAZORPAY PAYMENT
-    //
-    // POST /api/payments/verify
-    // ============================================================
+  // ============================================================
+  // VERIFY RAZORPAY PAYMENT
+  // ============================================================
 
-    const verifyRazorpayPayment =
-      async (
+  const verifyRazorpayPayment =
+    async (
+      paymentResponse
+    ) => {
+      const razorpayOrderId =
         paymentResponse
-      ) => {
-        console.log("");
-        console.log(
-          "========================================"
+          ?.razorpay_order_id;
+
+      const razorpayPaymentId =
+        paymentResponse
+          ?.razorpay_payment_id;
+
+      const razorpaySignature =
+        paymentResponse
+          ?.razorpay_signature;
+
+      if (!razorpayOrderId) {
+        throw new Error(
+          "Razorpay Order ID is missing."
+        );
+      }
+
+      if (!razorpayPaymentId) {
+        throw new Error(
+          "Razorpay Payment ID is missing."
+        );
+      }
+
+      if (!razorpaySignature) {
+        throw new Error(
+          "Razorpay payment signature is missing."
+        );
+      }
+
+      const response =
+        await API.post(
+          "/payments/verify",
+          {
+            razorpayOrderId:
+              razorpayOrderId,
+
+            razorpayPaymentId:
+              razorpayPaymentId,
+
+            razorpaySignature:
+              razorpaySignature,
+          }
         );
 
-        console.log(
-          "VERIFYING RAZORPAY PAYMENT"
+      const responseData =
+        response?.data ??
+        response;
+
+      if (
+        responseData?.success ===
+        false
+      ) {
+        throw new Error(
+          responseData?.message ||
+            "Payment verification failed."
+        );
+      }
+
+      return responseData;
+    };
+
+  // ============================================================
+  // OPEN RAZORPAY CHECKOUT
+  // ============================================================
+
+  const openRazorpayCheckout =
+    async (
+      databaseOrderId
+    ) => {
+      if (
+        !window.Razorpay
+      ) {
+        throw new Error(
+          "Razorpay SDK is not loaded. Please add Razorpay Checkout script to index.html."
+        );
+      }
+
+      const razorpayOrder =
+        await createRazorpayOrder(
+          databaseOrderId
         );
 
-        console.log(
-          "========================================"
-        );
+      const options = {
+        key:
+          razorpayOrder.keyId,
 
-        console.log(
-          "Payment Response:",
-          paymentResponse
-        );
+        amount:
+          razorpayOrder.amount,
 
-        const razorpayOrderId =
-          paymentResponse?.razorpay_order_id;
+        currency:
+          razorpayOrder.currency,
 
-        const razorpayPaymentId =
-          paymentResponse?.razorpay_payment_id;
+        name:
+          "Shanti Enterprises",
 
-        const razorpaySignature =
-          paymentResponse?.razorpay_signature;
+        description:
+          isWholesaleOrder
+            ? "Wholesale Order Payment"
+            : "Order Payment",
 
-        if (!razorpayOrderId) {
-          throw new Error(
-            "Razorpay Order ID is missing."
-          );
-        }
+        order_id:
+          razorpayOrder.id,
 
-        if (!razorpayPaymentId) {
-          throw new Error(
-            "Razorpay Payment ID is missing."
-          );
-        }
-
-        if (!razorpaySignature) {
-          throw new Error(
-            "Razorpay payment signature is missing."
-          );
-        }
-
-        const response =
-          await API.post(
-            "/payments/verify",
-            {
-              razorpayOrderId:
-                razorpayOrderId,
-
-              razorpayPaymentId:
-                razorpayPaymentId,
-
-              razorpaySignature:
-                razorpaySignature,
-            }
-          );
-
-        const responseData =
-          response?.data ?? response;
-
-        console.log(
-          "PAYMENT VERIFY RESPONSE:",
-          responseData
-        );
-
-        if (
-          responseData?.success === false
-        ) {
-          throw new Error(
-            responseData?.message ||
-              "Payment verification failed."
-          );
-        }
-
-        return responseData;
-      };
-
-    // ============================================================
-    // OPEN RAZORPAY CHECKOUT
-    // ============================================================
-
-    const openRazorpayCheckout =
-      async (databaseOrderId) => {
-        // ========================================================
-        // CHECK SDK
-        // ========================================================
-
-        if (!window.Razorpay) {
-          throw new Error(
-            "Razorpay SDK is not loaded. Please add Razorpay Checkout script to index.html."
-          );
-        }
-
-        // ========================================================
-        // CREATE RAZORPAY ORDER
-        // ========================================================
-
-        const razorpayOrder =
-          await createRazorpayOrder(
-            databaseOrderId
-          );
-
-        console.log(
-          "Opening Razorpay Checkout:",
-          razorpayOrder
-        );
-
-        // ========================================================
-        // RAZORPAY OPTIONS
-        // ========================================================
-
-        const options = {
-          key:
-            razorpayOrder.keyId,
-
-          amount:
-            razorpayOrder.amount,
-
-          currency:
-            razorpayOrder.currency,
-
+        prefill: {
           name:
-            "Shanti Enterprises",
+            address.name ||
+            user?.name ||
+            "",
 
-          description:
-            "Wholesale Order Payment",
+          email:
+            user?.email ||
+            "",
 
-          order_id:
-            razorpayOrder.id,
+          contact:
+            address.phone ||
+            user?.phone ||
+            "",
+        },
 
-          prefill: {
-            name:
-              address.name ||
-              user?.name ||
-              "",
+        notes: {
+          databaseOrderId:
+            String(
+              databaseOrderId
+            ),
+        },
 
-            email:
-              user?.email ||
-              "",
+        theme: {
+          color:
+            "#0d9488",
+        },
 
-            contact:
-              address.phone ||
-              user?.phone ||
-              "",
-          },
+        // ======================================================
+        // PAYMENT SUCCESS
+        // ======================================================
 
-          notes: {
-            databaseOrderId:
-              String(databaseOrderId),
-          },
-
-          theme: {
-            color:
-              "#0d9488",
-          },
-
-          // ======================================================
-          // PAYMENT SUCCESS
-          // ======================================================
-
-          handler:
-            async (
-              paymentResponse
-            ) => {
-              try {
-                setLoading(true);
-                setError("");
-
-                console.log(
-                  "Razorpay Success:",
-                  paymentResponse
-                );
-
-                // ==================================================
-                // VERIFY PAYMENT
-                // ==================================================
-
-                await verifyRazorpayPayment(
-                  paymentResponse
-                );
-
-                // ==================================================
-                // PAYMENT VERIFIED
-                // ==================================================
-
-                clearCart();
-
-                setSuccessMessage(
-                  "Payment successful. Your order has been confirmed."
-                );
-
-                // ==================================================
-                // GO TO ORDER SUCCESS PAGE
-                // ==================================================
-
-                navigate(
-                  `/order-success/${databaseOrderId}`
-                );
-              } catch (err) {
-                console.error(
-                  "Payment verification error:",
-                  err
-                );
-
-                setError(
-                  err?.response?.data?.message ||
-                    err?.message ||
-                    "Payment verification failed."
-                );
-
-                setLoading(false);
-              }
-            },
-
-          // ======================================================
-          // MODAL DISMISS
-          // ======================================================
-
-          modal: {
-            ondismiss: () => {
-              console.log(
-                "Razorpay Checkout closed."
+        handler:
+          async (
+            paymentResponse
+          ) => {
+            try {
+              setLoading(
+                true
               );
 
-              setLoading(false);
+              setError("");
+
+              await verifyRazorpayPayment(
+                paymentResponse
+              );
+
+              clearCart();
+
+              setSuccessMessage(
+                "Payment successful. Your order has been confirmed."
+              );
+
+              navigate(
+                `/order-success/${databaseOrderId}`
+              );
+            } catch (
+              err
+            ) {
+              console.error(
+                "Payment verification error:",
+                err
+              );
+
+              setError(
+                err?.response?.data
+                  ?.message ||
+                  err?.message ||
+                  "Payment verification failed."
+              );
+
+              setLoading(
+                false
+              );
+            }
+          },
+
+        // ======================================================
+        // MODAL DISMISS
+        // ======================================================
+
+        modal: {
+          ondismiss:
+            () => {
+              setLoading(
+                false
+              );
 
               setError(
                 "Payment was cancelled."
               );
             },
-          },
-        };
-
-        // ========================================================
-        // CREATE RAZORPAY INSTANCE
-        // ========================================================
-
-        const razorpay =
-          new window.Razorpay(
-            options
-          );
-
-        // ========================================================
-        // PAYMENT FAILED EVENT
-        // ========================================================
-
-        razorpay.on(
-          "payment.failed",
-          (response) => {
-            console.error(
-              "Razorpay payment failed:",
-              response
-            );
-
-            setLoading(false);
-
-            setError(
-              response?.error
-                ?.description ||
-                "Payment failed. Please try again."
-            );
-          }
-        );
-
-        // ========================================================
-        // OPEN CHECKOUT
-        // ========================================================
-
-        razorpay.open();
+        },
       };
 
-    // ============================================================
-    // PLACE ORDER
-    // ============================================================
+      const razorpay =
+        new window.Razorpay(
+          options
+        );
 
-    const handlePlaceOrder =
-      async (e) => {
-        e.preventDefault();
+      // ========================================================
+      // PAYMENT FAILED
+      // ========================================================
 
-        setError("");
-        setSuccessMessage("");
-
-        // ========================================================
-        // LOGIN CHECK
-        // ========================================================
-
-        if (!isLoggedIn) {
-          setError(
-            "Please login to place an order."
+      razorpay.on(
+        "payment.failed",
+        (response) => {
+          console.error(
+            "Razorpay payment failed:",
+            response
           );
 
-          return;
-        }
+          setLoading(
+            false
+          );
 
-        // ========================================================
-        // CART CHECK
-        // ========================================================
+          setError(
+            response?.error
+              ?.description ||
+              "Payment failed. Please try again."
+          );
+        }
+      );
+
+      razorpay.open();
+    };
+
+  // ============================================================
+  // PLACE ORDER
+  // ============================================================
+
+  const handlePlaceOrder =
+    async (
+      e
+    ) => {
+      e.preventDefault();
+
+      setError("");
+      setSuccessMessage("");
+
+      // --------------------------------------------------------
+      // LOGIN CHECK
+      // --------------------------------------------------------
+
+      if (!isLoggedIn) {
+        setError(
+          "Please login to place an order."
+        );
+
+        return;
+      }
+
+      // --------------------------------------------------------
+      // NORMAL CART CHECK
+      // --------------------------------------------------------
+      // Wholesale quotation orders do not depend on cartItems.
+      // --------------------------------------------------------
+
+      if (
+        !isWholesaleOrder &&
+        (!cartItems ||
+          cartItems.length === 0)
+      ) {
+        setError(
+          "Your cart is empty."
+        );
+
+        return;
+      }
+
+      // --------------------------------------------------------
+      // ADDRESS CHECK
+      // --------------------------------------------------------
+
+      const addressError =
+        validateAddress();
+
+      if (addressError) {
+        setError(
+          addressError
+        );
+
+        return;
+      }
+
+      // --------------------------------------------------------
+      // QUOTATION CHECK
+      // --------------------------------------------------------
+
+      if (
+        isWholesaleOrder &&
+        loadingQuotation
+      ) {
+        setError(
+          "Please wait while the quotation is loaded."
+        );
+
+        return;
+      }
+
+      if (
+        isWholesaleOrder &&
+        !quotation
+      ) {
+        setError(
+          "Unable to load the accepted quotation."
+        );
+
+        return;
+      }
+
+      // --------------------------------------------------------
+      // NORMAL PRICE CHECK
+      // --------------------------------------------------------
+
+      if (
+        !isWholesaleOrder &&
+        loadingPricing
+      ) {
+        setError(
+          "Please wait while prices are calculated."
+        );
+
+        return;
+      }
+
+      // --------------------------------------------------------
+      // AMOUNT CHECK
+      // --------------------------------------------------------
+
+      if (
+        itemsPrice <= 0
+      ) {
+        setError(
+          "Unable to calculate the order amount."
+        );
+
+        return;
+      }
+
+      // --------------------------------------------------------
+      // PREVENT DOUBLE SUBMISSION
+      // --------------------------------------------------------
+
+      if (loading) {
+        return;
+      }
+
+      setLoading(
+        true
+      );
+
+      try {
+        // ======================================================
+        // STEP 1
+        // CREATE DATABASE ORDER
+        // ======================================================
+
+        const {
+          order,
+          orderId,
+        } =
+          await createOrderInDB();
+
+        console.log(
+          "DATABASE ORDER CREATED:",
+          order
+        );
+
+        // ======================================================
+        // COD
+        // ======================================================
 
         if (
-          !cartItems ||
-          cartItems.length === 0
+          paymentMethod ===
+          "COD"
         ) {
-          setError(
-            "Your cart is empty."
+          clearCart();
+
+          navigate(
+            `/order-success/${orderId}`
           );
 
           return;
         }
 
-        // ========================================================
-        // ADDRESS CHECK
-        // ========================================================
+        // ======================================================
+        // RAZORPAY
+        // ======================================================
 
-        const addressError =
-          validateAddress();
-
-        if (addressError) {
-          setError(
-            addressError
-          );
-
-          return;
-        }
-
-        // ========================================================
-        // QUOTATION LOADING
-        // ========================================================
-
-        if (isWholesaleOrder && loadingQuotation) {
-          setError("Please wait while the quotation is loaded.");
-          return;
-        }
-
-        if (isWholesaleOrder && !quotation) {
-          setError("Unable to load the accepted quotation.");
-          return;
-        }
-
-        // ========================================================
-        // PRICE LOADING
-        // ========================================================
-
-        if (!isWholesaleOrder && loadingPricing) {
-          setError(
-            "Please wait while prices are calculated."
-          );
-
-          return;
-        }
-
-        // ========================================================
-        // PRICE CHECK
-        // ========================================================
-
-        if (itemsPrice <= 0) {
-          setError(
-            "Unable to calculate the order amount."
-          );
-
-          return;
-        }
-
-        // ========================================================
-        // START
-        // ========================================================
-
-        setLoading(true);
-
-        try {
-          // ======================================================
-          // STEP 1
-          // CREATE DATABASE ORDER
-          // ======================================================
-
-          const {
-            order,
-            orderId,
-          } =
-            await createOrderInDB();
-
-          console.log(
-            "DATABASE ORDER CREATED:",
-            order
-          );
-
-          console.log(
-            "DATABASE ORDER ID:",
+        if (
+          paymentMethod ===
+          "Razorpay"
+        ) {
+          await openRazorpayCheckout(
             orderId
           );
 
-          // ======================================================
-          // COD
-          // ======================================================
-
-          if (
-            paymentMethod ===
-            "COD"
-          ) {
-            clearCart();
-
-            navigate(
-              `/order-success/${orderId}`
-            );
-
-            return;
-          }
-
-          // ======================================================
-          // RAZORPAY
-          // ======================================================
-
-          if (
-            paymentMethod ===
-            "Razorpay"
-          ) {
-            // ====================================================
-            // STEP 2
-            // CREATE RAZORPAY ORDER
-            // ====================================================
-
-            await openRazorpayCheckout(
-              orderId
-            );
-
-            return;
-          }
-
-          throw new Error(
-            "Invalid payment method selected."
-          );
-        } catch (err) {
-          console.error(
-            "PLACE ORDER ERROR:",
-            err
-          );
-
-          const backendMessage =
-            err?.response?.data
-              ?.message;
-
-          setError(
-            backendMessage ||
-              err?.message ||
-              "Failed to place order."
-          );
-
-          setLoading(false);
+          return;
         }
-      };
 
-    // ============================================================
-    // EMPTY CART
-    // ============================================================
+        throw new Error(
+          "Invalid payment method selected."
+        );
+      } catch (
+        err
+      ) {
+        console.error(
+          "PLACE ORDER ERROR:",
+          err
+        );
 
-    if (
-      !cartItems ||
-      cartItems.length === 0
-    ) {
-      return (
-        <div className="max-w-3xl mx-auto px-4 py-20">
-          <div className="bg-white border border-slate-200 rounded-2xl p-10 text-center shadow-sm">
-            <div className="text-5xl mb-4">
-              🛒
-            </div>
+        const backendMessage =
+          err?.response?.data
+            ?.message;
 
-            <h1 className="text-2xl font-bold text-slate-800">
-              Your cart is empty
-            </h1>
+        setError(
+          backendMessage ||
+            err?.message ||
+            "Failed to place order."
+        );
 
-            <p className="text-slate-500 mt-2">
-              Add some products before
-              proceeding to checkout.
-            </p>
+        setLoading(
+          false
+        );
+      }
+    };
 
-            <button
-              type="button"
-              onClick={() =>
-                navigate(
-                  "/products"
-                )
-              }
-              className="mt-6 px-6 py-3 bg-teal-600 text-white rounded-lg font-medium hover:bg-teal-700 transition"
-            >
-              Continue Shopping
-            </button>
-          </div>
-        </div>
-      );
-    }
+  // ============================================================
+  // EMPTY CART
+  // ============================================================
+  // IMPORTANT:
+  // Wholesale quotation checkout can work without cartItems.
+  // ============================================================
 
-    // ============================================================
-    // INPUT CLASS
-    // ============================================================
-
-    const inputClass =
-      "w-full border border-slate-300 rounded-lg px-4 py-3 text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent";
-
-    // ============================================================
-    // UI
-    // ============================================================
-
+  if (
+    !isWholesaleOrder &&
+    (!cartItems ||
+      cartItems.length === 0)
+  ) {
     return (
-      <section className="min-h-screen bg-slate-50 py-10">
-        <div className="max-w-6xl mx-auto px-4">
+      <div className="max-w-3xl mx-auto px-4 py-20">
+        <div className="bg-white border border-slate-200 rounded-2xl p-10 text-center shadow-sm">
 
-          {/* ======================================================
-              HEADER
-          ====================================================== */}
+          <div className="text-5xl mb-4">
+            🛒
+          </div>
 
-          <div className="mb-8">
-            <p className="text-sm text-teal-600 font-semibold uppercase tracking-wide">
-              Shanti Enterprises
-            </p>
+          <h1 className="text-2xl font-bold text-slate-800">
+            Your cart is empty
+          </h1>
 
-            <h1 className="text-3xl font-bold text-slate-900 mt-1">
-              Checkout
+          <p className="text-slate-500 mt-2">
+            Add some products before
+            proceeding to checkout.
+          </p>
+
+          <button
+            type="button"
+            onClick={() =>
+              navigate(
+                "/products"
+              )
+            }
+            className="mt-6 px-6 py-3 bg-teal-600 text-white rounded-lg font-medium hover:bg-teal-700 transition"
+          >
+            Continue Shopping
+          </button>
+
+        </div>
+      </div>
+    );
+  }
+
+  // ============================================================
+  // LOADING WHOLESALE QUOTATION
+  // ============================================================
+
+  if (
+    isWholesaleOrder &&
+    loadingQuotation
+  ) {
+    return (
+      <section className="min-h-screen bg-slate-50 py-20">
+        <div className="max-w-3xl mx-auto px-4">
+          <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-10 text-center">
+
+            <div className="w-10 h-10 border-4 border-slate-200 border-t-teal-600 rounded-full animate-spin mx-auto" />
+
+            <h1 className="text-xl font-bold text-slate-800 mt-5">
+              Loading quotation...
             </h1>
 
             <p className="text-slate-500 mt-2">
-              {isWholesaleOrder
-                ? "Complete your shipping details and place your wholesale order."
-                : "Complete your shipping details and place your order."}
+              Please wait while we prepare
+              your wholesale order.
             </p>
-          </div>
-
-          {/* ======================================================
-              ERROR
-          ====================================================== */}
-
-          {error && (
-            <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
-              <p className="text-sm font-medium text-red-700">
-                {error}
-              </p>
-            </div>
-          )}
-
-          {/* ======================================================
-              SUCCESS
-          ====================================================== */}
-
-          {successMessage && (
-            <div className="mb-6 rounded-xl border border-green-200 bg-green-50 px-4 py-3">
-              <p className="text-sm font-medium text-green-700">
-                {successMessage}
-              </p>
-            </div>
-          )}
-
-          {/* ======================================================
-              MAIN GRID
-          ====================================================== */}
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-            {/* ====================================================
-                CHECKOUT FORM
-            ==================================================== */}
-
-            <div className="lg:col-span-2">
-              <form
-                onSubmit={
-                  handlePlaceOrder
-                }
-                className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 md:p-8"
-              >
-
-                {/* ==================================================
-                    SHIPPING ADDRESS
-                ================================================== */}
-
-                <div className="mb-8">
-                  <h2 className="text-xl font-bold text-slate-800">
-                    Shipping Address
-                  </h2>
-
-                  <p className="text-sm text-slate-500 mt-1">
-                    Enter the address where you
-                    want the order delivered.
-                  </p>
-                </div>
-
-                {/* NAME */}
-
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Full Name
-                  </label>
-
-                  <input
-                    type="text"
-                    name="name"
-                    value={
-                      address.name
-                    }
-                    onChange={
-                      handleChange
-                    }
-                    placeholder="Enter full name"
-                    className={
-                      inputClass
-                    }
-                    required
-                  />
-                </div>
-
-                {/* PHONE */}
-
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Phone Number
-                  </label>
-
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={
-                      address.phone
-                    }
-                    onChange={
-                      handleChange
-                    }
-                    placeholder="Enter phone number"
-                    className={
-                      inputClass
-                    }
-                    required
-                  />
-                </div>
-
-                {/* ADDRESS LINE 1 */}
-
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Address
-                  </label>
-
-                  <input
-                    type="text"
-                    name="addressLine1"
-                    value={
-                      address.addressLine1
-                    }
-                    onChange={
-                      handleChange
-                    }
-                    placeholder="House / Building / Street"
-                    className={
-                      inputClass
-                    }
-                    required
-                  />
-                </div>
-
-                {/* ADDRESS LINE 2 */}
-
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Address Line 2
-                    <span className="text-slate-400 font-normal">
-                      {" "}
-                      (Optional)
-                    </span>
-                  </label>
-
-                  <input
-                    type="text"
-                    name="addressLine2"
-                    value={
-                      address.addressLine2
-                    }
-                    onChange={
-                      handleChange
-                    }
-                    placeholder="Landmark / Area"
-                    className={
-                      inputClass
-                    }
-                  />
-                </div>
-
-                {/* CITY + STATE */}
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      City
-                    </label>
-
-                    <input
-                      type="text"
-                      name="city"
-                      value={
-                        address.city
-                      }
-                      onChange={
-                        handleChange
-                      }
-                      placeholder="City"
-                      className={
-                        inputClass
-                      }
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      State
-                    </label>
-
-                    <input
-                      type="text"
-                      name="state"
-                      value={
-                        address.state
-                      }
-                      onChange={
-                        handleChange
-                      }
-                      placeholder="State"
-                      className={
-                        inputClass
-                      }
-                      required
-                    />
-                  </div>
-
-                </div>
-
-                {/* POSTAL + COUNTRY */}
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      Postal Code
-                    </label>
-
-                    <input
-                      type="text"
-                      name="postalCode"
-                      value={
-                        address.postalCode
-                      }
-                      onChange={
-                        handleChange
-                      }
-                      placeholder="411014"
-                      className={
-                        inputClass
-                      }
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      Country
-                    </label>
-
-                    <input
-                      type="text"
-                      name="country"
-                      value={
-                        address.country
-                      }
-                      onChange={
-                        handleChange
-                      }
-                      className={
-                        inputClass
-                      }
-                      required
-                    />
-                  </div>
-
-                </div>
-
-                {/* ==================================================
-                    PAYMENT METHOD
-                ================================================== */}
-
-                <div className="border-t border-slate-200 pt-8">
-
-                  <h2 className="text-xl font-bold text-slate-800">
-                    Payment Method
-                  </h2>
-
-                  <p className="text-sm text-slate-500 mt-1 mb-5">
-                    Select how you want to pay.
-                  </p>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-                    {/* COD */}
-
-                    <label
-                      className={`cursor-pointer rounded-xl border p-4 transition ${
-                        paymentMethod ===
-                        "COD"
-                          ? "border-teal-500 bg-teal-50"
-                          : "border-slate-200 hover:border-slate-300"
-                      }`}
-                    >
-                      <div className="flex items-start gap-3">
-
-                        <input
-                          type="radio"
-                          name="paymentMethod"
-                          value="COD"
-                          checked={
-                            paymentMethod ===
-                            "COD"
-                          }
-                          onChange={(e) =>
-                            setPaymentMethod(
-                              e.target.value
-                            )
-                          }
-                          className="mt-1"
-                        />
-
-                        <div>
-                          <p className="font-semibold text-slate-800">
-                            Cash on Delivery
-                          </p>
-
-                          <p className="text-sm text-slate-500 mt-1">
-                            Pay when your order
-                            is delivered.
-                          </p>
-                        </div>
-
-                      </div>
-                    </label>
-
-                    {/* RAZORPAY */}
-
-                    <label
-                      className={`cursor-pointer rounded-xl border p-4 transition ${
-                        paymentMethod ===
-                        "Razorpay"
-                          ? "border-teal-500 bg-teal-50"
-                          : "border-slate-200 hover:border-slate-300"
-                      }`}
-                    >
-                      <div className="flex items-start gap-3">
-
-                        <input
-                          type="radio"
-                          name="paymentMethod"
-                          value="Razorpay"
-                          checked={
-                            paymentMethod ===
-                            "Razorpay"
-                          }
-                          onChange={(e) =>
-                            setPaymentMethod(
-                              e.target.value
-                            )
-                          }
-                          className="mt-1"
-                        />
-
-                        <div>
-                          <p className="font-semibold text-slate-800">
-                            Online Payment
-                          </p>
-
-                          <p className="text-sm text-slate-500 mt-1">
-                            Pay securely using
-                            Razorpay.
-                          </p>
-                        </div>
-
-                      </div>
-                    </label>
-
-                  </div>
-                </div>
-
-                {/* ==================================================
-                    PLACE ORDER
-                ================================================== */}
-
-                <button
-                  type="submit"
-                  disabled={
-                    loading ||
-                    loadingPricing
-                  }
-                  className="w-full mt-8 bg-teal-600 text-white py-3.5 rounded-xl hover:bg-teal-700 transition font-semibold disabled:bg-slate-300 disabled:cursor-not-allowed"
-                >
-                  {loading
-                    ? "Processing..."
-                    : loadingPricing
-                    ? "Calculating Prices..."
-                    : paymentMethod ===
-                      "Razorpay"
-                    ? "Proceed to Payment"
-                    : isWholesaleOrder
-                    ? "Place Wholesale Order"
-                    : "Place Order"}
-                </button>
-
-              </form>
-            </div>
-
-            {/* ====================================================
-                ORDER SUMMARY
-            ==================================================== */}
-
-            <aside className="lg:col-span-1">
-              <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 sticky top-6">
-
-                <h2 className="text-xl font-bold text-slate-800 mb-5">
-                  Order Summary
-                </h2>
-
-                {isWholesaleOrder && quotation && (
-                  <div className="mb-5 rounded-xl border border-teal-200 bg-teal-50 p-4">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-teal-700">
-                      Wholesale Quotation
-                    </p>
-                    <p className="text-sm font-semibold text-slate-800 mt-1">
-                      {quotation.quotationNumber || quotation._id}
-                    </p>
-                    <p className="text-xs text-slate-500 mt-1">
-                      Accepted quotation pricing will be used for this order.
-                    </p>
-                  </div>
-                )}
-
-                {/* ITEMS */}
-
-                <div className="space-y-4">
-
-                  {checkoutItems.map(
-                    (
-                      item,
-                      index
-                    ) => {
-                      const productId =
-                        getProductId(
-                          item
-                        );
-
-                      const itemPricing = isWholesaleOrder
-                        ? {
-                            unitPrice: Number(item?.price || 0),
-                            subtotal:
-                              Number(item?.price || 0) *
-                              Number(item?.quantity || 1),
-                          }
-                        : pricing[productId];
-
-                      const quantity =
-                        Number(
-                          item?.quantity ||
-                            1
-                        );
-
-                      const unitPrice =
-                        Number(
-                          itemPricing?.unitPrice ??
-                            item?.price ??
-                            item?.product
-                              ?.price ??
-                            0
-                        );
-
-                      const subtotal =
-                        Number(
-                          itemPricing?.subtotal ??
-                            unitPrice *
-                              quantity
-                        );
-
-                      const image =
-                        item?.image ||
-                        item?.product
-                          ?.image ||
-                        "https://via.placeholder.com/100";
-
-                      const name =
-                        item?.name ||
-                        item?.product
-                          ?.name ||
-                        "Product";
-
-                      return (
-                        <div
-                          key={
-                            productId ||
-                            index
-                          }
-                          className="flex gap-3 border-b border-slate-100 pb-4"
-                        >
-
-                          <img
-                            src={image}
-                            alt={name}
-                            className="w-16 h-16 rounded-lg object-cover bg-slate-100"
-                          />
-
-                          <div className="flex-1 min-w-0">
-
-                            <p className="font-medium text-sm text-slate-800 line-clamp-2">
-                              {name}
-                            </p>
-
-                            <p className="text-xs text-slate-500 mt-1">
-                              Qty:{" "}
-                              {quantity}
-                            </p>
-
-                            <p className="text-xs text-slate-500">
-                              ₹
-                              {unitPrice.toLocaleString(
-                                "en-IN"
-                              )}{" "}
-                              / unit
-                            </p>
-
-                          </div>
-
-                          <div className="text-sm font-semibold text-slate-800 whitespace-nowrap">
-                            ₹
-                            {subtotal.toLocaleString(
-                              "en-IN"
-                            )}
-                          </div>
-
-                        </div>
-                      );
-                    }
-                  )}
-
-                </div>
-
-                {/* ==================================================
-                    PRICE BREAKDOWN
-                ================================================== */}
-
-                <div className="border-t border-slate-200 mt-5 pt-5 space-y-3">
-
-                  <div className="flex justify-between text-sm text-slate-600">
-                    <span>
-                      Products
-                    </span>
-
-                    <span>
-                      ₹
-                      {itemsPrice.toLocaleString(
-                        "en-IN"
-                      )}
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between text-sm text-slate-600">
-                    <span>
-                      Shipping
-                    </span>
-
-                    <span>
-                      ₹
-                      {shippingPrice.toLocaleString(
-                        "en-IN"
-                      )}
-                    </span>
-                  </div>
-
-                  <div className="border-t border-slate-200 pt-4 flex justify-between">
-
-                    <span className="text-lg font-bold text-slate-800">
-                      Total
-                    </span>
-
-                    <span className="text-lg font-bold text-teal-700">
-                      ₹
-                      {totalPrice.toLocaleString(
-                        "en-IN"
-                      )}
-                    </span>
-
-                  </div>
-
-                </div>
-
-                {/* ==================================================
-                    PAYMENT INFO
-                ================================================== */}
-
-                <div className="mt-6 rounded-xl bg-slate-50 p-4">
-
-                  <p className="text-xs text-slate-500 uppercase tracking-wide">
-                    Payment
-                  </p>
-
-                  <p className="text-sm font-semibold text-slate-800 mt-1">
-                    {paymentMethod ===
-                    "Razorpay"
-                      ? "Online Payment"
-                      : "Cash on Delivery"}
-                  </p>
-
-                </div>
-
-              </div>
-            </aside>
 
           </div>
         </div>
       </section>
     );
-  };
+  }
 
-  export default CheckoutPage;
+  // ============================================================
+  // INPUT CLASS
+  // ============================================================
+
+  const inputClass =
+    "w-full border border-slate-300 rounded-lg px-4 py-3 text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent";
+
+  // ============================================================
+  // UI
+  // ============================================================
+
+  return (
+    <section className="min-h-screen bg-slate-50 py-10">
+
+      <div className="max-w-6xl mx-auto px-4">
+
+        {/* ======================================================
+            HEADER
+        ====================================================== */}
+
+        <div className="mb-8">
+
+          <p className="text-sm text-teal-600 font-semibold uppercase tracking-wide">
+            Shanti Enterprises
+          </p>
+
+          <h1 className="text-3xl font-bold text-slate-900 mt-1">
+            Checkout
+          </h1>
+
+          <p className="text-slate-500 mt-2">
+            {isWholesaleOrder
+              ? "Complete your shipping details and place your wholesale order."
+              : "Complete your shipping details and place your order."}
+          </p>
+
+        </div>
+
+        {/* ======================================================
+            ERROR
+        ====================================================== */}
+
+        {error && (
+          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+
+            <p className="text-sm font-medium text-red-700">
+              {error}
+            </p>
+
+          </div>
+        )}
+
+        {/* ======================================================
+            SUCCESS
+        ====================================================== */}
+
+        {successMessage && (
+          <div className="mb-6 rounded-xl border border-green-200 bg-green-50 px-4 py-3">
+
+            <p className="text-sm font-medium text-green-700">
+              {successMessage}
+            </p>
+
+          </div>
+        )}
+
+        {/* ======================================================
+            MAIN GRID
+        ====================================================== */}
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+          {/* ====================================================
+              CHECKOUT FORM
+          ==================================================== */}
+
+          <div className="lg:col-span-2">
+
+            <form
+              onSubmit={
+                handlePlaceOrder
+              }
+              className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 md:p-8"
+            >
+
+              {/* ==================================================
+                  SHIPPING ADDRESS
+              ================================================== */}
+
+              <div className="mb-8">
+
+                <h2 className="text-xl font-bold text-slate-800">
+                  Shipping Address
+                </h2>
+
+                <p className="text-sm text-slate-500 mt-1">
+                  Enter the address where you
+                  want the order delivered.
+                </p>
+
+              </div>
+
+              {/* NAME */}
+
+              <div className="mb-4">
+
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Full Name
+                </label>
+
+                <input
+                  type="text"
+                  name="name"
+                  value={
+                    address.name
+                  }
+                  onChange={
+                    handleChange
+                  }
+                  placeholder="Enter full name"
+                  className={
+                    inputClass
+                  }
+                  required
+                />
+
+              </div>
+
+              {/* PHONE */}
+
+              <div className="mb-4">
+
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Phone Number
+                </label>
+
+                <input
+                  type="tel"
+                  name="phone"
+                  value={
+                    address.phone
+                  }
+                  onChange={
+                    handleChange
+                  }
+                  placeholder="Enter phone number"
+                  className={
+                    inputClass
+                  }
+                  required
+                />
+
+              </div>
+
+              {/* ADDRESS LINE 1 */}
+
+              <div className="mb-4">
+
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Address
+                </label>
+
+                <input
+                  type="text"
+                  name="addressLine1"
+                  value={
+                    address.addressLine1
+                  }
+                  onChange={
+                    handleChange
+                  }
+                  placeholder="House / Building / Street"
+                  className={
+                    inputClass
+                  }
+                  required
+                />
+
+              </div>
+
+              {/* ADDRESS LINE 2 */}
+
+              <div className="mb-4">
+
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+
+                  Address Line 2
+
+                  <span className="text-slate-400 font-normal">
+                    {" "}
+                    (Optional)
+                  </span>
+
+                </label>
+
+                <input
+                  type="text"
+                  name="addressLine2"
+                  value={
+                    address.addressLine2
+                  }
+                  onChange={
+                    handleChange
+                  }
+                  placeholder="Landmark / Area"
+                  className={
+                    inputClass
+                  }
+                />
+
+              </div>
+
+              {/* CITY + STATE */}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+
+                <div>
+
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    City
+                  </label>
+
+                  <input
+                    type="text"
+                    name="city"
+                    value={
+                      address.city
+                    }
+                    onChange={
+                      handleChange
+                    }
+                    placeholder="City"
+                    className={
+                      inputClass
+                    }
+                    required
+                  />
+
+                </div>
+
+                <div>
+
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    State
+                  </label>
+
+                  <input
+                    type="text"
+                    name="state"
+                    value={
+                      address.state
+                    }
+                    onChange={
+                      handleChange
+                    }
+                    placeholder="State"
+                    className={
+                      inputClass
+                    }
+                    required
+                  />
+
+                </div>
+
+              </div>
+
+              {/* POSTAL + COUNTRY */}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+
+                <div>
+
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Postal Code
+                  </label>
+
+                  <input
+                    type="text"
+                    name="postalCode"
+                    value={
+                      address.postalCode
+                    }
+                    onChange={
+                      handleChange
+                    }
+                    placeholder="411014"
+                    className={
+                      inputClass
+                    }
+                    required
+                  />
+
+                </div>
+
+                <div>
+
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Country
+                  </label>
+
+                  <input
+                    type="text"
+                    name="country"
+                    value={
+                      address.country
+                    }
+                    onChange={
+                      handleChange
+                    }
+                    className={
+                      inputClass
+                    }
+                    required
+                  />
+
+                </div>
+
+              </div>
+
+              {/* ==================================================
+                  PAYMENT METHOD
+              ================================================== */}
+
+              <div className="border-t border-slate-200 pt-8">
+
+                <h2 className="text-xl font-bold text-slate-800">
+                  Payment Method
+                </h2>
+
+                <p className="text-sm text-slate-500 mt-1 mb-5">
+                  Select how you want to pay.
+                </p>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                  {/* COD */}
+
+                  <label
+                    className={`cursor-pointer rounded-xl border p-4 transition ${
+                      paymentMethod ===
+                      "COD"
+                        ? "border-teal-500 bg-teal-50"
+                        : "border-slate-200 hover:border-slate-300"
+                    }`}
+                  >
+
+                    <div className="flex items-start gap-3">
+
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        value="COD"
+                        checked={
+                          paymentMethod ===
+                          "COD"
+                        }
+                        onChange={(e) =>
+                          setPaymentMethod(
+                            e.target.value
+                          )
+                        }
+                        className="mt-1"
+                      />
+
+                      <div>
+
+                        <p className="font-semibold text-slate-800">
+                          Cash on Delivery
+                        </p>
+
+                        <p className="text-sm text-slate-500 mt-1">
+                          Pay when your order
+                          is delivered.
+                        </p>
+
+                      </div>
+
+                    </div>
+
+                  </label>
+
+                  {/* RAZORPAY */}
+
+                  <label
+                    className={`cursor-pointer rounded-xl border p-4 transition ${
+                      paymentMethod ===
+                      "Razorpay"
+                        ? "border-teal-500 bg-teal-50"
+                        : "border-slate-200 hover:border-slate-300"
+                    }`}
+                  >
+
+                    <div className="flex items-start gap-3">
+
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        value="Razorpay"
+                        checked={
+                          paymentMethod ===
+                          "Razorpay"
+                        }
+                        onChange={(e) =>
+                          setPaymentMethod(
+                            e.target.value
+                          )
+                        }
+                        className="mt-1"
+                      />
+
+                      <div>
+
+                        <p className="font-semibold text-slate-800">
+                          Online Payment
+                        </p>
+
+                        <p className="text-sm text-slate-500 mt-1">
+                          Pay securely using
+                          Razorpay.
+                        </p>
+
+                      </div>
+
+                    </div>
+
+                  </label>
+
+                </div>
+
+              </div>
+
+              {/* ==================================================
+                  PLACE ORDER
+              ================================================== */}
+
+              <button
+                type="submit"
+                disabled={
+                  loading ||
+                  loadingPricing ||
+                  loadingQuotation
+                }
+                className="w-full mt-8 bg-teal-600 text-white py-3.5 rounded-xl hover:bg-teal-700 transition font-semibold disabled:bg-slate-300 disabled:cursor-not-allowed"
+              >
+
+                {loading
+                  ? "Processing..."
+                  : loadingPricing ||
+                    loadingQuotation
+                  ? "Preparing Order..."
+                  : paymentMethod ===
+                    "Razorpay"
+                  ? "Proceed to Payment"
+                  : isWholesaleOrder
+                  ? "Place Wholesale Order"
+                  : "Place Order"}
+
+              </button>
+
+            </form>
+
+          </div>
+
+          {/* ====================================================
+              ORDER SUMMARY
+          ==================================================== */}
+
+          <aside className="lg:col-span-1">
+
+            <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 sticky top-6">
+
+              <h2 className="text-xl font-bold text-slate-800 mb-5">
+                Order Summary
+              </h2>
+
+              {/* WHOLESALE QUOTATION */}
+
+              {isWholesaleOrder &&
+                quotation && (
+                  <div className="mb-5 rounded-xl border border-teal-200 bg-teal-50 p-4">
+
+                    <p className="text-xs font-semibold uppercase tracking-wide text-teal-700">
+                      Wholesale Quotation
+                    </p>
+
+                    <p className="text-sm font-semibold text-slate-800 mt-1">
+                      {quotation.quotationNumber ||
+                        quotation._id}
+                    </p>
+
+                    <p className="text-xs text-slate-500 mt-1">
+                      Accepted quotation pricing
+                      will be used for this order.
+                    </p>
+
+                  </div>
+                )}
+
+              {/* ITEMS */}
+
+              <div className="space-y-4">
+
+                {checkoutItems.map(
+                  (
+                    item,
+                    index
+                  ) => {
+                    const productId =
+                      getProductId(
+                        item
+                      );
+
+                    const itemPricing =
+                      isWholesaleOrder
+                        ? null
+                        : pricing[
+                            productId
+                          ];
+
+                    const quantity =
+                      Number(
+                        item?.quantity ||
+                          1
+                      );
+
+                    const unitPrice =
+                      Number(
+                        itemPricing
+                          ?.unitPrice ??
+                          item?.price ??
+                          item?.product
+                            ?.price ??
+                          0
+                      );
+
+                    const subtotal =
+                      Number(
+                        itemPricing
+                          ?.subtotal ??
+                          unitPrice *
+                            quantity
+                      );
+
+                    const image =
+                      item?.image ||
+                      item?.product
+                        ?.image ||
+                      item?.product
+                        ?.images?.[0] ||
+                      "https://via.placeholder.com/100";
+
+                    const name =
+                      item?.name ||
+                      item?.product
+                        ?.name ||
+                      "Product";
+
+                    return (
+                      <div
+                        key={
+                          productId ||
+                          index
+                        }
+                        className="flex gap-3 border-b border-slate-100 pb-4"
+                      >
+
+                        <img
+                          src={
+                            image
+                          }
+                          alt={
+                            name
+                          }
+                          className="w-16 h-16 rounded-lg object-cover bg-slate-100"
+                        />
+
+                        <div className="flex-1 min-w-0">
+
+                          <p className="font-medium text-sm text-slate-800 line-clamp-2">
+                            {name}
+                          </p>
+
+                          <p className="text-xs text-slate-500 mt-1">
+                            Qty:{" "}
+                            {quantity}
+                          </p>
+
+                          <p className="text-xs text-slate-500">
+                            ₹
+                            {unitPrice.toLocaleString(
+                              "en-IN"
+                            )}{" "}
+                            / unit
+                          </p>
+
+                        </div>
+
+                        <div className="text-sm font-semibold text-slate-800 whitespace-nowrap">
+                          ₹
+                          {subtotal.toLocaleString(
+                            "en-IN"
+                          )}
+                        </div>
+
+                      </div>
+                    );
+                  }
+                )}
+
+              </div>
+
+              {/* PRICE BREAKDOWN */}
+
+              <div className="border-t border-slate-200 mt-5 pt-5 space-y-3">
+
+                <div className="flex justify-between text-sm text-slate-600">
+
+                  <span>
+                    Products
+                  </span>
+
+                  <span>
+                    ₹
+                    {itemsPrice.toLocaleString(
+                      "en-IN"
+                    )}
+                  </span>
+
+                </div>
+
+                <div className="flex justify-between text-sm text-slate-600">
+
+                  <span>
+                    Shipping
+                  </span>
+
+                  <span>
+                    ₹
+                    {shippingPrice.toLocaleString(
+                      "en-IN"
+                    )}
+                  </span>
+
+                </div>
+
+                <div className="border-t border-slate-200 pt-4 flex justify-between">
+
+                  <span className="text-lg font-bold text-slate-800">
+                    Total
+                  </span>
+
+                  <span className="text-lg font-bold text-teal-700">
+                    ₹
+                    {totalPrice.toLocaleString(
+                      "en-IN"
+                    )}
+                  </span>
+
+                </div>
+
+              </div>
+
+              {/* PAYMENT INFO */}
+
+              <div className="mt-6 rounded-xl bg-slate-50 p-4">
+
+                <p className="text-xs text-slate-500 uppercase tracking-wide">
+                  Payment
+                </p>
+
+                <p className="text-sm font-semibold text-slate-800 mt-1">
+                  {paymentMethod ===
+                  "Razorpay"
+                    ? "Online Payment"
+                    : "Cash on Delivery"}
+                </p>
+
+              </div>
+
+            </div>
+
+          </aside>
+
+        </div>
+
+      </div>
+
+    </section>
+  );
+};
+
+export default CheckoutPage;
