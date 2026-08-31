@@ -1587,7 +1587,7 @@ function QuotationDetailsPage() {
               <p
                 style={{
                   margin:
-                    0,
+                    "0 0 16px",
                   color:
                     "#047857",
                   lineHeight:
@@ -1597,6 +1597,23 @@ function QuotationDetailsPage() {
                 You have accepted this
                 quotation successfully.
               </p>
+
+              <button
+                type="button"
+                onClick={() =>
+                  navigate(
+                    `/checkout?quotationId=${quotationId}`
+                  )
+                }
+                style={{
+                  width:
+                    "100%",
+                  marginTop:
+                    "10px",
+                }}
+              >
+                Proceed to Order
+              </button>
 
             </section>
           )}

@@ -2,12 +2,13 @@
 // SHANTI ENTERPRISES
 // Order API
 // Frontend Phase 3 - Customer
+// Updated - Wholesale Quotation Order Support
 // ============================================================
 
 import api from "./axios";
 
 // ============================================================
-// CREATE ORDER
+// CREATE NORMAL ORDER
 // ============================================================
 
 export const createOrder = async (
@@ -22,7 +23,28 @@ export const createOrder = async (
 };
 
 // ============================================================
+// CREATE ORDER FROM ACCEPTED QUOTATION
+// ============================================================
+// Backend Route:
+// POST /api/orders/from-quotation
+// ============================================================
+
+export const createOrderFromQuotation =
+  async (
+    orderData
+  ) => {
+    const response =
+      await api.post(
+        "/orders/from-quotation",
+        orderData
+      );
+
+    return response.data;
+  };
+
+// ============================================================
 // GET MY ORDERS
+// ============================================================
 // Backend Route:
 // GET /api/orders
 // ============================================================
@@ -30,18 +52,20 @@ export const createOrder = async (
 export const getMyOrders = async (
   params = {}
 ) => {
-  const response = await api.get(
-    "/orders",
-    {
-      params,
-    }
-  );
+  const response =
+    await api.get(
+      "/orders",
+      {
+        params,
+      }
+    );
 
   return response.data;
 };
 
 // ============================================================
 // GET ORDER BY ID
+// ============================================================
 // Backend Route:
 // GET /api/orders/:id
 // ============================================================
@@ -55,9 +79,10 @@ export const getOrderById = async (
     );
   }
 
-  const response = await api.get(
-    `/orders/${orderId}`
-  );
+  const response =
+    await api.get(
+      `/orders/${orderId}`
+    );
 
   return response.data;
 };

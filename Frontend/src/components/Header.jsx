@@ -2,6 +2,7 @@
 // SHANTI ENTERPRISES
 // Header
 // Frontend Phase 2 - Shopping
+// Updated - RFQ + Quotation Navigation
 // ============================================================
 
 import {
@@ -10,7 +11,7 @@ import {
 
 import {
   useAuth,
-} from "../../context/AuthContext";
+} from "../context/AuthContext";
 
 // ============================================================
 // HEADER
@@ -23,11 +24,17 @@ function Header() {
     logout,
   } = useAuth();
 
+  const isAdmin =
+    user?.role === "admin";
+
   return (
     <header className="app-header">
+
       <div className="app-header-inner">
 
-        {/* Brand */}
+        {/* ==================================================
+            BRAND
+            ================================================== */}
 
         <Link
           to="/"
@@ -36,9 +43,13 @@ function Header() {
           Shanti Enterprises
         </Link>
 
-        {/* Navigation */}
+        {/* ==================================================
+            NAVIGATION
+            ================================================== */}
 
         <nav className="app-nav">
+
+          {/* PUBLIC */}
 
           <Link to="/">
             Home
@@ -48,17 +59,95 @@ function Header() {
             Categories
           </Link>
 
+          <Link to="/products">
+            Products
+          </Link>
+
+          <Link to="/cart">
+            Cart
+          </Link>
+
+          {/* ==================================================
+              AUTHENTICATED USER
+              ================================================== */}
+
           {isAuthenticated ? (
             <>
+
               <span>
-                Welcome, {user?.name}
+                Welcome,{" "}
+                {user?.name ||
+                  user?.email ||
+                  "User"}
               </span>
 
-              {user?.role === "admin" && (
-                <Link to="/admin/test">
-                  Admin
-                </Link>
+              {/* ==================================================
+                  CUSTOMER NAVIGATION
+                  ================================================== */}
+
+              {!isAdmin && (
+                <>
+
+                  <Link to="/dashboard">
+                    Dashboard
+                  </Link>
+
+                  <Link to="/orders">
+                    Orders
+                  </Link>
+
+                  <Link to="/rfqs">
+                    RFQs
+                  </Link>
+
+                  <Link to="/quotations">
+                    Quotations
+                  </Link>
+
+                  <Link to="/profile">
+                    Profile
+                  </Link>
+
+                </>
               )}
+
+              {/* ==================================================
+                  ADMIN NAVIGATION
+                  ================================================== */}
+
+              {isAdmin && (
+                <>
+
+                  <Link to="/admin">
+                    Admin Dashboard
+                  </Link>
+
+                  <Link to="/admin/products">
+                    Products
+                  </Link>
+
+                  <Link to="/admin/orders">
+                    Orders
+                  </Link>
+
+                  <Link to="/admin/rfqs">
+                    RFQs
+                  </Link>
+
+                  <Link to="/admin/quotations">
+                    Quotations
+                  </Link>
+
+                  <Link to="/admin/users">
+                    Users
+                  </Link>
+
+                </>
+              )}
+
+              {/* ==================================================
+                  LOGOUT
+                  ================================================== */}
 
               <button
                 type="button"
@@ -66,8 +155,13 @@ function Header() {
               >
                 Logout
               </button>
+
             </>
           ) : (
+            /* ==================================================
+               GUEST
+               ================================================== */
+
             <Link to="/login">
               Login
             </Link>
@@ -76,8 +170,13 @@ function Header() {
         </nav>
 
       </div>
+
     </header>
   );
 }
+
+// ============================================================
+// EXPORT
+// ============================================================
 
 export default Header;

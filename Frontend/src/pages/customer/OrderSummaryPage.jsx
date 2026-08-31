@@ -5,8 +5,13 @@
 // ============================================================
 
 import {
+  useEffect,
   useState,
 } from "react";
+
+import {
+  useSearchParams,
+} from "react-router-dom";
 
 import {
   Link,
@@ -23,7 +28,12 @@ import {
 
 import {
   createOrder,
+  createOrderFromQuotation,
 } from "../../api/orderApi";
+
+import {
+  getQuotationById,
+} from "../../api/quotationApi";
 
 // ============================================================
 // ORDER SUMMARY PAGE
@@ -32,6 +42,21 @@ import {
 function OrderSummaryPage() {
   const navigate =
     useNavigate();
+
+  const [searchParams] =
+    useSearchParams();
+
+  const quotationId =
+    searchParams.get("quotationId");
+
+  const isQuotationOrder =
+    Boolean(quotationId);
+
+  const [quotation, setQuotation] =
+    useState(null);
+
+  const [quotationLoading, setQuotationLoading] =
+    useState(isQuotationOrder);
 
   const {
     cartItems,
@@ -42,6 +67,116 @@ function OrderSummaryPage() {
   const {
     selectedAddress,
   } = useAddress();
+
+  useEffect(() => {
+    if (!isQuotationOrder) {
+      setQuotationLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadQuotation = async () => {
+      try {
+        setQuotationLoading(true);
+        const response =
+          await getQuotationById(quotationId);
+
+        const receivedQuotation =
+          response?.quotation ||
+          response?.data?.quotation ||
+          response?.data ||
+          response;
+
+        if (!receivedQuotation) {
+          throw new Error(
+            "Quotation data was not found."
+          );
+        }
+
+        if (!cancelled) {
+          setQuotation(
+            receivedQuotation
+          );
+        }
+      } catch (err) {
+        console.error(
+          "Load quotation for order summary error:",
+          err
+        );
+
+        if (!cancelled) {
+          setError(
+            err?.response?.data?.message ||
+            err?.message ||
+            "Unable to load quotation."
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setQuotationLoading(false);
+        }
+      }
+    };
+
+    loadQuotation();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [quotationId, isQuotationOrder]);
+
+  const quotationItems =
+    Array.isArray(quotation?.items)
+      ? quotation.items
+      : [];
+
+  const displayItems = isQuotationOrder
+    ? quotationItems.map((item) => ({
+        productId:
+          item.product?._id ||
+          item.product ||
+          item.productId,
+        name:
+          item.productName ||
+          item.product?.name ||
+          "Product",
+        image:
+          item.product?.images?.[0] ||
+          item.product?.image ||
+          "",
+        quantity:
+          Number(item.quantity) || 0,
+        price:
+          Number(item.unitPrice) || 0,
+        unit:
+          item.unit ||
+          item.product?.unit ||
+          "piece",
+      }))
+    : cartItems;
+
+  const displayTotalItems = isQuotationOrder
+    ? quotationItems.reduce(
+        (total, item) =>
+          total + Number(item.quantity || 0),
+        0
+      )
+    : totalItems;
+
+  const displaySubtotal = isQuotationOrder
+    ? Number(
+        quotation?.totalAmount ??
+        quotation?.subtotal ??
+        quotationItems.reduce(
+          (total, item) =>
+            total +
+            Number(item.quantity || 0) *
+              Number(item.unitPrice || 0),
+          0
+        )
+      )
+    : Number(subtotal);
 
   const [
     paymentMethod,
@@ -59,10 +194,41 @@ function OrderSummaryPage() {
   ] = useState("");
 
   // ==========================================================
+  // QUOTATION LOADING
+  // ==========================================================
+
+  if (
+    isQuotationOrder &&
+    quotationLoading
+  ) {
+    return (
+      <section className="order-summary-page">
+        <div className="order-summary-container">
+          <div className="order-summary-empty">
+            <div className="order-summary-empty-icon">
+              🧾
+            </div>
+            <span className="order-summary-eyebrow">
+              ORDER SUMMARY
+            </span>
+            <h1>
+              Loading quotation...
+            </h1>
+            <p>
+              Please wait while we prepare your quotation order.
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // ==========================================================
   // EMPTY CART
   // ==========================================================
 
   if (
+    !isQuotationOrder &&
     cartItems.length === 0
   ) {
     return (
@@ -161,7 +327,7 @@ function OrderSummaryPage() {
         setError("");
 
         // ------------------------------------------------------
-        // ORDER ITEMS
+        // NORMAL CART ORDER ITEMS
         // ------------------------------------------------------
 
         const orderItems =
@@ -204,10 +370,11 @@ function OrderSummaryPage() {
           );
 
         // ------------------------------------------------------
-        // VALIDATE ITEMS
+        // VALIDATE CART ONLY FOR NORMAL ORDERS
         // ------------------------------------------------------
 
         if (
+          !isQuotationOrder &&
           orderItems.length === 0
         ) {
           throw new Error(
@@ -215,18 +382,20 @@ function OrderSummaryPage() {
           );
         }
 
-        const invalidItem =
-          orderItems.find(
-            (item) =>
-              !item.product ||
-              item.quantity <= 0 ||
-              item.price < 0
-          );
+        if (!isQuotationOrder) {
+          const invalidItem =
+            orderItems.find(
+              (item) =>
+                !item.product ||
+                item.quantity <= 0 ||
+                item.price < 0
+            );
 
-        if (invalidItem) {
-          throw new Error(
-            "One or more cart items are invalid."
-          );
+          if (invalidItem) {
+            throw new Error(
+              "One or more cart items are invalid."
+            );
+          }
         }
 
         // ------------------------------------------------------
@@ -282,21 +451,27 @@ function OrderSummaryPage() {
         // ------------------------------------------------------
 
         const response =
-          await createOrder({
-            items:
-              orderItems,
+          isQuotationOrder
+            ? await createOrderFromQuotation({
+                quotationId,
+                shippingAddress,
+                paymentMethod,
+              })
+            : await createOrder({
+                items:
+                  orderItems,
 
-            shippingAddress,
+                shippingAddress,
 
-            subtotal:
-              Number(subtotal),
+                subtotal:
+                  Number(subtotal),
 
-            totalAmount:
-              Number(subtotal),
+                totalAmount:
+                  Number(subtotal),
 
-            paymentMethod:
-              paymentMethod,
-          });
+                paymentMethod:
+                  paymentMethod,
+              });
 
         // ------------------------------------------------------
         // GET CREATED ORDER
@@ -401,11 +576,11 @@ function OrderSummaryPage() {
           <div className="order-summary-items-count">
 
             <strong>
-              {totalItems}
+              {displayTotalItems}
             </strong>
 
             <span>
-              {totalItems === 1
+              {displayTotalItems === 1
                 ? "Item"
                 : "Items"}
             </span>
@@ -602,9 +777,9 @@ function OrderSummaryPage() {
                 </div>
 
                 <span className="order-summary-product-count">
-                  {cartItems.length}{" "}
+                  {displayItems.length}{" "}
                   product
-                  {cartItems.length !== 1
+                  {displayItems.length !== 1
                     ? "s"
                     : ""}
                 </span>
@@ -613,7 +788,7 @@ function OrderSummaryPage() {
 
               <div className="order-summary-products">
 
-                {cartItems.map(
+                {displayItems.map(
                   (item) => {
 
                     const price =
@@ -705,7 +880,7 @@ function OrderSummaryPage() {
                 ================================================== */}
 
             <Link
-              to="/checkout"
+              to={isQuotationOrder ? `/checkout?quotationId=${quotationId}` : "/checkout"}
               className="order-summary-back-link"
             >
               ← Back to Checkout
@@ -738,7 +913,7 @@ function OrderSummaryPage() {
               </span>
 
               <strong>
-                {totalItems}
+                {displayTotalItems}
               </strong>
 
             </div>
@@ -751,7 +926,7 @@ function OrderSummaryPage() {
 
               <strong>
                 ₹
-                {subtotal.toLocaleString(
+                {displaySubtotal.toLocaleString(
                   "en-IN"
                 )}
               </strong>
@@ -768,7 +943,7 @@ function OrderSummaryPage() {
 
               <strong>
                 ₹
-                {subtotal.toLocaleString(
+                {displaySubtotal.toLocaleString(
                   "en-IN"
                 )}
               </strong>

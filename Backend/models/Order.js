@@ -2,6 +2,7 @@
 // SHANTI ENTERPRISES
 // Order Model
 // Phase 2 - Shopping
+// Updated - Wholesale Order Support
 // ============================================================
 
 const mongoose = require("mongoose");
@@ -138,6 +139,28 @@ const orderSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
+      index: true,
+    },
+
+    // --------------------------------------------------------
+    // WHOLESALE QUOTATION REFERENCE
+    // --------------------------------------------------------
+
+    quotation: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Quotation",
+      default: null,
+      index: true,
+    },
+
+    // --------------------------------------------------------
+    // WHOLESALE RFQ REFERENCE
+    // --------------------------------------------------------
+
+    rfq: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "RFQ",
+      default: null,
       index: true,
     },
 
