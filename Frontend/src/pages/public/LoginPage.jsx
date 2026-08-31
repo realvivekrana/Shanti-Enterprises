@@ -800,7 +800,7 @@ function LoginPage() {
 
         .se-form-wrapper {
           width: 100%;
-          max-width: 650px;
+          max-width: 500px;
         }
 
         /* ==================================================
@@ -821,20 +821,10 @@ function LoginPage() {
             0 4px 14px rgba(15, 23, 42, 0.04);
 
           overflow: hidden;
-
-          transition:
-            box-shadow 0.25s ease,
-            transform 0.25s ease;
-        }
-
-        .se-login-card:hover {
-          box-shadow:
-            0 30px 75px rgba(15, 23, 42, 0.12),
-            0 6px 18px rgba(15, 23, 42, 0.05);
         }
 
         .se-login-card-main {
-          padding: 38px 42px 40px;
+          padding: 30px 32px 32px;
         }
 
         /* ==================================================
@@ -878,14 +868,8 @@ function LoginPage() {
             background 0.2s ease;
         }
 
-        .se-role-tab:hover:not(:disabled) {
+        .se-role-tab:hover {
           color: #155eef;
-          background: #f8fbff;
-        }
-
-        .se-role-tab:disabled {
-          opacity: 0.55;
-          cursor: not-allowed;
         }
 
         .se-role-tab.active {
@@ -1514,11 +1498,6 @@ function LoginPage() {
             font-size: 15px;
           }
 
-          .se-market-badge {
-            padding: 9px 13px;
-            font-size: 12px;
-          }
-
           .se-feature-grid {
             grid-template-columns: 1fr;
 
@@ -1689,8 +1668,6 @@ function LoginPage() {
                         "customer"
                       )
                     }
-                    disabled={isSubmitting}
-                    aria-pressed={loginType === "customer"}
                   >
                     <UserIcon size={21} />
 
@@ -1709,8 +1686,6 @@ function LoginPage() {
                         "admin"
                       )
                     }
-                    disabled={isSubmitting}
-                    aria-pressed={loginType === "admin"}
                   >
                     <ShieldIcon size={21} />
 
@@ -1752,11 +1727,7 @@ function LoginPage() {
                 ========================================== */}
 
                 {errorMessage && (
-                  <div
-                    className="se-error"
-                    role="alert"
-                    aria-live="polite"
-                  >
+                  <div className="se-error">
                     {errorMessage}
                   </div>
                 )}
@@ -1797,17 +1768,12 @@ function LoginPage() {
                         className="se-input"
                         placeholder="Enter your email"
                         value={email}
-                        onChange={(event) => {
-                          setEmail(event.target.value);
-                          if (localError) {
-                            setLocalError("");
-                          }
-                          if (clearError) {
-                            clearError();
-                          }
-                        }}
+                        onChange={(event) =>
+                          setEmail(
+                            event.target.value
+                          )
+                        }
                         autoComplete="email"
-                        aria-invalid={Boolean(errorMessage)}
                         disabled={isSubmitting}
                         required
                       />
@@ -1860,17 +1826,12 @@ function LoginPage() {
                         className="se-input password-input"
                         placeholder="Enter your password"
                         value={password}
-                        onChange={(event) => {
-                          setPassword(event.target.value);
-                          if (localError) {
-                            setLocalError("");
-                          }
-                          if (clearError) {
-                            clearError();
-                          }
-                        }}
+                        onChange={(event) =>
+                          setPassword(
+                            event.target.value
+                          )
+                        }
                         autoComplete="current-password"
-                        aria-invalid={Boolean(errorMessage)}
                         disabled={isSubmitting}
                         required
                       />

@@ -1,7 +1,7 @@
 // ============================================================
 // SHANTI ENTERPRISES
 // Quotation API
-// Frontend - Wholesale Quotation
+// Frontend - Customer + Admin Wholesale Quotation
 // ============================================================
 
 import api from "./axios";
@@ -27,6 +27,19 @@ export const getMyQuotations = async (
 
   return response.data;
 };
+
+// ------------------------------------------------------------
+// GET QUOTATIONS
+// Compatibility alias
+//
+// Some frontend pages use:
+// getQuotations
+//
+// Keep both names available.
+// ------------------------------------------------------------
+
+export const getQuotations =
+  getMyQuotations;
 
 // ------------------------------------------------------------
 // GET SINGLE QUOTATION
@@ -157,6 +170,14 @@ export const createQuotation = async (
 };
 
 // ------------------------------------------------------------
+// CREATE ADMIN QUOTATION
+// Compatibility alias
+// ------------------------------------------------------------
+
+export const createAdminQuotation =
+  createQuotation;
+
+// ------------------------------------------------------------
 // UPDATE QUOTATION STATUS
 // PATCH /api/admin/quotations/:id/status
 // ------------------------------------------------------------
@@ -188,6 +209,14 @@ export const updateQuotationStatus = async (
 };
 
 // ------------------------------------------------------------
+// UPDATE ADMIN QUOTATION STATUS
+// Compatibility alias
+// ------------------------------------------------------------
+
+export const updateAdminQuotationStatus =
+  updateQuotationStatus;
+
+// ------------------------------------------------------------
 // CANCEL ADMIN QUOTATION
 // PATCH /api/admin/quotations/:id/cancel
 // ------------------------------------------------------------
@@ -206,4 +235,38 @@ export const cancelQuotation = async (
   );
 
   return response.data;
+};
+
+// ------------------------------------------------------------
+// CANCEL ADMIN QUOTATION
+// Compatibility alias
+// ------------------------------------------------------------
+
+export const cancelAdminQuotation =
+  cancelQuotation;
+
+// ============================================================
+// DEFAULT EXPORT
+// ============================================================
+
+export default {
+  getMyQuotations,
+  getQuotations,
+
+  getQuotationById,
+
+  acceptQuotation,
+  rejectQuotation,
+
+  getAdminQuotations,
+  getAdminQuotationById,
+
+  createQuotation,
+  createAdminQuotation,
+
+  updateQuotationStatus,
+  updateAdminQuotationStatus,
+
+  cancelQuotation,
+  cancelAdminQuotation,
 };
