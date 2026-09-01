@@ -1001,12 +1001,83 @@ const deleteProduct =
   };
 
 // ============================================================
+// GET WHOLESALE PRICE FOR A PRODUCT + QUANTITY
+// GET /api/products/:id/wholesale-price?quantity=N
+// Public — no auth required
+// ============================================================
+
+const {
+  getWholesalePrice,
+  validateWholesaleQuantity,
+} = require("../utils/wholesaleUtils");
+
+const getWholesalePriceForProduct = async (
+  req,
+  res,
+  next
+) => {
+  try {
+    const quantity = Number(req.query.quantity);
+
+    if (
+      !Number.isInteger(quantity) ||
+      quantity < 1
+    ) {
+      const error = new Error(
+        "quantity must be a positive whole number"
+      );
+      error.statusCode = 400;
+      return next(error);
+    }
+
+    const product = await Product.findOne({
+      _id: req.params.id,
+      isActive: true,
+    }).select(
+      "name price unit moq isWholesale wholesalePriceTiers"
+    );
+
+    if (!product) {
+      const error = new Error("Product not found");
+      error.statusCode = 404;
+      return next(error);
+    }
+
+    // MOQ check (informational — do not block, just report)
+    const moqResult = validateWholesaleQuantity(
+      quantity,
+      product.moq
+    );
+
+    const unitPrice = getWholesalePrice(product, quantity);
+
+    res.status(200).json({
+      success: true,
+      productId: product._id,
+      name: product.name,
+      quantity,
+      unitPrice,
+      totalPrice: unitPrice * quantity,
+      currency: "INR",
+      unit: product.unit,
+      moq: product.moq,
+      moqMet: moqResult.valid,
+      moqMessage: moqResult.valid ? null : moqResult.message,
+      wholesalePriceTiers: product.wholesalePriceTiers,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ============================================================
 // EXPORT
 // ============================================================
 
 module.exports = {
   getProducts,
   getProductById,
+  getWholesalePriceForProduct,
   createProduct,
   updateProduct,
   deleteProduct,

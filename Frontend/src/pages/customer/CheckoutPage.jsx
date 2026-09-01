@@ -29,6 +29,10 @@ import {
   useCart,
 } from "../../context/CartContext";
 
+import {
+  useAuth,
+} from "../../context/AuthContext";
+
 // ============================================================
 // CHECKOUT PAGE
 // ============================================================
@@ -39,55 +43,21 @@ const CheckoutPage = () => {
     clearCart,
   } = useCart();
 
-  const navigate =
-    useNavigate();
-
-  const [
-    searchParams,
-  ] = useSearchParams();
-
-  const quotationId =
-    searchParams.get(
-      "quotationId"
-    );
-
-  const isWholesaleOrder =
-    Boolean(
-      quotationId
-    );
-
   // ==========================================================
-  // USER
+  // AUTH — use context, NOT localStorage (localStorage never
+  // stores "userInfo" — auth is cookie-based)
   // ==========================================================
 
-  const userInfo =
-    localStorage.getItem(
-      "userInfo"
-    );
+  const { user } = useAuth();
+  const isLoggedIn = Boolean(user);
 
-  const isLoggedIn =
-    Boolean(
-      userInfo
-    );
+  const navigate = useNavigate();
 
-  let user = null;
+  const [searchParams] = useSearchParams();
 
-  try {
-    user = userInfo
-      ? JSON.parse(
-          userInfo
-        )
-      : null;
-  } catch (
-    error
-  ) {
-    console.error(
-      "Failed to parse userInfo:",
-      error
-    );
+  const quotationId = searchParams.get("quotationId");
 
-    user = null;
-  }
+  const isWholesaleOrder = Boolean(quotationId);
 
   // ==========================================================
   // ADDRESS
@@ -130,7 +100,7 @@ const CheckoutPage = () => {
     paymentMethod,
     setPaymentMethod,
   ] = useState(
-    "COD"
+    "cod"
   );
 
   // ==========================================================
@@ -848,9 +818,8 @@ const CheckoutPage = () => {
                   address.country.trim(),
               },
 
-              paymentMethod:
-                paymentMethod ===
-                "Razorpay"
+        paymentMethod:
+                paymentMethod === "razorpay"
                   ? "razorpay"
                   : "cod",
             }
@@ -893,34 +862,37 @@ const CheckoutPage = () => {
       // NORMAL ORDER
       // ========================================================
 
+      // Build items array from cart — backend expects:
+      // { product: id, quantity: N }
+      const cartOrderItems = (cartItems || []).map(
+        (item) => ({
+          product:
+            item.productId ||
+            item._id ||
+            item.product?._id ||
+            item.product,
+          quantity: Number(item.quantity || 1),
+        })
+      );
+
       const payload = {
-        name:
-          address.name.trim(),
+        items: cartOrderItems,
 
-        phone:
-          address.phone.trim(),
-
-        addressLine1:
-          address.addressLine1.trim(),
-
-        addressLine2:
-          address.addressLine2.trim(),
-
-        city:
-          address.city.trim(),
-
-        state:
-          address.state.trim(),
-
-        postalCode:
-          address.postalCode.trim(),
-
-        country:
-          address.country.trim(),
+        shippingAddress: {
+          name:         address.name.trim(),
+          phone:        address.phone.trim(),
+          addressLine1: address.addressLine1.trim(),
+          addressLine2: address.addressLine2
+            ? address.addressLine2.trim()
+            : "",
+          city:         address.city.trim(),
+          state:        address.state.trim(),
+          postalCode:   address.postalCode.trim(),
+          country:      address.country.trim() || "India",
+        },
 
         paymentMethod:
-          paymentMethod ===
-          "Razorpay"
+          paymentMethod === "razorpay"
             ? "razorpay"
             : "cod",
       };
@@ -1508,7 +1480,7 @@ const CheckoutPage = () => {
 
         if (
           paymentMethod ===
-          "COD"
+          "cod"
         ) {
           clearCart();
 
@@ -1529,7 +1501,7 @@ const CheckoutPage = () => {
 
         if (
           paymentMethod ===
-          "Razorpay"
+          "razorpay"
         ) {
           await openRazorpayCheckout(
             orderId
@@ -1990,7 +1962,7 @@ const CheckoutPage = () => {
                   <label
                     className={`cursor-pointer rounded-xl border p-4 transition ${
                       paymentMethod ===
-                      "COD"
+                      "cod"
                         ? "border-teal-500 bg-teal-50"
                         : "border-slate-200 hover:border-slate-300"
                     }`}
@@ -2001,10 +1973,10 @@ const CheckoutPage = () => {
                       <input
                         type="radio"
                         name="paymentMethod"
-                        value="COD"
+                        value="cod"
                         checked={
                           paymentMethod ===
-                          "COD"
+                          "cod"
                         }
                         onChange={(
                           event
@@ -2038,7 +2010,7 @@ const CheckoutPage = () => {
                   <label
                     className={`cursor-pointer rounded-xl border p-4 transition ${
                       paymentMethod ===
-                      "Razorpay"
+                      "razorpay"
                         ? "border-teal-500 bg-teal-50"
                         : "border-slate-200 hover:border-slate-300"
                     }`}
@@ -2049,10 +2021,10 @@ const CheckoutPage = () => {
                       <input
                         type="radio"
                         name="paymentMethod"
-                        value="Razorpay"
+                        value="razorpay"
                         checked={
                           paymentMethod ===
-                          "Razorpay"
+                          "razorpay"
                         }
                         onChange={(
                           event
@@ -2105,7 +2077,7 @@ const CheckoutPage = () => {
                     loadingQuotation
                   ? "Preparing Order..."
                   : paymentMethod ===
-                    "Razorpay"
+                    "razorpay"
                   ? "Proceed to Payment"
                   : isWholesaleOrder
                   ? "Place Wholesale Order"
@@ -2374,7 +2346,7 @@ const CheckoutPage = () => {
 
                 <p className="text-sm font-semibold text-slate-800 mt-1">
                   {paymentMethod ===
-                  "Razorpay"
+                  "razorpay"
                     ? "Online Payment"
                     : "Cash on Delivery"}
                 </p>

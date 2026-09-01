@@ -101,7 +101,7 @@ const createReturnRequest = async (
       [
         "cancelled",
         "returned",
-      ].includes(order.status)
+      ].includes(order.orderStatus)
     ) {
       const error = new Error(
         "Return cannot be requested for this order"

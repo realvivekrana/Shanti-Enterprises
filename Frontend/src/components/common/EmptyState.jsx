@@ -1,18 +1,23 @@
 // ============================================================
-// SHANTI ENTERPRISES
-// Empty State Component
-// Frontend Phase 1 - Foundation
+// SHANTI ENTERPRISES — EmptyState Component (Premium)
 // ============================================================
 
-function EmptyState({
-  title = "No data found",
-  message = "There is nothing to display.",
-}) {
+function EmptyState({ title = "Nothing here", message = "", icon = "📭", action, actionLabel }) {
   return (
-    <div>
+    <div className="empty-state">
+      <div style={{ fontSize: '52px', marginBottom: '16px', lineHeight: 1 }}>{icon}</div>
       <h2>{title}</h2>
-
-      <p>{message}</p>
+      {message && <p>{message}</p>}
+      {action && actionLabel && (
+        <button
+          type="button"
+          onClick={action}
+          className="btn-primary"
+          style={{ marginTop: '20px', display: 'inline-flex' }}
+        >
+          {actionLabel}
+        </button>
+      )}
     </div>
   );
 }

@@ -9,6 +9,7 @@ const express = require("express");
 const {
   getProducts,
   getProductById,
+  getWholesalePriceForProduct,
   createProduct,
   updateProduct,
   deleteProduct,
@@ -30,6 +31,13 @@ const router =
 router.get(
   "/",
   getProducts
+);
+
+// GET /api/products/:id/wholesale-price?quantity=N
+// Must be registered BEFORE /:id to avoid route shadowing
+router.get(
+  "/:id/wholesale-price",
+  getWholesalePriceForProduct
 );
 
 // GET /api/products/:id

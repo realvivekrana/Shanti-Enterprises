@@ -19,11 +19,11 @@ import {
 
 function MainLayout() {
   return (
-    <div className="app">
+    <div className="app-layout">
 
       <Header />
 
-      <main>
+      <main className="app-main">
         <Outlet />
       </main>
 

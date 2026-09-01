@@ -433,7 +433,7 @@ function CartPage() {
       }
 
       navigate(
-        "/checkout"
+        "/checkout/address"
       );
     };
 

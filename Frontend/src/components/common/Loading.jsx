@@ -1,17 +1,11 @@
 // ============================================================
-// SHANTI ENTERPRISES
-// Loading Component
-// Frontend Phase 1 - Foundation
+// SHANTI ENTERPRISES — Loading Component (Premium)
 // ============================================================
 
-function Loading({
-  message = "Loading...",
-}) {
+function Loading({ message = "Loading..." }) {
   return (
-    <div
-      role="status"
-      aria-live="polite"
-    >
+    <div className="loading-wrap" role="status" aria-live="polite">
+      <div className="loading-spinner" aria-hidden="true" />
       <p>{message}</p>
     </div>
   );
