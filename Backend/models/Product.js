@@ -52,10 +52,27 @@ const productSchema = new mongoose.Schema(
       index: true,
     },
 
+    sku: {
+      type: String,
+      trim: true,
+      uppercase: true,
+      unique: true,
+      sparse: true,
+      default: undefined,
+      index: true,
+    },
+
     description: {
       type: String,
       default: "",
       trim: true,
+    },
+
+    brand: {
+      type: String,
+      default: "",
+      trim: true,
+      maxlength: 120,
     },
 
     image: {

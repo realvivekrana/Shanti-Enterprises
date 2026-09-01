@@ -7,6 +7,30 @@
 import api from "./axios";
 
 // ============================================================
+// HELPERS
+// ============================================================
+
+const createSlug = (value = "") =>
+  String(value)
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+const prepareProductData = (productData) => {
+  const name = String(productData?.name || "").trim();
+  const slug = String(
+    productData?.slug || createSlug(name)
+  ).trim();
+
+  return {
+    ...productData,
+    name,
+    slug,
+  };
+};
+
+// ============================================================
 // GET PRODUCTS
 // Public Product Listing
 // GET /api/products
@@ -83,9 +107,21 @@ export const createProduct = async (
     );
   }
 
+  const payload = prepareProductData(productData);
+
+  if (!payload.name) {
+    throw new Error("Product name is required.");
+  }
+
+  if (!payload.slug) {
+    throw new Error(
+      "Product name must contain letters or numbers."
+    );
+  }
+
   const response = await api.post(
     "/admin/products",
-    productData
+    payload
   );
 
   return response.data;
@@ -113,9 +149,21 @@ export const updateProduct = async (
     );
   }
 
+  const payload = prepareProductData(productData);
+
+  if (!payload.name) {
+    throw new Error("Product name is required.");
+  }
+
+  if (!payload.slug) {
+    throw new Error(
+      "Product name must contain letters or numbers."
+    );
+  }
+
   const response = await api.put(
     `/admin/products/${productId}`,
-    productData
+    payload
   );
 
   return response.data;

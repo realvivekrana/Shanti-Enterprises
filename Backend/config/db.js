@@ -18,7 +18,13 @@ const connectDatabase = async () => {
       throw new Error("Please add your real MongoDB connection string to .env");
     }
 
-    const connection = await mongoose.connect(mongoUri);
+    const connection = await mongoose.connect(
+      mongoUri,
+      {
+        serverSelectionTimeoutMS: 10000,
+        connectTimeoutMS: 10000,
+      }
+    );
 
     console.log("");
     console.log("================================================");
@@ -28,6 +34,8 @@ const connectDatabase = async () => {
     console.log(`Host     : ${connection.connection.host}`);
     console.log("================================================");
     console.log("");
+
+    return connection;
   } catch (error) {
     console.error("");
     console.error("================================================");
@@ -37,7 +45,7 @@ const connectDatabase = async () => {
     console.error("================================================");
     console.error("");
 
-    process.exit(1);
+    throw error;
   }
 };
 

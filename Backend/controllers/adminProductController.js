@@ -220,7 +220,9 @@ const createAdminProduct = async (
     const {
       name,
       slug,
+      sku,
       description = "",
+      brand = "",
       category,
       price,
       moq,
@@ -315,6 +317,34 @@ const createAdminProduct = async (
     }
 
     // --------------------------------------------------------
+    // SKU VALIDATION
+    // --------------------------------------------------------
+
+    const normalizedSku =
+      sku === undefined ||
+      sku === null ||
+      String(sku).trim() === ""
+        ? undefined
+        : String(sku).trim().toUpperCase();
+
+    if (normalizedSku) {
+      const existingSku =
+        await Product.findOne({
+          sku: normalizedSku,
+        });
+
+      if (existingSku) {
+        const error = new Error(
+          "A product with this SKU already exists"
+        );
+
+        error.statusCode = 409;
+
+        return next(error);
+      }
+    }
+
+    // --------------------------------------------------------
     // CATEGORY VALIDATION
     // --------------------------------------------------------
 
@@ -391,9 +421,17 @@ const createAdminProduct = async (
       slug:
         normalizedSlug,
 
+      sku:
+        normalizedSku,
+
       description:
         String(
           description
+        ).trim(),
+
+      brand:
+        String(
+          brand || ""
         ).trim(),
 
       image:
@@ -495,7 +533,9 @@ const updateAdminProduct = async (
     const {
       name,
       slug,
+      sku,
       description,
+      brand,
       category,
       price,
       moq,
@@ -576,6 +616,43 @@ const updateAdminProduct = async (
     }
 
     // --------------------------------------------------------
+    // UPDATE SKU
+    // --------------------------------------------------------
+
+    if (
+      sku !== undefined
+    ) {
+      const normalizedSku =
+        String(sku || "")
+          .trim()
+          .toUpperCase();
+
+      if (!normalizedSku) {
+        product.sku = undefined;
+      } else {
+        const duplicateSku =
+          await Product.findOne({
+            sku: normalizedSku,
+            _id: {
+              $ne: product._id,
+            },
+          });
+
+        if (duplicateSku) {
+          const error = new Error(
+            "A product with this SKU already exists"
+          );
+
+          error.statusCode = 409;
+
+          return next(error);
+        }
+
+        product.sku = normalizedSku;
+      }
+    }
+
+    // --------------------------------------------------------
     // UPDATE DESCRIPTION
     // --------------------------------------------------------
 
@@ -586,6 +663,17 @@ const updateAdminProduct = async (
         String(
           description
         ).trim();
+    }
+
+    // --------------------------------------------------------
+    // UPDATE BRAND
+    // --------------------------------------------------------
+
+    if (
+      brand !== undefined
+    ) {
+      product.brand =
+        String(brand || "").trim();
     }
 
     // --------------------------------------------------------

@@ -277,19 +277,6 @@ const login = async (
     // --------------------------------------------------------
 
     if (!user) {
-      console.log("");
-      console.log(
-        "LOGIN DEBUG"
-      );
-      console.log(
-        "Email:",
-        normalizedEmail
-      );
-      console.log(
-        "User found: NO"
-      );
-      console.log("");
-
       const error =
         new Error(
           "Invalid email or password"
@@ -299,38 +286,6 @@ const login = async (
 
       return next(error);
     }
-
-    // --------------------------------------------------------
-    // DEBUG
-    // --------------------------------------------------------
-
-    console.log("");
-    console.log(
-      "LOGIN DEBUG"
-    );
-    console.log(
-      "Email:",
-      normalizedEmail
-    );
-    console.log(
-      "User found: YES"
-    );
-    console.log(
-      "User ID:",
-      user._id.toString()
-    );
-    console.log(
-      "Role:",
-      user.role
-    );
-    console.log(
-      "Active:",
-      user.isActive
-    );
-    console.log(
-      "Password hash exists:",
-      Boolean(user.password)
-    );
 
     // --------------------------------------------------------
     // ACTIVE CHECK
@@ -359,13 +314,6 @@ const login = async (
         password,
         user.password
       );
-
-    console.log(
-      "Password matched:",
-      passwordMatched
-    );
-
-    console.log("");
 
     if (!passwordMatched) {
       const error =

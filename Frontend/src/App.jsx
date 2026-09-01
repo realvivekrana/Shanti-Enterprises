@@ -49,6 +49,18 @@ import AddressesPage from "./pages/customer/AddressesPage";
 import CustomerTestPage from "./pages/customer/CustomerTestPage";
 
 // ============================================================
+// CUSTOMER WISHLIST / NOTIFICATIONS / RETURNS / INVOICES / SHIPMENTS
+// ============================================================
+
+import WishlistPage from "./pages/customer/WishlistPage";
+import NotificationsPage from "./pages/customer/NotificationsPage";
+import ReturnsPage from "./pages/customer/ReturnsPage";
+import InvoicesPage from "./pages/customer/InvoicesPage";
+import ShipmentTrackingPage from "./pages/customer/ShipmentTrackingPage";
+
+import BulkQuotesPage from "./pages/customer/BulkQuotesPage";
+
+// ============================================================
 // CUSTOMER RFQ
 // ============================================================
 
@@ -80,6 +92,14 @@ import AdminUsersPage from "./pages/admin/AdminUsersPage";
 import AdminAnalyticsPage from "./pages/admin/AdminAnalyticsPage";
 import AdminProfilePage from "./pages/admin/AdminProfilePage";
 import AdminTestPage from "./pages/admin/AdminTestPage";
+
+// ============================================================
+// ADMIN INVENTORY / SHIPMENTS / REPORTS
+// ============================================================
+
+import AdminInventoryPage from "./pages/admin/AdminInventoryPage";
+import AdminShipmentsPage from "./pages/admin/AdminShipmentsPage";
+import AdminReportsPage from "./pages/admin/AdminReportsPage";
 
 // ============================================================
 // ADMIN RFQ
@@ -377,6 +397,79 @@ function App() {
             />
 
             {/* ==================================================
+                WISHLIST
+                ================================================== */}
+
+            <Route
+              path="/wishlist"
+              element={
+                <WishlistPage />
+              }
+            />
+
+            {/* ==================================================
+                NOTIFICATIONS
+                ================================================== */}
+
+            <Route
+              path="/notifications"
+              element={
+                <NotificationsPage />
+              }
+            />
+
+            {/* ==================================================
+                RETURNS
+                ================================================== */}
+
+            <Route
+              path="/returns"
+              element={
+                <ReturnsPage />
+              }
+            />
+
+            {/* ==================================================
+                INVOICES
+                ================================================== */}
+
+            <Route
+              path="/invoices"
+              element={
+                <InvoicesPage />
+              }
+            />
+
+            {/* ==================================================
+                SHIPMENTS / TRACKING
+                ================================================== */}
+
+            <Route
+              path="/shipments"
+              element={
+                <ShipmentTrackingPage />
+              }
+            />
+
+            <Route
+              path="/shipments/:shipmentId"
+              element={
+                <ShipmentTrackingPage />
+              }
+            />
+
+            {/* ==================================================
+                BULK QUOTES
+                ================================================== */}
+
+            <Route
+              path="/bulk-quotes"
+              element={
+                <BulkQuotesPage />
+              }
+            />
+
+            {/* ==================================================
                 CUSTOMER RFQ
                 ================================================== */}
 
@@ -605,6 +698,46 @@ function App() {
               path="/admin/quotations/:quotationId"
               element={
                 <AdminQuotationDetailsPage />
+              }
+            />
+
+            {/* ==================================================
+                ADMIN INVENTORY
+                ================================================== */}
+
+            <Route
+              path="/admin/inventory"
+              element={
+                <AdminInventoryPage />
+              }
+            />
+
+            {/* ==================================================
+                ADMIN SHIPMENTS
+                ================================================== */}
+
+            <Route
+              path="/admin/shipments"
+              element={
+                <AdminShipmentsPage />
+              }
+            />
+
+            <Route
+              path="/admin/shipments/:shipmentId"
+              element={
+                <AdminShipmentsPage />
+              }
+            />
+
+            {/* ==================================================
+                ADMIN REPORTS
+                ================================================== */}
+
+            <Route
+              path="/admin/reports"
+              element={
+                <AdminReportsPage />
               }
             />
 

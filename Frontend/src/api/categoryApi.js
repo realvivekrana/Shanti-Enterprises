@@ -1,25 +1,41 @@
 // ============================================================
 // SHANTI ENTERPRISES
 // Category API
-// Frontend Phase 5 - Category Management
 // ============================================================
 
 import api from "./axios";
+
+// ============================================================
+// HELPERS
+// ============================================================
+
+const createSlug = (value = "") =>
+  String(value)
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+const prepareCategoryData = (categoryData) => {
+  const name = String(categoryData?.name || "").trim();
+  const slug = String(
+    categoryData?.slug || createSlug(name)
+  ).trim();
+
+  return {
+    ...categoryData,
+    name,
+    slug,
+  };
+};
 
 // ============================================================
 // GET ALL CATEGORIES
 // GET /api/categories
 // ============================================================
 
-export const getCategories = async (
-  params = {}
-) => {
-  const response = await api.get(
-    "/categories",
-    {
-      params,
-    }
-  );
+export const getCategories = async (params = {}) => {
+  const response = await api.get("/categories", { params });
 
   return response.data;
 };
@@ -29,47 +45,46 @@ export const getCategories = async (
 // GET /api/categories/:id
 // ============================================================
 
-export const getCategoryById = async (
-  categoryId
-) => {
+export const getCategoryById = async (categoryId) => {
   if (!categoryId) {
-    throw new Error(
-      "Category ID is required."
-    );
+    throw new Error("Category ID is required.");
   }
 
-  const response = await api.get(
-    `/categories/${categoryId}`
-  );
+  const response = await api.get(`/categories/${categoryId}`);
 
   return response.data;
 };
 
 // ============================================================
 // CREATE CATEGORY
-// POST /api/admin/categories
+// POST /api/categories (admin only)
 // ============================================================
 
-export const createCategory = async (
-  categoryData
-) => {
+export const createCategory = async (categoryData) => {
   if (!categoryData) {
+    throw new Error("Category data is required.");
+  }
+
+  const payload = prepareCategoryData(categoryData);
+
+  if (!payload.name) {
+    throw new Error("Category name is required.");
+  }
+
+  if (!payload.slug) {
     throw new Error(
-      "Category data is required."
+      "Category name must contain letters or numbers."
     );
   }
 
-  const response = await api.post(
-    "/admin/categories",
-    categoryData
-  );
+  const response = await api.post("/categories", payload);
 
   return response.data;
 };
 
 // ============================================================
 // UPDATE CATEGORY
-// PUT /api/admin/categories/:id
+// PUT /api/categories/:id (admin only)
 // ============================================================
 
 export const updateCategory = async (
@@ -77,20 +92,28 @@ export const updateCategory = async (
   categoryData
 ) => {
   if (!categoryId) {
-    throw new Error(
-      "Category ID is required."
-    );
+    throw new Error("Category ID is required.");
   }
 
   if (!categoryData) {
+    throw new Error("Category data is required.");
+  }
+
+  const payload = prepareCategoryData(categoryData);
+
+  if (!payload.name) {
+    throw new Error("Category name is required.");
+  }
+
+  if (!payload.slug) {
     throw new Error(
-      "Category data is required."
+      "Category name must contain letters or numbers."
     );
   }
 
   const response = await api.put(
-    `/admin/categories/${categoryId}`,
-    categoryData
+    `/categories/${categoryId}`,
+    payload
   );
 
   return response.data;
@@ -98,21 +121,25 @@ export const updateCategory = async (
 
 // ============================================================
 // DELETE CATEGORY
-// DELETE /api/admin/categories/:id
+// DELETE /api/categories/:id (admin only)
 // ============================================================
 
-export const deleteCategory = async (
-  categoryId
-) => {
+export const deleteCategory = async (categoryId) => {
   if (!categoryId) {
-    throw new Error(
-      "Category ID is required."
-    );
+    throw new Error("Category ID is required.");
   }
 
   const response = await api.delete(
-    `/admin/categories/${categoryId}`
+    `/categories/${categoryId}`
   );
 
   return response.data;
+};
+
+export default {
+  getCategories,
+  getCategoryById,
+  createCategory,
+  updateCategory,
+  deleteCategory,
 };

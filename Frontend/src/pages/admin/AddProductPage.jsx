@@ -20,6 +20,10 @@ import {
 } from "../../api/productApi";
 
 import {
+  getCategories,
+} from "../../api/categoryApi";
+
+import {
   uploadImage,
 } from "../../api/uploadApi";
 
@@ -95,6 +99,50 @@ function AddProductPage() {
     success,
     setSuccess,
   ] = useState("");
+
+  const [
+    categories,
+    setCategories,
+  ] = useState([]);
+
+  const [
+    categoriesLoading,
+    setCategoriesLoading,
+  ] = useState(true);
+
+  // ==========================================================
+  // LOAD ACTIVE CATEGORIES
+  // ==========================================================
+
+  useEffect(() => {
+    let isMounted = true;
+
+    getCategories()
+      .then((response) => {
+        if (!isMounted) {
+          return;
+        }
+
+        setCategories(
+          response?.categories || []
+        );
+      })
+      .catch((loadError) => {
+        console.error(
+          "Load categories error:",
+          loadError
+        );
+      })
+      .finally(() => {
+        if (isMounted) {
+          setCategoriesLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // ==========================================================
   // CLEANUP IMAGE PREVIEW
@@ -441,7 +489,7 @@ function AddProductPage() {
           Number(form.moq),
 
         category:
-          form.category.trim(),
+          form.category || null,
 
         brand:
           form.brand.trim(),
@@ -702,18 +750,34 @@ function AddProductPage() {
             Category
           </label>
 
-          <input
+          <select
             id="category"
             name="category"
-            type="text"
             value={
               form.category
             }
             onChange={
               handleChange
             }
-            placeholder="Enter category"
-          />
+            disabled={categoriesLoading}
+          >
+
+            <option value="">
+              {categoriesLoading
+                ? "Loading categories..."
+                : "No category"}
+            </option>
+
+            {categories.map((category) => (
+              <option
+                key={category._id}
+                value={category._id}
+              >
+                {category.name}
+              </option>
+            ))}
+
+          </select>
 
         </div>
 

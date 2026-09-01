@@ -8,6 +8,11 @@ const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const dotenv = require("dotenv");
 
+// Load environment variables before importing application modules.
+// Some modules (for example Cloudinary configuration) read these values
+// as soon as they are imported.
+dotenv.config();
+
 const connectDatabase = require("./config/db");
 
 // ============================================================
@@ -82,12 +87,6 @@ const {
 } = require("./middleware/errorMiddleware");
 
 // ============================================================
-// ENVIRONMENT
-// ============================================================
-
-dotenv.config();
-
-// ============================================================
 // APP
 // ============================================================
 
@@ -99,12 +98,6 @@ const PORT =
 const FRONTEND_URL =
   process.env.FRONTEND_URL ||
   "http://localhost:5173";
-
-// ============================================================
-// DATABASE
-// ============================================================
-
-connectDatabase();
 
 // ============================================================
 // GLOBAL MIDDLEWARE
@@ -426,7 +419,11 @@ app.use(
 // START SERVER
 // ============================================================
 
-app.listen(
+const startServer = async () => {
+  try {
+    await connectDatabase();
+
+    app.listen(
   PORT,
   () => {
     console.log("");
@@ -567,5 +564,15 @@ app.listen(
     );
 
     console.log("");
+    }
+    );
+  } catch (error) {
+    console.error(
+      "Server was not started because MongoDB is unavailable."
+    );
+
+    process.exitCode = 1;
   }
-);
+};
+
+startServer();
