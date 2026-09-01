@@ -188,6 +188,32 @@ const createOrder = async (
       }
 
       // ------------------------------------------------------
+      // MINIMUM ORDER QUANTITY CHECK
+      // ------------------------------------------------------
+
+      const minimumOrderQuantity =
+        Math.max(
+          1,
+          Number(
+            product.moq ??
+              product.minimumOrderQuantity ??
+              product.minOrderQuantity ??
+              1
+          ) || 1
+        );
+
+      if (
+        quantity <
+        minimumOrderQuantity
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            `${product.name} has a minimum order quantity of ${minimumOrderQuantity}.`,
+        });
+      }
+
+      // ------------------------------------------------------
       // STOCK CHECK
       // ------------------------------------------------------
 
@@ -653,6 +679,21 @@ const createOrderFromQuotation =
           });
         }
 
+        // ----------------------------------------------------
+        // MINIMUM ORDER QUANTITY CHECK
+        // ----------------------------------------------------
+
+        const minimumOrderQuantity =
+          Math.max(
+            1,
+            Number(
+              product.moq ??
+                product.minimumOrderQuantity ??
+                product.minOrderQuantity ??
+                1
+            ) || 1
+          );
+
         const quantity =
           Number(
             quotationItem.quantity
@@ -668,6 +709,17 @@ const createOrderFromQuotation =
             success: false,
             message:
               `Invalid quantity for ${quotationItem.productName}.`,
+          });
+        }
+
+        if (
+          quantity <
+          minimumOrderQuantity
+        ) {
+          return res.status(400).json({
+            success: false,
+            message:
+              `${product.name} has a minimum order quantity of ${minimumOrderQuantity}.`,
           });
         }
 

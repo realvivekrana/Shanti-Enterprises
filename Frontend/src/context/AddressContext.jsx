@@ -15,7 +15,7 @@ import {
 import {
   getMyAddresses,
   createAddress,
-  updateAddress,
+  updateAddress as updateAddressApi,
   deleteAddress,
   setDefaultAddress,
 } from "../api/addressApi";

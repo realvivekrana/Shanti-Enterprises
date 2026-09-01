@@ -25,6 +25,7 @@ const {
   getAdminCustomerById,
   updateCustomerStatus,
   updateAdminCustomer,
+  deleteAdminCustomer,
 } = require(
   "../controllers/adminCustomerController"
 );
@@ -56,6 +57,16 @@ const customerUpdateValidation = [
     .isString()
     .withMessage(
       "Phone must be text"
+    ),
+
+  body("role")
+    .optional()
+    .isIn([
+      "customer",
+      "admin",
+    ])
+    .withMessage(
+      "Role must be customer or admin"
     ),
 ];
 
@@ -107,6 +118,16 @@ router.patch(
   "/:id/status",
   validate(customerStatusValidation),
   updateCustomerStatus
+);
+
+// ============================================================
+// DELETE USER
+// ============================================================
+
+// DELETE /api/admin/customers/:id
+router.delete(
+  "/:id",
+  deleteAdminCustomer
 );
 
 module.exports = router;

@@ -14,7 +14,7 @@ export const getAdminUsers = async (
   params = {}
 ) => {
   const response = await api.get(
-    "/users",
+    "/admin/customers",
     {
       params,
     }
@@ -37,7 +37,7 @@ export const getAdminUserById = async (
   }
 
   const response = await api.get(
-    `/users/${userId}`
+    `/admin/customers/${userId}`
   );
 
   return response.data;
@@ -63,8 +63,8 @@ export const updateUserRole = async (
     );
   }
 
-  const response = await api.put(
-    `/users/${userId}/role`,
+  const response = await api.patch(
+    `/admin/customers/${userId}`,
     {
       role,
     }
@@ -93,10 +93,11 @@ export const updateUserStatus = async (
     );
   }
 
-  const response = await api.put(
-    `/users/${userId}/status`,
+  const response = await api.patch(
+    `/admin/customers/${userId}/status`,
     {
-      status,
+      isActive:
+        status === "active",
     }
   );
 
@@ -117,7 +118,7 @@ export const deleteAdminUser = async (
   }
 
   const response = await api.delete(
-    `/users/${userId}`
+    `/admin/customers/${userId}`
   );
 
   return response.data;

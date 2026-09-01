@@ -36,7 +36,6 @@ const USER_ROLES = [
 const USER_STATUSES = [
   "active",
   "inactive",
-  "blocked",
 ];
 
 // ============================================================

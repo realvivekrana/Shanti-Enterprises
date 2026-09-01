@@ -33,9 +33,7 @@ const getAdminCustomers = async (
       100
     );
 
-    const filter = {
-      role: "customer",
-    };
+    const filter = {};
 
     // --------------------------------------------------------
     // STATUS FILTER
@@ -113,6 +111,9 @@ const getAdminCustomers = async (
       },
 
       customers,
+
+      // Compatibility for the admin user-management UI.
+      users: customers,
     });
   } catch (error) {
     next(error);
@@ -132,7 +133,6 @@ const getAdminCustomerById = async (
     const customer =
       await User.findOne({
         _id: req.params.id,
-        role: "customer",
       }).select(
         "-password -resetPasswordToken -resetPasswordExpires"
       );
@@ -151,6 +151,9 @@ const getAdminCustomerById = async (
       success: true,
 
       customer,
+
+      // Compatibility for the admin user-details UI.
+      user: customer,
     });
   } catch (error) {
     next(error);
@@ -186,7 +189,6 @@ const updateCustomerStatus = async (
     const customer =
       await User.findOne({
         _id: req.params.id,
-        role: "customer",
       });
 
     if (!customer) {
@@ -195,6 +197,19 @@ const updateCustomerStatus = async (
       );
 
       error.statusCode = 404;
+
+      return next(error);
+    }
+
+    if (
+      String(customer._id) ===
+      String(req.user?.id)
+    ) {
+      const error = new Error(
+        "You cannot change your own account status."
+      );
+
+      error.statusCode = 400;
 
       return next(error);
     }
@@ -240,12 +255,12 @@ const updateAdminCustomer = async (
     const {
       name,
       phone,
+      role,
     } = req.body;
 
     const customer =
       await User.findOne({
         _id: req.params.id,
-        role: "customer",
       });
 
     if (!customer) {
@@ -284,6 +299,40 @@ const updateAdminCustomer = async (
         String(phone).trim();
     }
 
+    if (
+      role !== undefined
+    ) {
+      if (
+        ![
+          "customer",
+          "admin",
+        ].includes(role)
+      ) {
+        const error = new Error(
+          "Role must be customer or admin"
+        );
+
+        error.statusCode = 400;
+
+        return next(error);
+      }
+
+      if (
+        String(customer._id) ===
+        String(req.user?.id)
+      ) {
+        const error = new Error(
+          "You cannot change your own role."
+        );
+
+        error.statusCode = 400;
+
+        return next(error);
+      }
+
+      customer.role = role;
+    }
+
     await customer.save();
 
     res.status(200).json({
@@ -312,9 +361,59 @@ const updateAdminCustomer = async (
   }
 };
 
+// ============================================================
+// DELETE USER
+// ============================================================
+
+const deleteAdminCustomer = async (
+  req,
+  res,
+  next
+) => {
+  try {
+    const customer =
+      await User.findById(
+        req.params.id
+      );
+
+    if (!customer) {
+      const error = new Error(
+        "User not found"
+      );
+
+      error.statusCode = 404;
+
+      return next(error);
+    }
+
+    if (
+      String(customer._id) ===
+      String(req.user?.id)
+    ) {
+      const error = new Error(
+        "You cannot delete your own account."
+      );
+
+      error.statusCode = 400;
+
+      return next(error);
+    }
+
+    await customer.deleteOne();
+
+    return res.status(200).json({
+      success: true,
+      message: "User deleted successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getAdminCustomers,
   getAdminCustomerById,
   updateCustomerStatus,
   updateAdminCustomer,
+  deleteAdminCustomer,
 };

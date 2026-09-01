@@ -39,24 +39,40 @@ const createPaymentValidation = [
 ];
 
 const verifyPaymentValidation = [
-  body("razorpayOrderId")
-    .trim()
-    .notEmpty()
-    .withMessage("Razorpay order ID is required"),
+  body()
+    .custom((value, { req }) => {
+      const razorpayOrderId =
+        req.body?.razorpay_order_id ||
+        req.body?.razorpayOrderId;
 
-  body("razorpayPaymentId")
-    .trim()
-    .notEmpty()
-    .withMessage(
-      "Razorpay payment ID is required"
-    ),
+      const razorpayPaymentId =
+        req.body?.razorpay_payment_id ||
+        req.body?.razorpayPaymentId;
 
-  body("razorpaySignature")
-    .trim()
-    .notEmpty()
-    .withMessage(
-      "Razorpay signature is required"
-    ),
+      const razorpaySignature =
+        req.body?.razorpay_signature ||
+        req.body?.razorpaySignature;
+
+      if (!razorpayOrderId) {
+        throw new Error(
+          "Razorpay order ID is required"
+        );
+      }
+
+      if (!razorpayPaymentId) {
+        throw new Error(
+          "Razorpay payment ID is required"
+        );
+      }
+
+      if (!razorpaySignature) {
+        throw new Error(
+          "Razorpay signature is required"
+        );
+      }
+
+      return true;
+    }),
 ];
 
 const getPaymentValidation = [
@@ -78,8 +94,6 @@ router.use(protect);
 // CREATE RAZORPAY ORDER
 // ============================================================
 
-// POST /api/payments/create-order
-
 router.post(
   "/create-order",
   validate(createPaymentValidation),
@@ -90,8 +104,6 @@ router.post(
 // VERIFY RAZORPAY PAYMENT
 // ============================================================
 
-// POST /api/payments/verify
-
 router.post(
   "/verify",
   validate(verifyPaymentValidation),
@@ -101,8 +113,6 @@ router.post(
 // ============================================================
 // GET PAYMENT BY ORDER
 // ============================================================
-
-// GET /api/payments/order/:orderId
 
 router.get(
   "/order/:orderId",

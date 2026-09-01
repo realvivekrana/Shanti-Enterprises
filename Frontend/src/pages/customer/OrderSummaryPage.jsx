@@ -62,6 +62,7 @@ function OrderSummaryPage() {
     cartItems,
     totalItems,
     subtotal,
+    clearCart,
   } = useCart();
 
   const {
@@ -503,6 +504,10 @@ function OrderSummaryPage() {
           paymentMethod ===
           "cod"
         ) {
+          if (!isQuotationOrder) {
+            clearCart();
+          }
+
           navigate(
             `/order-success/${orderId}`,
             {

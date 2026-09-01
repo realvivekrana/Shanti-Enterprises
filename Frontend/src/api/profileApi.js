@@ -32,7 +32,7 @@ export const updateMyProfile = async (
   }
 
   const response = await api.put(
-    "/auth/profile",
+    "/profile",
     profileData
   );
 

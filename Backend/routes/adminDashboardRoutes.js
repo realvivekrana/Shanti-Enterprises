@@ -7,6 +7,8 @@
 const express = require("express");
 
 const {
+  getDashboardStats,
+  getSalesAnalytics,
   getAdminDashboard,
 } = require(
   "../controllers/adminDashboardController"
@@ -37,6 +39,18 @@ router.use(adminOnly);
 // ============================================================
 // GET ADMIN DASHBOARD
 // ============================================================
+
+// GET /api/admin/dashboard/stats
+router.get(
+  "/stats",
+  getDashboardStats
+);
+
+// GET /api/admin/dashboard/sales?period=30d
+router.get(
+  "/sales",
+  getSalesAnalytics
+);
 
 // GET /api/admin/dashboard
 router.get(
