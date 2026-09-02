@@ -1158,6 +1158,17 @@ function AdminUsersPage() {
                         : "Delete"}
                     </button>
 
+                    {/* ==================================================
+                        VIEW DETAILS
+                        ================================================== */}
+
+                    <Link
+                      to={`/admin/users/${userId}`}
+                      className="admin-user-view-link"
+                    >
+                      View Details →
+                    </Link>
+
                   </article>
                 );
               }

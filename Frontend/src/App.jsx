@@ -95,6 +95,7 @@ import EditCategoryPage from "./pages/admin/EditCategoryPage";
 import AdminOrdersPage from "./pages/admin/AdminOrdersPage";
 import AdminOrderDetailsPage from "./pages/admin/AdminOrderDetailsPage";
 import AdminUsersPage from "./pages/admin/AdminUsersPage";
+import AdminUserDetailsPage from "./pages/admin/AdminUserDetailsPage";
 import AdminAnalyticsPage from "./pages/admin/AdminAnalyticsPage";
 import AdminProfilePage from "./pages/admin/AdminProfilePage";
 import AdminTestPage from "./pages/admin/AdminTestPage";
@@ -721,6 +722,13 @@ function App() {
               path="/admin/users"
               element={
                 <AdminUsersPage />
+              }
+            />
+
+            <Route
+              path="/admin/users/:userId"
+              element={
+                <AdminUserDetailsPage />
               }
             />
 

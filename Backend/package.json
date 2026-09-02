@@ -26,6 +26,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.18.0",
     "multer": "^2.0.2",
+    "nodemailer": "6.10.1",
     "razorpay": "^2.9.6",
     "streamifier": "^0.1.1"
   },
