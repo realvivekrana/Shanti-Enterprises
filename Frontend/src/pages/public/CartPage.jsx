@@ -1,38 +1,41 @@
 // ============================================================
 // SHANTI ENTERPRISES
 // Cart Page
-// Frontend Phase 6 - Complete UI/UX
+// Premium Mobile-First UI
 // ============================================================
 
+import { useState } from "react";
 import {
-  useState,
-} from "react";
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  ChevronRight,
+  Minus,
+  Package,
+  Plus,
+  RefreshCw,
+  ShieldCheck,
+  ShoppingBag,
+  Trash2,
+  Truck,
+} from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 
-import {
-  Link,
-  useNavigate,
-} from "react-router-dom";
-
-import {
-  useCart,
-} from "../../context/CartContext";
-
+import { useCart } from "../../context/CartContext";
 import EmptyState from "../../components/common/EmptyState";
+
+import "./CartPage.css";
 
 // ============================================================
 // IMAGE URL HELPER
 // ============================================================
 
-const getImageUrl = (
-  image
-) => {
+const getImageUrl = (image) => {
   if (!image) {
     return "";
   }
 
-  if (
-    typeof image === "string"
-  ) {
+  if (typeof image === "string") {
     return image;
   }
 
@@ -58,40 +61,22 @@ function CartPage() {
     clearCart,
   } = useCart();
 
-  const navigate =
-    useNavigate();
+  const navigate = useNavigate();
 
   // ==========================================================
   // UI STATE
   // ==========================================================
 
-  const [
-    imageErrors,
-    setImageErrors,
-  ] = useState({});
-
-  const [
-    removingProductId,
-    setRemovingProductId,
-  ] = useState(null);
-
-  const [
-    clearingCart,
-    setClearingCart,
-  ] = useState(false);
-
-  const [
-    quantityErrors,
-    setQuantityErrors,
-  ] = useState({});
+  const [imageErrors, setImageErrors] = useState({});
+  const [removingProductId, setRemovingProductId] = useState(null);
+  const [clearingCart, setClearingCart] = useState(false);
+  const [quantityErrors, setQuantityErrors] = useState({});
 
   // ==========================================================
   // GET PRODUCT ID
   // ==========================================================
 
-  const getProductId = (
-    item
-  ) => {
+  const getProductId = (item) => {
     return (
       item?.productId ||
       item?._id ||
@@ -107,47 +92,25 @@ function CartPage() {
   // REMOVE ITEM
   // ==========================================================
 
-  const handleRemove = async (
-    productId
-  ) => {
-    if (
-      !productId ||
-      removingProductId
-    ) {
+  const handleRemove = async (productId) => {
+    if (!productId || removingProductId) {
       return;
     }
 
     try {
-      setRemovingProductId(
-        productId
-      );
+      setRemovingProductId(productId);
 
-      setQuantityErrors(
-        (current) => {
-          const updated = {
-            ...current,
-          };
+      setQuantityErrors((current) => {
+        const updated = { ...current };
+        delete updated[productId];
+        return updated;
+      });
 
-          delete updated[
-            productId
-          ];
-
-          return updated;
-        }
-      );
-
-      await removeFromCart(
-        productId
-      );
+      await removeFromCart(productId);
     } catch (error) {
-      console.error(
-        "Remove cart item error:",
-        error
-      );
+      console.error("Remove cart item error:", error);
     } finally {
-      setRemovingProductId(
-        null
-      );
+      setRemovingProductId(null);
     }
   };
 
@@ -155,359 +118,328 @@ function CartPage() {
   // CLEAR CART
   // ==========================================================
 
-  const handleClearCart =
-    async () => {
-      if (
-        clearingCart ||
-        cartItems.length === 0
-      ) {
-        return;
-      }
+  const handleClearCart = async () => {
+    if (clearingCart || cartItems.length === 0) {
+      return;
+    }
 
-      const confirmed =
-        window.confirm(
-          "Are you sure you want to remove all items from your cart?"
-        );
+    const confirmed = window.confirm(
+      "Are you sure you want to remove all items from your cart?"
+    );
 
-      if (!confirmed) {
-        return;
-      }
+    if (!confirmed) {
+      return;
+    }
 
-      try {
-        setClearingCart(
-          true
-        );
+    try {
+      setClearingCart(true);
 
-        await clearCart();
+      await clearCart();
 
-        setQuantityErrors({});
-        setImageErrors({});
-      } catch (error) {
-        console.error(
-          "Clear cart error:",
-          error
-        );
-      } finally {
-        setClearingCart(
-          false
-        );
-      }
-    };
+      setQuantityErrors({});
+      setImageErrors({});
+    } catch (error) {
+      console.error("Clear cart error:", error);
+    } finally {
+      setClearingCart(false);
+    }
+  };
 
   // ==========================================================
   // IMAGE ERROR
   // ==========================================================
 
-  const handleImageError =
-    (productId) => {
-      if (!productId) {
-        return;
-      }
+  const handleImageError = (productId) => {
+    if (!productId) {
+      return;
+    }
 
-      setImageErrors(
-        (current) => ({
-          ...current,
-          [productId]: true,
-        })
-      );
-    };
+    setImageErrors((current) => ({
+      ...current,
+      [productId]: true,
+    }));
+  };
 
   // ==========================================================
   // QUANTITY CHANGE
   // ==========================================================
 
-  const handleQuantityChange =
-    (
-      item,
-      requestedQuantity
-    ) => {
-      const productId =
-        getProductId(item);
+  const handleQuantityChange = (item, requestedQuantity) => {
+    const productId = getProductId(item);
 
-      if (!productId) {
+    if (!productId) {
+      return;
+    }
+
+    const moq = Math.max(
+      1,
+      Number(
+        item?.moq ??
+          item?.minimumOrderQuantity ??
+          item?.minOrderQuantity ??
+          1
+      ) || 1
+    );
+
+    const rawStock = Number(
+      item?.stock ??
+        item?.countInStock ??
+        item?.inventory
+    );
+
+    const hasStockLimit =
+      Number.isFinite(rawStock) && rawStock >= 0;
+
+    let nextQuantity = Number(requestedQuantity);
+
+    // --------------------------------------------------------
+    // INVALID VALUE
+    // --------------------------------------------------------
+
+    if (!Number.isFinite(nextQuantity)) {
+      setQuantityErrors((current) => ({
+        ...current,
+        [productId]: `Quantity must be at least ${moq}.`,
+      }));
+
+      return;
+    }
+
+    // --------------------------------------------------------
+    // MOQ
+    // --------------------------------------------------------
+
+    if (nextQuantity < moq) {
+      nextQuantity = moq;
+    }
+
+    // --------------------------------------------------------
+    // STOCK
+    // --------------------------------------------------------
+
+    if (hasStockLimit) {
+      if (rawStock <= 0) {
+        setQuantityErrors((current) => ({
+          ...current,
+          [productId]:
+            "This product is currently out of stock.",
+        }));
+
         return;
       }
 
-      const moq =
-        Math.max(
-          1,
-          Number(
-            item?.moq ??
-              item?.minimumOrderQuantity ??
-              item?.minOrderQuantity ??
-              1
-          ) || 1
-        );
+      if (nextQuantity > rawStock) {
+        nextQuantity = rawStock;
 
-      const rawStock =
-        Number(
-          item?.stock ??
-            item?.countInStock ??
-            item?.inventory
-        );
-
-      const hasStockLimit =
-        Number.isFinite(
-          rawStock
-        ) &&
-        rawStock >= 0;
-
-      let nextQuantity =
-        Number(
-          requestedQuantity
-        );
-
-      // --------------------------------------------------------
-      // INVALID VALUE
-      // --------------------------------------------------------
-
-      if (
-        !Number.isFinite(
-          nextQuantity
-        )
-      ) {
-        setQuantityErrors(
-          (current) => ({
-            ...current,
-            [productId]:
-              `Quantity must be at least ${moq}.`,
-          })
-        );
-
-        return;
-      }
-
-      // --------------------------------------------------------
-      // MOQ
-      // --------------------------------------------------------
-
-      if (
-        nextQuantity < moq
-      ) {
-        nextQuantity = moq;
-      }
-
-      // --------------------------------------------------------
-      // STOCK
-      // --------------------------------------------------------
-
-      if (
-        hasStockLimit
-      ) {
-        if (rawStock <= 0) {
-          setQuantityErrors(
-            (current) => ({
-              ...current,
-              [productId]:
-                "This product is currently out of stock.",
-            })
-          );
-
-          return;
-        }
-
-        if (
-          nextQuantity >
-          rawStock
-        ) {
-          nextQuantity =
-            rawStock;
-
-          setQuantityErrors(
-            (current) => ({
-              ...current,
-              [productId]:
-                `Only ${rawStock} unit${
-                  rawStock === 1
-                    ? ""
-                    : "s"
-                } available.`,
-            })
-          );
-        } else {
-          setQuantityErrors(
-            (current) => {
-              const updated = {
-                ...current,
-              };
-
-              delete updated[
-                productId
-              ];
-
-              return updated;
-            }
-          );
-        }
+        setQuantityErrors((current) => ({
+          ...current,
+          [productId]: `Only ${rawStock} unit${
+            rawStock === 1 ? "" : "s"
+          } available.`,
+        }));
       } else {
-        setQuantityErrors(
-          (current) => {
-            const updated = {
-              ...current,
-            };
-
-            delete updated[
-              productId
-            ];
-
-            return updated;
-          }
-        );
+        setQuantityErrors((current) => {
+          const updated = { ...current };
+          delete updated[productId];
+          return updated;
+        });
       }
+    } else {
+      setQuantityErrors((current) => {
+        const updated = { ...current };
+        delete updated[productId];
+        return updated;
+      });
+    }
 
-      updateQuantity(
-        productId,
-        nextQuantity
-      );
-    };
+    updateQuantity(productId, nextQuantity);
+  };
 
   // ==========================================================
   // INCREASE QUANTITY
   // ==========================================================
 
-  const handleIncrease =
-    (item) => {
-      const currentQuantity =
-        Number(
-          item?.quantity
-        ) || 0;
+  const handleIncrease = (item) => {
+    const currentQuantity = Number(item?.quantity) || 0;
 
-      handleQuantityChange(
-        item,
-        currentQuantity + 1
-      );
-    };
+    handleQuantityChange(
+      item,
+      currentQuantity + 1
+    );
+  };
 
   // ==========================================================
   // DECREASE QUANTITY
   // ==========================================================
 
-  const handleDecrease =
-    (item) => {
-      const currentQuantity =
-        Number(
-          item?.quantity
-        ) || 0;
+  const handleDecrease = (item) => {
+    const currentQuantity = Number(item?.quantity) || 0;
 
-      const moq =
-        Math.max(
-          1,
-          Number(
-            item?.moq ??
-              item?.minimumOrderQuantity ??
-              1
-          ) || 1
-        );
+    const moq = Math.max(
+      1,
+      Number(
+        item?.moq ??
+          item?.minimumOrderQuantity ??
+          1
+      ) || 1
+    );
 
-      if (
-        currentQuantity <=
-        moq
-      ) {
-        return;
-      }
+    if (currentQuantity <= moq) {
+      return;
+    }
 
-      handleQuantityChange(
-        item,
-        currentQuantity - 1
-      );
-    };
+    handleQuantityChange(
+      item,
+      currentQuantity - 1
+    );
+  };
 
   // ==========================================================
   // CHECKOUT
   // ==========================================================
 
-  const handleCheckout =
-    (event) => {
-      event.preventDefault();
+  const handleCheckout = (event) => {
+    event.preventDefault();
 
-      if (
-        cartItems.length === 0
-      ) {
-        return;
+    if (cartItems.length === 0) {
+      return;
+    }
+
+    if (Number(subtotal) <= 0) {
+      return;
+    }
+
+    navigate("/checkout/address");
+  };
+
+  // ==========================================================
+  // FORMAT MONEY
+  // ==========================================================
+
+  const formatMoney = (amount) => {
+    return Number(amount || 0).toLocaleString(
+      "en-IN",
+      {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
       }
-
-      if (
-        Number(subtotal) <= 0
-      ) {
-        return;
-      }
-
-      navigate(
-        "/checkout/address"
-      );
-    };
+    );
+  };
 
   // ==========================================================
   // EMPTY CART
   // ==========================================================
 
-  if (
-    cartItems.length === 0
-  ) {
+  if (cartItems.length === 0) {
     return (
       <section className="cart-page">
-
         <div className="cart-container">
-
-          <header className="cart-page-header">
-
+          <header className="cart-page-header cart-page-header-empty">
             <div className="cart-header-content">
-
               <span className="cart-eyebrow">
                 YOUR SHOPPING CART
               </span>
 
-              <h1>
-                Shopping Cart
-              </h1>
+              <h1>Shopping Cart</h1>
 
               <p>
-                Your cart is waiting for
-                some great products.
+                Your cart is waiting for some great
+                products.
               </p>
-
             </div>
 
             <div className="cart-items-count cart-items-count-empty">
+              <ShoppingBag size={18} aria-hidden="true" />
 
-              <strong>
-                0
-              </strong>
-
-              <span>
-                Items
-              </span>
-
+              <div>
+                <strong>0</strong>
+                <span>Items</span>
+              </div>
             </div>
-
           </header>
 
           <div className="cart-empty-card">
-
             <div className="cart-empty-icon">
-              🛒
+              <ShoppingBag
+                size={42}
+                strokeWidth={1.6}
+                aria-hidden="true"
+              />
             </div>
 
-            <EmptyState
-              title="Your cart is empty"
-              message="Add products to your cart to continue shopping."
-            />
-
-            <Link
-              to="/products"
-              className="cart-primary-button"
-            >
-              Browse Products
-
-              <span>
-                →
+            <div className="cart-empty-content">
+              <span className="cart-empty-label">
+                NOTHING HERE YET
               </span>
-            </Link>
 
+              <EmptyState
+                title="Your cart is empty"
+                message="Add products to your cart to continue shopping."
+              />
+
+              <Link
+                to="/products"
+                className="cart-primary-button"
+              >
+                <ShoppingBag
+                  size={18}
+                  aria-hidden="true"
+                />
+
+                <span>Browse Products</span>
+
+                <ArrowRight
+                  size={18}
+                  aria-hidden="true"
+                />
+              </Link>
+            </div>
           </div>
 
-        </div>
+          <div className="cart-empty-benefits">
+            <div className="cart-benefit">
+              <Package
+                size={20}
+                aria-hidden="true"
+              />
 
+              <div>
+                <strong>Wide Product Range</strong>
+                <span>
+                  Source products for your business
+                </span>
+              </div>
+            </div>
+
+            <div className="cart-benefit">
+              <ShieldCheck
+                size={20}
+                aria-hidden="true"
+              />
+
+              <div>
+                <strong>Secure Checkout</strong>
+                <span>
+                  Safe and reliable ordering
+                </span>
+              </div>
+            </div>
+
+            <div className="cart-benefit">
+              <Truck
+                size={20}
+                aria-hidden="true"
+              />
+
+              <div>
+                <strong>Business Delivery</strong>
+                <span>
+                  Order quantities that work for you
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
     );
   }
@@ -518,7 +450,6 @@ function CartPage() {
 
   return (
     <section className="cart-page">
-
       <div className="cart-container">
 
         {/* ==================================================
@@ -526,38 +457,33 @@ function CartPage() {
             ================================================== */}
 
         <header className="cart-page-header">
-
           <div className="cart-header-content">
-
             <span className="cart-eyebrow">
               YOUR SHOPPING CART
             </span>
 
-            <h1>
-              Shopping Cart
-            </h1>
+            <h1>Shopping Cart</h1>
 
             <p>
-              Review your selected products
-              before checkout.
+              Review your selected products before
+              checkout.
             </p>
-
           </div>
 
           <div className="cart-items-count">
+            <ShoppingBag
+              size={19}
+              aria-hidden="true"
+            />
 
-            <strong>
-              {totalItems}
-            </strong>
+            <div>
+              <strong>{totalItems}</strong>
 
-            <span>
-              {totalItems === 1
-                ? "Item"
-                : "Items"}
-            </span>
-
+              <span>
+                {totalItems === 1 ? "Item" : "Items"}
+              </span>
+            </div>
           </div>
-
         </header>
 
         {/* ==================================================
@@ -573,34 +499,41 @@ function CartPage() {
           <div className="cart-items-section">
 
             <div className="cart-items-header">
-
               <div>
-
                 <span className="cart-section-eyebrow">
                   SELECTED PRODUCTS
                 </span>
 
-                <h2>
-                  Cart Items
-                </h2>
-
+                <h2>Cart Items</h2>
               </div>
 
               <button
                 type="button"
                 className="cart-clear-button"
-                onClick={
-                  handleClearCart
-                }
-                disabled={
-                  clearingCart
-                }
+                onClick={handleClearCart}
+                disabled={clearingCart}
               >
-                {clearingCart
-                  ? "Clearing..."
-                  : "Clear Cart"}
-              </button>
+                {clearingCart ? (
+                  <>
+                    <RefreshCw
+                      size={15}
+                      className="cart-spin"
+                      aria-hidden="true"
+                    />
 
+                    Clearing...
+                  </>
+                ) : (
+                  <>
+                    <Trash2
+                      size={15}
+                      aria-hidden="true"
+                    />
+
+                    Clear Cart
+                  </>
+                )}
+              </button>
             </div>
 
             {/* ==================================================
@@ -608,106 +541,157 @@ function CartPage() {
                 ================================================== */}
 
             <div className="cart-items-list">
+              {cartItems.map((item, index) => {
+                const itemId = getProductId(item);
 
-              {cartItems.map(
-                (item, index) => {
-                  const itemId =
-                    getProductId(
-                      item
-                    );
+                const itemPrice =
+                  Number(
+                    item?.price ??
+                      item?.product?.price ??
+                      0
+                  ) || 0;
 
-                  const itemPrice =
-                    Number(
-                      item?.price ??
-                        item?.product
-                          ?.price ??
-                        0
-                    ) || 0;
+                const itemQuantity =
+                  Number(item?.quantity) || 0;
 
-                  const itemQuantity =
-                    Number(
-                      item?.quantity
-                    ) || 0;
+                const itemMoq = Math.max(
+                  1,
+                  Number(
+                    item?.moq ??
+                      item?.minimumOrderQuantity ??
+                      item?.minOrderQuantity ??
+                      1
+                  ) || 1
+                );
 
-                  const itemMoq =
-                    Math.max(
-                      1,
-                      Number(
-                        item?.moq ??
-                          item?.minimumOrderQuantity ??
-                          item?.minOrderQuantity ??
-                          1
-                      ) || 1
-                    );
+                const itemStock = Number(
+                  item?.stock ??
+                    item?.countInStock ??
+                    item?.inventory
+                );
 
-                  const itemStock =
-                    Number(
-                      item?.stock ??
-                        item?.countInStock ??
-                        item?.inventory
-                    );
+                const hasStockLimit =
+                  Number.isFinite(itemStock) &&
+                  itemStock >= 0;
 
-                  const hasStockLimit =
-                    Number.isFinite(
-                      itemStock
-                    ) &&
-                    itemStock >= 0;
+                const isOutOfStock =
+                  hasStockLimit &&
+                  itemStock <= 0;
 
-                  const isOutOfStock =
-                    hasStockLimit &&
-                    itemStock <= 0;
+                const itemTotal =
+                  itemPrice * itemQuantity;
 
-                  const itemTotal =
-                    itemPrice *
-                    itemQuantity;
+                const image = getImageUrl(
+                  item?.image ||
+                    item?.images?.[0] ||
+                    item?.product?.image ||
+                    item?.product?.images?.[0]
+                );
 
-                  const image =
-                    getImageUrl(
-                      item?.image ||
-                        item?.images?.[0] ||
-                        item?.product
-                          ?.image ||
-                        item?.product
-                          ?.images?.[0]
-                    );
+                const imageFailed =
+                  imageErrors[itemId];
 
-                  const imageFailed =
-                    imageErrors[
-                      itemId
-                    ];
+                const quantityError =
+                  quantityErrors[itemId];
 
-                  const quantityError =
-                    quantityErrors[
-                      itemId
-                    ];
+                const productName =
+                  item?.name ||
+                  item?.product?.name ||
+                  "Product";
 
-                  const productName =
-                    item?.name ||
-                    item?.product
-                      ?.name ||
-                    "Product";
+                const canDecrease =
+                  itemQuantity > itemMoq;
 
-                  const canDecrease =
-                    itemQuantity >
-                    itemMoq;
+                const canIncrease =
+                  !hasStockLimit ||
+                  itemQuantity < itemStock;
 
-                  const canIncrease =
-                    !hasStockLimit ||
-                    itemQuantity <
-                      itemStock;
+                return (
+                  <article
+                    className={`cart-item ${
+                      isOutOfStock
+                        ? "cart-item-out-of-stock"
+                        : ""
+                    }`}
+                    key={itemId || index}
+                  >
+                    {/* ==================================================
+                        PRODUCT IMAGE
+                        ================================================== */}
 
-                  return (
-                    <article
-                      className="cart-item"
-                      key={
-                        itemId ||
-                        index
+                    <Link
+                      to={
+                        itemId
+                          ? `/products/${itemId}`
+                          : "/products"
                       }
+                      className="cart-item-image-link"
+                      aria-label={`View ${productName}`}
                     >
+                      <div className="cart-item-image">
+                        {image && !imageFailed ? (
+                          <img
+                            src={image}
+                            alt={productName}
+                            loading="lazy"
+                            onError={() =>
+                              handleImageError(
+                                itemId
+                              )
+                            }
+                          />
+                        ) : (
+                          <div className="cart-item-no-image">
+                            <Package
+                              size={28}
+                              aria-hidden="true"
+                            />
 
-                      {/* ==================================================
-                          PRODUCT IMAGE
-                          ================================================== */}
+                            <small>No Image</small>
+                          </div>
+                        )}
+
+                        {isOutOfStock && (
+                          <span className="cart-image-overlay">
+                            Out of stock
+                          </span>
+                        )}
+                      </div>
+                    </Link>
+
+                    {/* ==================================================
+                        PRODUCT INFORMATION
+                        ================================================== */}
+
+                    <div className="cart-item-info">
+                      <div className="cart-item-top-line">
+                        {item?.category && (
+                          <span className="cart-item-category">
+                            {typeof item.category ===
+                            "object"
+                              ? item.category?.name ||
+                                "Category"
+                              : item.category}
+                          </span>
+                        )}
+
+                        {isOutOfStock ? (
+                          <span className="cart-item-stock-badge cart-item-stock-badge-out">
+                            Out of stock
+                          </span>
+                        ) : (
+                          hasStockLimit && (
+                            <span className="cart-item-stock-badge">
+                              <CheckCircle2
+                                size={13}
+                                aria-hidden="true"
+                              />
+
+                              {itemStock} available
+                            </span>
+                          )
+                        )}
+                      </div>
 
                       <Link
                         to={
@@ -715,262 +699,152 @@ function CartPage() {
                             ? `/products/${itemId}`
                             : "/products"
                         }
-                        className="cart-item-image-link"
-                        aria-label={`View ${productName}`}
+                        className="cart-item-name"
                       >
-
-                        <div className="cart-item-image">
-
-                          {image &&
-                          !imageFailed ? (
-                            <img
-                              src={
-                                image
-                              }
-                              alt={
-                                productName
-                              }
-                              loading="lazy"
-                              onError={() =>
-                                handleImageError(
-                                  itemId
-                                )
-                              }
-                            />
-                          ) : (
-                            <div className="cart-item-no-image">
-
-                              <span>
-                                SE
-                              </span>
-
-                              <small>
-                                No Image
-                              </small>
-
-                            </div>
-                          )}
-
-                        </div>
-
+                        {productName}
                       </Link>
 
+                      <p className="cart-item-price">
+                        ₹{formatMoney(itemPrice)}
+
+                        <span>/ unit</span>
+                      </p>
+
+                      <p className="cart-item-moq">
+                        Minimum Order:{" "}
+                        <strong>{itemMoq}</strong>{" "}
+                        {itemMoq === 1
+                          ? "unit"
+                          : "units"}
+                      </p>
+
                       {/* ==================================================
-                          PRODUCT INFORMATION
+                          QUANTITY
                           ================================================== */}
 
-                      <div className="cart-item-info">
+                      <div className="cart-item-quantity-row">
+                        <span className="cart-quantity-label">
+                          Quantity
+                        </span>
 
-                        <div className="cart-item-top-line">
-
-                          {item?.category && (
-                            <span className="cart-item-category">
-                              {typeof item.category ===
-                              "object"
-                                ? item.category?.name ||
-                                  "Category"
-                                : item.category}
-                            </span>
-                          )}
-
-                          {isOutOfStock ? (
-                            <span className="cart-item-stock-badge cart-item-stock-badge-out">
-                              Out of stock
-                            </span>
-                          ) : (
-                            hasStockLimit && (
-                              <span className="cart-item-stock-badge">
-                                {itemStock}{" "}
-                                available
-                              </span>
-                            )
-                          )}
-
-                        </div>
-
-                        <Link
-                          to={
-                            itemId
-                              ? `/products/${itemId}`
-                              : "/products"
-                          }
-                          className="cart-item-name"
-                        >
-                          {productName}
-                        </Link>
-
-                        <p className="cart-item-price">
-
-                          ₹
-                          {itemPrice.toLocaleString(
-                            "en-IN",
-                            {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
+                        <div className="cart-quantity-control">
+                          <button
+                            type="button"
+                            disabled={
+                              !canDecrease ||
+                              isOutOfStock
                             }
-                          )}
+                            onClick={() =>
+                              handleDecrease(item)
+                            }
+                            aria-label={`Decrease ${productName} quantity`}
+                          >
+                            <Minus
+                              size={15}
+                              aria-hidden="true"
+                            />
+                          </button>
 
-                          <span>
-                            / unit
-                          </span>
+                          <input
+                            type="number"
+                            min={itemMoq}
+                            max={
+                              hasStockLimit
+                                ? itemStock
+                                : undefined
+                            }
+                            value={itemQuantity}
+                            disabled={isOutOfStock}
+                            onChange={(event) =>
+                              handleQuantityChange(
+                                item,
+                                event.target.value
+                              )
+                            }
+                            aria-label={`${productName} quantity`}
+                          />
 
+                          <button
+                            type="button"
+                            disabled={
+                              !canIncrease ||
+                              isOutOfStock
+                            }
+                            onClick={() =>
+                              handleIncrease(item)
+                            }
+                            aria-label={`Increase ${productName} quantity`}
+                          >
+                            <Plus
+                              size={15}
+                              aria-hidden="true"
+                            />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* ==================================================
+                          QUANTITY ERROR
+                          ================================================== */}
+
+                      {quantityError && (
+                        <p className="cart-quantity-error">
+                          {quantityError}
                         </p>
+                      )}
+                    </div>
 
-                        <p className="cart-item-moq">
+                    {/* ==================================================
+                        TOTAL + REMOVE
+                        ================================================== */}
 
-                          Minimum Order:{" "}
+                    <div className="cart-item-actions">
+                      <div className="cart-item-total">
+                        <span>Item Total</span>
 
-                          <strong>
-                            {itemMoq}
-                          </strong>{" "}
+                        <strong>
+                          ₹{formatMoney(itemTotal)}
+                        </strong>
+                      </div>
 
-                          {itemMoq === 1
-                            ? "unit"
-                            : "units"}
-
-                        </p>
-
-                        {/* ==================================================
-                            QUANTITY
-                            ================================================== */}
-
-                        <div className="cart-item-quantity-row">
-
-                          <span>
-                            Quantity
-                          </span>
-
-                          <div className="cart-quantity-control">
-
-                            <button
-                              type="button"
-                              disabled={
-                                !canDecrease ||
-                                isOutOfStock
-                              }
-                              onClick={() =>
-                                handleDecrease(
-                                  item
-                                )
-                              }
-                              aria-label={`Decrease ${productName} quantity`}
-                            >
-                              −
-                            </button>
-
-                            <input
-                              type="number"
-                              min={
-                                itemMoq
-                              }
-                              max={
-                                hasStockLimit
-                                  ? itemStock
-                                  : undefined
-                              }
-                              value={
-                                itemQuantity
-                              }
-                              disabled={
-                                isOutOfStock
-                              }
-                              onChange={(
-                                event
-                              ) =>
-                                handleQuantityChange(
-                                  item,
-                                  event
-                                    .target
-                                    .value
-                                )
-                              }
-                              aria-label={`${productName} quantity`}
+                      <button
+                        type="button"
+                        className="cart-remove-button"
+                        onClick={() =>
+                          handleRemove(itemId)
+                        }
+                        disabled={
+                          !itemId ||
+                          removingProductId ===
+                            itemId
+                        }
+                      >
+                        {removingProductId ===
+                        itemId ? (
+                          <>
+                            <RefreshCw
+                              size={14}
+                              className="cart-spin"
+                              aria-hidden="true"
                             />
 
-                            <button
-                              type="button"
-                              disabled={
-                                !canIncrease ||
-                                isOutOfStock
-                              }
-                              onClick={() =>
-                                handleIncrease(
-                                  item
-                                )
-                              }
-                              aria-label={`Increase ${productName} quantity`}
-                            >
-                              +
-                            </button>
+                            Removing...
+                          </>
+                        ) : (
+                          <>
+                            <Trash2
+                              size={14}
+                              aria-hidden="true"
+                            />
 
-                          </div>
-
-                        </div>
-
-                        {/* ==================================================
-                            QUANTITY ERROR
-                            ================================================== */}
-
-                        {quantityError && (
-                          <p className="text-xs text-red-600 mt-2">
-                            {quantityError}
-                          </p>
+                            Remove
+                          </>
                         )}
-
-                      </div>
-
-                      {/* ==================================================
-                          TOTAL + REMOVE
-                          ================================================== */}
-
-                      <div className="cart-item-actions">
-
-                        <div className="cart-item-total">
-
-                          <span>
-                            Item Total
-                          </span>
-
-                          <strong>
-                            ₹
-                            {itemTotal.toLocaleString(
-                              "en-IN",
-                              {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              }
-                            )}
-                          </strong>
-
-                        </div>
-
-                        <button
-                          type="button"
-                          className="cart-remove-button"
-                          onClick={() =>
-                            handleRemove(
-                              itemId
-                            )
-                          }
-                          disabled={
-                            !itemId ||
-                            removingProductId ===
-                              itemId
-                          }
-                        >
-                          {removingProductId ===
-                          itemId
-                            ? "Removing..."
-                            : "Remove"}
-                        </button>
-
-                      </div>
-
-                    </article>
-                  );
-                }
-              )}
-
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
             </div>
 
             {/* ==================================================
@@ -981,13 +855,18 @@ function CartPage() {
               to="/products"
               className="cart-continue-link"
             >
-              <span>
-                ←
-              </span>
+              <ArrowLeft
+                size={17}
+                aria-hidden="true"
+              />
 
-              Continue Shopping
+              <span>Continue Shopping</span>
+
+              <ChevronRight
+                size={16}
+                aria-hidden="true"
+              />
             </Link>
-
           </div>
 
           {/* ==================================================
@@ -995,17 +874,15 @@ function CartPage() {
               ================================================== */}
 
           <aside className="cart-summary">
-
             <div className="cart-summary-header">
+              <span>ORDER SUMMARY</span>
 
-              <span>
-                ORDER SUMMARY
-              </span>
+              <h2>Cart Summary</h2>
 
-              <h2>
-                Cart Summary
-              </h2>
-
+              <p>
+                Review your order before continuing
+                to checkout.
+              </p>
             </div>
 
             {/* ==================================================
@@ -1013,15 +890,16 @@ function CartPage() {
                 ================================================== */}
 
             <div className="cart-summary-highlight">
+              <div className="cart-summary-highlight-icon">
+                <ShoppingBag
+                  size={18}
+                  aria-hidden="true"
+                />
+              </div>
 
-              <span>
-                Items in cart
-              </span>
+              <span>Items in cart</span>
 
-              <strong>
-                {totalItems}
-              </strong>
-
+              <strong>{totalItems}</strong>
             </div>
 
             {/* ==================================================
@@ -1029,24 +907,11 @@ function CartPage() {
                 ================================================== */}
 
             <div className="cart-summary-row">
-
-              <span>
-                Subtotal
-              </span>
+              <span>Subtotal</span>
 
               <strong>
-                ₹
-                {Number(
-                  subtotal || 0
-                ).toLocaleString(
-                  "en-IN",
-                  {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  }
-                )}
+                ₹{formatMoney(subtotal)}
               </strong>
-
             </div>
 
             {/* ==================================================
@@ -1054,15 +919,11 @@ function CartPage() {
                 ================================================== */}
 
             <div className="cart-summary-row">
-
-              <span>
-                Shipping
-              </span>
+              <span>Shipping</span>
 
               <strong>
                 Calculated at checkout
               </strong>
-
             </div>
 
             <div className="cart-summary-divider" />
@@ -1072,47 +933,37 @@ function CartPage() {
                 ================================================== */}
 
             <div className="cart-summary-total">
+              <div>
+                <span>Estimated Total</span>
 
-              <span>
-                Estimated Total
-              </span>
+                <small>
+                  Taxes & shipping may apply
+                </small>
+              </div>
 
               <strong>
-                ₹
-                {Number(
-                  subtotal || 0
-                ).toLocaleString(
-                  "en-IN",
-                  {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  }
-                )}
+                ₹{formatMoney(subtotal)}
               </strong>
-
             </div>
 
             {/* ==================================================
                 CHECKOUT
                 ================================================== */}
 
-            {Number(
-              subtotal || 0
-            ) > 0 ? (
+            {Number(subtotal || 0) > 0 ? (
               <button
                 type="button"
                 className="cart-checkout-button"
-                onClick={
-                  handleCheckout
-                }
+                onClick={handleCheckout}
               >
                 <span>
                   Proceed to Checkout
                 </span>
 
-                <span>
-                  →
-                </span>
+                <ArrowRight
+                  size={18}
+                  aria-hidden="true"
+                />
               </button>
             ) : (
               <button
@@ -1132,9 +983,7 @@ function CartPage() {
               type="button"
               className="cart-summary-products-button"
               onClick={() =>
-                navigate(
-                  "/products"
-                )
+                navigate("/products")
               }
             >
               Continue Shopping
@@ -1145,25 +994,59 @@ function CartPage() {
                 ================================================== */}
 
             <div className="cart-summary-trust">
+              <div className="cart-trust-icon">
+                <ShieldCheck
+                  size={18}
+                  aria-hidden="true"
+                />
+              </div>
 
-              <span>
-                ✓
-              </span>
+              <div>
+                <strong>Ready for checkout?</strong>
 
-              <p>
-                Review your address,
-                quantities and order details
-                before placing the order.
-              </p>
-
+                <p>
+                  Review your address, quantities and
+                  order details before placing the
+                  order.
+                </p>
+              </div>
             </div>
 
+            {/* ==================================================
+                BUSINESS FEATURES
+                ================================================== */}
+
+            <div className="cart-summary-features">
+              <div>
+                <Package
+                  size={16}
+                  aria-hidden="true"
+                />
+
+                <span>Business-ready ordering</span>
+              </div>
+
+              <div>
+                <Truck
+                  size={16}
+                  aria-hidden="true"
+                />
+
+                <span>Shipping calculated at checkout</span>
+              </div>
+
+              <div>
+                <ShieldCheck
+                  size={16}
+                  aria-hidden="true"
+                />
+
+                <span>Secure checkout experience</span>
+              </div>
+            </div>
           </aside>
-
         </div>
-
       </div>
-
     </section>
   );
 }

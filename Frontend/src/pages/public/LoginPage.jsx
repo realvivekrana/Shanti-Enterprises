@@ -1,377 +1,1187 @@
 // ============================================================
-// SHANTI ENTERPRISES — LoginPage (Premium)
+// SHANTI ENTERPRISES — LoginPage
+// Premium Responsive UI
 // ============================================================
 
 import { useEffect, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+
+import {
+  Link,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
+
 import { useAuth } from "../../context/AuthContext";
 
-// ─── tiny SVG icons ──────────────────────────────────────────
+// ============================================================
+// CSS
+// ============================================================
+
+import "./LoginPage.css";
+
+
+// ============================================================
+// ICONS
+// ============================================================
+
 const IconMail = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
-);
-const IconLock = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
-);
-const IconEye = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6z"/><circle cx="12" cy="12" r="2.5"/></svg>
-);
-const IconEyeOff = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3l18 18"/><path d="M10.6 10.6a2 2 0 0 0 2.8 2.8"/><path d="M9.2 5.4A9.8 9.8 0 0 1 12 5c6 0 9.5 7 9.5 7a17 17 0 0 1-3.1 3.7"/><path d="M6.2 6.2C3.8 8.1 2.5 12 2.5 12S6 19 12 19c1.5 0 2.8-.3 4-.9"/></svg>
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <rect
+      x="3"
+      y="5"
+      width="18"
+      height="14"
+      rx="2"
+    />
+
+    <path d="m3 7 9 6 9-6" />
+  </svg>
 );
 
-// ─── input field ─────────────────────────────────────────────
-function Field({ id, label, type = "text", value, onChange, placeholder, autoComplete, disabled, icon, extra }) {
+
+const IconLock = () => (
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <rect
+      x="4"
+      y="10"
+      width="16"
+      height="11"
+      rx="2"
+    />
+
+    <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+  </svg>
+);
+
+
+const IconEye = () => (
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6z" />
+
+    <circle
+      cx="12"
+      cy="12"
+      r="2.5"
+    />
+  </svg>
+);
+
+
+const IconEyeOff = () => (
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M3 3l18 18" />
+
+    <path d="M10.6 10.6a2 2 0 0 0 2.8 2.8" />
+
+    <path d="M9.2 5.4A9.8 9.8 0 0 1 12 5c6 0 9.5 7 9.5 7a17 17 0 0 1-3.1 3.7" />
+
+    <path d="M6.2 6.2C3.8 8.1 2.5 12 2.5 12S6 19 12 19c1.5 0 2.8-.3 4-.9" />
+  </svg>
+);
+
+
+const IconPackage = () => (
+  <svg
+    width="21"
+    height="21"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <path d="m16.5 9.4-9-5.19" />
+
+    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+
+    <path d="m3.3 7 8.7 5 8.7-5" />
+
+    <path d="M12 22V12" />
+  </svg>
+);
+
+
+const IconPrice = () => (
+  <svg
+    width="21"
+    height="21"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M12 2v20" />
+
+    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H7" />
+  </svg>
+);
+
+
+const IconShield = () => (
+  <svg
+    width="21"
+    height="21"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" />
+
+    <path d="m9 12 2 2 4-4" />
+  </svg>
+);
+
+
+const IconArrow = () => (
+  <svg
+    width="17"
+    height="17"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M5 12h14" />
+
+    <path d="m13 6 6 6-6 6" />
+  </svg>
+);
+
+
+const IconCheck = () => (
+  <svg
+    width="15"
+    height="15"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <path d="m5 12 4 4L19 6" />
+  </svg>
+);
+
+
+// ============================================================
+// FIELD COMPONENT
+// ============================================================
+
+function Field({
+  id,
+  label,
+  type = "text",
+  value,
+  onChange,
+  placeholder,
+  autoComplete,
+  disabled,
+  icon,
+  extra,
+}) {
   return (
-    <div style={{ marginBottom: 20 }}>
-      <label htmlFor={id} style={{ display: "block", fontSize: 13, fontWeight: 600, color: "var(--se-text-2)", marginBottom: 7 }}>
+    <div className="login-field">
+
+      <label
+        htmlFor={id}
+        className="login-field-label"
+      >
         {label}
       </label>
-      <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+
+      <div className="login-input-wrap">
+
         {icon && (
-          <span style={{ position: "absolute", left: 14, color: "var(--se-text-4)", display: "flex", pointerEvents: "none", zIndex: 1 }}>
+          <span className="login-input-icon">
             {icon}
           </span>
         )}
+
         <input
           id={id}
+          className="login-input"
           type={type}
           value={value}
           onChange={onChange}
           placeholder={placeholder}
           autoComplete={autoComplete}
           disabled={disabled}
-          style={{ paddingLeft: icon ? 44 : 14, paddingRight: extra ? 44 : 14, height: 48, fontSize: 15 }}
         />
+
         {extra}
+
       </div>
+
     </div>
   );
 }
 
-// ─── sidebar feature ─────────────────────────────────────────
-function SideFeature({ emoji, title, desc }) {
+
+// ============================================================
+// SIDE FEATURE
+// ============================================================
+
+function SideFeature({
+  icon,
+  title,
+  desc,
+}) {
   return (
-    <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
-      <div style={{ width: 44, height: 44, borderRadius: 12, background: "rgba(13,148,136,.15)", border: "1px solid rgba(13,148,136,.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }}>
-        {emoji}
+    <div className="login-feature">
+
+      <div className="login-feature-icon">
+        {icon}
       </div>
-      <div>
-        <p style={{ color: "#fff", fontSize: 14, fontWeight: 700, marginBottom: 3 }}>{title}</p>
-        <p style={{ color: "#94A3B8", fontSize: 13 }}>{desc}</p>
+
+      <div className="login-feature-content">
+
+        <h3>
+          {title}
+        </h3>
+
+        <p>
+          {desc}
+        </p>
+
       </div>
+
     </div>
   );
 }
 
-// ─────────────────────────────────────────────────────────────
+
+// ============================================================
+// LOGIN PAGE
+// ============================================================
+
 function LoginPage() {
-  const navigate  = useNavigate();
-  const location  = useLocation();
-  const { user, loading: authLoading, login, error: authError, clearError } = useAuth();
 
-  const [loginType,    setLoginType]    = useState("customer");
-  const [email,        setEmail]        = useState("");
-  const [password,     setPassword]     = useState("");
-  const [showPwd,      setShowPwd]      = useState(false);
-  const [rememberMe,   setRememberMe]   = useState(false);
-  const [submitting,   setSubmitting]   = useState(false);
-  const [localError,   setLocalError]   = useState("");
+  const navigate = useNavigate();
 
-  // detect admin URL
+  const location = useLocation();
+
+  const {
+    user,
+    loading: authLoading,
+    login,
+    error: authError,
+    clearError,
+  } = useAuth();
+
+
+  // ==========================================================
+  // STATE
+  // ==========================================================
+
+  const [
+    loginType,
+    setLoginType,
+  ] = useState("customer");
+
+
+  const [
+    email,
+    setEmail,
+  ] = useState("");
+
+
+  const [
+    password,
+    setPassword,
+  ] = useState("");
+
+
+  const [
+    showPwd,
+    setShowPwd,
+  ] = useState(false);
+
+
+  const [
+    rememberMe,
+    setRememberMe,
+  ] = useState(false);
+
+
+  const [
+    submitting,
+    setSubmitting,
+  ] = useState(false);
+
+
+  const [
+    localError,
+    setLocalError,
+  ] = useState("");
+
+
+  // ==========================================================
+  // DETECT ADMIN URL
+  // ==========================================================
+
   useEffect(() => {
-    setLoginType(location.pathname === "/admin/login" ? "admin" : "customer");
+
+    setLoginType(
+      location.pathname === "/admin/login"
+        ? "admin"
+        : "customer"
+    );
+
   }, [location.pathname]);
 
-  // redirect if already logged in
-  useEffect(() => {
-    if (!user) return;
-    navigate(user.role === "admin" ? "/admin" : "/orders", { replace: true });
-  }, [user, navigate]);
 
-  // load remembered email
+  // ==========================================================
+  // REDIRECT ALREADY LOGGED IN USER
+  // ==========================================================
+
   useEffect(() => {
-    const saved = localStorage.getItem("shantiRememberEmail");
-    if (saved) { setEmail(saved); setRememberMe(true); }
+
+    if (!user) {
+      return;
+    }
+
+    navigate(
+      user.role === "admin"
+        ? "/admin"
+        : "/orders",
+      {
+        replace: true,
+      }
+    );
+
+  }, [
+    user,
+    navigate,
+  ]);
+
+
+  // ==========================================================
+  // LOAD REMEMBERED EMAIL
+  // ==========================================================
+
+  useEffect(() => {
+
+    const saved =
+      localStorage.getItem(
+        "shantiRememberEmail"
+      );
+
+    if (saved) {
+
+      setEmail(saved);
+
+      setRememberMe(true);
+
+    }
+
   }, []);
 
+
+  // ==========================================================
+  // SWITCH LOGIN TYPE
+  // ==========================================================
+
   const switchType = (type) => {
+
     setLoginType(type);
-    setLocalError("");
-    if (clearError) clearError();
-    navigate(type === "admin" ? "/admin/login" : "/login", { replace: true });
-  };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
     setLocalError("");
-    if (clearError) clearError();
-    const cleanEmail = email.trim().toLowerCase();
-    if (!cleanEmail) return setLocalError("Please enter your email address.");
-    if (!password)   return setLocalError("Please enter your password.");
-    setSubmitting(true);
-    try {
-      const res  = await login(cleanEmail, password);
-      const u    = res?.user;
-      if (!u) throw new Error("Login succeeded but user info was not returned.");
-      if (loginType === "admin"    && u.role !== "admin") return setLocalError("This account is not an admin account.");
-      if (loginType === "customer" && u.role === "admin") return setLocalError("Please use Admin Login for this account.");
-      if (rememberMe) localStorage.setItem("shantiRememberEmail", cleanEmail);
-      else localStorage.removeItem("shantiRememberEmail");
-      navigate(u.role === "admin" ? "/admin" : "/orders", { replace: true });
-    } catch (err) {
-      setLocalError(err?.message || "Unable to sign in. Please check your credentials.");
-    } finally {
-      setSubmitting(false);
+
+    if (clearError) {
+      clearError();
     }
+
+    navigate(
+      type === "admin"
+        ? "/admin/login"
+        : "/login",
+      {
+        replace: true,
+      }
+    );
+
   };
 
-  const errorMsg = localError || authError || "";
-  const busy = submitting || authLoading;
+
+  // ==========================================================
+  // SUBMIT
+  // ==========================================================
+
+  const handleSubmit = async (event) => {
+
+    event.preventDefault();
+
+    setLocalError("");
+
+    if (clearError) {
+      clearError();
+    }
+
+    const cleanEmail =
+      email
+        .trim()
+        .toLowerCase();
+
+
+    // --------------------------------------------------------
+    // VALIDATION
+    // --------------------------------------------------------
+
+    if (!cleanEmail) {
+
+      setLocalError(
+        "Please enter your email address."
+      );
+
+      return;
+
+    }
+
+
+    if (!password) {
+
+      setLocalError(
+        "Please enter your password."
+      );
+
+      return;
+
+    }
+
+
+    // --------------------------------------------------------
+    // LOGIN
+    // --------------------------------------------------------
+
+    setSubmitting(true);
+
+    try {
+
+      const response =
+        await login(
+          cleanEmail,
+          password
+        );
+
+
+      const loggedInUser =
+        response?.user;
+
+
+      if (!loggedInUser) {
+
+        throw new Error(
+          "Login succeeded but user info was not returned."
+        );
+
+      }
+
+
+      // ------------------------------------------------------
+      // ADMIN VALIDATION
+      // ------------------------------------------------------
+
+      if (
+        loginType === "admin" &&
+        loggedInUser.role !== "admin"
+      ) {
+
+        setLocalError(
+          "This account is not an admin account."
+        );
+
+        return;
+
+      }
+
+
+      // ------------------------------------------------------
+      // CUSTOMER VALIDATION
+      // ------------------------------------------------------
+
+      if (
+        loginType === "customer" &&
+        loggedInUser.role === "admin"
+      ) {
+
+        setLocalError(
+          "Please use Admin Login for this account."
+        );
+
+        return;
+
+      }
+
+
+      // ------------------------------------------------------
+      // REMEMBER EMAIL
+      // ------------------------------------------------------
+
+      if (rememberMe) {
+
+        localStorage.setItem(
+          "shantiRememberEmail",
+          cleanEmail
+        );
+
+      } else {
+
+        localStorage.removeItem(
+          "shantiRememberEmail"
+        );
+
+      }
+
+
+      // ------------------------------------------------------
+      // REDIRECT
+      // ------------------------------------------------------
+
+      navigate(
+        loggedInUser.role === "admin"
+          ? "/admin"
+          : "/orders",
+        {
+          replace: true,
+        }
+      );
+
+    } catch (error) {
+
+      setLocalError(
+        error?.message ||
+        "Unable to sign in. Please check your credentials."
+      );
+
+    } finally {
+
+      setSubmitting(false);
+
+    }
+
+  };
+
+
+  // ==========================================================
+  // DERIVED STATE
+  // ==========================================================
+
+  const errorMsg =
+    localError ||
+    authError ||
+    "";
+
+
+  const busy =
+    submitting ||
+    authLoading;
+
+
+  // ==========================================================
+  // RENDER
+  // ==========================================================
 
   return (
-    <div style={{ minHeight: "calc(100vh - 68px)", display: "grid", gridTemplateColumns: "1fr 1fr" }}>
+    <main className="login-page">
 
-      {/* ── LEFT PANEL ────────────────────────────────────── */}
-      <div style={{
-        background: "linear-gradient(145deg, #0F172A 0%, #1E293B 100%)",
-        padding: "64px 56px",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-        position: "relative",
-        overflow: "hidden",
-      }}>
-        {/* decorative circles */}
-        <div style={{ position: "absolute", width: 340, height: 340, top: -100, right: -80, borderRadius: "50%", border: "1px solid rgba(13,148,136,.15)", pointerEvents: "none" }} />
-        <div style={{ position: "absolute", width: 220, height: 220, bottom: -60, left: -60, borderRadius: "50%", background: "rgba(13,148,136,.07)", pointerEvents: "none" }} />
+      {/* ======================================================
+          BRAND / BUSINESS PANEL
+          ====================================================== */}
 
-        <div style={{ position: "relative", zIndex: 1, maxWidth: 420 }}>
-          {/* logo */}
-          <Link to="/" style={{ display: "inline-flex", alignItems: "center", gap: 10, marginBottom: 48 }}>
-            <span style={{ width: 40, height: 40, background: "var(--se-teal)", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 800, color: "#fff", flexShrink: 0 }}>SE</span>
-            <span style={{ color: "#fff", fontSize: "1rem", fontWeight: 800, letterSpacing: "-0.02em" }}>Shanti Enterprises</span>
+      <section className="login-brand-panel">
+
+        {/* Decorative elements */}
+
+        <div
+          className="login-decoration login-decoration-one"
+          aria-hidden="true"
+        />
+
+        <div
+          className="login-decoration login-decoration-two"
+          aria-hidden="true"
+        />
+
+        <div
+          className="login-decoration login-decoration-three"
+          aria-hidden="true"
+        />
+
+
+        <div className="login-brand-inner">
+
+          {/* Brand */}
+
+          <Link
+            to="/"
+            className="login-brand"
+            aria-label="Shanti Enterprises home"
+          >
+
+            <span className="login-brand-logo">
+              SE
+            </span>
+
+            <span className="login-brand-name">
+              Shanti Enterprises
+            </span>
+
           </Link>
 
-          {/* headline */}
-          <h1 style={{ color: "#fff", fontSize: "clamp(2rem,3.5vw,2.8rem)", fontWeight: 800, letterSpacing: "-0.04em", lineHeight: 1.1, marginBottom: 16 }}>
-            Your trusted<br />
-            <span style={{ color: "var(--se-teal)" }}>business partner.</span>
-          </h1>
-          <p style={{ color: "#94A3B8", fontSize: 16, lineHeight: 1.7, marginBottom: 48 }}>
-            Sign in to access your orders, track shipments, request quotes and manage your wholesale account.
-          </p>
 
-          {/* features */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-            <SideFeature emoji="📦" title="Order Management" desc="View, track and manage all your orders in one place." />
-            <SideFeature emoji="💰" title="Wholesale Pricing" desc="Volume-based pricing tiers that scale with your business." />
-            <SideFeature emoji="🔒" title="Secure Checkout" desc="Razorpay-powered payments with UPI, cards & net banking." />
+          {/* Hero */}
+
+          <div className="login-brand-copy">
+
+            <span className="login-brand-eyebrow">
+              BUSINESS ACCOUNT
+            </span>
+
+            <h1>
+              Your trusted{" "}
+              <span>
+                business partner.
+              </span>
+            </h1>
+
+            <p>
+              Sign in to access your orders,
+              track shipments, request quotes
+              and manage your wholesale account.
+            </p>
+
           </div>
 
-          {/* bottom trust */}
-          <div style={{ marginTop: 48, display: "flex", alignItems: "center", gap: 8, color: "#64748B", fontSize: 13 }}>
-            <span style={{ color: "#22C55E" }}>●</span> Encrypted &amp; Secure
-            <span style={{ margin: "0 8px", color: "#334155" }}>·</span>
-            <span>Trusted since 2010</span>
+
+          {/* Features */}
+
+          <div className="login-features">
+
+            <SideFeature
+              icon={<IconPackage />}
+              title="Order Management"
+              desc="View, track and manage all your orders in one place."
+            />
+
+            <SideFeature
+              icon={<IconPrice />}
+              title="Wholesale Pricing"
+              desc="Volume-based pricing tiers that scale with your business."
+            />
+
+            <SideFeature
+              icon={<IconShield />}
+              title="Secure Checkout"
+              desc="Razorpay-powered payments with UPI, cards & net banking."
+            />
+
           </div>
-        </div>
-      </div>
 
-      {/* ── RIGHT PANEL ───────────────────────────────────── */}
-      <div style={{
-        background: "var(--se-bg)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "48px 40px",
-      }}>
-        <div style={{ width: "100%", maxWidth: 460 }}>
 
-          {/* ── CARD ── */}
-          <div style={{ background: "#fff", border: "1px solid var(--se-border)", borderRadius: 20, boxShadow: "0 20px 60px rgba(15,23,42,.1), 0 4px 16px rgba(15,23,42,.04)", overflow: "hidden" }}>
+          {/* Trust */}
 
-            {/* TABS */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", borderBottom: "1px solid var(--se-border)" }}>
-              {[
-                { key: "customer", label: "Customer Login", emoji: "👤" },
-                { key: "admin",    label: "Admin Login",    emoji: "⚙️" },
-              ].map(t => (
-                <button
-                  key={t.key}
-                  type="button"
-                  onClick={() => switchType(t.key)}
-                  style={{
-                    height: 54,
-                    background: "transparent",
-                    border: "none",
-                    borderBottom: loginType === t.key ? "3px solid var(--se-teal)" : "3px solid transparent",
-                    color: loginType === t.key ? "var(--se-teal-hover)" : "var(--se-text-3)",
-                    fontWeight: 700,
-                    fontSize: 14,
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 7,
-                    transition: "all .2s",
-                    boxShadow: "none",
-                    transform: "none",
-                  }}
-                >
-                  <span>{t.emoji}</span> {t.key === "customer" ? "Customer" : "Admin"}
-                </button>
-              ))}
+          <div className="login-trust">
+
+            <div className="login-trust-item">
+
+              <span className="login-trust-check">
+                <IconCheck />
+              </span>
+
+              <span>
+                Encrypted & Secure
+              </span>
+
             </div>
 
-            {/* FORM BODY */}
-            <div style={{ padding: "32px 32px 28px" }}>
-              <h2 style={{ fontSize: "1.5rem", fontWeight: 800, color: "var(--se-navy)", marginBottom: 6, letterSpacing: "-0.03em" }}>
-                {loginType === "admin" ? "Admin Sign In" : "Welcome back"}
-              </h2>
-              <p style={{ fontSize: 14, color: "var(--se-text-3)", marginBottom: 24 }}>
-                {loginType === "admin"
-                  ? "Sign in to manage your store."
-                  : "Sign in to access your account and orders."}
-              </p>
+            <span
+              className="login-trust-dot"
+              aria-hidden="true"
+            />
 
-              {/* admin note */}
+            <span>
+              Trusted since 2010
+            </span>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      {/* ======================================================
+          FORM PANEL
+          ====================================================== */}
+
+      <section className="login-form-panel">
+
+        <div className="login-form-container">
+
+          {/* Mobile brand */}
+
+          <Link
+            to="/"
+            className="login-mobile-brand"
+          >
+
+            <span className="login-mobile-logo">
+              SE
+            </span>
+
+            <span>
+              Shanti Enterprises
+            </span>
+
+          </Link>
+
+
+          {/* Login Card */}
+
+          <div className="login-card">
+
+            {/* ==================================================
+                LOGIN TYPE TABS
+                ================================================== */}
+
+            <div className="login-tabs">
+
+              <button
+                type="button"
+                className={`login-tab ${
+                  loginType === "customer"
+                    ? "is-active"
+                    : ""
+                }`}
+                onClick={() =>
+                  switchType("customer")
+                }
+              >
+
+                <span className="login-tab-icon">
+                  👤
+                </span>
+
+                <span>
+                  Customer
+                </span>
+
+              </button>
+
+
+              <button
+                type="button"
+                className={`login-tab ${
+                  loginType === "admin"
+                    ? "is-active"
+                    : ""
+                }`}
+                onClick={() =>
+                  switchType("admin")
+                }
+              >
+
+                <span className="login-tab-icon">
+                  ⚙️
+                </span>
+
+                <span>
+                  Admin
+                </span>
+
+              </button>
+
+            </div>
+
+
+            {/* ==================================================
+                FORM CONTENT
+                ================================================== */}
+
+            <div className="login-card-body">
+
+              <div className="login-heading">
+
+                <span className="login-heading-badge">
+
+                  {loginType === "admin"
+                    ? "ADMIN PORTAL"
+                    : "CUSTOMER PORTAL"}
+
+                </span>
+
+                <h2>
+
+                  {loginType === "admin"
+                    ? "Admin Sign In"
+                    : "Welcome back"}
+
+                </h2>
+
+                <p>
+
+                  {loginType === "admin"
+                    ? "Sign in to manage your store."
+                    : "Sign in to access your account and orders."}
+
+                </p>
+
+              </div>
+
+
+              {/* =================================================
+                  ADMIN NOTE
+                  ================================================= */}
+
               {loginType === "admin" && (
-                <div style={{ padding: "10px 14px", background: "var(--se-teal-soft)", border: "1px solid var(--se-teal-light)", borderRadius: 8, color: "var(--se-teal-hover)", fontSize: 13, fontWeight: 600, marginBottom: 20 }}>
-                  ⚙️ Use your administrator credentials to sign in.
+
+                <div
+                  className="login-admin-note"
+                  role="note"
+                >
+
+                  <span>
+                    ⚙️
+                  </span>
+
+                  <p>
+                    Use your administrator
+                    credentials to sign in.
+                  </p>
+
                 </div>
+
               )}
 
-              {/* error */}
+
+              {/* =================================================
+                  ERROR
+                  ================================================= */}
+
               {errorMsg && (
-                <div className="alert-error" role="alert" style={{ marginBottom: 20 }}>
-                  ⚠ {errorMsg}
+
+                <div
+                  className="login-error"
+                  role="alert"
+                >
+
+                  <span
+                    className="login-error-icon"
+                    aria-hidden="true"
+                  >
+                    !
+                  </span>
+
+                  <span>
+                    {errorMsg}
+                  </span>
+
                 </div>
+
               )}
 
-              <form onSubmit={handleSubmit} noValidate>
+
+              {/* =================================================
+                  FORM
+                  ================================================= */}
+
+              <form
+                onSubmit={handleSubmit}
+                noValidate
+                className="login-form"
+              >
 
                 <Field
                   id="email"
                   label="Email Address"
                   type="email"
                   value={email}
-                  onChange={e => setEmail(e.target.value)}
+                  onChange={(event) =>
+                    setEmail(
+                      event.target.value
+                    )
+                  }
                   placeholder="you@example.com"
                   autoComplete="email"
                   disabled={busy}
                   icon={<IconMail />}
                 />
 
+
                 <Field
                   id="password"
                   label="Password"
-                  type={showPwd ? "text" : "password"}
+                  type={
+                    showPwd
+                      ? "text"
+                      : "password"
+                  }
                   value={password}
-                  onChange={e => setPassword(e.target.value)}
+                  onChange={(event) =>
+                    setPassword(
+                      event.target.value
+                    )
+                  }
                   placeholder="Enter your password"
                   autoComplete="current-password"
                   disabled={busy}
                   icon={<IconLock />}
                   extra={
+
                     <button
                       type="button"
-                      onClick={() => setShowPwd(p => !p)}
-                      style={{ position: "absolute", right: 12, background: "none", border: "none", color: "var(--se-text-4)", cursor: "pointer", display: "flex", alignItems: "center", padding: 6, borderRadius: 6, boxShadow: "none", transform: "none" }}
-                      aria-label={showPwd ? "Hide password" : "Show password"}
+                      className="login-password-toggle"
+                      onClick={() =>
+                        setShowPwd(
+                          (current) =>
+                            !current
+                        )
+                      }
+                      aria-label={
+                        showPwd
+                          ? "Hide password"
+                          : "Show password"
+                      }
+                      aria-pressed={showPwd}
+                      disabled={busy}
                     >
-                      {showPwd ? <IconEyeOff /> : <IconEye />}
+
+                      {showPwd ? (
+                        <IconEyeOff />
+                      ) : (
+                        <IconEye />
+                      )}
+
                     </button>
+
                   }
                 />
 
-                {/* remember me */}
-                <label style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 24, cursor: "pointer", fontSize: 13, color: "var(--se-text-3)", fontWeight: 500 }}>
+
+                {/* Remember */}
+
+                <label className="login-remember">
+
                   <input
                     type="checkbox"
                     checked={rememberMe}
-                    onChange={e => setRememberMe(e.target.checked)}
-                    style={{ width: 16, height: 16, accentColor: "var(--se-teal)", cursor: "pointer" }}
+                    onChange={(event) =>
+                      setRememberMe(
+                        event.target.checked
+                      )
+                    }
+                    disabled={busy}
                   />
-                  Remember my email
+
+                  <span className="login-checkbox">
+                    <IconCheck />
+                  </span>
+
+                  <span>
+                    Remember my email
+                  </span>
+
                 </label>
 
-                {/* submit */}
+
+                {/* Submit */}
+
                 <button
                   type="submit"
+                  className={`login-submit ${
+                    busy
+                      ? "is-loading"
+                      : ""
+                  }`}
                   disabled={busy}
-                  style={{
-                    width: "100%",
-                    height: 52,
-                    background: busy ? "var(--se-text-4)" : "var(--se-teal)",
-                    color: "#fff",
-                    border: "none",
-                    borderRadius: 12,
-                    fontSize: 15,
-                    fontWeight: 700,
-                    cursor: busy ? "not-allowed" : "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 10,
-                    boxShadow: busy ? "none" : "0 6px 20px rgba(13,148,136,.35)",
-                    transition: "all .22s",
-                    transform: "none",
-                  }}
                 >
+
                   {busy ? (
+
                     <>
-                      <span style={{ width: 18, height: 18, border: "2px solid rgba(255,255,255,.4)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin .8s linear infinite", display: "inline-block" }} />
-                      Signing in…
+
+                      <span className="login-spinner" />
+
+                      <span>
+                        Signing in...
+                      </span>
+
                     </>
+
                   ) : (
-                    <>{loginType === "admin" ? "Sign In as Admin" : "Sign In"} →</>
+
+                    <>
+
+                      <span>
+
+                        {loginType === "admin"
+                          ? "Sign In as Admin"
+                          : "Sign In"}
+
+                      </span>
+
+                      <IconArrow />
+
+                    </>
+
                   )}
+
                 </button>
 
               </form>
 
-              {/* divider + register */}
+
+              {/* =================================================
+                  REGISTER
+                  ================================================= */}
+
               {loginType === "customer" && (
+
                 <>
-                  <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "22px 0", color: "var(--se-text-4)", fontSize: 12, fontWeight: 700 }}>
-                    <div style={{ flex: 1, height: 1, background: "var(--se-border)" }} />
-                    OR
-                    <div style={{ flex: 1, height: 1, background: "var(--se-border)" }} />
+
+                  <div className="login-divider">
+
+                    <span />
+
+                    <strong>
+                      OR
+                    </strong>
+
+                    <span />
+
                   </div>
+
+
                   <Link
                     to="/register"
-                    style={{
-                      display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                      height: 48, borderRadius: 10, border: "1px solid var(--se-border)",
-                      background: "#fff", color: "var(--se-teal-hover)", fontSize: 14, fontWeight: 700,
-                      transition: "all .2s",
-                    }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--se-teal-light)"; e.currentTarget.style.background = "var(--se-teal-soft)"; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--se-border)"; e.currentTarget.style.background = "#fff"; }}
+                    className="login-register"
                   >
-                    Create new account →
+
+                    <span>
+                      Create new account
+                    </span>
+
+                    <IconArrow />
+
                   </Link>
+
                 </>
+
               )}
+
             </div>
 
-            {/* card footer */}
-            <div style={{ padding: "14px 32px", background: "var(--se-surface-2)", borderTop: "1px solid var(--se-border)", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12, color: "var(--se-text-4)" }}>
-              <Link to="/" style={{ color: "var(--se-text-3)", fontWeight: 600, fontSize: 12 }}>← Back to Home</Link>
-              <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <span style={{ color: "#22C55E" }}>🔒</span> Secure Connection
+
+            {/* ==================================================
+                CARD FOOTER
+                ================================================== */}
+
+            <div className="login-card-footer">
+
+              <Link
+                to="/"
+                className="login-back-home"
+              >
+
+                <span>
+                  ←
+                </span>
+
+                <span>
+                  Back to Home
+                </span>
+
+              </Link>
+
+
+              <span className="login-secure">
+
+                <span className="login-secure-icon">
+                  🔒
+                </span>
+
+                <span>
+                  Secure Connection
+                </span>
+
               </span>
+
             </div>
+
           </div>
 
-        </div>
-      </div>
 
-      {/* spin keyframe */}
-      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-    </div>
+          {/* Bottom message */}
+
+          <p className="login-bottom-text">
+
+            © {new Date().getFullYear()}{" "}
+            Shanti Enterprises.
+            All rights reserved.
+
+          </p>
+
+        </div>
+
+      </section>
+
+    </main>
   );
 }
+
 
 export default LoginPage;

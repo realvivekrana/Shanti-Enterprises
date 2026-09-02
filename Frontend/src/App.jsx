@@ -1,7 +1,7 @@
 // ============================================================
 // SHANTI ENTERPRISES
 // App Component
-// Frontend Phase 7 - Authentication & Navigation
+// Mobile First • Premium Responsive UI
 // ============================================================
 
 import {
@@ -10,7 +10,13 @@ import {
   Route,
 } from "react-router-dom";
 
-import MainLayout from "./layouts/MainLayout";
+import {
+  ArrowLeft,
+  Home,
+  SearchX,
+} from "lucide-react";
+
+import MainLayout from "./components/layout/MainLayout";
 
 import ProtectedRoute from "./components/common/ProtectedRoute";
 
@@ -49,7 +55,7 @@ import AddressesPage from "./pages/customer/AddressesPage";
 import CustomerTestPage from "./pages/customer/CustomerTestPage";
 
 // ============================================================
-// CUSTOMER WISHLIST / NOTIFICATIONS / RETURNS / INVOICES / SHIPMENTS
+// CUSTOMER WISHLIST / NOTIFICATIONS / RETURNS / INVOICES
 // ============================================================
 
 import WishlistPage from "./pages/customer/WishlistPage";
@@ -121,6 +127,14 @@ import CreateQuotationPage from "./pages/admin/CreateQuotationPage";
 // ============================================================
 
 function NotFoundPage() {
+  const handleGoBack = () => {
+    window.history.back();
+  };
+
+  const handleGoHome = () => {
+    window.location.href = "/";
+  };
+
   return (
     <div className="app-page">
 
@@ -137,51 +151,131 @@ function NotFoundPage() {
           </h1>
 
           <p>
-            The page you are looking
-            for does not exist.
+            The page you are looking for
+            does not exist or may have been moved.
           </p>
 
         </div>
 
       </div>
 
-      <div
-        style={{
-          textAlign: "center",
-          padding: "60px 20px",
-        }}
-      >
+      <section className="card">
 
         <div
           style={{
-            fontSize: "72px",
-            fontWeight: 800,
-            lineHeight: 1,
-            marginBottom: "16px",
+            minHeight: "360px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            textAlign: "center",
+            padding: "40px 20px",
           }}
         >
-          404
+
+          {/* ==================================================
+              ICON
+              ================================================== */}
+
+          <div
+            style={{
+              width: "72px",
+              height: "72px",
+              display: "grid",
+              placeItems: "center",
+              borderRadius: "20px",
+              marginBottom: "20px",
+              background:
+                "linear-gradient(135deg, rgba(20,184,166,.12), rgba(14,165,233,.12))",
+              color: "#0f9386",
+            }}
+          >
+            <SearchX
+              size={34}
+              strokeWidth={1.8}
+            />
+          </div>
+
+          {/* ==================================================
+              404
+              ================================================== */}
+
+          <div
+            style={{
+              fontSize: "clamp(56px, 15vw, 96px)",
+              fontWeight: 900,
+              lineHeight: 1,
+              letterSpacing: "-0.06em",
+              background:
+                "linear-gradient(135deg, #14b8a6, #0ea5e9, #8b5cf6)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              marginBottom: "14px",
+            }}
+          >
+            404
+          </div>
+
+          <h2
+            style={{
+              margin: "0 0 8px",
+              fontSize: "clamp(20px, 5vw, 28px)",
+              fontWeight: 800,
+            }}
+          >
+            Sorry, we couldn't find that page.
+          </h2>
+
+          <p
+            style={{
+              maxWidth: "480px",
+              margin: "0 auto 24px",
+              lineHeight: 1.7,
+              opacity: 0.7,
+            }}
+          >
+            The page you're looking for may have
+            been removed, renamed, or is temporarily
+            unavailable.
+          </p>
+
+          {/* ==================================================
+              ACTIONS
+              ================================================== */}
+
+          <div
+            style={{
+              width: "100%",
+              display: "flex",
+              flexDirection: "column",
+              gap: "10px",
+              maxWidth: "360px",
+            }}
+          >
+
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={handleGoHome}
+            >
+              <Home size={17} />
+              Go to Home
+            </button>
+
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={handleGoBack}
+            >
+              <ArrowLeft size={17} />
+              Go Back
+            </button>
+
+          </div>
+
         </div>
 
-        <p
-          style={{
-            marginBottom: "24px",
-          }}
-        >
-          Sorry, we couldn't find
-          that page.
-        </p>
-
-        <button
-          type="button"
-          onClick={() =>
-            window.history.back()
-          }
-        >
-          ← Go Back
-        </button>
-
-      </div>
+      </section>
 
     </div>
   );
@@ -304,8 +398,6 @@ function App() {
             }
           >
 
-            {/* CUSTOMER DASHBOARD */}
-
             <Route
               path="/dashboard"
               element={
@@ -313,16 +405,12 @@ function App() {
               }
             />
 
-            {/* CUSTOMER PROFILE */}
-
             <Route
               path="/profile"
               element={
                 <ProfilePage />
               }
             />
-
-            {/* CUSTOMER ADDRESSES */}
 
             <Route
               path="/addresses"

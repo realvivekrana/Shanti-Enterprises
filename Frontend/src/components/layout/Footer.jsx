@@ -1,12 +1,25 @@
 // ============================================================
 // SHANTI ENTERPRISES
 // Footer
-// Frontend Phase 6 - UI/UX
+// Mobile First • Premium Responsive UI
 // ============================================================
 
 import {
   Link,
 } from "react-router-dom";
+
+import {
+  ArrowUpRight,
+  Building2,
+  ChevronRight,
+  Mail,
+  MapPin,
+  Package,
+  Phone,
+  ShieldCheck,
+  ShoppingBag,
+  UserRound,
+} from "lucide-react";
 
 import {
   useAuth,
@@ -35,7 +48,7 @@ function Footer() {
       <div className="footer-container">
 
         {/* ==================================================
-            BRAND
+            BRAND / INTRO
             ================================================== */}
 
         <div className="footer-brand">
@@ -44,13 +57,23 @@ function Footer() {
             to="/"
             className="footer-logo"
           >
+
             <span className="footer-logo-mark">
               SE
             </span>
 
-            <span>
-              Shanti Enterprises
+            <span className="footer-logo-content">
+
+              <strong>
+                Shanti Enterprises
+              </strong>
+
+              <small>
+                Business Solutions
+              </small>
+
             </span>
+
           </Link>
 
           <p className="footer-description">
@@ -58,6 +81,19 @@ function Footer() {
             quality products and reliable
             business solutions.
           </p>
+
+          <div className="footer-trust-badge">
+
+            <ShieldCheck
+              size={17}
+              strokeWidth={2}
+            />
+
+            <span>
+              Reliable B2B Business Partner
+            </span>
+
+          </div>
 
         </div>
 
@@ -72,19 +108,51 @@ function Footer() {
           </h3>
 
           <Link to="/">
-            Home
+
+            <span>
+              Home
+            </span>
+
+            <ChevronRight
+              size={15}
+            />
+
           </Link>
 
           <Link to="/categories">
-            Categories
+
+            <span>
+              Categories
+            </span>
+
+            <ChevronRight
+              size={15}
+            />
+
           </Link>
 
           <Link to="/products">
-            Products
+
+            <span>
+              Products
+            </span>
+
+            <ChevronRight
+              size={15}
+            />
+
           </Link>
 
           <Link to="/cart">
-            Cart
+
+            <span>
+              Cart
+            </span>
+
+            <ChevronRight
+              size={15}
+            />
+
           </Link>
 
         </div>
@@ -100,39 +168,87 @@ function Footer() {
           </h3>
 
           {!isAuthenticated && (
-            <Link to="/login">
-              Login
-            </Link>
+            <>
+              <Link to="/login">
+
+                <span>
+                  Login
+                </span>
+
+                <ChevronRight
+                  size={15}
+                />
+
+              </Link>
+
+              <Link to="/register">
+
+                <span>
+                  Create Account
+                </span>
+
+                <ChevronRight
+                  size={15}
+                />
+
+              </Link>
+            </>
           )}
 
           {isAuthenticated && (
             <>
               {isAdmin ? (
                 <Link to="/admin">
-                  Admin Dashboard
+
+                  <span>
+                    Admin Dashboard
+                  </span>
+
+                  <ChevronRight
+                    size={15}
+                  />
+
                 </Link>
               ) : (
                 <>
                   <Link to="/dashboard">
-                    Dashboard
+
+                    <span>
+                      Dashboard
+                    </span>
+
+                    <ChevronRight
+                      size={15}
+                    />
+
                   </Link>
 
                   <Link to="/orders">
-                    My Orders
+
+                    <span>
+                      My Orders
+                    </span>
+
+                    <ChevronRight
+                      size={15}
+                    />
+
                   </Link>
 
                   <Link to="/profile">
-                    Profile
+
+                    <span>
+                      Profile
+                    </span>
+
+                    <ChevronRight
+                      size={15}
+                    />
+
                   </Link>
                 </>
               )}
             </>
-          )}
-
-          {!isAuthenticated && (
-            <Link to="/register">
-              Create Account
-            </Link>
           )}
 
         </div>
@@ -141,7 +257,7 @@ function Footer() {
             SUPPORT
             ================================================== */}
 
-        <div className="footer-column">
+        <div className="footer-column footer-support-column">
 
           <h3>
             Support
@@ -149,20 +265,138 @@ function Footer() {
 
           <a
             href="mailto:support@shantienterprises.com"
+            className="footer-contact-link"
           >
-            Email Support
+
+            <span className="footer-contact-icon">
+              <Mail
+                size={16}
+              />
+            </span>
+
+            <span>
+              support@shantienterprises.com
+            </span>
+
+            <ArrowUpRight
+              size={14}
+            />
+
           </a>
 
           <a
             href="tel:+919999999999"
+            className="footer-contact-link"
           >
-            Contact Us
+
+            <span className="footer-contact-icon">
+              <Phone
+                size={16}
+              />
+            </span>
+
+            <span>
+              +91 99999 99999
+            </span>
+
+            <ArrowUpRight
+              size={14}
+            />
+
           </a>
 
-          <p>
-            Pune, Maharashtra,
-            India
-          </p>
+          <div className="footer-location">
+
+            <span className="footer-contact-icon">
+              <MapPin
+                size={16}
+              />
+            </span>
+
+            <span>
+              Pune, Maharashtra,
+              India
+            </span>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      {/* ====================================================
+          BUSINESS STRIP
+          ==================================================== */}
+
+      <div className="footer-business-strip">
+
+        <div className="footer-business-container">
+
+          <div className="footer-business-item">
+
+            <div className="footer-business-icon">
+              <ShoppingBag
+                size={18}
+              />
+            </div>
+
+            <div>
+
+              <strong>
+                Quality Products
+              </strong>
+
+              <span>
+                Reliable product selection
+              </span>
+
+            </div>
+
+          </div>
+
+          <div className="footer-business-item">
+
+            <div className="footer-business-icon">
+              <Package
+                size={18}
+              />
+            </div>
+
+            <div>
+
+              <strong>
+                Business Orders
+              </strong>
+
+              <span>
+                Built for B2B requirements
+              </span>
+
+            </div>
+
+          </div>
+
+          <div className="footer-business-item">
+
+            <div className="footer-business-icon">
+              <Building2
+                size={18}
+              />
+            </div>
+
+            <div>
+
+              <strong>
+                Business Support
+              </strong>
+
+              <span>
+                Dedicated customer assistance
+              </span>
+
+            </div>
+
+          </div>
 
         </div>
 
@@ -187,6 +421,10 @@ function Footer() {
             <Link to="/">
               Privacy
             </Link>
+
+            <span>
+              •
+            </span>
 
             <Link to="/">
               Terms

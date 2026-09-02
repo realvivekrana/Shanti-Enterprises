@@ -1,340 +1,1183 @@
 // ============================================================
-// SHANTI ENTERPRISES — HomePage (Premium)
+// SHANTI ENTERPRISES
+// Home Page
+// Mobile First • Premium Responsive UI
 // ============================================================
 
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { getProducts } from "../../api/productApi";
-import { getCategories } from "../../api/categoryApi";
+import {
+  useEffect,
+  useState,
+} from "react";
+
+import {
+  Link,
+} from "react-router-dom";
+
+import {
+  ArrowRight,
+  Building2,
+  Check,
+  ChevronRight,
+  CreditCard,
+  LockKeyhole,
+  Package,
+  ShieldCheck,
+  ShoppingBag,
+  Truck,
+  Zap,
+} from "lucide-react";
+
+import {
+  getProducts,
+} from "../../api/productApi";
+
+import {
+  getCategories,
+} from "../../api/categoryApi";
+
+// IMPORTANT:
+// ProductCard is inside components/customer
 import ProductCard from "../../components/customer/ProductCard";
 
+import "./HomePage.css";
+
+
+// ============================================================
+// IMAGE HELPER
+// ============================================================
+
 const getImg = (img) => {
-  if (!img) return "";
-  if (typeof img === "string") return img;
-  return img.url || img.secure_url || "";
+
+  if (!img) {
+    return "";
+  }
+
+  if (typeof img === "string") {
+    return img;
+  }
+
+  return (
+    img.url ||
+    img.secure_url ||
+    ""
+  );
 };
+
+
+// ============================================================
+// CATEGORY ID HELPER
+// ============================================================
 
 const getCatId = (cat) => {
-  if (!cat) return "";
-  if (typeof cat === "string") return cat;
-  return cat._id || cat.id || "";
+
+  if (!cat) {
+    return "";
+  }
+
+  if (typeof cat === "string") {
+    return cat;
+  }
+
+  return (
+    cat._id ||
+    cat.id ||
+    ""
+  );
 };
 
-// ── Skeleton ─────────────────────────────────────────────────
-function Skeleton({ w = "100%", h = 16, radius = 6, mb = 0 }) {
+
+// ============================================================
+// SKELETON
+// ============================================================
+
+function Skeleton({
+  className = "",
+}) {
+
   return (
     <div
-      style={{
-        width: w, height: h, borderRadius: radius,
-        background: "linear-gradient(90deg,#f1f5f9 25%,#e2e8f0 50%,#f1f5f9 75%)",
-        backgroundSize: "200% 100%",
-        animation: "shimmer 1.4s infinite",
-        marginBottom: mb,
-        flexShrink: 0,
-      }}
+      className={`home-skeleton ${className}`}
+      aria-hidden="true"
     />
   );
 }
 
-// ── Stat ─────────────────────────────────────────────────────
-function HeroStat({ value, label }) {
+
+// ============================================================
+// HERO STAT
+// ============================================================
+
+function HeroStat({
+  value,
+  label,
+}) {
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-      <strong style={{ color: "#fff", fontSize: "1.8rem", fontWeight: 800, lineHeight: 1 }}>{value}</strong>
-      <span style={{ color: "#64748B", fontSize: 13, fontWeight: 500 }}>{label}</span>
+    <div className="home-hero-stat">
+
+      <strong>
+        {value}
+      </strong>
+
+      <span>
+        {label}
+      </span>
+
     </div>
   );
 }
 
-// ── Feature card ─────────────────────────────────────────────
-function FeatureCard({ icon, title, desc }) {
+
+// ============================================================
+// FEATURE CARD
+// ============================================================
+
+function FeatureCard({
+  icon,
+  title,
+  desc,
+}) {
+
   return (
-    <div className="home-feature-card">
-      <div className="home-feature-icon">{icon}</div>
-      <h3>{title}</h3>
-      <p>{desc}</p>
-    </div>
+    <article className="home-feature-card">
+
+      <div className="home-feature-icon">
+        {icon}
+      </div>
+
+      <h3>
+        {title}
+      </h3>
+
+      <p>
+        {desc}
+      </p>
+
+    </article>
   );
 }
 
-// ── Step ─────────────────────────────────────────────────────
-function Step({ num, title, desc }) {
+
+// ============================================================
+// STEP
+// ============================================================
+
+function Step({
+  num,
+  title,
+  desc,
+}) {
+
   return (
     <div className="home-shopping-item">
+
       <div className="home-shopping-item-icon">
-        <span style={{ color: "#fff", fontWeight: 800, fontSize: 16 }}>{num}</span>
+
+        <span>
+          {num}
+        </span>
+
       </div>
+
       <div className="home-shopping-item-content">
-        <h4>{title}</h4>
-        <p>{desc}</p>
+
+        <h4>
+          {title}
+        </h4>
+
+        <p>
+          {desc}
+        </p>
+
       </div>
+
     </div>
   );
 }
 
-// ─────────────────────────────────────────────────────────────
+
+// ============================================================
+// TRUST ITEM
+// ============================================================
+
+function TrustItem({
+  icon,
+  text,
+}) {
+
+  return (
+    <div className="home-trust-item">
+
+      <span className="home-trust-icon">
+        {icon}
+      </span>
+
+      <span>
+        {text}
+      </span>
+
+    </div>
+  );
+}
+
+
+// ============================================================
+// SECTION HEADER
+// ============================================================
+
+function SectionHeader({
+  eyebrow,
+  title,
+  description,
+  linkText = "View All",
+  linkTo = "/products",
+}) {
+
+  return (
+    <div className="home-section-header">
+
+      <div className="home-section-heading">
+
+        <span className="home-eyebrow">
+          {eyebrow}
+        </span>
+
+        <h2>
+          {title}
+        </h2>
+
+        <p>
+          {description}
+        </p>
+
+      </div>
+
+      <Link
+        to={linkTo}
+        className="home-section-link"
+      >
+
+        <span>
+          {linkText}
+        </span>
+
+        <ArrowRight
+          size={16}
+        />
+
+      </Link>
+
+    </div>
+  );
+}
+
+
+// ============================================================
+// HOME PAGE
+// ============================================================
+
 function HomePage() {
-  const [products, setProducts]       = useState([]);
-  const [categories, setCategories]   = useState([]);
-  const [loadingP, setLoadingP]       = useState(true);
-  const [loadingC, setLoadingC]       = useState(true);
+
+  const [
+    products,
+    setProducts,
+  ] = useState([]);
+
+  const [
+    categories,
+    setCategories,
+  ] = useState([]);
+
+  const [
+    loadingP,
+    setLoadingP,
+  ] = useState(true);
+
+  const [
+    loadingC,
+    setLoadingC,
+  ] = useState(true);
+
+
+  // ==========================================================
+  // PRODUCTS
+  // ==========================================================
 
   useEffect(() => {
-    getProducts({ page: 1, limit: 8 })
-      .then(r => setProducts(r?.products || []))
-      .catch(() => {})
-      .finally(() => setLoadingP(false));
+
+    let mounted = true;
+
+    getProducts({
+      page: 1,
+      limit: 8,
+    })
+      .then((response) => {
+
+        if (!mounted) {
+          return;
+        }
+
+        setProducts(
+          response?.products || []
+        );
+
+      })
+      .catch(() => {
+
+        if (!mounted) {
+          return;
+        }
+
+        setProducts([]);
+
+      })
+      .finally(() => {
+
+        if (!mounted) {
+          return;
+        }
+
+        setLoadingP(false);
+
+      });
+
+    return () => {
+      mounted = false;
+    };
+
   }, []);
 
+
+  // ==========================================================
+  // CATEGORIES
+  // ==========================================================
+
   useEffect(() => {
+
+    let mounted = true;
+
     getCategories()
-      .then(r => setCategories(r?.categories || []))
-      .catch(() => {})
-      .finally(() => setLoadingC(false));
+      .then((response) => {
+
+        if (!mounted) {
+          return;
+        }
+
+        setCategories(
+          response?.categories || []
+        );
+
+      })
+      .catch(() => {
+
+        if (!mounted) {
+          return;
+        }
+
+        setCategories([]);
+
+      })
+      .finally(() => {
+
+        if (!mounted) {
+          return;
+        }
+
+        setLoadingC(false);
+
+      });
+
+    return () => {
+      mounted = false;
+    };
+
   }, []);
 
-  const cats  = categories.slice(0, 6);
-  const prods = products.slice(0, 8);
+
+  // ==========================================================
+  // LIMIT HOME DATA
+  // ==========================================================
+
+  const cats =
+    categories.slice(
+      0,
+      6
+    );
+
+  const prods =
+    products.slice(
+      0,
+      8
+    );
+
+
+  // ==========================================================
+  // PAGE
+  // ==========================================================
 
   return (
     <div className="home-page">
 
-      {/* ── SHIMMER KEYFRAME ─────────────────────────────── */}
-      <style>{`@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}`}</style>
 
-      {/* ════════════════════════════════════════════════════
+      {/* ====================================================
           HERO
-          ════════════════════════════════════════════════════ */}
+          ==================================================== */}
+
       <section className="home-hero">
+
         <div className="home-container">
+
           <div className="home-hero-grid">
 
-            {/* LEFT */}
+
+            {/* ==================================================
+                HERO CONTENT
+                ================================================== */}
+
             <div className="home-hero-content">
-              <span className="home-hero-badge">Trusted B2B Partner since 2010</span>
+
+              <span className="home-hero-badge">
+
+                <ShieldCheck
+                  size={15}
+                />
+
+                <span>
+                  Trusted B2B Partner since 2010
+                </span>
+
+              </span>
+
 
               <h1>
-                Quality Products.<br />
-                <span>Reliable Business.</span>
+
+                Quality Products.
+
+                <br />
+
+                <span>
+                  Reliable Business.
+                </span>
+
               </h1>
 
+
               <p>
-                Shanti Enterprises delivers premium industrial &amp; wholesale
-                products with transparent pricing, bulk ordering, and fast fulfilment
-                — everything your business needs in one place.
+                Shanti Enterprises delivers
+                premium industrial &amp; wholesale
+                products with transparent pricing,
+                bulk ordering, and fast fulfilment —
+                everything your business needs in
+                one place.
               </p>
 
+
+              {/* ==================================================
+                  HERO ACTIONS
+                  ================================================== */}
+
               <div className="home-hero-actions">
-                <Link to="/products" className="home-primary-button">
-                  Explore Products <span>→</span>
+
+                <Link
+                  to="/products"
+                  className="home-primary-button"
+                >
+
+                  <span>
+                    Explore Products
+                  </span>
+
+                  <ArrowRight
+                    size={17}
+                  />
+
                 </Link>
-                <Link to="/categories" className="home-secondary-button">
+
+
+                <Link
+                  to="/categories"
+                  className="home-secondary-button"
+                >
                   Browse Categories
                 </Link>
+
               </div>
 
-              {/* Trust row */}
-              <div style={{ display: "flex", gap: 24, marginTop: 36, flexWrap: "wrap" }}>
-                {[
-                  { icon: "✓", text: "Quality Assured" },
-                  { icon: "🔒", text: "Secure Checkout" },
-                  { icon: "⚡", text: "Fast Dispatch" },
-                ].map(t => (
-                  <div key={t.text} style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 13, fontWeight: 600, color: "var(--se-text-3)" }}>
-                    <span style={{ color: "var(--se-teal)", fontWeight: 700 }}>{t.icon}</span>
-                    {t.text}
-                  </div>
-                ))}
+
+              {/* ==================================================
+                  TRUST ROW
+                  ================================================== */}
+
+              <div className="home-trust-row">
+
+                <TrustItem
+                  icon={
+                    <Check
+                      size={15}
+                    />
+                  }
+                  text="Quality Assured"
+                />
+
+                <TrustItem
+                  icon={
+                    <LockKeyhole
+                      size={15}
+                    />
+                  }
+                  text="Secure Checkout"
+                />
+
+                <TrustItem
+                  icon={
+                    <Zap
+                      size={15}
+                    />
+                  }
+                  text="Fast Dispatch"
+                />
+
               </div>
+
             </div>
 
-            {/* RIGHT — hero card */}
+
+            {/* ==================================================
+                HERO VISUAL
+                ================================================== */}
+
             <div className="home-hero-visual">
+
+              <div className="home-hero-glow" />
+
+
               <div className="home-hero-card">
-                <div className="home-hero-card-icon">🏭</div>
-                <h2>Shanti Enterprises</h2>
-                <p>Your one-stop wholesale &amp; industrial supply partner.</p>
+
+                <div className="home-hero-card-top">
+
+                  <div className="home-hero-card-icon">
+
+                    <Building2
+                      size={28}
+                    />
+
+                  </div>
+
+                  <span className="home-hero-card-label">
+                    BUSINESS SUPPLY
+                  </span>
+
+                </div>
+
+
+                <h2>
+                  Shanti Enterprises
+                </h2>
+
+
+                <p>
+                  Your one-stop wholesale &
+                  industrial supply partner.
+                </p>
+
+
                 <div className="home-hero-card-divider" />
+
+
                 <div className="home-hero-stats">
-                  <HeroStat value="500+" label="Products" />
-                  <HeroStat value="1K+"  label="Customers" />
-                  <HeroStat value="15+"  label="Categories" />
-                  <HeroStat value="24h"  label="Dispatch" />
+
+                  <HeroStat
+                    value="500+"
+                    label="Products"
+                  />
+
+                  <HeroStat
+                    value="1K+"
+                    label="Customers"
+                  />
+
+                  <HeroStat
+                    value="15+"
+                    label="Categories"
+                  />
+
+                  <HeroStat
+                    value="24h"
+                    label="Dispatch"
+                  />
+
                 </div>
+
+
+                <div className="home-hero-card-footer">
+
+                  <span>
+
+                    <span className="home-status-dot" />
+
+                    Business orders accepted
+
+                  </span>
+
+                </div>
+
               </div>
+
             </div>
 
           </div>
+
         </div>
+
       </section>
 
-      {/* ════════════════════════════════════════════════════
+
+      {/* ====================================================
           CATEGORIES
-          ════════════════════════════════════════════════════ */}
+          ==================================================== */}
+
       <section className="home-section">
+
         <div className="home-container">
-          <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 16, marginBottom: 36, flexWrap: "wrap" }}>
-            <div className="home-section-heading" style={{ marginBottom: 0 }}>
-              <span className="home-eyebrow">Shop by Category</span>
-              <h2>Explore our range</h2>
-              <p>Find exactly what your business needs.</p>
-            </div>
-            <Link to="/categories" style={{ fontSize: 14, fontWeight: 700, color: "var(--se-teal)", flexShrink: 0 }}>
-              View All →
-            </Link>
+
+          <SectionHeader
+            eyebrow="Shop by Category"
+            title="Explore our range"
+            description="Find exactly what your business needs."
+            linkText="View All"
+            linkTo="/categories"
+          />
+
+
+          {/* ==================================================
+              CATEGORY GRID
+              ================================================== */}
+
+          <div className="home-category-grid">
+
+            {loadingC ? (
+
+              Array.from({
+                length: 6,
+              }).map((_, index) => (
+
+                <div
+                  key={index}
+                  className="home-category-card home-category-skeleton"
+                >
+
+                  <Skeleton
+                    className="home-category-image-skeleton"
+                  />
+
+                  <div className="home-category-content">
+
+                    <Skeleton
+                      className="home-category-title-skeleton"
+                    />
+
+                    <Skeleton
+                      className="home-category-link-skeleton"
+                    />
+
+                  </div>
+
+                </div>
+
+              ))
+
+            ) : cats.length === 0 ? (
+
+              <div className="home-empty-state home-category-empty">
+
+                <div className="home-empty-icon">
+
+                  <Package
+                    size={28}
+                  />
+
+                </div>
+
+                <h3>
+                  Categories coming soon
+                </h3>
+
+                <p>
+                  New categories will appear here
+                  once they are added.
+                </p>
+
+              </div>
+
+            ) : (
+
+              cats.map((cat) => {
+
+                const id =
+                  getCatId(cat);
+
+                const img =
+                  getImg(cat.image);
+
+                return (
+
+                  <Link
+                    key={
+                      id ||
+                      cat.name
+                    }
+                    to={
+                      id
+                        ? `/products?category=${id}`
+                        : "/products"
+                    }
+                    className="home-category-card"
+                  >
+
+                    <div className="home-category-image">
+
+                      {img ? (
+
+                        <img
+                          src={img}
+                          alt={
+                            cat.name ||
+                            "Product category"
+                          }
+                          loading="lazy"
+                        />
+
+                      ) : (
+
+                        <div className="home-category-placeholder">
+
+                          <Package
+                            size={38}
+                          />
+
+                        </div>
+
+                      )}
+
+
+                      <span className="home-category-overlay">
+
+                        <ArrowRight
+                          size={17}
+                        />
+
+                      </span>
+
+                    </div>
+
+
+                    <div className="home-category-content">
+
+                      <h3>
+                        {cat.name}
+                      </h3>
+
+                      <span>
+
+                        Browse Products
+
+                        <ChevronRight
+                          size={14}
+                        />
+
+                      </span>
+
+                    </div>
+
+                  </Link>
+
+                );
+
+              })
+
+            )}
+
           </div>
 
-          {/* Grid */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(180px,1fr))", gap: 16 }}>
-            {loadingC
-              ? Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} style={{ background: "#fff", border: "1px solid var(--se-border)", borderRadius: 16, overflow: "hidden" }}>
-                    <Skeleton w="100%" h={140} radius={0} mb={0} />
-                    <div style={{ padding: "14px 16px" }}>
-                      <Skeleton w="70%" h={14} mb={6} />
-                      <Skeleton w="50%" h={10} />
-                    </div>
-                  </div>
-                ))
-              : cats.map(cat => {
-                  const id  = getCatId(cat);
-                  const img = getImg(cat.image);
-                  return (
-                    <Link
-                      key={id || cat.name}
-                      to={id ? `/products?category=${id}` : "/products"}
-                      style={{ display: "block", borderRadius: 16, overflow: "hidden", background: "#fff", border: "1px solid var(--se-border)", boxShadow: "0 2px 8px rgba(15,23,42,.05)", transition: "all .22s", textDecoration: "none" }}
-                      onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 12px 28px rgba(15,23,42,.1)"; }}
-                      onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 2px 8px rgba(15,23,42,.05)"; }}
-                    >
-                      <div style={{ height: 130, background: img ? "none" : "var(--se-teal-soft)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-                        {img
-                          ? <img src={img} alt={cat.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />
-                          : <span style={{ fontSize: 44 }}>📦</span>
-                        }
-                      </div>
-                      <div style={{ padding: "12px 14px 14px" }}>
-                        <h3 style={{ fontSize: 14, fontWeight: 700, color: "var(--se-text)", marginBottom: 2 }}>{cat.name}</h3>
-                        <p style={{ fontSize: 12, color: "var(--se-text-3)" }}>Browse →</p>
-                      </div>
-                    </Link>
-                  );
-                })
-            }
-          </div>
         </div>
+
       </section>
 
-      {/* ════════════════════════════════════════════════════
-          FEATURED PRODUCTS
-          ════════════════════════════════════════════════════ */}
-      <section className="home-section" style={{ background: "var(--se-surface)", paddingTop: 64, paddingBottom: 72 }}>
-        <div className="home-container">
-          <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 16, marginBottom: 36, flexWrap: "wrap" }}>
-            <div className="home-section-heading" style={{ marginBottom: 0 }}>
-              <span className="home-eyebrow">Featured Products</span>
-              <h2>Popular this month</h2>
-              <p>Top picks from our catalogue — ready to order.</p>
-            </div>
-            <Link to="/products" style={{ fontSize: 14, fontWeight: 700, color: "var(--se-teal)", flexShrink: 0 }}>
-              View All →
-            </Link>
-          </div>
 
-          {loadingP
-            ? <div className="home-products-grid">
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <div key={i} style={{ background: "#fff", border: "1px solid var(--se-border)", borderRadius: 16, overflow: "hidden" }}>
-                    <Skeleton w="100%" h={200} radius={0} mb={0} />
-                    <div style={{ padding: 18 }}>
-                      <Skeleton w="40%" h={10} mb={10} />
-                      <Skeleton w="80%" h={14} mb={8} />
-                      <Skeleton w="50%" h={14} mb={14} />
-                      <Skeleton w="100%" h={36} radius={8} />
-                    </div>
+      {/* ====================================================
+          FEATURED PRODUCTS
+          ==================================================== */}
+
+      <section className="home-section home-products-section">
+
+        <div className="home-container">
+
+          <SectionHeader
+            eyebrow="Featured Products"
+            title="Popular this month"
+            description="Top picks from our catalogue — ready to order."
+            linkText="View All"
+            linkTo="/products"
+          />
+
+
+          {/* ==================================================
+              PRODUCTS
+              ================================================== */}
+
+          {loadingP ? (
+
+            <div className="home-products-grid">
+
+              {Array.from({
+                length: 8,
+              }).map((_, index) => (
+
+                <div
+                  key={index}
+                  className="home-product-skeleton"
+                >
+
+                  <Skeleton
+                    className="home-product-image-skeleton"
+                  />
+
+                  <div className="home-product-skeleton-content">
+
+                    <Skeleton
+                      className="home-product-small-skeleton"
+                    />
+
+                    <Skeleton
+                      className="home-product-title-skeleton"
+                    />
+
+                    <Skeleton
+                      className="home-product-price-skeleton"
+                    />
+
+                    <Skeleton
+                      className="home-product-button-skeleton"
+                    />
+
                   </div>
-                ))}
+
+                </div>
+
+              ))}
+
+            </div>
+
+          ) : prods.length === 0 ? (
+
+            <div className="home-empty-state">
+
+              <div className="home-empty-icon">
+
+                <Package
+                  size={30}
+                />
+
               </div>
-            : prods.length === 0
-              ? <div className="empty-state" style={{ maxWidth: 480, margin: "0 auto" }}>
-                  <div style={{ fontSize: 48, marginBottom: 12 }}>📦</div>
-                  <h2>Products coming soon</h2>
-                  <p>New products will appear here once they are added.</p>
-                </div>
-              : <div className="home-products-grid">
-                  {prods.map(p => <ProductCard key={p._id || p.id} product={p} />)}
-                </div>
-          }
+
+              <h2>
+                Products coming soon
+              </h2>
+
+              <p>
+                New products will appear here
+                once they are added.
+              </p>
+
+              <Link
+                to="/categories"
+                className="home-primary-button"
+              >
+
+                Explore Categories
+
+                <ArrowRight
+                  size={16}
+                />
+
+              </Link>
+
+            </div>
+
+          ) : (
+
+            <div className="home-products-grid">
+
+              {prods.map((product) => (
+
+                <ProductCard
+                  key={
+                    product._id ||
+                    product.id
+                  }
+                  product={product}
+                />
+
+              ))}
+
+            </div>
+
+          )}
+
+
+          {/* ==================================================
+              PRODUCTS CTA
+              ================================================== */}
 
           <div className="home-section-footer">
-            <Link to="/products" className="home-primary-button" style={{ display: "inline-flex" }}>
-              See All Products →
+
+            <Link
+              to="/products"
+              className="home-primary-button"
+            >
+
+              <span>
+                See All Products
+              </span>
+
+              <ArrowRight
+                size={17}
+              />
+
             </Link>
+
           </div>
+
         </div>
+
       </section>
 
-      {/* ════════════════════════════════════════════════════
+
+      {/* ====================================================
           WHY CHOOSE US
-          ════════════════════════════════════════════════════ */}
+          ==================================================== */}
+
       <section className="home-section">
+
         <div className="home-container">
-          <div className="home-section-heading">
-            <span className="home-eyebrow">Why Choose Us</span>
-            <h2>Built around your business</h2>
-            <p>We combine product quality with a smooth ordering experience tailored for B2B.</p>
+
+
+          <div className="home-section-heading home-centered-heading">
+
+            <span className="home-eyebrow">
+              Why Choose Us
+            </span>
+
+            <h2>
+              Built around your business
+            </h2>
+
+            <p>
+              We combine product quality with
+              a smooth ordering experience
+              tailored for B2B.
+            </p>
+
           </div>
+
+
           <div className="home-feature-grid">
-            <FeatureCard icon="🏆" title="Verified Quality" desc="Every product is sourced from trusted suppliers and meets strict quality standards." />
-            <FeatureCard icon="⚡" title="Fast Dispatch" desc="Orders confirmed before noon are dispatched the same business day." />
-            <FeatureCard icon="💰" title="Wholesale Pricing" desc="Volume-based pricing tiers that scale with your order quantity." />
-            <FeatureCard icon="🔒" title="Secure Payments" desc="Razorpay-powered checkout with UPI, cards, net banking &amp; more." />
+
+            <FeatureCard
+              icon={
+                <ShieldCheck
+                  size={25}
+                />
+              }
+              title="Verified Quality"
+              desc="Every product is sourced from trusted suppliers and meets strict quality standards."
+            />
+
+
+            <FeatureCard
+              icon={
+                <Truck
+                  size={25}
+                />
+              }
+              title="Fast Dispatch"
+              desc="Orders confirmed before noon are dispatched the same business day."
+            />
+
+
+            <FeatureCard
+              icon={
+                <ShoppingBag
+                  size={25}
+                />
+              }
+              title="Wholesale Pricing"
+              desc="Volume-based pricing tiers that scale with your order quantity."
+            />
+
+
+            <FeatureCard
+              icon={
+                <CreditCard
+                  size={25}
+                />
+              }
+              title="Secure Payments"
+              desc="Razorpay-powered checkout with UPI, cards, net banking & more."
+            />
+
           </div>
+
         </div>
+
       </section>
 
-      {/* ════════════════════════════════════════════════════
+
+      {/* ====================================================
           HOW IT WORKS
-          ════════════════════════════════════════════════════ */}
-      <section className="home-section home-shopping-section" style={{ background: "var(--se-navy-soft)" }}>
+          ==================================================== */}
+
+      <section className="home-section home-shopping-section">
+
         <div className="home-container">
+
           <div className="home-shopping-grid">
-            <div>
-              <span className="home-eyebrow" style={{ color: "var(--se-teal-light)" }}>Simple Ordering</span>
-              <h2>From browse to delivered — in 3 steps.</h2>
-              <p>No complicated process. Add what you need, confirm your address, and pay securely online or on delivery.</p>
-              <Link to="/products" className="home-cta-button" style={{ marginTop: 28, display: "inline-flex" }}>
-                Start Shopping →
+
+
+            {/* ==================================================
+                INTRO
+                ================================================== */}
+
+            <div className="home-shopping-content">
+
+              <span className="home-eyebrow home-eyebrow-light">
+                Simple Ordering
+              </span>
+
+              <h2>
+                From browse to delivered —
+                in 3 steps.
+              </h2>
+
+              <p>
+                No complicated process. Add what
+                you need, confirm your address,
+                and pay securely online or on
+                delivery.
+              </p>
+
+              <Link
+                to="/products"
+                className="home-cta-button"
+              >
+
+                <span>
+                  Start Shopping
+                </span>
+
+                <ArrowRight
+                  size={17}
+                />
+
               </Link>
+
             </div>
+
+
+            {/* ==================================================
+                STEPS
+                ================================================== */}
+
             <div className="home-shopping-box">
-              <Step num="01" title="Browse & Add" desc="Find products by category or search. Add to cart with one click." />
-              <Step num="02" title="Set Address" desc="Use a saved address or enter a new delivery location." />
-              <Step num="03" title="Pay & Confirm" desc="Razorpay or Cash on Delivery — your order is confirmed instantly." />
+
+              <Step
+                num="01"
+                title="Browse & Add"
+                desc="Find products by category or search. Add to cart with one click."
+              />
+
+              <Step
+                num="02"
+                title="Set Address"
+                desc="Use a saved address or enter a new delivery location."
+              />
+
+              <Step
+                num="03"
+                title="Pay & Confirm"
+                desc="Razorpay or Cash on Delivery — your order is confirmed instantly."
+              />
+
             </div>
+
           </div>
+
         </div>
+
       </section>
 
-      {/* ════════════════════════════════════════════════════
+
+      {/* ====================================================
           FINAL CTA
-          ════════════════════════════════════════════════════ */}
+          ==================================================== */}
+
       <section className="home-final-cta">
+
         <div className="home-container">
-          <span className="home-eyebrow" style={{ color: "var(--se-teal-light)" }}>Ready to Order?</span>
-          <h2>Start exploring our products today.</h2>
-          <p>Join hundreds of businesses that trust Shanti Enterprises for their supply needs.</p>
-          <div className="home-final-cta-actions">
-            <Link to="/products" className="home-cta-button">Browse Products →</Link>
-            <Link to="/register" className="home-secondary-button" style={{ background: "rgba(255,255,255,.08)", border: "1px solid rgba(255,255,255,.15)", color: "#fff" }}>
-              Create Account
-            </Link>
+
+          <div className="home-final-cta-content">
+
+            <span className="home-eyebrow home-eyebrow-light">
+              Ready to Order?
+            </span>
+
+            <h2>
+              Start exploring our products today.
+            </h2>
+
+            <p>
+              Join hundreds of businesses that
+              trust Shanti Enterprises for their
+              supply needs.
+            </p>
+
+
+            <div className="home-final-cta-actions">
+
+              <Link
+                to="/products"
+                className="home-cta-button"
+              >
+
+                <span>
+                  Browse Products
+                </span>
+
+                <ArrowRight
+                  size={17}
+                />
+
+              </Link>
+
+
+              <Link
+                to="/register"
+                className="home-final-secondary-button"
+              >
+                Create Account
+              </Link>
+
+            </div>
+
           </div>
+
         </div>
+
       </section>
 
     </div>
   );
 }
+
 
 export default HomePage;

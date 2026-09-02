@@ -91,7 +91,7 @@ const upload = multer({
 //
 // Example:
 // upload.single("image")
-//
+// 
 
 const uploadProductImage =
   upload.single("image");

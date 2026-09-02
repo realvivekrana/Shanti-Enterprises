@@ -1,0 +1,1082 @@
+/* ============================================================
+   SHANTI ENTERPRISES
+   HEADER / NAVBAR
+   Mobile First • Premium Responsive UI
+   ============================================================ */
+
+
+/* ============================================================
+   01. HEADER
+   ============================================================ */
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+
+  width: 100%;
+
+  background:
+    rgba(255, 255, 255, 0.94);
+
+  border-bottom:
+    1px solid
+    var(--border-light);
+
+  box-shadow:
+    0 4px 20px
+    rgba(15, 23, 42, 0.05);
+
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+
+/* ============================================================
+   02. HEADER CONTAINER
+   ============================================================ */
+
+.header-container {
+  width: 100%;
+  max-width: 1380px;
+  min-height: 68px;
+
+  margin: 0 auto;
+
+  padding:
+    10px
+    var(--container-padding);
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 14px;
+}
+
+
+/* ============================================================
+   03. LOGO
+   ============================================================ */
+
+.header-logo {
+  min-width: 0;
+
+  display: inline-flex;
+  align-items: center;
+
+  gap: 10px;
+
+  color: var(--text-primary);
+
+  flex-shrink: 1;
+
+  transition:
+    transform var(--transition-fast),
+    opacity var(--transition-fast);
+}
+
+.header-logo:hover {
+  opacity: 0.92;
+}
+
+.header-logo:active {
+  transform: scale(0.98);
+}
+
+
+/* ============================================================
+   04. LOGO MARK
+   ============================================================ */
+
+.header-logo-mark {
+  width: 42px;
+  height: 42px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 12px;
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--brand-primary),
+      #0d9488
+    );
+
+  color: #ffffff;
+
+  font-size: 0.85rem;
+  font-weight: 800;
+
+  letter-spacing: -0.03em;
+
+  box-shadow:
+    0 6px 16px
+    rgba(15, 118, 110, 0.20);
+}
+
+
+/* ============================================================
+   05. LOGO CONTENT
+   ============================================================ */
+
+.header-logo-content {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  line-height: 1.15;
+}
+
+.header-logo-text {
+  overflow: hidden;
+
+  color: var(--text-primary);
+
+  font-size: 0.95rem;
+  font-weight: 800;
+
+  white-space: nowrap;
+  text-overflow: ellipsis;
+
+  letter-spacing: -0.02em;
+}
+
+.header-logo-subtitle {
+  margin-top: 3px;
+
+  color: var(--text-muted);
+
+  font-size: 0.62rem;
+  font-weight: 600;
+
+  letter-spacing: 0.05em;
+
+  text-transform: uppercase;
+}
+
+
+/* ============================================================
+   06. DESKTOP NAVIGATION
+   ============================================================ */
+
+.header-desktop-nav {
+  display: none;
+
+  align-items: center;
+
+  gap: 3px;
+
+  margin-left: auto;
+  margin-right: auto;
+}
+
+
+/* ============================================================
+   07. NAV LINKS
+   ============================================================ */
+
+.header-nav-link {
+  position: relative;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 7px;
+
+  min-height: 40px;
+
+  padding:
+    8px
+    12px;
+
+  border-radius: 9px;
+
+  color: var(--text-secondary);
+
+  font-size: 0.84rem;
+  font-weight: 600;
+
+  white-space: nowrap;
+
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.header-nav-link svg {
+  flex-shrink: 0;
+
+  transition:
+    transform var(--transition-fast);
+}
+
+.header-nav-link:hover {
+  background: var(--gray-100);
+
+  color: var(--brand-primary);
+}
+
+.header-nav-link:hover svg {
+  transform: translateY(-1px);
+}
+
+.header-nav-link-active {
+  background:
+    var(--brand-primary-light);
+
+  color:
+    var(--brand-primary-dark);
+}
+
+.header-nav-link-active::after {
+  content: "";
+
+  position: absolute;
+
+  left: 12px;
+  right: 12px;
+  bottom: 3px;
+
+  height: 2px;
+
+  border-radius: var(--radius-full);
+
+  background:
+    var(--brand-primary);
+}
+
+
+/* ============================================================
+   08. HEADER ACTIONS
+   ============================================================ */
+
+.header-actions {
+  display: none;
+
+  align-items: center;
+
+  gap: 8px;
+
+  flex-shrink: 0;
+}
+
+
+/* ============================================================
+   09. USER AREA
+   ============================================================ */
+
+.header-user {
+  display: flex;
+  align-items: center;
+
+  gap: 8px;
+
+  max-width: 190px;
+
+  padding:
+    6px
+    9px;
+
+  border:
+    1px solid
+    var(--border-light);
+
+  border-radius: 10px;
+
+  background:
+    var(--bg-surface);
+
+  cursor: default;
+}
+
+.header-user-avatar {
+  width: 32px;
+  height: 32px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 9px;
+
+  background:
+    var(--brand-primary-light);
+
+  color:
+    var(--brand-primary-dark);
+}
+
+.header-user-info {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  line-height: 1.2;
+}
+
+.header-user-info span {
+  color: var(--text-muted);
+
+  font-size: 0.62rem;
+  font-weight: 600;
+}
+
+.header-user-info strong {
+  max-width: 105px;
+
+  overflow: hidden;
+
+  color: var(--text-primary);
+
+  font-size: 0.75rem;
+
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.header-user-chevron {
+  color: var(--text-muted);
+
+  flex-shrink: 0;
+}
+
+
+/* ============================================================
+   10. LOGIN BUTTON
+   ============================================================ */
+
+.header-login-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 7px;
+
+  min-height: 40px;
+
+  padding:
+    8px
+    15px;
+
+  border:
+    1px solid
+    var(--brand-primary);
+
+  border-radius: 9px;
+
+  background:
+    transparent;
+
+  color:
+    var(--brand-primary);
+
+  font-size: 0.84rem;
+  font-weight: 700;
+
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast),
+    transform var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.header-login-button:hover {
+  background:
+    var(--brand-primary);
+
+  color:
+    #ffffff;
+
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 5px 14px
+    rgba(15, 118, 110, 0.18);
+}
+
+
+/* ============================================================
+   11. DASHBOARD BUTTON
+   ============================================================ */
+
+.header-dashboard-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 7px;
+
+  min-height: 40px;
+
+  padding:
+    8px
+    13px;
+
+  border-radius: 9px;
+
+  background:
+    var(--brand-primary);
+
+  color:
+    #ffffff;
+
+  font-size: 0.82rem;
+  font-weight: 700;
+
+  box-shadow:
+    0 4px 12px
+    rgba(15, 118, 110, 0.16);
+
+  transition:
+    background-color var(--transition-fast),
+    transform var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.header-dashboard-button:hover {
+  background:
+    var(--brand-primary-dark);
+
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 6px 16px
+    rgba(15, 118, 110, 0.22);
+}
+
+
+/* ============================================================
+   12. LOGOUT BUTTON
+   ============================================================ */
+
+.header-logout-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 7px;
+
+  min-height: 40px;
+
+  padding:
+    8px
+    12px;
+
+  border:
+    1px solid
+    var(--border-light);
+
+  border-radius: 9px;
+
+  background:
+    var(--bg-surface);
+
+  color:
+    var(--text-secondary);
+
+  font-size: 0.82rem;
+  font-weight: 600;
+
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.header-logout-button:hover:not(:disabled) {
+  background:
+    var(--danger-light);
+
+  border-color:
+    #fecaca;
+
+  color:
+    var(--danger);
+}
+
+.header-logout-button:disabled {
+  opacity: 0.55;
+}
+
+
+/* ============================================================
+   13. MOBILE MENU BUTTON
+   ============================================================ */
+
+.header-mobile-button {
+  width: 42px;
+  height: 42px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border:
+    1px solid
+    var(--border-light);
+
+  border-radius: 10px;
+
+  background:
+    var(--bg-surface);
+
+  color:
+    var(--text-primary);
+
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.header-mobile-button:hover {
+  background:
+    var(--gray-100);
+
+  border-color:
+    var(--border-medium);
+}
+
+.header-mobile-button:active {
+  transform: scale(0.96);
+}
+
+
+/* ============================================================
+   14. MOBILE MENU
+   ============================================================ */
+
+.header-mobile-menu {
+  width: 100%;
+
+  border-top:
+    1px solid
+    var(--border-light);
+
+  background:
+    var(--bg-surface);
+
+  box-shadow:
+    0 14px 28px
+    rgba(15, 23, 42, 0.08);
+
+  animation:
+    header-menu-open 180ms ease-out;
+}
+
+@keyframes header-menu-open {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.header-mobile-menu-inner {
+  width: 100%;
+
+  max-width: 1380px;
+
+  margin: 0 auto;
+
+  padding:
+    14px
+    var(--container-padding)
+    18px;
+}
+
+
+/* ============================================================
+   15. MOBILE USER CARD
+   ============================================================ */
+
+.header-mobile-user-card {
+  display: flex;
+  align-items: center;
+
+  gap: 11px;
+
+  margin-bottom: 12px;
+
+  padding: 13px;
+
+  border:
+    1px solid
+    var(--border-light);
+
+  border-radius: 13px;
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--gray-50),
+      var(--bg-surface)
+    );
+}
+
+.header-mobile-user-avatar {
+  width: 40px;
+  height: 40px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 11px;
+
+  background:
+    var(--brand-primary-light);
+
+  color:
+    var(--brand-primary-dark);
+}
+
+.header-mobile-user-card div:last-child {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+}
+
+.header-mobile-user-card span {
+  color:
+    var(--text-muted);
+
+  font-size: 0.7rem;
+}
+
+.header-mobile-user-card strong {
+  overflow: hidden;
+
+  color:
+    var(--text-primary);
+
+  font-size: 0.9rem;
+
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+
+/* ============================================================
+   16. MOBILE NAVIGATION
+   ============================================================ */
+
+.header-mobile-nav {
+  display: flex;
+  flex-direction: column;
+
+  gap: 4px;
+}
+
+.header-mobile-nav .header-nav-link {
+  width: 100%;
+
+  min-height: 48px;
+
+  justify-content: flex-start;
+
+  padding:
+    8px
+    10px;
+
+  border-radius: 10px;
+
+  font-size: 0.9rem;
+}
+
+.header-mobile-nav .header-nav-link-active::after {
+  display: none;
+}
+
+.header-mobile-nav .header-nav-link-active {
+  background:
+    var(--brand-primary-light);
+
+  color:
+    var(--brand-primary-dark);
+}
+
+
+/* ============================================================
+   17. MOBILE NAV ICON
+   ============================================================ */
+
+.header-mobile-nav-icon {
+  width: 34px;
+  height: 34px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 8px;
+
+  background:
+    var(--gray-100);
+
+  color:
+    var(--text-secondary);
+
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.header-mobile-nav .header-nav-link-active
+.header-mobile-nav-icon {
+  background:
+    rgba(15, 118, 110, 0.12);
+
+  color:
+    var(--brand-primary);
+}
+
+
+/* ============================================================
+   18. MOBILE LOGOUT
+   ============================================================ */
+
+.header-mobile-logout {
+  width: 100%;
+
+  min-height: 48px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  padding:
+    8px
+    10px;
+
+  margin-top: 4px;
+
+  border:
+    1px solid
+    transparent;
+
+  border-radius: 10px;
+
+  background:
+    transparent;
+
+  color:
+    var(--danger);
+
+  font-size: 0.9rem;
+  font-weight: 600;
+
+  text-align: left;
+
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.header-mobile-logout:hover:not(:disabled) {
+  background:
+    var(--danger-light);
+
+  border-color:
+    #fecaca;
+}
+
+.header-mobile-logout:disabled {
+  opacity: 0.55;
+}
+
+
+/* ============================================================
+   19. MOBILE FOOTER INFO
+   ============================================================ */
+
+.header-mobile-footer {
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  margin-top: 14px;
+  padding-top: 14px;
+
+  border-top:
+    1px solid
+    var(--border-light);
+}
+
+.header-mobile-footer-icon {
+  width: 34px;
+  height: 34px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 9px;
+
+  background:
+    var(--brand-secondary-light);
+
+  color:
+    var(--warning);
+}
+
+.header-mobile-footer > div:last-child {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+}
+
+.header-mobile-footer strong {
+  color:
+    var(--text-primary);
+
+  font-size: 0.78rem;
+}
+
+.header-mobile-footer span {
+  margin-top: 2px;
+
+  color:
+    var(--text-muted);
+
+  font-size: 0.67rem;
+}
+
+
+/* ============================================================
+   20. TABLET — 640px+
+   ============================================================ */
+
+@media (min-width: 640px) {
+
+  .header-container {
+    min-height: 72px;
+  }
+
+  .header-logo-text {
+    font-size: 1rem;
+  }
+
+  .header-logo-subtitle {
+    font-size: 0.64rem;
+  }
+
+  .header-mobile-menu-inner {
+    padding-top: 16px;
+    padding-bottom: 20px;
+  }
+}
+
+
+/* ============================================================
+   21. TABLET / SMALL DESKTOP — 768px+
+   ============================================================ */
+
+@media (min-width: 768px) {
+
+  .header-container {
+    gap: 18px;
+  }
+
+  .header-logo-mark {
+    width: 44px;
+    height: 44px;
+  }
+
+  .header-logo-text {
+    font-size: 1.02rem;
+  }
+
+  .header-desktop-nav {
+    display: flex;
+  }
+
+  .header-actions {
+    display: flex;
+  }
+
+  .header-mobile-button {
+    display: none;
+  }
+
+  .header-mobile-menu {
+    display: none;
+  }
+}
+
+
+/* ============================================================
+   22. DESKTOP — 1024px+
+   ============================================================ */
+
+@media (min-width: 1024px) {
+
+  .header-container {
+    min-height: 76px;
+
+    padding-inline:
+      var(--container-padding);
+  }
+
+  .header-desktop-nav {
+    gap: 5px;
+  }
+
+  .header-nav-link {
+    min-height: 42px;
+
+    padding:
+      9px
+      14px;
+
+    font-size: 0.875rem;
+  }
+
+  .header-actions {
+    gap: 9px;
+  }
+
+  .header-user {
+    padding:
+      6px
+      10px;
+  }
+}
+
+
+/* ============================================================
+   23. LARGE DESKTOP — 1280px+
+   ============================================================ */
+
+@media (min-width: 1280px) {
+
+  .header-container {
+    padding-inline:
+      32px;
+  }
+
+  .header-desktop-nav {
+    gap: 7px;
+  }
+
+  .header-nav-link {
+    padding-inline: 15px;
+  }
+
+  .header-logo-text {
+    font-size: 1.06rem;
+  }
+}
+
+
+/* ============================================================
+   24. DARK MODE
+   ============================================================ */
+
+.dark .site-header {
+  background:
+    rgba(11, 17, 32, 0.92);
+
+  border-bottom-color:
+    var(--border-light);
+
+  box-shadow:
+    0 4px 24px
+    rgba(0, 0, 0, 0.22);
+}
+
+.dark .header-logo-mark {
+  box-shadow:
+    0 6px 18px
+    rgba(13, 148, 136, 0.16);
+}
+
+.dark .header-nav-link:hover {
+  background:
+    var(--gray-100);
+}
+
+.dark .header-user {
+  background:
+    var(--bg-surface);
+}
+
+.dark .header-login-button:hover {
+  color:
+    #ffffff;
+}
+
+.dark .header-dashboard-button {
+  color:
+    #ffffff;
+}
+
+.dark .header-mobile-menu {
+  box-shadow:
+    0 16px 30px
+    rgba(0, 0, 0, 0.30);
+}
+
+.dark .header-mobile-user-card {
+  background:
+    linear-gradient(
+      135deg,
+      #172033,
+      var(--bg-surface)
+    );
+}
+
+.dark .header-mobile-nav-icon {
+  background:
+    var(--gray-100);
+}
+
+
+/* ============================================================
+   25. REDUCED MOTION
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+
+  .header-mobile-menu {
+    animation: none;
+  }
+
+  .header-logo,
+  .header-nav-link,
+  .header-nav-link svg,
+  .header-login-button,
+  .header-dashboard-button,
+  .header-mobile-button {
+    transition: none;
+  }
+}

@@ -424,147 +424,147 @@ const startServer = async () => {
     await connectDatabase();
 
     app.listen(
-  PORT,
-  () => {
-    console.log("");
+      PORT,
+      () => {
+        console.log("");
 
-    console.log(
-      "================================================"
-    );
+        console.log(
+          "================================================"
+        );
 
-    console.log(
-      "        SHANTI ENTERPRISES API SERVER"
-    );
+        console.log(
+          "        SHANTI ENTERPRISES API SERVER"
+        );
 
-    console.log(
-      "================================================"
-    );
+        console.log(
+          "================================================"
+        );
 
-    console.log(
-      `Environment : ${
-        process.env.NODE_ENV ||
-        "development"
-      }`
-    );
+        console.log(
+          `Environment : ${
+            process.env.NODE_ENV ||
+            "development"
+          }`
+        );
 
-    console.log(
-      `Port        : ${PORT}`
-    );
+        console.log(
+          `Port        : ${PORT}`
+        );
 
-    console.log(
-      `API         : http://localhost:${PORT}/api`
-    );
+        console.log(
+          `API         : http://localhost:${PORT}/api`
+        );
 
-    console.log(
-      `Health      : http://localhost:${PORT}/api/health`
-    );
+        console.log(
+          `Health      : http://localhost:${PORT}/api/health`
+        );
 
-    console.log(
-      `Auth        : http://localhost:${PORT}/api/auth`
-    );
+        console.log(
+          `Auth        : http://localhost:${PORT}/api/auth`
+        );
 
-    console.log(
-      `Products    : http://localhost:${PORT}/api/products`
-    );
+        console.log(
+          `Products    : http://localhost:${PORT}/api/products`
+        );
 
-    console.log(
-      `Categories  : http://localhost:${PORT}/api/categories`
-    );
+        console.log(
+          `Categories  : http://localhost:${PORT}/api/categories`
+        );
 
-    console.log(
-      `Cart        : http://localhost:${PORT}/api/cart`
-    );
+        console.log(
+          `Cart        : http://localhost:${PORT}/api/cart`
+        );
 
-    console.log(
-      `Orders      : http://localhost:${PORT}/api/orders`
-    );
+        console.log(
+          `Orders      : http://localhost:${PORT}/api/orders`
+        );
 
-    console.log(
-      `RFQs        : http://localhost:${PORT}/api/rfqs`
-    );
+        console.log(
+          `RFQs        : http://localhost:${PORT}/api/rfqs`
+        );
 
-    console.log(
-      `Quotations  : http://localhost:${PORT}/api/quotations`
-    );
+        console.log(
+          `Quotations  : http://localhost:${PORT}/api/quotations`
+        );
 
-    console.log(
-      `Wishlist    : http://localhost:${PORT}/api/wishlist`
-    );
+        console.log(
+          `Wishlist    : http://localhost:${PORT}/api/wishlist`
+        );
 
-    console.log(
-      `Profile     : http://localhost:${PORT}/api/profile`
-    );
+        console.log(
+          `Profile     : http://localhost:${PORT}/api/profile`
+        );
 
-    console.log(
-      `Addresses   : http://localhost:${PORT}/api/addresses`
-    );
+        console.log(
+          `Addresses   : http://localhost:${PORT}/api/addresses`
+        );
 
-    console.log(
-      `Notifications : http://localhost:${PORT}/api/notifications`
-    );
+        console.log(
+          `Notifications : http://localhost:${PORT}/api/notifications`
+        );
 
-    console.log(
-      `Bulk Quotes : http://localhost:${PORT}/api/bulk-quotes`
-    );
+        console.log(
+          `Bulk Quotes : http://localhost:${PORT}/api/bulk-quotes`
+        );
 
-    console.log(
-      `Payments    : http://localhost:${PORT}/api/payments`
-    );
+        console.log(
+          `Payments    : http://localhost:${PORT}/api/payments`
+        );
 
-    console.log(
-      `Invoices    : http://localhost:${PORT}/api/invoices`
-    );
+        console.log(
+          `Invoices    : http://localhost:${PORT}/api/invoices`
+        );
 
-    console.log(
-      `Shipments   : http://localhost:${PORT}/api/shipments`
-    );
+        console.log(
+          `Shipments   : http://localhost:${PORT}/api/shipments`
+        );
 
-    console.log(
-      `Returns     : http://localhost:${PORT}/api/returns`
-    );
+        console.log(
+          `Returns     : http://localhost:${PORT}/api/returns`
+        );
 
-    console.log(
-      `Admin       : http://localhost:${PORT}/api/admin/dashboard`
-    );
+        console.log(
+          `Admin       : http://localhost:${PORT}/api/admin/dashboard`
+        );
 
-    console.log(
-      `Admin Products : http://localhost:${PORT}/api/admin/products`
-    );
+        console.log(
+          `Admin Products : http://localhost:${PORT}/api/admin/products`
+        );
 
-    console.log(
-      `Admin Orders : http://localhost:${PORT}/api/admin/orders`
-    );
+        console.log(
+          `Admin Orders : http://localhost:${PORT}/api/admin/orders`
+        );
 
-    console.log(
-      `Admin RFQs : http://localhost:${PORT}/api/admin/rfqs`
-    );
+        console.log(
+          `Admin RFQs : http://localhost:${PORT}/api/admin/rfqs`
+        );
 
-    console.log(
-      `Admin Quotations : http://localhost:${PORT}/api/admin/quotations`
-    );
+        console.log(
+          `Admin Quotations : http://localhost:${PORT}/api/admin/quotations`
+        );
 
-    console.log(
-      `Admin Customers : http://localhost:${PORT}/api/admin/customers`
-    );
+        console.log(
+          `Admin Customers : http://localhost:${PORT}/api/admin/customers`
+        );
 
-    console.log(
-      `Admin Inventory : http://localhost:${PORT}/api/admin/inventory`
-    );
+        console.log(
+          `Admin Inventory : http://localhost:${PORT}/api/admin/inventory`
+        );
 
-    console.log(
-      `Admin Shipments : http://localhost:${PORT}/api/admin/shipments`
-    );
+        console.log(
+          `Admin Shipments : http://localhost:${PORT}/api/admin/shipments`
+        );
 
-    console.log(
-      `Admin Reports : http://localhost:${PORT}/api/admin/reports`
-    );
+        console.log(
+          `Admin Reports : http://localhost:${PORT}/api/admin/reports`
+        );
 
-    console.log(
-      "================================================"
-    );
+        console.log(
+          "================================================"
+        );
 
-    console.log("");
-    }
+        console.log("");
+      }
     );
   } catch (error) {
     console.error(

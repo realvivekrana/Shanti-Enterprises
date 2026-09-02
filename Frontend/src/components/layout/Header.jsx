@@ -1,7 +1,7 @@
 // ============================================================
 // SHANTI ENTERPRISES
 // Header / Navbar
-// Frontend Phase 6 - UI/UX
+// Mobile First • Premium Responsive UI
 // ============================================================
 
 import {
@@ -13,6 +13,20 @@ import {
   NavLink,
   useNavigate,
 } from "react-router-dom";
+
+import {
+  ChevronDown,
+  Grid2X2,
+  Home,
+  LayoutDashboard,
+  LogIn,
+  LogOut,
+  Menu,
+  Package,
+  ShoppingCart,
+  User,
+  X,
+} from "lucide-react";
 
 import {
   useAuth,
@@ -72,8 +86,6 @@ function Header() {
         error
       );
 
-      // Even if API logout fails,
-      // AuthContext clears frontend state.
       navigate("/login", {
         replace: true,
       });
@@ -132,21 +144,35 @@ function Header() {
           onClick={
             closeMobileMenu
           }
+          aria-label="Shanti Enterprises Home"
         >
+
           <span className="header-logo-mark">
             SE
           </span>
 
-          <span className="header-logo-text">
-            Shanti Enterprises
+          <span className="header-logo-content">
+
+            <span className="header-logo-text">
+              Shanti Enterprises
+            </span>
+
+            <span className="header-logo-subtitle">
+              Business Solutions
+            </span>
+
           </span>
+
         </Link>
 
         {/* ==================================================
-            DESKTOP NAV
+            DESKTOP NAVIGATION
             ================================================== */}
 
-        <nav className="header-desktop-nav">
+        <nav
+          className="header-desktop-nav"
+          aria-label="Main navigation"
+        >
 
           <NavLink
             to="/"
@@ -154,7 +180,14 @@ function Header() {
               getNavClass
             }
           >
-            Home
+            <Home
+              size={17}
+              strokeWidth={2}
+            />
+
+            <span>
+              Home
+            </span>
           </NavLink>
 
           <NavLink
@@ -163,7 +196,14 @@ function Header() {
               getNavClass
             }
           >
-            Categories
+            <Grid2X2
+              size={17}
+              strokeWidth={2}
+            />
+
+            <span>
+              Categories
+            </span>
           </NavLink>
 
           <NavLink
@@ -172,7 +212,14 @@ function Header() {
               getNavClass
             }
           >
-            Products
+            <Package
+              size={17}
+              strokeWidth={2}
+            />
+
+            <span>
+              Products
+            </span>
           </NavLink>
 
           <NavLink
@@ -181,7 +228,14 @@ function Header() {
               getNavClass
             }
           >
-            Cart
+            <ShoppingCart
+              size={17}
+              strokeWidth={2}
+            />
+
+            <span>
+              Cart
+            </span>
           </NavLink>
 
         </nav>
@@ -195,22 +249,55 @@ function Header() {
           {isAuthenticated ? (
             <>
 
-              {/* USER NAME */}
+              {/* USER */}
 
-              <span className="header-user-name">
-                {user?.name ||
-                  "Account"}
-              </span>
+              <div className="header-user">
 
-              {/* ADMIN / CUSTOMER DASHBOARD */}
+                <div className="header-user-avatar">
+                  <User
+                    size={17}
+                    strokeWidth={2}
+                  />
+                </div>
+
+                <div className="header-user-info">
+
+                  <span>
+                    Welcome
+                  </span>
+
+                  <strong>
+                    {user?.name ||
+                      "Account"}
+                  </strong>
+
+                </div>
+
+                <ChevronDown
+                  size={15}
+                  className="header-user-chevron"
+                />
+
+              </div>
+
+              {/* DASHBOARD */}
 
               <Link
                 to={dashboardPath}
-                className="header-action-button"
+                className="header-dashboard-button"
               >
-                {isAdmin
-                  ? "Admin"
-                  : "Dashboard"}
+
+                <LayoutDashboard
+                  size={17}
+                  strokeWidth={2}
+                />
+
+                <span>
+                  {isAdmin
+                    ? "Admin"
+                    : "Dashboard"}
+                </span>
+
               </Link>
 
               {/* LOGOUT */}
@@ -225,9 +312,18 @@ function Header() {
                   logoutLoading
                 }
               >
-                {logoutLoading
-                  ? "Logging out..."
-                  : "Logout"}
+
+                <LogOut
+                  size={17}
+                  strokeWidth={2}
+                />
+
+                <span>
+                  {logoutLoading
+                    ? "Logging out..."
+                    : "Logout"}
+                </span>
+
               </button>
 
             </>
@@ -236,7 +332,16 @@ function Header() {
               to="/login"
               className="header-login-button"
             >
-              Login
+
+              <LogIn
+                size={17}
+                strokeWidth={2}
+              />
+
+              <span>
+                Login
+              </span>
+
             </Link>
           )}
 
@@ -264,9 +369,19 @@ function Header() {
             )
           }
         >
-          <span />
-          <span />
-          <span />
+
+          {mobileMenuOpen ? (
+            <X
+              size={24}
+              strokeWidth={2}
+            />
+          ) : (
+            <Menu
+              size={24}
+              strokeWidth={2}
+            />
+          )}
+
         </button>
 
       </div>
@@ -278,66 +393,23 @@ function Header() {
       {mobileMenuOpen && (
         <div className="header-mobile-menu">
 
-          <nav className="header-mobile-nav">
-
-            <NavLink
-              to="/"
-              className={
-                getNavClass
-              }
-              onClick={
-                closeMobileMenu
-              }
-            >
-              Home
-            </NavLink>
-
-            <NavLink
-              to="/categories"
-              className={
-                getNavClass
-              }
-              onClick={
-                closeMobileMenu
-              }
-            >
-              Categories
-            </NavLink>
-
-            <NavLink
-              to="/products"
-              className={
-                getNavClass
-              }
-              onClick={
-                closeMobileMenu
-              }
-            >
-              Products
-            </NavLink>
-
-            <NavLink
-              to="/cart"
-              className={
-                getNavClass
-              }
-              onClick={
-                closeMobileMenu
-              }
-            >
-              Cart
-            </NavLink>
+          <div className="header-mobile-menu-inner">
 
             {/* ==================================================
-                AUTHENTICATED MOBILE ACTIONS
+                MOBILE USER HEADER
                 ================================================== */}
 
-            {isAuthenticated ? (
-              <>
+            {isAuthenticated && (
+              <div className="header-mobile-user-card">
 
-                {/* USER */}
+                <div className="header-mobile-user-avatar">
+                  <User
+                    size={20}
+                  />
+                </div>
 
-                <div className="header-mobile-user">
+                <div>
+
                   <span>
                     Signed in as
                   </span>
@@ -346,61 +418,23 @@ function Header() {
                     {user?.name ||
                       "Account"}
                   </strong>
+
                 </div>
 
-                {/* DASHBOARD */}
+              </div>
+            )}
 
-                <NavLink
-                  to={dashboardPath}
-                  className={
-                    getNavClass
-                  }
-                  onClick={
-                    closeMobileMenu
-                  }
-                >
-                  {isAdmin
-                    ? "Admin Dashboard"
-                    : "Dashboard"}
-                </NavLink>
+            {/* ==================================================
+                MOBILE NAV
+                ================================================== */}
 
-                {/* PROFILE */}
+            <nav
+              className="header-mobile-nav"
+              aria-label="Mobile navigation"
+            >
 
-                {!isAdmin && (
-                  <NavLink
-                    to="/profile"
-                    className={
-                      getNavClass
-                    }
-                    onClick={
-                      closeMobileMenu
-                    }
-                  >
-                    Profile
-                  </NavLink>
-                )}
-
-                {/* LOGOUT */}
-
-                <button
-                  type="button"
-                  className="header-mobile-logout"
-                  onClick={
-                    handleLogout
-                  }
-                  disabled={
-                    logoutLoading
-                  }
-                >
-                  {logoutLoading
-                    ? "Logging out..."
-                    : "Logout"}
-                </button>
-
-              </>
-            ) : (
               <NavLink
-                to="/login"
+                to="/"
                 className={
                   getNavClass
                 }
@@ -408,11 +442,221 @@ function Header() {
                   closeMobileMenu
                 }
               >
-                Login
-              </NavLink>
-            )}
 
-          </nav>
+                <span className="header-mobile-nav-icon">
+                  <Home
+                    size={18}
+                  />
+                </span>
+
+                <span>
+                  Home
+                </span>
+
+              </NavLink>
+
+              <NavLink
+                to="/categories"
+                className={
+                  getNavClass
+                }
+                onClick={
+                  closeMobileMenu
+                }
+              >
+
+                <span className="header-mobile-nav-icon">
+                  <Grid2X2
+                    size={18}
+                  />
+                </span>
+
+                <span>
+                  Categories
+                </span>
+
+              </NavLink>
+
+              <NavLink
+                to="/products"
+                className={
+                  getNavClass
+                }
+                onClick={
+                  closeMobileMenu
+                }
+              >
+
+                <span className="header-mobile-nav-icon">
+                  <Package
+                    size={18}
+                  />
+                </span>
+
+                <span>
+                  Products
+                </span>
+
+              </NavLink>
+
+              <NavLink
+                to="/cart"
+                className={
+                  getNavClass
+                }
+                onClick={
+                  closeMobileMenu
+                }
+              >
+
+                <span className="header-mobile-nav-icon">
+                  <ShoppingCart
+                    size={18}
+                  />
+                </span>
+
+                <span>
+                  Cart
+                </span>
+
+              </NavLink>
+
+              {/* ==================================================
+                  AUTHENTICATED LINKS
+                  ================================================== */}
+
+              {isAuthenticated ? (
+                <>
+
+                  <NavLink
+                    to={dashboardPath}
+                    className={
+                      getNavClass
+                    }
+                    onClick={
+                      closeMobileMenu
+                    }
+                  >
+
+                    <span className="header-mobile-nav-icon">
+                      <LayoutDashboard
+                        size={18}
+                      />
+                    </span>
+
+                    <span>
+                      {isAdmin
+                        ? "Admin Dashboard"
+                        : "Dashboard"}
+                    </span>
+
+                  </NavLink>
+
+                  {!isAdmin && (
+                    <NavLink
+                      to="/profile"
+                      className={
+                        getNavClass
+                      }
+                      onClick={
+                        closeMobileMenu
+                      }
+                    >
+
+                      <span className="header-mobile-nav-icon">
+                        <User
+                          size={18}
+                        />
+                      </span>
+
+                      <span>
+                        Profile
+                      </span>
+
+                    </NavLink>
+                  )}
+
+                  {/* MOBILE LOGOUT */}
+
+                  <button
+                    type="button"
+                    className="header-mobile-logout"
+                    onClick={
+                      handleLogout
+                    }
+                    disabled={
+                      logoutLoading
+                    }
+                  >
+
+                    <span className="header-mobile-nav-icon">
+                      <LogOut
+                        size={18}
+                      />
+                    </span>
+
+                    <span>
+                      {logoutLoading
+                        ? "Logging out..."
+                        : "Logout"}
+                    </span>
+
+                  </button>
+
+                </>
+              ) : (
+                <NavLink
+                  to="/login"
+                  className={
+                    getNavClass
+                  }
+                  onClick={
+                    closeMobileMenu
+                  }
+                >
+
+                  <span className="header-mobile-nav-icon">
+                    <LogIn
+                      size={18}
+                    />
+                  </span>
+
+                  <span>
+                    Login
+                  </span>
+
+                </NavLink>
+              )}
+
+            </nav>
+
+            {/* ==================================================
+                MOBILE BUSINESS INFO
+                ================================================== */}
+
+            <div className="header-mobile-footer">
+
+              <div className="header-mobile-footer-icon">
+                <Package
+                  size={17}
+                />
+              </div>
+
+              <div>
+
+                <strong>
+                  Shanti Enterprises
+                </strong>
+
+                <span>
+                  Reliable B2B Business Solutions
+                </span>
+
+              </div>
+
+            </div>
+
+          </div>
 
         </div>
       )}

@@ -1,0 +1,1500 @@
+/* ============================================================
+   SHANTI ENTERPRISES
+   Login Page
+   Premium • Mobile First • Responsive
+   ============================================================ */
+
+.se-login-page {
+  width: 100%;
+  min-height: 100vh;
+  background:
+    radial-gradient(
+      circle at 15% 10%,
+      rgba(14, 165, 233, 0.07),
+      transparent 25%
+    ),
+    #f7f9fc;
+  color: #172033;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  overflow-x: hidden;
+}
+
+.se-login-page *,
+.se-login-page *::before,
+.se-login-page *::after {
+  box-sizing: border-box;
+}
+
+.se-login-page button,
+.se-login-page input {
+  font: inherit;
+}
+
+
+/* ============================================================
+   MAIN LAYOUT
+   ============================================================ */
+
+.se-login-main {
+  width: 100%;
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
+
+/* ============================================================
+   LEFT BRAND PANEL
+   ============================================================ */
+
+.se-brand-panel {
+  position: relative;
+  overflow: hidden;
+
+  min-height: auto;
+  padding: 46px 22px 48px;
+
+  background:
+    radial-gradient(
+      circle at 88% 8%,
+      rgba(56, 189, 248, 0.22),
+      transparent 28%
+    ),
+    radial-gradient(
+      circle at 10% 82%,
+      rgba(139, 92, 246, 0.18),
+      transparent 30%
+    ),
+    linear-gradient(
+      145deg,
+      #04152f 0%,
+      #082b5c 48%,
+      #071b3b 100%
+    );
+
+  color: #ffffff;
+}
+
+.se-brand-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+
+  background-image:
+    radial-gradient(
+      rgba(148, 163, 184, 0.35) 1px,
+      transparent 1px
+    );
+
+  background-size: 24px 24px;
+
+  opacity: 0.16;
+  pointer-events: none;
+
+  mask-image:
+    linear-gradient(
+      to bottom,
+      black,
+      transparent 78%
+    );
+}
+
+.se-brand-panel::after {
+  content: "";
+  position: absolute;
+
+  left: -15%;
+  right: -15%;
+  bottom: -180px;
+
+  height: 390px;
+
+  background:
+    radial-gradient(
+      ellipse at center,
+      rgba(14, 165, 233, 0.16),
+      transparent 65%
+    );
+
+  pointer-events: none;
+}
+
+
+/* ============================================================
+   PANEL CONTENT
+   ============================================================ */
+
+.se-panel-content {
+  position: relative;
+  z-index: 2;
+
+  width: 100%;
+  max-width: 680px;
+
+  margin: 0 auto;
+}
+
+
+/* ============================================================
+   MARKET BADGE
+   ============================================================ */
+
+.se-market-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+
+  padding: 9px 13px;
+
+  border-radius: 999px;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(37, 99, 235, 0.22),
+      rgba(14, 165, 233, 0.12)
+    );
+
+  border: 1px solid
+    rgba(125, 211, 252, 0.24);
+
+  color: #bae6fd;
+
+  font-size: 11px;
+  font-weight: 800;
+
+  letter-spacing: 0.2px;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+
+/* ============================================================
+   BRAND TITLE
+   ============================================================ */
+
+.se-panel-title {
+  margin: 25px 0 17px;
+
+  font-size: clamp(
+    38px,
+    8vw,
+    64px
+  );
+
+  line-height: 1.03;
+
+  letter-spacing: -2px;
+
+  font-weight: 850;
+}
+
+.se-panel-title-highlight {
+  display: inline-block;
+
+  background:
+    linear-gradient(
+      90deg,
+      #60a5fa,
+      #22d3ee,
+      #a78bfa
+    );
+
+  -webkit-background-clip: text;
+  background-clip: text;
+
+  -webkit-text-fill-color: transparent;
+}
+
+
+/* ============================================================
+   BRAND DESCRIPTION
+   ============================================================ */
+
+.se-panel-description {
+  max-width: 600px;
+
+  margin: 0;
+
+  color: #cbd9eb;
+
+  font-size: 15px;
+
+  line-height: 1.7;
+}
+
+
+/* ============================================================
+   FEATURES
+   ============================================================ */
+
+.se-feature-grid {
+  margin-top: 34px;
+
+  display: grid;
+
+  grid-template-columns: 1fr;
+
+  gap: 20px;
+}
+
+.se-feature {
+  display: flex;
+  align-items: flex-start;
+
+  gap: 14px;
+
+  padding: 2px 0;
+}
+
+.se-feature-icon {
+  width: 48px;
+  height: 48px;
+
+  flex: 0 0 48px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 14px;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(59, 130, 246, 0.28),
+      rgba(14, 165, 233, 0.12)
+    );
+
+  border: 1px solid
+    rgba(147, 197, 253, 0.15);
+
+  color: #dbeafe;
+
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+.se-feature-title {
+  margin: 1px 0 5px;
+
+  color: #ffffff;
+
+  font-size: 15px;
+
+  font-weight: 800;
+}
+
+.se-feature-text {
+  margin: 0;
+
+  color: #b7c7dc;
+
+  font-size: 13px;
+
+  line-height: 1.5;
+}
+
+
+/* ============================================================
+   LEFT FOOTER
+   ============================================================ */
+
+.se-panel-footer {
+  position: relative;
+  z-index: 3;
+
+  margin-top: 42px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 20px;
+
+  color: #9fb2cc;
+
+  font-size: 11px;
+}
+
+.se-secure-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.se-secure-dot {
+  color: #4ade80;
+}
+
+
+/* ============================================================
+   RIGHT FORM PANEL
+   ============================================================ */
+
+.se-form-panel {
+  min-height: auto;
+
+  padding: 26px 12px 40px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background:
+    radial-gradient(
+      circle at 90% 10%,
+      rgba(59, 130, 246, 0.08),
+      transparent 25%
+    ),
+    #f8fafc;
+}
+
+.se-form-wrapper {
+  width: 100%;
+  max-width: 650px;
+}
+
+
+/* ============================================================
+   LOGIN CARD
+   ============================================================ */
+
+.se-login-card {
+  width: 100%;
+
+  background: #ffffff;
+
+  border: 1px solid #e3e8ef;
+
+  border-radius: 18px;
+
+  overflow: hidden;
+
+  box-shadow:
+    0 24px 60px rgba(15, 23, 42, 0.10),
+    0 5px 18px rgba(15, 23, 42, 0.045);
+}
+
+.se-login-card-main {
+  padding: 27px 20px 29px;
+}
+
+
+/* ============================================================
+   ROLE TABS
+   ============================================================ */
+
+.se-role-tabs {
+  display: grid;
+
+  grid-template-columns: 1fr 1fr;
+
+  border-bottom: 1px solid #e6eaf0;
+
+  margin-bottom: 29px;
+}
+
+.se-role-tab {
+  position: relative;
+
+  min-height: 51px;
+
+  border: 0;
+
+  background: transparent;
+
+  color: #64748b;
+
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  font-size: 13px;
+
+  font-weight: 800;
+
+  transition:
+    color 0.2s ease,
+    background 0.2s ease;
+}
+
+.se-role-tab:hover {
+  color: #2563eb;
+
+  background: #f8fbff;
+}
+
+.se-role-tab.active {
+  color: #155eef;
+}
+
+.se-role-tab.active::after {
+  content: "";
+
+  position: absolute;
+
+  left: 8%;
+  right: 8%;
+
+  bottom: -1px;
+
+  height: 3px;
+
+  border-radius: 3px 3px 0 0;
+
+  background:
+    linear-gradient(
+      90deg,
+      #2563eb,
+      #06b6d4
+    );
+}
+
+
+/* ============================================================
+   FORM HEADING
+   ============================================================ */
+
+.se-form-heading {
+  margin-bottom: 21px;
+}
+
+.se-form-heading h1 {
+  margin: 0 0 7px;
+
+  color: #14213d;
+
+  font-size: 28px;
+
+  line-height: 1.2;
+
+  letter-spacing: -0.9px;
+
+  font-weight: 850;
+}
+
+.se-form-heading p {
+  margin: 0;
+
+  color: #64748b;
+
+  font-size: 13px;
+
+  line-height: 1.6;
+}
+
+
+/* ============================================================
+   ROLE NOTE
+   ============================================================ */
+
+.se-role-note {
+  margin: 0 0 20px;
+
+  padding: 11px 13px;
+
+  border-radius: 10px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #eff6ff,
+      #f0fdfa
+    );
+
+  border: 1px solid #dbeafe;
+
+  color: #1d4ed8;
+
+  font-size: 11.5px;
+
+  line-height: 1.5;
+
+  font-weight: 650;
+}
+
+
+/* ============================================================
+   ERROR
+   ============================================================ */
+
+.se-error {
+  margin: 0 0 18px;
+
+  padding: 11px 13px;
+
+  border-radius: 10px;
+
+  background: #fef2f2;
+
+  border: 1px solid #fecaca;
+
+  color: #b91c1c;
+
+  font-size: 12px;
+
+  line-height: 1.5;
+
+  font-weight: 650;
+}
+
+
+/* ============================================================
+   FORM GROUP
+   ============================================================ */
+
+.se-form-group {
+  margin-bottom: 18px;
+}
+
+.se-form-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 12px;
+
+  margin-bottom: 8px;
+}
+
+.se-form-label {
+  color: #1e293b;
+
+  font-size: 13px;
+
+  font-weight: 800;
+}
+
+
+/* ============================================================
+   FORGOT
+   ============================================================ */
+
+.se-forgot {
+  border: 0;
+
+  padding: 0;
+
+  background: transparent;
+
+  color: #2563eb;
+
+  font-size: 11.5px;
+
+  font-weight: 750;
+
+  cursor: pointer;
+}
+
+.se-forgot:hover {
+  text-decoration: underline;
+}
+
+
+/* ============================================================
+   INPUT
+   ============================================================ */
+
+.se-input-wrap {
+  position: relative;
+
+  display: flex;
+  align-items: center;
+}
+
+.se-input-icon {
+  position: absolute;
+
+  left: 14px;
+
+  z-index: 2;
+
+  display: flex;
+  align-items: center;
+
+  color: #7b8ba2;
+
+  pointer-events: none;
+}
+
+.se-input {
+  width: 100%;
+
+  height: 53px;
+
+  padding:
+    0 15px 0 47px;
+
+  border: 1px solid #d7e0ea;
+
+  border-radius: 10px;
+
+  outline: none;
+
+  background: #ffffff;
+
+  color: #17233b;
+
+  font-size: 14px;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.se-input.password-input {
+  padding-right: 51px;
+}
+
+.se-input::placeholder {
+  color: #a1adbc;
+}
+
+.se-input:hover {
+  border-color: #bdc9d8;
+}
+
+.se-input:focus {
+  border-color: #3b82f6;
+
+  box-shadow:
+    0 0 0 4px
+    rgba(59, 130, 246, 0.10);
+
+  background: #ffffff;
+}
+
+.se-input:disabled {
+  background: #f8fafc;
+
+  cursor: not-allowed;
+}
+
+
+/* ============================================================
+   PASSWORD TOGGLE
+   ============================================================ */
+
+.se-password-toggle {
+  position: absolute;
+
+  right: 10px;
+
+  width: 35px;
+  height: 35px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 0;
+
+  border-radius: 8px;
+
+  background: transparent;
+
+  color: #718096;
+
+  cursor: pointer;
+
+  transition:
+    color 0.2s ease,
+    background 0.2s ease;
+}
+
+.se-password-toggle:hover {
+  color: #2563eb;
+
+  background: #eff6ff;
+}
+
+
+/* ============================================================
+   REMEMBER ME
+   ============================================================ */
+
+.se-remember {
+  display: flex;
+  align-items: center;
+
+  gap: 9px;
+
+  margin:
+    1px 0 21px;
+
+  color: #526177;
+
+  font-size: 12.5px;
+
+  cursor: pointer;
+
+  user-select: none;
+}
+
+.se-remember input {
+  appearance: none;
+
+  width: 18px;
+  height: 18px;
+
+  flex: 0 0 18px;
+
+  margin: 0;
+
+  border: 1px solid #b9c5d4;
+
+  border-radius: 5px;
+
+  background: #ffffff;
+
+  cursor: pointer;
+
+  position: relative;
+}
+
+.se-remember input:checked {
+  border-color: #2563eb;
+
+  background:
+    linear-gradient(
+      135deg,
+      #2563eb,
+      #0891b2
+    );
+}
+
+.se-remember input:checked::after {
+  content: "✓";
+
+  position: absolute;
+
+  left: 3px;
+  top: -1px;
+
+  color: #ffffff;
+
+  font-size: 13px;
+
+  font-weight: 900;
+}
+
+
+/* ============================================================
+   SUBMIT
+   ============================================================ */
+
+.se-submit {
+  width: 100%;
+
+  min-height: 54px;
+
+  border: 0;
+
+  border-radius: 10px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #2563eb 0%,
+      #0891b2 100%
+    );
+
+  color: #ffffff;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 9px;
+
+  font-size: 14px;
+
+  font-weight: 850;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 10px 24px
+    rgba(37, 99, 235, 0.20);
+
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    opacity 0.18s ease;
+}
+
+.se-submit:hover:not(:disabled) {
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 15px 30px
+    rgba(37, 99, 235, 0.28);
+}
+
+.se-submit:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.se-submit:disabled {
+  opacity: 0.65;
+
+  cursor: not-allowed;
+}
+
+
+/* ============================================================
+   SPINNER
+   ============================================================ */
+
+.se-spinner {
+  width: 18px;
+  height: 18px;
+
+  border: 2px solid
+    rgba(255, 255, 255, 0.35);
+
+  border-top-color: #ffffff;
+
+  border-radius: 50%;
+
+  animation:
+    se-spin 0.75s linear infinite;
+}
+
+@keyframes se-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+
+/* ============================================================
+   DIVIDER
+   ============================================================ */
+
+.se-divider {
+  display: flex;
+  align-items: center;
+
+  gap: 13px;
+
+  margin: 23px 0;
+
+  color: #8491a3;
+
+  font-size: 10px;
+
+  font-weight: 800;
+
+  letter-spacing: 0.7px;
+}
+
+.se-divider::before,
+.se-divider::after {
+  content: "";
+
+  flex: 1;
+
+  height: 1px;
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      #dfe5ec,
+      transparent
+    );
+}
+
+
+/* ============================================================
+   REGISTER BUTTON
+   ============================================================ */
+
+.se-register-button {
+  width: 100%;
+
+  min-height: 50px;
+
+  border: 1px solid #d8e1eb;
+
+  border-radius: 10px;
+
+  background: #ffffff;
+
+  color: #155eef;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 9px;
+
+  text-decoration: none;
+
+  font-size: 13px;
+
+  font-weight: 800;
+
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.se-register-button:hover {
+  border-color: #8bb5ff;
+
+  background:
+    linear-gradient(
+      135deg,
+      #f8fbff,
+      #f0fdfa
+    );
+
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 8px 18px
+    rgba(37, 99, 235, 0.08);
+}
+
+
+/* ============================================================
+   BOTTOM ROW
+   ============================================================ */
+
+.se-bottom-row {
+  margin-top: 18px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 15px;
+
+  color: #64748b;
+
+  font-size: 11.5px;
+}
+
+.se-back-home {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 6px;
+
+  color: #2563eb;
+
+  text-decoration: none;
+
+  font-weight: 750;
+}
+
+.se-back-home:hover {
+  text-decoration: underline;
+}
+
+.se-secure-connection {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 6px;
+}
+
+.se-secure-connection svg {
+  color: #16a34a;
+}
+
+
+/* ============================================================
+   480px
+   ============================================================ */
+
+@media (min-width: 480px) {
+
+  .se-brand-panel {
+    padding:
+      54px 30px 55px;
+  }
+
+  .se-form-panel {
+    padding:
+      32px 20px 45px;
+  }
+
+  .se-login-card-main {
+    padding:
+      32px 28px 34px;
+  }
+
+  .se-form-heading h1 {
+    font-size: 31px;
+  }
+
+  .se-input {
+    height: 55px;
+  }
+}
+
+
+/* ============================================================
+   640px
+   ============================================================ */
+
+@media (min-width: 640px) {
+
+  .se-brand-panel {
+    padding:
+      62px 42px 65px;
+  }
+
+  .se-panel-title {
+    font-size: 50px;
+  }
+
+  .se-panel-description {
+    font-size: 16px;
+  }
+
+  .se-feature-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+
+    column-gap: 28px;
+  }
+
+  .se-form-panel {
+    padding:
+      42px 30px 55px;
+  }
+
+  .se-login-card {
+    border-radius: 20px;
+  }
+
+  .se-login-card-main {
+    padding:
+      36px 38px 39px;
+  }
+}
+
+
+/* ============================================================
+   768px
+   ============================================================ */
+
+@media (min-width: 768px) {
+
+  .se-brand-panel {
+    padding:
+      70px 52px 70px;
+  }
+
+  .se-panel-title {
+    font-size: 56px;
+  }
+
+  .se-feature-grid {
+    margin-top: 40px;
+  }
+
+  .se-panel-footer {
+    margin-top: 55px;
+
+    font-size: 12px;
+  }
+
+  .se-form-panel {
+    padding:
+      50px 40px 65px;
+  }
+}
+
+
+/* ============================================================
+   DESKTOP
+   ============================================================ */
+
+@media (min-width: 901px) {
+
+  .se-login-main {
+    min-height: 100vh;
+
+    grid-template-columns:
+      minmax(0, 0.92fr)
+      minmax(0, 1.08fr);
+  }
+
+  .se-brand-panel {
+    min-height: 100vh;
+
+    padding:
+      72px 52px 45px;
+  }
+
+  .se-form-panel {
+    min-height: 100vh;
+
+    padding:
+      55px 48px;
+  }
+
+  .se-feature-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+
+    gap:
+      28px 26px;
+  }
+
+  .se-panel-footer {
+    position: absolute;
+
+    left: 52px;
+    right: 52px;
+    bottom: 30px;
+
+    margin-top: 0;
+  }
+
+  .se-login-card-main {
+    padding:
+      39px 43px 42px;
+  }
+
+  .se-role-tab {
+    min-height: 54px;
+
+    font-size: 15px;
+  }
+
+  .se-form-heading h1 {
+    font-size: 33px;
+  }
+
+  .se-form-heading p {
+    font-size: 14px;
+  }
+
+  .se-input {
+    height: 57px;
+  }
+
+  .se-submit {
+    min-height: 56px;
+
+    font-size: 15px;
+  }
+}
+
+
+/* ============================================================
+   1100px
+   ============================================================ */
+
+@media (min-width: 1100px) {
+
+  .se-login-main {
+    grid-template-columns:
+      minmax(0, 0.9fr)
+      minmax(0, 1.1fr);
+  }
+
+  .se-brand-panel {
+    padding-left: 64px;
+    padding-right: 64px;
+  }
+
+  .se-panel-footer {
+    left: 64px;
+    right: 64px;
+  }
+
+  .se-form-panel {
+    padding:
+      60px 65px;
+  }
+
+  .se-form-wrapper {
+    max-width: 650px;
+  }
+}
+
+
+/* ============================================================
+   1300px+
+   ============================================================ */
+
+@media (min-width: 1300px) {
+
+  .se-brand-panel {
+    padding:
+      84px 76px 50px;
+  }
+
+  .se-panel-footer {
+    left: 76px;
+    right: 76px;
+  }
+
+  .se-panel-title {
+    font-size: 65px;
+  }
+
+  .se-panel-description {
+    font-size: 17px;
+  }
+
+  .se-feature-grid {
+    margin-top: 46px;
+
+    gap:
+      30px 34px;
+  }
+
+  .se-form-panel {
+    padding:
+      65px 80px;
+  }
+}
+
+
+/* ============================================================
+   DARK MODE
+   ============================================================ */
+
+.dark .se-login-page {
+  background:
+    radial-gradient(
+      circle at 15% 10%,
+      rgba(14, 165, 233, 0.08),
+      transparent 25%
+    ),
+    #07101f;
+
+  color: #e5edf7;
+}
+
+.dark .se-form-panel {
+  background:
+    radial-gradient(
+      circle at 90% 10%,
+      rgba(59, 130, 246, 0.10),
+      transparent 25%
+    ),
+    #0a1424;
+}
+
+.dark .se-login-card {
+  background: #0f1b2d;
+
+  border-color: #22334a;
+
+  box-shadow:
+    0 25px 70px
+    rgba(0, 0, 0, 0.32);
+}
+
+.dark .se-role-tabs {
+  border-color: #24364d;
+}
+
+.dark .se-role-tab {
+  color: #91a2b8;
+}
+
+.dark .se-role-tab:hover {
+  color: #60a5fa;
+
+  background: rgba(59, 130, 246, 0.06);
+}
+
+.dark .se-role-tab.active {
+  color: #60a5fa;
+}
+
+.dark .se-role-tab.active::after {
+  background:
+    linear-gradient(
+      90deg,
+      #60a5fa,
+      #22d3ee
+    );
+}
+
+.dark .se-form-heading h1 {
+  color: #f1f5f9;
+}
+
+.dark .se-form-heading p {
+  color: #94a3b8;
+}
+
+.dark .se-role-note {
+  background:
+    rgba(37, 99, 235, 0.10);
+
+  border-color:
+    rgba(96, 165, 250, 0.18);
+
+  color: #93c5fd;
+}
+
+.dark .se-form-label {
+  color: #dbe5f1;
+}
+
+.dark .se-forgot {
+  color: #60a5fa;
+}
+
+.dark .se-input {
+  background: #0b1728;
+
+  border-color: #2b3d54;
+
+  color: #e5edf7;
+}
+
+.dark .se-input::placeholder {
+  color: #64748b;
+}
+
+.dark .se-input:hover {
+  border-color: #3b506a;
+}
+
+.dark .se-input:focus {
+  border-color: #60a5fa;
+
+  background: #0c192b;
+
+  box-shadow:
+    0 0 0 4px
+    rgba(96, 165, 250, 0.10);
+}
+
+.dark .se-input:disabled {
+  background: #0d1828;
+}
+
+.dark .se-input-icon,
+.dark .se-password-toggle {
+  color: #8294aa;
+}
+
+.dark .se-password-toggle:hover {
+  color: #60a5fa;
+
+  background:
+    rgba(59, 130, 246, 0.10);
+}
+
+.dark .se-remember {
+  color: #94a3b8;
+}
+
+.dark .se-remember input {
+  background: #0b1728;
+
+  border-color: #3a4c63;
+}
+
+.dark .se-register-button {
+  background: #0d192a;
+
+  border-color: #2b3d54;
+
+  color: #60a5fa;
+}
+
+.dark .se-register-button:hover {
+  background: #102039;
+
+  border-color: #4773a7;
+}
+
+.dark .se-divider {
+  color: #718096;
+}
+
+.dark .se-divider::before,
+.dark .se-divider::after {
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      #26384e,
+      transparent
+    );
+}
+
+.dark .se-bottom-row {
+  color: #8292a8;
+}
+
+.dark .se-back-home {
+  color: #60a5fa;
+}
+
+.dark .se-error {
+  background: rgba(127, 29, 29, 0.20);
+
+  border-color: rgba(248, 113, 113, 0.25);
+
+  color: #fca5a5;
+}
+
+
+/* ============================================================
+   ACCESSIBILITY
+   ============================================================ */
+
+.se-role-tab:focus-visible,
+.se-forgot:focus-visible,
+.se-password-toggle:focus-visible,
+.se-submit:focus-visible,
+.se-register-button:focus-visible,
+.se-back-home:focus-visible,
+.se-input:focus-visible {
+  outline: 3px solid
+    rgba(59, 130, 246, 0.30);
+
+  outline-offset: 2px;
+}
+
+
+/* ============================================================
+   REDUCED MOTION
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+
+  .se-login-page *,
+  .se-login-page *::before,
+  .se-login-page *::after {
+    animation-duration: 0.01ms !important;
+
+    animation-iteration-count: 1 !important;
+
+    scroll-behavior: auto !important;
+
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,7 +1,7 @@
-
 // ============================================================
 // SHANTI ENTERPRISES
 // Categories Page
+// Mobile First • Premium Responsive UI
 // ============================================================
 
 import {
@@ -12,6 +12,16 @@ import {
 import {
   Link,
 } from "react-router-dom";
+
+import {
+  ArrowRight,
+  Boxes,
+  ChevronRight,
+  Grid2X2,
+  PackageOpen,
+  RefreshCw,
+  Sparkles,
+} from "lucide-react";
 
 import {
   getCategories,
@@ -102,6 +112,11 @@ const CategoryImageFallback = ({
 
   return (
     <div className="categories-image-fallback">
+      <PackageOpen
+        size={42}
+        strokeWidth={1.5}
+      />
+
       <span>
         {firstLetter}
       </span>
@@ -133,6 +148,37 @@ const createCategorySlug = (
       "-"
     );
 };
+
+// ============================================================
+// CATEGORY SKELETON
+// ============================================================
+
+function CategorySkeleton() {
+  return (
+    <article className="categories-skeleton-card">
+
+      <div className="categories-skeleton-image" />
+
+      <div className="categories-skeleton-content">
+
+        <div className="categories-skeleton-top">
+          <div className="categories-skeleton-number" />
+          <div className="categories-skeleton-type" />
+        </div>
+
+        <div className="categories-skeleton-title" />
+
+        <div className="categories-skeleton-line" />
+
+        <div className="categories-skeleton-line categories-skeleton-line-short" />
+
+        <div className="categories-skeleton-button" />
+
+      </div>
+
+    </article>
+  );
+}
 
 // ============================================================
 // CATEGORIES PAGE
@@ -184,8 +230,8 @@ function CategoriesPage() {
         setError(
           err.response?.data
             ?.message ||
-            err.message ||
-            "Unable to load categories."
+          err.message ||
+          "Unable to load categories."
         );
       } finally {
         setLoading(false);
@@ -210,50 +256,38 @@ function CategoriesPage() {
 
         <div className="categories-container">
 
-          <div className="categories-page-header">
+          <header className="categories-page-header">
 
-            <span className="categories-eyebrow">
-              EXPLORE OUR STORE
-            </span>
+            <div className="categories-heading-content">
 
-            <h1>
-              Product Categories
-            </h1>
+              <span className="categories-eyebrow">
+                <Sparkles size={13} />
+                EXPLORE OUR STORE
+              </span>
 
-            <p>
-              Discover products by category
-              and find exactly what your
-              business needs.
-            </p>
+              <h1>
+                Product Categories
+              </h1>
 
-          </div>
+              <p>
+                Discover products by category
+                and find exactly what your
+                business needs.
+              </p>
+
+            </div>
+
+          </header>
 
           <div className="categories-loading-grid">
 
-            {[1, 2, 3, 4, 5, 6].map(
-              (item) => (
-                <div
-                  key={item}
-                  className="categories-skeleton-card"
-                >
-                  <div className="categories-skeleton-image" />
-
-                  <div className="categories-skeleton-content">
-
-                    <div className="categories-skeleton-number" />
-
-                    <div className="categories-skeleton-title" />
-
-                    <div className="categories-skeleton-line" />
-
-                    <div className="categories-skeleton-line categories-skeleton-line-short" />
-
-                    <div className="categories-skeleton-button" />
-
-                  </div>
-                </div>
-              )
-            )}
+            {Array.from({
+              length: 6,
+            }).map((_, index) => (
+              <CategorySkeleton
+                key={index}
+              />
+            ))}
 
           </div>
 
@@ -273,23 +307,28 @@ function CategoriesPage() {
 
         <div className="categories-container">
 
-          <div className="categories-page-header">
+          <header className="categories-page-header">
 
-            <span className="categories-eyebrow">
-              EXPLORE OUR STORE
-            </span>
+            <div className="categories-heading-content">
 
-            <h1>
-              Product Categories
-            </h1>
+              <span className="categories-eyebrow">
+                <Sparkles size={13} />
+                EXPLORE OUR STORE
+              </span>
 
-            <p>
-              Discover products by category
-              and find exactly what your
-              business needs.
-            </p>
+              <h1>
+                Product Categories
+              </h1>
 
-          </div>
+              <p>
+                Discover products by category
+                and find exactly what your
+                business needs.
+              </p>
+
+            </div>
+
+          </header>
 
           <div className="categories-state-wrapper">
 
@@ -298,12 +337,32 @@ function CategoriesPage() {
               onRetry={loadCategories}
             />
 
-            <Link
-              to="/products"
-              className="categories-secondary-button"
-            >
-              Browse Products
-            </Link>
+            <div className="categories-state-actions">
+
+              <button
+                type="button"
+                className="categories-retry-button"
+                onClick={loadCategories}
+              >
+                <RefreshCw
+                  size={16}
+                />
+
+                Try Again
+              </button>
+
+              <Link
+                to="/products"
+                className="categories-secondary-button"
+              >
+                Browse Products
+
+                <ArrowRight
+                  size={16}
+                />
+              </Link>
+
+            </div>
 
           </div>
 
@@ -323,23 +382,28 @@ function CategoriesPage() {
 
         <div className="categories-container">
 
-          <div className="categories-page-header">
+          <header className="categories-page-header">
 
-            <span className="categories-eyebrow">
-              EXPLORE OUR STORE
-            </span>
+            <div className="categories-heading-content">
 
-            <h1>
-              Product Categories
-            </h1>
+              <span className="categories-eyebrow">
+                <Sparkles size={13} />
+                EXPLORE OUR STORE
+              </span>
 
-            <p>
-              Discover products by category
-              and find exactly what your
-              business needs.
-            </p>
+              <h1>
+                Product Categories
+              </h1>
 
-          </div>
+              <p>
+                Discover products by category
+                and find exactly what your
+                business needs.
+              </p>
+
+            </div>
+
+          </header>
 
           <div className="categories-empty-wrapper">
 
@@ -353,6 +417,11 @@ function CategoriesPage() {
               className="categories-primary-button"
             >
               Browse Products
+
+              <ArrowRight
+                size={16}
+              />
+
             </Link>
 
           </div>
@@ -381,6 +450,7 @@ function CategoriesPage() {
           <div className="categories-heading-content">
 
             <span className="categories-eyebrow">
+              <Sparkles size={13} />
               EXPLORE OUR STORE
             </span>
 
@@ -400,10 +470,14 @@ function CategoriesPage() {
             to="/products"
             className="categories-header-button"
           >
-            View All Products
             <span>
-              →
+              View All Products
             </span>
+
+            <ArrowRight
+              size={17}
+            />
+
           </Link>
 
         </header>
@@ -417,7 +491,9 @@ function CategoriesPage() {
           <div className="categories-summary-left">
 
             <div className="categories-summary-icon">
-              C
+              <Grid2X2
+                size={20}
+              />
             </div>
 
             <div>
@@ -478,18 +554,23 @@ function CategoriesPage() {
                   category?.image
                 );
 
+              const categoryUrl =
+                `/products?category=${encodeURIComponent(
+                  slug
+                )}`;
+
               return (
                 <article
                   key={id}
                   className="categories-card"
                 >
 
-                  {/* CATEGORY IMAGE */}
+                  {/* ==========================================
+                      CATEGORY IMAGE
+                      ========================================== */}
 
                   <Link
-                    to={`/products?category=${encodeURIComponent(
-                      slug
-                    )}`}
+                    to={categoryUrl}
                     className="categories-card-image"
                     aria-label={`View ${name} products`}
                   >
@@ -497,7 +578,6 @@ function CategoriesPage() {
                     <div className="categories-card-image-overlay" />
 
                     {image ? (
-
                       <img
                         src={image}
                         alt={`${name} category`}
@@ -521,36 +601,29 @@ function CategoriesPage() {
                           }
                         }}
                       />
-
                     ) : null}
 
-                    <div
-                      className="categories-image-fallback"
-                      style={{
-                        display:
-                          image
-                            ? "none"
-                            : "flex",
-                      }}
-                    >
-                      <span>
-                        {name
-                          ?.charAt(0)
-                          ?.toUpperCase() ||
-                          "C"}
-                      </span>
-                    </div>
+                    <CategoryImageFallback
+                      name={name}
+                    />
 
                     <span className="categories-image-label">
-                      Explore Category
+
                       <span>
-                        →
+                        Explore Category
                       </span>
+
+                      <ArrowRight
+                        size={15}
+                      />
+
                     </span>
 
                   </Link>
 
-                  {/* CATEGORY CONTENT */}
+                  {/* ==========================================
+                      CATEGORY CONTENT
+                      ========================================== */}
 
                   <div className="categories-card-content">
 
@@ -581,18 +654,20 @@ function CategoriesPage() {
                     </p>
 
                     <Link
-                      to={`/products?category=${encodeURIComponent(
-                        slug
-                      )}`}
+                      to={categoryUrl}
                       className="categories-card-link"
                     >
+
                       <span>
                         View Products
                       </span>
 
                       <span className="categories-card-link-arrow">
-                        →
+                        <ArrowRight
+                          size={15}
+                        />
                       </span>
+
                     </Link>
 
                   </div>
@@ -609,6 +684,12 @@ function CategoriesPage() {
             ================================================== */}
 
         <section className="categories-bottom-cta">
+
+          <div className="categories-bottom-icon">
+            <Boxes
+              size={25}
+            />
+          </div>
 
           <div className="categories-bottom-content">
 
@@ -632,10 +713,14 @@ function CategoriesPage() {
             to="/products"
             className="categories-primary-button"
           >
-            View All Products
             <span>
-              →
+              View All Products
             </span>
+
+            <ArrowRight
+              size={16}
+            />
+
           </Link>
 
         </section>
