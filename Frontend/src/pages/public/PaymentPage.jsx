@@ -1,0 +1,917 @@
+// ============================================================
+// SHANTI ENTERPRISES
+// Payment Page
+// Frontend Phase 6 - Premium UI/UX
+// ============================================================
+
+import {
+  useEffect,
+  useState,
+} from "react";
+
+import {
+  Link,
+  useNavigate,
+  useParams,
+} from "react-router-dom";
+
+import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  CheckCircle2,
+  ChevronRight,
+  CreditCard,
+  LockKeyhole,
+  ReceiptText,
+  ShieldCheck,
+  WalletCards,
+  AlertCircle,
+} from "lucide-react";
+
+import {
+  createPaymentOrder,
+  verifyPayment,
+} from "../../api/paymentApi";
+
+import {
+  useCart,
+} from "../../context/CartContext";
+
+// ============================================================
+// PAYMENT PAGE CSS
+// ============================================================
+
+import "../public/PaymentPage.css";
+
+// ============================================================
+// RAZORPAY SCRIPT
+// ============================================================
+
+const loadRazorpayScript = () => {
+  return new Promise((resolve) => {
+    if (
+      document.getElementById(
+        "razorpay-checkout-script"
+      )
+    ) {
+      resolve(true);
+      return;
+    }
+
+    const script =
+      document.createElement("script");
+
+    script.id =
+      "razorpay-checkout-script";
+
+    script.src =
+      "https://checkout.razorpay.com/v1/checkout.js";
+
+    script.onload = () => {
+      resolve(true);
+    };
+
+    script.onerror = () => {
+      resolve(false);
+    };
+
+    document.body.appendChild(script);
+  });
+};
+
+// ============================================================
+// PAYMENT PAGE
+// ============================================================
+
+function PaymentPage() {
+  const {
+    orderId,
+  } = useParams();
+
+  const navigate =
+    useNavigate();
+
+  const {
+    clearCart,
+  } = useCart();
+
+  const [
+    loading,
+    setLoading,
+  ] = useState(false);
+
+  const [
+    error,
+    setError,
+  ] = useState("");
+
+  const [
+    paymentStarted,
+    setPaymentStarted,
+  ] = useState(false);
+
+  // ==========================================================
+  // CHECK ORDER ID
+  // ==========================================================
+
+  useEffect(() => {
+    if (!orderId) {
+      setError(
+        "Order ID is missing."
+      );
+    }
+  }, [orderId]);
+
+  // ==========================================================
+  // START PAYMENT
+  // ==========================================================
+
+  const handlePayment =
+    async () => {
+      try {
+        setLoading(true);
+        setError("");
+
+        // ----------------------------------------------------
+        // LOAD RAZORPAY SCRIPT
+        // ----------------------------------------------------
+
+        const scriptLoaded =
+          await loadRazorpayScript();
+
+        if (!scriptLoaded) {
+          throw new Error(
+            "Razorpay checkout could not be loaded."
+          );
+        }
+
+        // ----------------------------------------------------
+        // CREATE RAZORPAY ORDER
+        // ----------------------------------------------------
+
+        const response =
+          await createPaymentOrder(
+            orderId
+          );
+
+        // ----------------------------------------------------
+        // BACKEND PAYMENT RESPONSE
+        // ----------------------------------------------------
+
+        const paymentOrder =
+          response?.payment ||
+          response?.data?.payment ||
+          response?.order ||
+          response?.paymentOrder ||
+          response?.data?.order ||
+          response?.data?.paymentOrder ||
+          response?.data ||
+          response;
+
+        // ----------------------------------------------------
+        // RAZORPAY ORDER ID
+        // ----------------------------------------------------
+
+        const razorpayOrderId =
+          paymentOrder?.razorpayOrderId ||
+          paymentOrder?.id ||
+          paymentOrder?.orderId;
+
+        // ----------------------------------------------------
+        // AMOUNT
+        // ----------------------------------------------------
+
+        const amount =
+          paymentOrder?.amount;
+
+        // ----------------------------------------------------
+        // CURRENCY
+        // ----------------------------------------------------
+
+        const currency =
+          paymentOrder?.currency ||
+          "INR";
+
+        // ----------------------------------------------------
+        // RAZORPAY KEY
+        // ----------------------------------------------------
+
+        const keyId =
+          paymentOrder?.keyId ||
+          response?.keyId ||
+          response?.data?.keyId ||
+          import.meta.env
+            .VITE_RAZORPAY_KEY_ID;
+
+        // ----------------------------------------------------
+        // VALIDATION
+        // ----------------------------------------------------
+
+        if (!razorpayOrderId) {
+          throw new Error(
+            "Razorpay order ID was not returned by the server."
+          );
+        }
+
+        if (!keyId) {
+          throw new Error(
+            "Razorpay public key is not configured."
+          );
+        }
+
+        if (
+          amount === undefined ||
+          amount === null ||
+          Number(amount) <= 0
+        ) {
+          throw new Error(
+            "Payment amount was not returned by the server."
+          );
+        }
+
+        // ----------------------------------------------------
+        // PAYMENT STARTED
+        // ----------------------------------------------------
+
+        setPaymentStarted(true);
+
+        // ----------------------------------------------------
+        // RAZORPAY OPTIONS
+        // ----------------------------------------------------
+
+        const options = {
+          key: keyId,
+
+          amount:
+            Number(amount),
+
+          currency,
+
+          name:
+            "Shanti Enterprises",
+
+          description:
+            "Shanti Enterprises Order",
+
+          order_id:
+            razorpayOrderId,
+
+          handler:
+            async function (
+              paymentResponse
+            ) {
+              try {
+                setLoading(true);
+                setError("");
+
+                // --------------------------------------------
+                // VERIFY PAYMENT
+                // --------------------------------------------
+
+                const verification =
+                  await verifyPayment({
+                    orderId,
+
+                    razorpay_order_id:
+                      paymentResponse
+                        .razorpay_order_id,
+
+                    razorpay_payment_id:
+                      paymentResponse
+                        .razorpay_payment_id,
+
+                    razorpay_signature:
+                      paymentResponse
+                        .razorpay_signature,
+                  });
+
+                // --------------------------------------------
+                // VERIFY RESPONSE
+                // --------------------------------------------
+
+                if (
+                  verification?.success ===
+                  false
+                ) {
+                  throw new Error(
+                    verification.message ||
+                      "Payment verification failed."
+                  );
+                }
+
+                // --------------------------------------------
+                // CLEAR CART
+                //
+                // IMPORTANT:
+                // Cart is cleared ONLY after successful
+                // payment verification.
+                // --------------------------------------------
+
+                clearCart();
+
+                // --------------------------------------------
+                // PAYMENT SUCCESS
+                // --------------------------------------------
+
+                navigate(
+                  `/order-success/${orderId}`,
+                  {
+                    replace: true,
+                  }
+                );
+              } catch (err) {
+                console.error(
+                  "Payment verification error:",
+                  err
+                );
+
+                setError(
+                  err.response?.data
+                    ?.message ||
+                    err.message ||
+                    "Payment verification failed."
+                );
+
+                setPaymentStarted(
+                  false
+                );
+              } finally {
+                setLoading(false);
+              }
+            },
+
+          // --------------------------------------------------
+          // RAZORPAY MODAL DISMISSED
+          // --------------------------------------------------
+
+          modal: {
+            ondismiss:
+              function () {
+                setLoading(false);
+
+                setPaymentStarted(
+                  false
+                );
+              },
+          },
+
+          // --------------------------------------------------
+          // RAZORPAY THEME
+          // --------------------------------------------------
+
+          theme: {
+            color: "#0f766e",
+          },
+        };
+
+        // ----------------------------------------------------
+        // RAZORPAY CHECK
+        // ----------------------------------------------------
+
+        if (
+          !window.Razorpay
+        ) {
+          throw new Error(
+            "Razorpay is not available."
+          );
+        }
+
+        // ----------------------------------------------------
+        // OPEN RAZORPAY
+        // ----------------------------------------------------
+
+        const razorpay =
+          new window.Razorpay(
+            options
+          );
+
+        // ----------------------------------------------------
+        // PAYMENT FAILED
+        // ----------------------------------------------------
+
+        razorpay.on(
+          "payment.failed",
+          function (
+            paymentError
+          ) {
+            console.error(
+              "Razorpay payment failed:",
+              paymentError
+            );
+
+            setError(
+              paymentError?.error
+                ?.description ||
+                "Payment failed. Please try again."
+            );
+
+            setLoading(false);
+
+            setPaymentStarted(
+              false
+            );
+          }
+        );
+
+        razorpay.open();
+      } catch (err) {
+        console.error(
+          "Payment initialization error:",
+          err
+        );
+
+        setError(
+          err.response?.data
+            ?.message ||
+            err.message ||
+            "Unable to start payment."
+        );
+
+        setLoading(false);
+
+        setPaymentStarted(
+          false
+        );
+      }
+    };
+
+  // ==========================================================
+  // PAGE
+  // ==========================================================
+
+  return (
+    <section className="payment-page">
+
+      <div className="payment-container">
+
+        {/* ==================================================
+            TOP HEADER
+            ================================================== */}
+
+        <header className="payment-header">
+
+          <div className="payment-header-content">
+
+            <div className="payment-brand-mark">
+              <ShieldCheck
+                size={20}
+                strokeWidth={2.2}
+              />
+            </div>
+
+            <div>
+
+              <span className="payment-eyebrow">
+                SECURE CHECKOUT
+              </span>
+
+              <h1>
+                Complete Payment
+              </h1>
+
+              <p>
+                Complete your payment securely
+                using Razorpay.
+              </p>
+
+            </div>
+
+          </div>
+
+          <div className="payment-header-security">
+            <LockKeyhole
+              size={16}
+            />
+
+            <span>
+              Secure &amp; Protected
+            </span>
+          </div>
+
+        </header>
+
+        {/* ==================================================
+            CHECKOUT STEPS
+            ================================================== */}
+
+        <div
+          className="payment-steps"
+          aria-label="Checkout progress"
+        >
+
+          <div className="payment-step completed">
+
+            <span className="payment-step-number">
+              <Check size={15} />
+            </span>
+
+            <div>
+              <strong>
+                Delivery
+              </strong>
+
+              <small>
+                Address
+              </small>
+            </div>
+
+          </div>
+
+          <div className="payment-step-line completed" />
+
+          <div className="payment-step completed">
+
+            <span className="payment-step-number">
+              <Check size={15} />
+            </span>
+
+            <div>
+              <strong>
+                Summary
+              </strong>
+
+              <small>
+                Review order
+              </small>
+            </div>
+
+          </div>
+
+          <div className="payment-step-line active" />
+
+          <div className="payment-step active">
+
+            <span className="payment-step-number">
+              3
+            </span>
+
+            <div>
+              <strong>
+                Payment
+              </strong>
+
+              <small>
+                Complete order
+              </small>
+            </div>
+
+          </div>
+
+        </div>
+
+        {/* ==================================================
+            PAYMENT CONTENT
+            ================================================== */}
+
+        <div className="payment-layout">
+
+          {/* ==================================================
+              MAIN PAYMENT CARD
+              ================================================== */}
+
+          <main className="payment-main-card">
+
+            <div className="payment-card-top">
+
+              <div className="payment-icon">
+                <WalletCards
+                  size={30}
+                  strokeWidth={1.9}
+                />
+              </div>
+
+              <div className="payment-card-label">
+
+                <span className="payment-card-eyebrow">
+                  RAZORPAY
+                </span>
+
+                <span className="payment-card-secure">
+                  <LockKeyhole size={13} />
+                  Secure
+                </span>
+
+              </div>
+
+            </div>
+
+            <div className="payment-card-content">
+
+              <h2>
+                Pay securely online
+              </h2>
+
+              <p className="payment-description">
+                You will be redirected to the
+                Razorpay secure payment window
+                to complete your transaction.
+              </p>
+
+            </div>
+
+            {/* ==================================================
+                SECURITY FEATURES
+                ================================================== */}
+
+            <div className="payment-feature-grid">
+
+              <div className="payment-feature">
+
+                <div className="payment-feature-icon">
+                  <ShieldCheck
+                    size={18}
+                  />
+                </div>
+
+                <div>
+                  <strong>
+                    Secure checkout
+                  </strong>
+
+                  <span>
+                    Powered by Razorpay
+                  </span>
+                </div>
+
+              </div>
+
+              <div className="payment-feature">
+
+                <div className="payment-feature-icon">
+                  <CreditCard
+                    size={18}
+                  />
+                </div>
+
+                <div>
+                  <strong>
+                    Online payment
+                  </strong>
+
+                  <span>
+                    Fast &amp; convenient
+                  </span>
+                </div>
+
+              </div>
+
+            </div>
+
+            {/* ==================================================
+                ERROR
+                ================================================== */}
+
+            {error && (
+              <div
+                className="payment-error"
+                role="alert"
+              >
+
+                <div className="payment-error-icon">
+                  <AlertCircle
+                    size={19}
+                  />
+                </div>
+
+                <div>
+                  <strong>
+                    Payment issue
+                  </strong>
+
+                  <p>
+                    {error}
+                  </p>
+                </div>
+
+              </div>
+            )}
+
+            {/* ==================================================
+                PAYMENT BUTTON
+                ================================================== */}
+
+            <button
+              type="button"
+              className="payment-button"
+              disabled={
+                loading ||
+                !orderId
+              }
+              onClick={
+                handlePayment
+              }
+            >
+
+              <span className="payment-button-content">
+
+                <span>
+                  {loading
+                    ? "Processing..."
+                    : paymentStarted
+                      ? "Payment Started"
+                      : "Pay with Razorpay"}
+                </span>
+
+                {!loading &&
+                  !paymentStarted && (
+                    <ArrowRight
+                      size={19}
+                      strokeWidth={2.3}
+                    />
+                  )}
+
+              </span>
+
+            </button>
+
+            {/* ==================================================
+                SECURITY NOTE
+                ================================================== */}
+
+            <div className="payment-security">
+
+              <div className="payment-security-icon">
+                <LockKeyhole
+                  size={15}
+                />
+              </div>
+
+              <p>
+                Secure payment powered by
+                Razorpay.
+              </p>
+
+            </div>
+
+          </main>
+
+          {/* ==================================================
+              ORDER INFORMATION
+              ================================================== */}
+
+          <aside className="payment-order-card">
+
+            <div className="payment-order-header">
+
+              <div className="payment-order-title-row">
+
+                <div className="payment-order-title-icon">
+                  <ReceiptText
+                    size={18}
+                  />
+                </div>
+
+                <span>
+                  ORDER DETAILS
+                </span>
+
+              </div>
+
+              <h2>
+                Payment Information
+              </h2>
+
+            </div>
+
+            {/* ==================================================
+                ORDER ID
+                ================================================== */}
+
+            <div className="payment-order-row">
+
+              <div className="payment-order-label">
+
+                <span>
+                  Order ID
+                </span>
+
+                <small>
+                  Your order reference
+                </small>
+
+              </div>
+
+              <strong className="payment-order-id">
+                {orderId ||
+                  "Unavailable"}
+              </strong>
+
+            </div>
+
+            <div className="payment-order-divider" />
+
+            {/* ==================================================
+                STATUS
+                ================================================== */}
+
+            <div className="payment-status-box">
+
+              <div className="payment-status-icon">
+                <CheckCircle2
+                  size={21}
+                />
+              </div>
+
+              <div>
+
+                <strong>
+                  Ready for Payment
+                </strong>
+
+                <p>
+                  Your order has been created
+                  and is waiting for payment.
+                </p>
+
+              </div>
+
+            </div>
+
+            {/* ==================================================
+                PAYMENT METHOD
+                ================================================== */}
+
+            <div className="payment-method-box">
+
+              <div className="payment-method-info">
+
+                <span>
+                  PAYMENT METHOD
+                </span>
+
+                <strong>
+                  Razorpay
+                </strong>
+
+              </div>
+
+              <span className="payment-online-badge">
+                ONLINE
+              </span>
+
+            </div>
+
+            {/* ==================================================
+                PROCESSING NOTE
+                ================================================== */}
+
+            <div className="payment-order-note">
+
+              <LockKeyhole
+                size={16}
+              />
+
+              <p>
+                Do not refresh or close the page
+                while payment is being processed.
+              </p>
+
+            </div>
+
+          </aside>
+
+        </div>
+
+        {/* ==================================================
+            BACK TO SUMMARY
+            ================================================== */}
+
+        <div className="payment-back-wrapper">
+
+          <Link
+            to="/checkout/summary"
+            className="payment-back-link"
+          >
+
+            <ArrowLeft
+              size={17}
+            />
+
+            <span>
+              Back to Order Summary
+            </span>
+
+          </Link>
+
+          <div className="payment-back-hint">
+
+            <ChevronRight
+              size={14}
+            />
+
+            <span>
+              Review your order before paying
+            </span>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+  );
+}
+
+export default PaymentPage;

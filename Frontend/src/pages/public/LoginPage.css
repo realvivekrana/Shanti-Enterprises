@@ -4,7 +4,7 @@
    Premium • Mobile First • Responsive
    ============================================================ */
 
-.se-login-page {
+.login-login-page {
   width: 100%;
   min-height: 100vh;
   background:
@@ -26,14 +26,14 @@
   overflow-x: hidden;
 }
 
-.se-login-page *,
-.se-login-page *::before,
-.se-login-page *::after {
+.login-login-page *,
+.login-login-page *::before,
+.login-login-page *::after {
   box-sizing: border-box;
 }
 
-.se-login-page button,
-.se-login-page input {
+.login-login-page button,
+.login-login-page input {
   font: inherit;
 }
 
@@ -42,7 +42,7 @@
    MAIN LAYOUT
    ============================================================ */
 
-.se-login-main {
+.login-login-main {
   width: 100%;
   min-height: 100vh;
   display: grid;
@@ -54,7 +54,7 @@
    LEFT BRAND PANEL
    ============================================================ */
 
-.se-brand-panel {
+.login-brand-panel {
   position: relative;
   overflow: hidden;
 
@@ -82,7 +82,7 @@
   color: #ffffff;
 }
 
-.se-brand-panel::before {
+.login-brand-panel::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -106,7 +106,7 @@
     );
 }
 
-.se-brand-panel::after {
+.login-brand-panel::after {
   content: "";
   position: absolute;
 
@@ -131,7 +131,7 @@
    PANEL CONTENT
    ============================================================ */
 
-.se-panel-content {
+.login-panel-content {
   position: relative;
   z-index: 2;
 
@@ -146,7 +146,7 @@
    MARKET BADGE
    ============================================================ */
 
-.se-market-badge {
+.login-market-badge {
   display: inline-flex;
   align-items: center;
   gap: 9px;
@@ -181,7 +181,7 @@
    BRAND TITLE
    ============================================================ */
 
-.se-panel-title {
+.login-panel-title {
   margin: 25px 0 17px;
 
   font-size: clamp(
@@ -197,7 +197,7 @@
   font-weight: 850;
 }
 
-.se-panel-title-highlight {
+.login-panel-title-highlight {
   display: inline-block;
 
   background:
@@ -219,7 +219,7 @@
    BRAND DESCRIPTION
    ============================================================ */
 
-.se-panel-description {
+.login-panel-description {
   max-width: 600px;
 
   margin: 0;
@@ -236,7 +236,7 @@
    FEATURES
    ============================================================ */
 
-.se-feature-grid {
+.login-feature-grid {
   margin-top: 34px;
 
   display: grid;
@@ -246,7 +246,7 @@
   gap: 20px;
 }
 
-.se-feature {
+.login-feature {
   display: flex;
   align-items: flex-start;
 
@@ -255,7 +255,7 @@
   padding: 2px 0;
 }
 
-.se-feature-icon {
+.login-feature-icon {
   width: 48px;
   height: 48px;
 
@@ -283,7 +283,7 @@
     0 8px 20px rgba(0, 0, 0, 0.12);
 }
 
-.se-feature-title {
+.login-feature-title {
   margin: 1px 0 5px;
 
   color: #ffffff;
@@ -293,7 +293,7 @@
   font-weight: 800;
 }
 
-.se-feature-text {
+.login-feature-text {
   margin: 0;
 
   color: #b7c7dc;
@@ -308,7 +308,7 @@
    LEFT FOOTER
    ============================================================ */
 
-.se-panel-footer {
+.login-panel-footer {
   position: relative;
   z-index: 3;
 
@@ -325,13 +325,13 @@
   font-size: 11px;
 }
 
-.se-secure-label {
+.login-secure-label {
   display: inline-flex;
   align-items: center;
   gap: 6px;
 }
 
-.se-secure-dot {
+.login-secure-dot {
   color: #4ade80;
 }
 
@@ -340,7 +340,7 @@
    RIGHT FORM PANEL
    ============================================================ */
 
-.se-form-panel {
+.login-form-panel {
   min-height: auto;
 
   padding: 26px 12px 40px;
@@ -358,7 +358,7 @@
     #f8fafc;
 }
 
-.se-form-wrapper {
+.login-form-wrapper {
   width: 100%;
   max-width: 650px;
 }
@@ -368,7 +368,7 @@
    LOGIN CARD
    ============================================================ */
 
-.se-login-card {
+.login-login-card {
   width: 100%;
 
   background: #ffffff;
@@ -384,7 +384,7 @@
     0 5px 18px rgba(15, 23, 42, 0.045);
 }
 
-.se-login-card-main {
+.login-login-card-main {
   padding: 27px 20px 29px;
 }
 
@@ -393,7 +393,7 @@
    ROLE TABS
    ============================================================ */
 
-.se-role-tabs {
+.login-role-tabs {
   display: grid;
 
   grid-template-columns: 1fr 1fr;
@@ -403,7 +403,7 @@
   margin-bottom: 29px;
 }
 
-.se-role-tab {
+.login-role-tab {
   position: relative;
 
   min-height: 51px;
@@ -431,17 +431,17 @@
     background 0.2s ease;
 }
 
-.se-role-tab:hover {
+.login-role-tab:hover {
   color: #2563eb;
 
   background: #f8fbff;
 }
 
-.se-role-tab.active {
+.login-role-tab.active {
   color: #155eef;
 }
 
-.se-role-tab.active::after {
+.login-role-tab.active::after {
   content: "";
 
   position: absolute;
@@ -468,11 +468,11 @@
    FORM HEADING
    ============================================================ */
 
-.se-form-heading {
+.login-form-heading {
   margin-bottom: 21px;
 }
 
-.se-form-heading h1 {
+.login-form-heading h1 {
   margin: 0 0 7px;
 
   color: #14213d;
@@ -486,7 +486,7 @@
   font-weight: 850;
 }
 
-.se-form-heading p {
+.login-form-heading p {
   margin: 0;
 
   color: #64748b;
@@ -501,7 +501,7 @@
    ROLE NOTE
    ============================================================ */
 
-.se-role-note {
+.login-role-note {
   margin: 0 0 20px;
 
   padding: 11px 13px;
@@ -531,7 +531,7 @@
    ERROR
    ============================================================ */
 
-.se-error {
+.login-error {
   margin: 0 0 18px;
 
   padding: 11px 13px;
@@ -556,11 +556,11 @@
    FORM GROUP
    ============================================================ */
 
-.se-form-group {
+.login-form-group {
   margin-bottom: 18px;
 }
 
-.se-form-label-row {
+.login-form-label-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -570,7 +570,7 @@
   margin-bottom: 8px;
 }
 
-.se-form-label {
+.login-form-label {
   color: #1e293b;
 
   font-size: 13px;
@@ -583,7 +583,7 @@
    FORGOT
    ============================================================ */
 
-.se-forgot {
+.login-forgot {
   border: 0;
 
   padding: 0;
@@ -599,7 +599,7 @@
   cursor: pointer;
 }
 
-.se-forgot:hover {
+.login-forgot:hover {
   text-decoration: underline;
 }
 
@@ -608,14 +608,14 @@
    INPUT
    ============================================================ */
 
-.se-input-wrap {
+.login-input-wrap {
   position: relative;
 
   display: flex;
   align-items: center;
 }
 
-.se-input-icon {
+.login-input-icon {
   position: absolute;
 
   left: 14px;
@@ -630,7 +630,7 @@
   pointer-events: none;
 }
 
-.se-input {
+.login-input {
   width: 100%;
 
   height: 53px;
@@ -656,19 +656,19 @@
     background 0.2s ease;
 }
 
-.se-input.password-input {
+.login-input.password-input {
   padding-right: 51px;
 }
 
-.se-input::placeholder {
+.login-input::placeholder {
   color: #a1adbc;
 }
 
-.se-input:hover {
+.login-input:hover {
   border-color: #bdc9d8;
 }
 
-.se-input:focus {
+.login-input:focus {
   border-color: #3b82f6;
 
   box-shadow:
@@ -678,7 +678,7 @@
   background: #ffffff;
 }
 
-.se-input:disabled {
+.login-input:disabled {
   background: #f8fafc;
 
   cursor: not-allowed;
@@ -689,7 +689,7 @@
    PASSWORD TOGGLE
    ============================================================ */
 
-.se-password-toggle {
+.login-password-toggle {
   position: absolute;
 
   right: 10px;
@@ -716,7 +716,7 @@
     background 0.2s ease;
 }
 
-.se-password-toggle:hover {
+.login-password-toggle:hover {
   color: #2563eb;
 
   background: #eff6ff;
@@ -727,7 +727,7 @@
    REMEMBER ME
    ============================================================ */
 
-.se-remember {
+.login-remember {
   display: flex;
   align-items: center;
 
@@ -745,7 +745,7 @@
   user-select: none;
 }
 
-.se-remember input {
+.login-remember input {
   appearance: none;
 
   width: 18px;
@@ -766,7 +766,7 @@
   position: relative;
 }
 
-.se-remember input:checked {
+.login-remember input:checked {
   border-color: #2563eb;
 
   background:
@@ -777,7 +777,7 @@
     );
 }
 
-.se-remember input:checked::after {
+.login-remember input:checked::after {
   content: "✓";
 
   position: absolute;
@@ -797,7 +797,7 @@
    SUBMIT
    ============================================================ */
 
-.se-submit {
+.login-submit {
   width: 100%;
 
   min-height: 54px;
@@ -837,7 +837,7 @@
     opacity 0.18s ease;
 }
 
-.se-submit:hover:not(:disabled) {
+.login-submit:hover:not(:disabled) {
   transform: translateY(-1px);
 
   box-shadow:
@@ -845,11 +845,11 @@
     rgba(37, 99, 235, 0.28);
 }
 
-.se-submit:active:not(:disabled) {
+.login-submit:active:not(:disabled) {
   transform: translateY(0);
 }
 
-.se-submit:disabled {
+.login-submit:disabled {
   opacity: 0.65;
 
   cursor: not-allowed;
@@ -860,7 +860,7 @@
    SPINNER
    ============================================================ */
 
-.se-spinner {
+.login-spinner {
   width: 18px;
   height: 18px;
 
@@ -886,7 +886,7 @@
    DIVIDER
    ============================================================ */
 
-.se-divider {
+.login-divider {
   display: flex;
   align-items: center;
 
@@ -903,8 +903,8 @@
   letter-spacing: 0.7px;
 }
 
-.se-divider::before,
-.se-divider::after {
+.login-divider::before,
+.login-divider::after {
   content: "";
 
   flex: 1;
@@ -925,7 +925,7 @@
    REGISTER BUTTON
    ============================================================ */
 
-.se-register-button {
+.login-register-button {
   width: 100%;
 
   min-height: 50px;
@@ -957,7 +957,7 @@
     box-shadow 0.2s ease;
 }
 
-.se-register-button:hover {
+.login-register-button:hover {
   border-color: #8bb5ff;
 
   background:
@@ -979,7 +979,7 @@
    BOTTOM ROW
    ============================================================ */
 
-.se-bottom-row {
+.login-bottom-row {
   margin-top: 18px;
 
   display: flex;
@@ -993,7 +993,7 @@
   font-size: 11.5px;
 }
 
-.se-back-home {
+.login-back-home {
   display: inline-flex;
   align-items: center;
 
@@ -1006,18 +1006,18 @@
   font-weight: 750;
 }
 
-.se-back-home:hover {
+.login-back-home:hover {
   text-decoration: underline;
 }
 
-.se-secure-connection {
+.login-secure-connection {
   display: inline-flex;
   align-items: center;
 
   gap: 6px;
 }
 
-.se-secure-connection svg {
+.login-secure-connection svg {
   color: #16a34a;
 }
 
@@ -1028,26 +1028,26 @@
 
 @media (min-width: 480px) {
 
-  .se-brand-panel {
+  .login-brand-panel {
     padding:
       54px 30px 55px;
   }
 
-  .se-form-panel {
+  .login-form-panel {
     padding:
       32px 20px 45px;
   }
 
-  .se-login-card-main {
+  .login-login-card-main {
     padding:
       32px 28px 34px;
   }
 
-  .se-form-heading h1 {
+  .login-form-heading h1 {
     font-size: 31px;
   }
 
-  .se-input {
+  .login-input {
     height: 55px;
   }
 }
@@ -1059,36 +1059,36 @@
 
 @media (min-width: 640px) {
 
-  .se-brand-panel {
+  .login-brand-panel {
     padding:
       62px 42px 65px;
   }
 
-  .se-panel-title {
+  .login-panel-title {
     font-size: 50px;
   }
 
-  .se-panel-description {
+  .login-panel-description {
     font-size: 16px;
   }
 
-  .se-feature-grid {
+  .login-feature-grid {
     grid-template-columns:
       repeat(2, minmax(0, 1fr));
 
     column-gap: 28px;
   }
 
-  .se-form-panel {
+  .login-form-panel {
     padding:
       42px 30px 55px;
   }
 
-  .se-login-card {
+  .login-login-card {
     border-radius: 20px;
   }
 
-  .se-login-card-main {
+  .login-login-card-main {
     padding:
       36px 38px 39px;
   }
@@ -1101,26 +1101,26 @@
 
 @media (min-width: 768px) {
 
-  .se-brand-panel {
+  .login-brand-panel {
     padding:
       70px 52px 70px;
   }
 
-  .se-panel-title {
+  .login-panel-title {
     font-size: 56px;
   }
 
-  .se-feature-grid {
+  .login-feature-grid {
     margin-top: 40px;
   }
 
-  .se-panel-footer {
+  .login-panel-footer {
     margin-top: 55px;
 
     font-size: 12px;
   }
 
-  .se-form-panel {
+  .login-form-panel {
     padding:
       50px 40px 65px;
   }
@@ -1133,7 +1133,7 @@
 
 @media (min-width: 901px) {
 
-  .se-login-main {
+  .login-login-main {
     min-height: 100vh;
 
     grid-template-columns:
@@ -1141,21 +1141,21 @@
       minmax(0, 1.08fr);
   }
 
-  .se-brand-panel {
+  .login-brand-panel {
     min-height: 100vh;
 
     padding:
       72px 52px 45px;
   }
 
-  .se-form-panel {
+  .login-form-panel {
     min-height: 100vh;
 
     padding:
       55px 48px;
   }
 
-  .se-feature-grid {
+  .login-feature-grid {
     grid-template-columns:
       repeat(2, minmax(0, 1fr));
 
@@ -1163,7 +1163,7 @@
       28px 26px;
   }
 
-  .se-panel-footer {
+  .login-panel-footer {
     position: absolute;
 
     left: 52px;
@@ -1173,30 +1173,30 @@
     margin-top: 0;
   }
 
-  .se-login-card-main {
+  .login-login-card-main {
     padding:
       39px 43px 42px;
   }
 
-  .se-role-tab {
+  .login-role-tab {
     min-height: 54px;
 
     font-size: 15px;
   }
 
-  .se-form-heading h1 {
+  .login-form-heading h1 {
     font-size: 33px;
   }
 
-  .se-form-heading p {
+  .login-form-heading p {
     font-size: 14px;
   }
 
-  .se-input {
+  .login-input {
     height: 57px;
   }
 
-  .se-submit {
+  .login-submit {
     min-height: 56px;
 
     font-size: 15px;
@@ -1210,28 +1210,28 @@
 
 @media (min-width: 1100px) {
 
-  .se-login-main {
+  .login-login-main {
     grid-template-columns:
       minmax(0, 0.9fr)
       minmax(0, 1.1fr);
   }
 
-  .se-brand-panel {
+  .login-brand-panel {
     padding-left: 64px;
     padding-right: 64px;
   }
 
-  .se-panel-footer {
+  .login-panel-footer {
     left: 64px;
     right: 64px;
   }
 
-  .se-form-panel {
+  .login-form-panel {
     padding:
       60px 65px;
   }
 
-  .se-form-wrapper {
+  .login-form-wrapper {
     max-width: 650px;
   }
 }
@@ -1243,32 +1243,32 @@
 
 @media (min-width: 1300px) {
 
-  .se-brand-panel {
+  .login-brand-panel {
     padding:
       84px 76px 50px;
   }
 
-  .se-panel-footer {
+  .login-panel-footer {
     left: 76px;
     right: 76px;
   }
 
-  .se-panel-title {
+  .login-panel-title {
     font-size: 65px;
   }
 
-  .se-panel-description {
+  .login-panel-description {
     font-size: 17px;
   }
 
-  .se-feature-grid {
+  .login-feature-grid {
     margin-top: 46px;
 
     gap:
       30px 34px;
   }
 
-  .se-form-panel {
+  .login-form-panel {
     padding:
       65px 80px;
   }
@@ -1279,7 +1279,7 @@
    DARK MODE
    ============================================================ */
 
-.dark .se-login-page {
+.dark .login-login-page {
   background:
     radial-gradient(
       circle at 15% 10%,
@@ -1291,7 +1291,7 @@
   color: #e5edf7;
 }
 
-.dark .se-form-panel {
+.dark .login-form-panel {
   background:
     radial-gradient(
       circle at 90% 10%,
@@ -1301,7 +1301,7 @@
     #0a1424;
 }
 
-.dark .se-login-card {
+.dark .login-login-card {
   background: #0f1b2d;
 
   border-color: #22334a;
@@ -1311,25 +1311,25 @@
     rgba(0, 0, 0, 0.32);
 }
 
-.dark .se-role-tabs {
+.dark .login-role-tabs {
   border-color: #24364d;
 }
 
-.dark .se-role-tab {
+.dark .login-role-tab {
   color: #91a2b8;
 }
 
-.dark .se-role-tab:hover {
+.dark .login-role-tab:hover {
   color: #60a5fa;
 
   background: rgba(59, 130, 246, 0.06);
 }
 
-.dark .se-role-tab.active {
+.dark .login-role-tab.active {
   color: #60a5fa;
 }
 
-.dark .se-role-tab.active::after {
+.dark .login-role-tab.active::after {
   background:
     linear-gradient(
       90deg,
@@ -1338,15 +1338,15 @@
     );
 }
 
-.dark .se-form-heading h1 {
+.dark .login-form-heading h1 {
   color: #f1f5f9;
 }
 
-.dark .se-form-heading p {
+.dark .login-form-heading p {
   color: #94a3b8;
 }
 
-.dark .se-role-note {
+.dark .login-role-note {
   background:
     rgba(37, 99, 235, 0.10);
 
@@ -1356,15 +1356,15 @@
   color: #93c5fd;
 }
 
-.dark .se-form-label {
+.dark .login-form-label {
   color: #dbe5f1;
 }
 
-.dark .se-forgot {
+.dark .login-forgot {
   color: #60a5fa;
 }
 
-.dark .se-input {
+.dark .login-input {
   background: #0b1728;
 
   border-color: #2b3d54;
@@ -1372,15 +1372,15 @@
   color: #e5edf7;
 }
 
-.dark .se-input::placeholder {
+.dark .login-input::placeholder {
   color: #64748b;
 }
 
-.dark .se-input:hover {
+.dark .login-input:hover {
   border-color: #3b506a;
 }
 
-.dark .se-input:focus {
+.dark .login-input:focus {
   border-color: #60a5fa;
 
   background: #0c192b;
@@ -1390,33 +1390,33 @@
     rgba(96, 165, 250, 0.10);
 }
 
-.dark .se-input:disabled {
+.dark .login-input:disabled {
   background: #0d1828;
 }
 
-.dark .se-input-icon,
-.dark .se-password-toggle {
+.dark .login-input-icon,
+.dark .login-password-toggle {
   color: #8294aa;
 }
 
-.dark .se-password-toggle:hover {
+.dark .login-password-toggle:hover {
   color: #60a5fa;
 
   background:
     rgba(59, 130, 246, 0.10);
 }
 
-.dark .se-remember {
+.dark .login-remember {
   color: #94a3b8;
 }
 
-.dark .se-remember input {
+.dark .login-remember input {
   background: #0b1728;
 
   border-color: #3a4c63;
 }
 
-.dark .se-register-button {
+.dark .login-register-button {
   background: #0d192a;
 
   border-color: #2b3d54;
@@ -1424,18 +1424,18 @@
   color: #60a5fa;
 }
 
-.dark .se-register-button:hover {
+.dark .login-register-button:hover {
   background: #102039;
 
   border-color: #4773a7;
 }
 
-.dark .se-divider {
+.dark .login-divider {
   color: #718096;
 }
 
-.dark .se-divider::before,
-.dark .se-divider::after {
+.dark .login-divider::before,
+.dark .login-divider::after {
   background:
     linear-gradient(
       90deg,
@@ -1445,15 +1445,15 @@
     );
 }
 
-.dark .se-bottom-row {
+.dark .login-bottom-row {
   color: #8292a8;
 }
 
-.dark .se-back-home {
+.dark .login-back-home {
   color: #60a5fa;
 }
 
-.dark .se-error {
+.dark .login-error {
   background: rgba(127, 29, 29, 0.20);
 
   border-color: rgba(248, 113, 113, 0.25);
@@ -1466,13 +1466,13 @@
    ACCESSIBILITY
    ============================================================ */
 
-.se-role-tab:focus-visible,
-.se-forgot:focus-visible,
-.se-password-toggle:focus-visible,
-.se-submit:focus-visible,
-.se-register-button:focus-visible,
-.se-back-home:focus-visible,
-.se-input:focus-visible {
+.login-role-tab:focus-visible,
+.login-forgot:focus-visible,
+.login-password-toggle:focus-visible,
+.login-submit:focus-visible,
+.login-register-button:focus-visible,
+.login-back-home:focus-visible,
+.login-input:focus-visible {
   outline: 3px solid
     rgba(59, 130, 246, 0.30);
 
@@ -1486,9 +1486,9 @@
 
 @media (prefers-reduced-motion: reduce) {
 
-  .se-login-page *,
-  .se-login-page *::before,
-  .se-login-page *::after {
+  .login-login-page *,
+  .login-login-page *::before,
+  .login-login-page *::after {
     animation-duration: 0.01ms !important;
 
     animation-iteration-count: 1 !important;
