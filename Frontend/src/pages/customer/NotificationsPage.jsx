@@ -22,6 +22,7 @@ import {
 import Loading from "../../components/common/Loading";
 
 import ErrorMessage from "../../components/common/ErrorMessage";
+import "./NotificationsPage.css";
 
 // ============================================================
 // HELPERS
@@ -151,7 +152,7 @@ function NotificationsPage() {
 
   if (loading && notifications.length === 0) {
     return (
-      <section className="app-page">
+      <section className="app-page notifications-page">
         <div className="page-container">
           <Loading message="Loading notifications..." />
         </div>
@@ -165,7 +166,7 @@ function NotificationsPage() {
 
   if (error && notifications.length === 0) {
     return (
-      <section className="app-page">
+      <section className="app-page notifications-page">
         <div className="page-container">
           <ErrorMessage
             message={error}
@@ -181,7 +182,7 @@ function NotificationsPage() {
   // ==========================================================
 
   return (
-    <section className="app-page">
+    <section className="app-page notifications-page">
       <div className="page-container">
 
         {/* ====================================================

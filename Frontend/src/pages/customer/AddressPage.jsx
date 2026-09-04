@@ -5,6 +5,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAddress } from "../../context/AddressContext";
+import "./AddressPage.css";
 
 const INIT = { name: "", phone: "", address: "", city: "", state: "", pincode: "" };
 
@@ -120,7 +121,7 @@ function AddressPage() {
   };
 
   return (
-    <div style={{ background: "var(--se-bg)", minHeight: "calc(100vh - 68px)" }}>
+    <div className="address-page" style={{ background: "var(--se-bg)", minHeight: "calc(100vh - 68px)" }}>
 
       {/* BANNER */}
       <div style={{ background: "linear-gradient(135deg, var(--se-navy) 0%, #1E3A5F 100%)", padding: "36px 0 30px" }}>

@@ -21,6 +21,7 @@ import {
 import Loading from "../../components/common/Loading";
 
 import ErrorMessage from "../../components/common/ErrorMessage";
+import "./InvoicesPage.css";
 
 // ============================================================
 // HELPERS
@@ -103,7 +104,7 @@ function InvoicesPage() {
 
   if (loading && invoices.length === 0) {
     return (
-      <section className="app-page">
+      <section className="app-page invoices-page">
         <div className="page-container">
           <Loading message="Loading your invoices..." />
         </div>

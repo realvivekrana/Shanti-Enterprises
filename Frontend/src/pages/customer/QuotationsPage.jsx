@@ -19,6 +19,8 @@ import {
   getQuotations,
 } from "../../api/quotationApi";
 
+import "./QuotationsPage.css";
+
 // ============================================================
 // HELPERS
 // ============================================================
@@ -356,7 +358,7 @@ function QuotationsPage() {
 
   if (loading) {
     return (
-      <div className="app-page">
+      <div className="app-page quotations-page">
         <div className="page-header">
           <div>
             <span className="page-eyebrow">
@@ -391,7 +393,7 @@ function QuotationsPage() {
   // ==========================================================
 
   return (
-    <div className="app-page">
+    <div className="app-page quotations-page">
 
       {/* ======================================================
           HEADER

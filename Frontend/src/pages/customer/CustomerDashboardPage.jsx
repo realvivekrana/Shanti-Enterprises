@@ -1,298 +1,746 @@
 // ============================================================
-// SHANTI ENTERPRISES — CustomerDashboardPage (Premium)
+// SHANTI ENTERPRISES — Customer Dashboard
+// Premium responsive customer overview
 // ============================================================
 
 import { useEffect, useMemo, useState } from "react";
+import {
+  ArrowRight,
+  Bell,
+  Box,
+  CheckCircle2,
+  ClipboardList,
+  FileText,
+  Heart,
+  MapPin,
+  Package,
+  RefreshCw,
+  ShoppingBag,
+  ShoppingCart,
+  UserRound,
+} from "lucide-react";
 import { Link } from "react-router-dom";
+
 import { useAuth } from "../../context/AuthContext";
 import { useCart } from "../../context/CartContext";
 import { getMyOrders } from "../../api/orderApi";
 import Loading from "../../components/common/Loading";
 import ErrorMessage from "../../components/common/ErrorMessage";
 
-// ── helpers ───────────────────────────────────────────────────
-const fmt = (n) =>
-  `₹${Number(n || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
+import "./CustomerDashboardPage.css";
 
-const fmtDate = (v) => {
-  if (!v) return "—";
-  const d = new Date(v);
-  return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+// ============================================================
+// HELPERS
+// ============================================================
+
+const fmt = (value) =>
+  `₹${Number(value || 0).toLocaleString("en-IN", {
+    maximumFractionDigits: 0,
+  })}`;
+
+const fmtDate = (value) => {
+  if (!value) return "—";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "—";
+  }
+
+  return date.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 };
 
-const extractOrders = (r) =>
-  Array.isArray(r?.orders) ? r.orders
-  : Array.isArray(r?.data?.orders) ? r.data.orders
-  : Array.isArray(r?.data) ? r.data
-  : Array.isArray(r) ? r : [];
+const extractOrders = (response) =>
+  Array.isArray(response?.orders)
+    ? response.orders
+    : Array.isArray(response?.data?.orders)
+      ? response.data.orders
+      : Array.isArray(response?.data)
+        ? response.data
+        : Array.isArray(response)
+          ? response
+          : [];
 
-const statusStyle = (s) => {
-  const v = String(s || "").toLowerCase();
-  if (v.includes("deliver") || v.includes("complete"))
-    return { bg: "var(--se-success-bg)", color: "var(--se-success)", border: "#A7F3D0" };
-  if (v.includes("cancel") || v.includes("reject"))
-    return { bg: "var(--se-danger-bg)",  color: "var(--se-danger)",  border: "#FECACA" };
-  if (v.includes("ship"))
-    return { bg: "var(--se-info-bg)",    color: "var(--se-info)",    border: "#BFDBFE" };
-  if (v.includes("confirm") || v.includes("process"))
-    return { bg: "#F0FDF4",              color: "#166534",           border: "#BBF7D0" };
-  return { bg: "var(--se-warning-bg)",  color: "var(--se-warning)", border: "#FDE68A" };
+const getOrderStatus = (order) =>
+  order?.orderStatus || order?.status || "Pending";
+
+const normalizeStatus = (status) =>
+  String(status || "pending").toLowerCase();
+
+const isDelivered = (status) => {
+  const value = normalizeStatus(status);
+  return value.includes("deliver") || value.includes("complete");
 };
 
-const fmtStatus = (s) =>
-  String(s || "Pending").replace(/[-_]/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+const isCancelled = (status) => {
+  const value = normalizeStatus(status);
+  return value.includes("cancel") || value.includes("reject");
+};
 
-// ── stat card ────────────────────────────────────────────────
-function StatCard({ icon, label, value, accent = "var(--se-teal)" }) {
+const getStatusTone = (status) => {
+  const value = normalizeStatus(status);
+
+  if (isDelivered(value)) return "success";
+  if (isCancelled(value)) return "danger";
+  if (value.includes("ship")) return "info";
+  if (value.includes("confirm") || value.includes("process")) {
+    return "progress";
+  }
+
+  return "warning";
+};
+
+const formatStatus = (status) =>
+  String(status || "Pending")
+    .replace(/[-_]/g, " ")
+    .replace(/\b\w/g, (character) => character.toUpperCase());
+
+// ============================================================
+// STAT CARD
+// ============================================================
+
+function StatCard({ icon, label, value, tone }) {
   return (
-    <div style={{ background: "#fff", border: "1px solid var(--se-border)", borderRadius: 14, padding: "20px 20px 16px", boxShadow: "var(--shadow-sm)", borderLeft: `4px solid ${accent}` }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-        <div style={{ width: 40, height: 40, borderRadius: 10, background: `${accent}18`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>
-          {icon}
-        </div>
-        <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--se-text-3)" }}>{label}</p>
+    <div className={`customer-dashboard-stat-card ${tone || ""}`}>
+      <div className="customer-dashboard-stat-icon">
+        {icon}
       </div>
-      <p style={{ fontSize: "1.8rem", fontWeight: 900, color: "var(--se-navy)", letterSpacing: "-0.04em", lineHeight: 1 }}>{value}</p>
+
+      <div className="customer-dashboard-stat-content">
+        <span>{label}</span>
+        <strong>{value}</strong>
+      </div>
     </div>
   );
 }
 
-// ── quick action ─────────────────────────────────────────────
+// ============================================================
+// QUICK ACTION
+// ============================================================
+
 function QuickAction({ to, icon, label, desc }) {
   return (
-    <Link to={to} style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 16px", borderRadius: 10, border: "1px solid var(--se-border)", background: "#fff", transition: "all .2s", textDecoration: "none" }}
-      onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--se-teal-light)"; e.currentTarget.style.background = "var(--se-teal-soft)"; e.currentTarget.style.transform = "translateX(2px)"; }}
-      onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--se-border)"; e.currentTarget.style.background = "#fff"; e.currentTarget.style.transform = ""; }}>
-      <div style={{ width: 40, height: 40, borderRadius: 10, background: "var(--se-teal-soft)", border: "1px solid var(--se-teal-light)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>
+    <Link to={to} className="customer-dashboard-action">
+      <span className="customer-dashboard-action-icon">
         {icon}
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ fontSize: 14, fontWeight: 700, color: "var(--se-text)" }}>{label}</p>
-        <p style={{ fontSize: 12, color: "var(--se-text-3)" }}>{desc}</p>
-      </div>
-      <span style={{ color: "var(--se-text-4)", fontSize: 16 }}>→</span>
+      </span>
+
+      <span className="customer-dashboard-action-copy">
+        <strong>{label}</strong>
+        <small>{desc}</small>
+      </span>
+
+      <ArrowRight
+        className="customer-dashboard-action-arrow"
+        size={16}
+        aria-hidden="true"
+      />
     </Link>
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-function CustomerDashboardPage() {
-  const { user }                    = useAuth();
-  const { totalItems = 0, subtotal = 0 } = useCart();
+// ============================================================
+// CUSTOMER DASHBOARD
+// ============================================================
 
-  const [orders,    setOrders]    = useState([]);
-  const [loading,   setLoading]   = useState(true);
-  const [refreshing,setRefreshing]= useState(false);
-  const [error,     setError]     = useState("");
+function CustomerDashboardPage() {
+  const { user } = useAuth();
+  const {
+    totalItems = 0,
+    subtotal = 0,
+  } = useCart();
+
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState("");
 
   const loadOrders = async (isRefresh = false) => {
     try {
-      if (isRefresh) setRefreshing(true); else setLoading(true);
+      if (isRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+
       setError("");
-      const r = await getMyOrders();
-      setOrders(extractOrders(r));
+
+      const response = await getMyOrders();
+      setOrders(extractOrders(response));
     } catch (err) {
-      setError(err?.response?.data?.message || err?.message || "Unable to load dashboard data.");
+      setError(
+        err?.response?.data?.message ||
+          err?.message ||
+          "Unable to load dashboard data."
+      );
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   };
 
-  useEffect(() => { loadOrders(); }, []);
+  useEffect(() => {
+    loadOrders();
+  }, []);
 
-  const name    = user?.name?.trim()  || "Customer";
-  const email   = user?.email         || "—";
-  const phone   = user?.phone         || "—";
+  const name = user?.name?.trim() || "Customer";
+  const email = user?.email || "—";
+  const phone = user?.phone || "—";
   const initial = name.charAt(0).toUpperCase();
 
-  const recent = useMemo(() => orders.slice(0, 5), [orders]);
+  const recentOrders = useMemo(
+    () => orders.slice(0, 5),
+    [orders]
+  );
 
-  const delivered = useMemo(() =>
-    orders.filter(o => { const s = String(o?.orderStatus || o?.status || "").toLowerCase(); return s.includes("deliver") || s.includes("complete"); }).length,
-  [orders]);
+  const deliveredCount = useMemo(
+    () =>
+      orders.filter((order) =>
+        isDelivered(getOrderStatus(order))
+      ).length,
+    [orders]
+  );
 
-  const active = useMemo(() =>
-    orders.filter(o => { const s = String(o?.orderStatus || o?.status || "pending").toLowerCase(); return !s.includes("deliver") && !s.includes("complete") && !s.includes("cancel"); }).length,
-  [orders]);
+  const activeCount = useMemo(
+    () =>
+      orders.filter((order) => {
+        const status = getOrderStatus(order);
 
-  if (loading) return <div style={{ padding: "64px 20px" }}><Loading message="Loading dashboard…" /></div>;
+        return (
+          !isDelivered(status) &&
+          !isCancelled(status)
+        );
+      }).length,
+    [orders]
+  );
+
+  if (loading) {
+    return (
+      <main className="customer-dashboard-loading">
+        <Loading message="Loading dashboard…" />
+      </main>
+    );
+  }
 
   return (
-    <div style={{ background: "var(--se-bg)", minHeight: "calc(100vh - 68px)" }}>
+    <main className="customer-dashboard-page">
+      {/* ======================================================
+          HERO
+          ====================================================== */}
 
-      {/* ── BANNER ──────────────────────────────────────── */}
-      <div style={{ background: "linear-gradient(135deg, var(--se-navy) 0%, var(--se-navy-soft) 100%)", padding: "40px 0 36px" }}>
-        <div style={{ width: "min(100% - 40px, 1240px)", margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20, flexWrap: "wrap" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
-            <div style={{ width: 60, height: 60, background: "var(--se-teal)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, fontWeight: 800, color: "#fff", flexShrink: 0, boxShadow: "0 4px 16px rgba(13,148,136,.4)" }}>
-              {initial}
+      <section className="customer-dashboard-hero">
+        <div className="customer-dashboard-container">
+          <div className="customer-dashboard-hero-inner">
+            <div className="customer-dashboard-identity">
+              <div
+                className="customer-dashboard-avatar customer-dashboard-avatar-hero"
+                aria-hidden="true"
+              >
+                {initial}
+              </div>
+
+              <div className="customer-dashboard-identity-copy">
+                <span className="customer-dashboard-eyebrow">
+                  Customer Dashboard
+                </span>
+
+                <h1>
+                  Welcome back,{" "}
+                  <span>{name}</span>
+                </h1>
+
+                <p>
+                  Manage your orders, account and
+                  business shopping activity from one place.
+                </p>
+              </div>
             </div>
-            <div>
-              <p style={{ fontSize: 12, fontWeight: 700, color: "var(--se-teal-light)", letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 4 }}>Customer Dashboard</p>
-              <h1 style={{ color: "#fff", fontSize: "clamp(1.4rem,2.5vw,1.9rem)", fontWeight: 800, letterSpacing: "-0.03em", marginBottom: 4 }}>Welcome back, {name}!</h1>
-              <p style={{ color: "#94A3B8", fontSize: 14 }}>{email}</p>
+
+            <div className="customer-dashboard-hero-actions">
+              <button
+                type="button"
+                className="customer-dashboard-refresh-button"
+                onClick={() => loadOrders(true)}
+                disabled={refreshing}
+              >
+                <RefreshCw
+                  size={16}
+                  className={
+                    refreshing
+                      ? "customer-dashboard-spin"
+                      : ""
+                  }
+                  aria-hidden="true"
+                />
+
+                {refreshing ? "Refreshing…" : "Refresh"}
+              </button>
+
+              <Link
+                to="/products"
+                className="customer-dashboard-primary-button"
+              >
+                <ShoppingBag
+                  size={16}
+                  aria-hidden="true"
+                />
+                Browse Products
+              </Link>
             </div>
           </div>
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            <button type="button" onClick={() => loadOrders(true)} disabled={refreshing}
-              style={{ height: 40, padding: "0 18px", background: "rgba(255,255,255,.08)", border: "1px solid rgba(255,255,255,.15)", borderRadius: 8, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", boxShadow: "none", transform: "none" }}>
-              {refreshing ? "Refreshing…" : "↻ Refresh"}
-            </button>
-            <Link to="/products" style={{ height: 40, padding: "0 20px", background: "var(--se-teal)", border: "none", borderRadius: 8, color: "#fff", fontSize: 13, fontWeight: 700, display: "flex", alignItems: "center", gap: 6, boxShadow: "0 4px 14px rgba(13,148,136,.4)" }}>
-              Browse Products →
-            </Link>
+        </div>
+      </section>
+
+      <div className="customer-dashboard-container customer-dashboard-content">
+        {/* ====================================================
+            ERROR
+            ==================================================== */}
+
+        {error && (
+          <div className="customer-dashboard-error">
+            <ErrorMessage
+              message={error}
+              onRetry={() => loadOrders()}
+            />
           </div>
-        </div>
-      </div>
+        )}
 
-      <div style={{ width: "min(100% - 40px, 1240px)", margin: "0 auto", padding: "32px 0 72px" }}>
+        {/* ====================================================
+            STATS
+            ==================================================== */}
 
-        {error && <ErrorMessage message={error} onRetry={() => loadOrders()} />}
+        <section
+          className="customer-dashboard-stats"
+          aria-label="Account summary"
+        >
+          <StatCard
+            icon={<Package size={19} />}
+            label="Total Orders"
+            value={orders.length}
+            tone="teal"
+          />
 
-        {/* ── STATS ───────────────────────────────────────── */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 16, marginBottom: 32 }}>
-          <StatCard icon="📦" label="Total Orders"  value={orders.length}    accent="var(--se-teal)"    />
-          <StatCard icon="⏳" label="Active Orders"  value={active}           accent="var(--se-warning)" />
-          <StatCard icon="✅" label="Delivered"      value={delivered}        accent="var(--se-success)" />
-          <StatCard icon="🛒" label="Cart Items"     value={totalItems}       accent="var(--se-info)"    />
-          <StatCard icon="₹"  label="Cart Value"     value={fmt(subtotal)}    accent="#7C3AED"           />
-        </div>
+          <StatCard
+            icon={<Box size={19} />}
+            label="Active Orders"
+            value={activeCount}
+            tone="amber"
+          />
 
-        {/* ── MAIN GRID ───────────────────────────────────── */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: 24, alignItems: "start" }}>
+          <StatCard
+            icon={<CheckCircle2 size={19} />}
+            label="Delivered"
+            value={deliveredCount}
+            tone="green"
+          />
 
-          {/* LEFT */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+          <StatCard
+            icon={<ShoppingCart size={19} />}
+            label="Cart Items"
+            value={totalItems}
+            tone="blue"
+          />
 
-            {/* Quick Actions */}
-            <div style={{ background: "#fff", border: "1px solid var(--se-border)", borderRadius: 16, padding: "22px 24px", boxShadow: "var(--shadow-sm)" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
+          <StatCard
+            icon="₹"
+            label="Cart Value"
+            value={fmt(subtotal)}
+            tone="violet"
+          />
+        </section>
+
+        {/* ====================================================
+            MAIN GRID
+            ==================================================== */}
+
+        <div className="customer-dashboard-grid">
+          {/* ==================================================
+              LEFT COLUMN
+              ================================================== */}
+
+          <div className="customer-dashboard-main">
+            {/* QUICK ACTIONS */}
+
+            <section className="customer-dashboard-card">
+              <div className="customer-dashboard-card-header">
                 <div>
-                  <p style={{ fontSize: 11, fontWeight: 700, color: "var(--se-text-4)", letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 4 }}>Shortcuts</p>
-                  <h2 style={{ fontSize: "1.1rem", fontWeight: 800 }}>Quick Actions</h2>
+                  <span>Shortcuts</span>
+                  <h2>Quick Actions</h2>
                 </div>
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                <QuickAction to="/products"  icon="🛍️" label="Browse Products"  desc="Explore our catalogue"      />
-                <QuickAction to="/categories"icon="🗂️" label="Categories"       desc="Shop by category"           />
-                <QuickAction to="/cart"      icon="🛒" label="My Cart"          desc={`${totalItems} item${totalItems!==1?"s":""}`} />
-                <QuickAction to="/orders"    icon="📦" label="My Orders"        desc="Track your orders"           />
-                <QuickAction to="/rfqs"      icon="📋" label="My RFQs"          desc="Wholesale requests"          />
-                <QuickAction to="/addresses" icon="📍" label="Addresses"        desc="Manage delivery addresses"   />
-              </div>
-            </div>
 
-            {/* Recent Orders */}
-            <div style={{ background: "#fff", border: "1px solid var(--se-border)", borderRadius: 16, padding: "22px 24px", boxShadow: "var(--shadow-sm)" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
+                <ShoppingBag
+                  size={19}
+                  className="customer-dashboard-header-icon"
+                  aria-hidden="true"
+                />
+              </div>
+
+              <div className="customer-dashboard-actions">
+                <QuickAction
+                  to="/products"
+                  icon={<ShoppingBag size={18} />}
+                  label="Browse Products"
+                  desc="Explore our catalogue"
+                />
+
+                <QuickAction
+                  to="/categories"
+                  icon={<ClipboardList size={18} />}
+                  label="Categories"
+                  desc="Shop by category"
+                />
+
+                <QuickAction
+                  to="/cart"
+                  icon={<ShoppingCart size={18} />}
+                  label="My Cart"
+                  desc={`${totalItems} item${
+                    totalItems !== 1 ? "s" : ""
+                  }`}
+                />
+
+                <QuickAction
+                  to="/orders"
+                  icon={<Package size={18} />}
+                  label="My Orders"
+                  desc="Track your orders"
+                />
+
+                <QuickAction
+                  to="/rfqs"
+                  icon={<FileText size={18} />}
+                  label="My RFQs"
+                  desc="Wholesale requests"
+                />
+
+                <QuickAction
+                  to="/addresses"
+                  icon={<MapPin size={18} />}
+                  label="Addresses"
+                  desc="Manage delivery addresses"
+                />
+              </div>
+            </section>
+
+            {/* RECENT ORDERS */}
+
+            <section className="customer-dashboard-card">
+              <div className="customer-dashboard-card-header">
                 <div>
-                  <p style={{ fontSize: 11, fontWeight: 700, color: "var(--se-text-4)", letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 4 }}>Order History</p>
-                  <h2 style={{ fontSize: "1.1rem", fontWeight: 800 }}>Recent Orders</h2>
+                  <span>Order History</span>
+                  <h2>Recent Orders</h2>
                 </div>
-                {orders.length > 0 && <Link to="/orders" style={{ fontSize: 13, fontWeight: 700, color: "var(--se-teal)" }}>View All →</Link>}
+
+                {orders.length > 0 && (
+                  <Link
+                    to="/orders"
+                    className="customer-dashboard-view-all"
+                  >
+                    View All
+                    <ArrowRight
+                      size={14}
+                      aria-hidden="true"
+                    />
+                  </Link>
+                )}
               </div>
 
-              {recent.length === 0 ? (
-                <div style={{ textAlign: "center", padding: "40px 20px" }}>
-                  <div style={{ fontSize: 48, marginBottom: 12 }}>📦</div>
-                  <h3 style={{ marginBottom: 8, fontSize: "1rem" }}>No orders yet</h3>
-                  <p style={{ marginBottom: 20, fontSize: 14 }}>Place your first order to see it here.</p>
-                  <Link to="/products" className="btn-primary" style={{ display: "inline-flex" }}>Start Shopping →</Link>
+              {recentOrders.length === 0 ? (
+                <div className="customer-dashboard-empty">
+                  <div className="customer-dashboard-empty-icon">
+                    <Package size={24} />
+                  </div>
+
+                  <h3>No orders yet</h3>
+
+                  <p>
+                    Place your first order to see it
+                    appear here.
+                  </p>
+
+                  <Link
+                    to="/products"
+                    className="customer-dashboard-small-button"
+                  >
+                    Start Shopping
+                    <ArrowRight
+                      size={15}
+                      aria-hidden="true"
+                    />
+                  </Link>
                 </div>
               ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-                  {recent.map((order, i) => {
-                    const oid    = order?._id || order?.id;
-                    const status = order?.orderStatus || order?.status || "Pending";
-                    const total  = Number(order?.totalAmount ?? order?.total ?? 0);
-                    const st     = statusStyle(status);
+                <div className="customer-dashboard-orders">
+                  {recentOrders.map((order, index) => {
+                    const orderId =
+                      order?._id || order?.id;
+
+                    const status =
+                      getOrderStatus(order);
+
+                    const total = Number(
+                      order?.totalAmount ??
+                        order?.total ??
+                        0
+                    );
+
+                    const tone =
+                      getStatusTone(status);
+
                     return (
-                      <div key={oid || i} style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 0", borderBottom: i < recent.length - 1 ? "1px solid var(--se-border-soft)" : "none" }}>
-                        <div style={{ width: 40, height: 40, borderRadius: 10, background: "var(--se-surface-2)", border: "1px solid var(--se-border)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>📦</div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <p style={{ fontSize: 14, fontWeight: 700, color: "var(--se-text)", marginBottom: 2 }}>
-                            #{order?.orderNumber || oid}
-                          </p>
-                          <p style={{ fontSize: 12, color: "var(--se-text-3)" }}>
-                            {fmtDate(order?.createdAt)} · {fmt(total)}
-                          </p>
+                      <div
+                        key={orderId || index}
+                        className="customer-dashboard-order"
+                      >
+                        <div className="customer-dashboard-order-icon">
+                          <Package
+                            size={17}
+                            aria-hidden="true"
+                          />
                         </div>
-                        <span style={{ padding: "4px 10px", borderRadius: 999, fontSize: 12, fontWeight: 700, background: st.bg, color: st.color, border: `1px solid ${st.border}`, whiteSpace: "nowrap" }}>
-                          {fmtStatus(status)}
+
+                        <div className="customer-dashboard-order-info">
+                          <strong>
+                            #
+                            {order?.orderNumber ||
+                              orderId ||
+                              "Order"}
+                          </strong>
+
+                          <span>
+                            {fmtDate(order?.createdAt)}
+                            <i>•</i>
+                            {fmt(total)}
+                          </span>
+                        </div>
+
+                        <span
+                          className={`customer-dashboard-order-status ${tone}`}
+                        >
+                          {formatStatus(status)}
                         </span>
-                        {oid && (
-                          <Link to={`/orders/${oid}`} style={{ fontSize: 12, fontWeight: 700, color: "var(--se-teal)", whiteSpace: "nowrap" }}>View →</Link>
+
+                        {orderId && (
+                          <Link
+                            to={`/orders/${orderId}`}
+                            className="customer-dashboard-order-link"
+                          >
+                            View
+                            <ArrowRight
+                              size={13}
+                              aria-hidden="true"
+                            />
+                          </Link>
                         )}
                       </div>
                     );
                   })}
                 </div>
               )}
-            </div>
+            </section>
 
-            {/* CTA banner */}
-            <div style={{ background: "linear-gradient(135deg, var(--se-navy) 0%, #1E3A5F 100%)", borderRadius: 16, padding: "28px 32px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20, flexWrap: "wrap" }}>
-              <div>
-                <p style={{ fontSize: 12, fontWeight: 700, color: "var(--se-teal-light)", letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 6 }}>Keep Shopping</p>
-                <h3 style={{ color: "#fff", fontSize: "1.2rem", fontWeight: 800, marginBottom: 6 }}>Find the products you need.</h3>
-                <p style={{ color: "#94A3B8", fontSize: 14 }}>Browse hundreds of quality products ready to order.</p>
+            {/* SHOPPING CTA */}
+
+            <section className="customer-dashboard-cta">
+              <div className="customer-dashboard-cta-glow" />
+
+              <div className="customer-dashboard-cta-content">
+                <span>Keep Shopping</span>
+
+                <h2>
+                  Find the products your
+                  business needs.
+                </h2>
+
+                <p>
+                  Browse quality products and place
+                  your next business order with ease.
+                </p>
               </div>
-              <Link to="/products" style={{ height: 46, padding: "0 24px", background: "var(--se-teal)", borderRadius: 10, color: "#fff", fontSize: 14, fontWeight: 700, display: "flex", alignItems: "center", gap: 8, flexShrink: 0, boxShadow: "0 4px 16px rgba(13,148,136,.4)" }}>
-                Explore Products →
-              </Link>
-            </div>
 
+              <Link
+                to="/products"
+                className="customer-dashboard-cta-button"
+              >
+                Explore Products
+                <ArrowRight
+                  size={16}
+                  aria-hidden="true"
+                />
+              </Link>
+            </section>
           </div>
 
-          {/* RIGHT SIDEBAR */}
-          <aside style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          {/* ==================================================
+              RIGHT SIDEBAR
+              ================================================== */}
 
-            {/* Profile card */}
-            <div style={{ background: "#fff", border: "1px solid var(--se-border)", borderRadius: 16, padding: "22px 24px", boxShadow: "var(--shadow-sm)", textAlign: "center" }}>
-              <div style={{ width: 64, height: 64, borderRadius: "50%", background: "var(--se-teal)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, fontWeight: 800, margin: "0 auto 14px", boxShadow: "0 4px 16px rgba(13,148,136,.3)" }}>
-                {initial}
+          <aside className="customer-dashboard-sidebar">
+            {/* PROFILE */}
+
+            <section className="customer-dashboard-card customer-dashboard-profile-card">
+              <div className="customer-dashboard-profile">
+                <div
+                  className="customer-dashboard-avatar"
+                  aria-hidden="true"
+                >
+                  {initial}
+                </div>
+
+                <h3>{name}</h3>
+
+                <p>{email}</p>
+
+                {phone !== "—" && (
+                  <p>{phone}</p>
+                )}
               </div>
-              <h3 style={{ fontSize: "1rem", fontWeight: 800, marginBottom: 4 }}>{name}</h3>
-              <p style={{ fontSize: 13, color: "var(--se-text-3)", marginBottom: 2 }}>{email}</p>
-              {phone !== "—" && <p style={{ fontSize: 13, color: "var(--se-text-3)", marginBottom: 16 }}>{phone}</p>}
-              <Link to="/profile" className="btn-secondary" style={{ width: "100%", justifyContent: "center", fontSize: 13 }}>
-                Edit Profile →
-              </Link>
-            </div>
 
-            {/* Account links */}
-            <div style={{ background: "#fff", border: "1px solid var(--se-border)", borderRadius: 16, padding: "20px 20px", boxShadow: "var(--shadow-sm)" }}>
-              <p style={{ fontSize: 11, fontWeight: 700, color: "var(--se-text-4)", letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 14 }}>Account</p>
-              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <Link
+                to="/profile"
+                className="customer-dashboard-profile-button"
+              >
+                <UserRound
+                  size={15}
+                  aria-hidden="true"
+                />
+                Edit Profile
+                <ArrowRight
+                  size={14}
+                  aria-hidden="true"
+                />
+              </Link>
+            </section>
+
+            {/* ACCOUNT */}
+
+            <section className="customer-dashboard-card customer-dashboard-account-card">
+              <div className="customer-dashboard-card-header">
+                <div>
+                  <span>Account</span>
+                  <h2>Manage</h2>
+                </div>
+
+                <UserRound
+                  size={18}
+                  className="customer-dashboard-header-icon"
+                  aria-hidden="true"
+                />
+              </div>
+
+              <nav className="customer-dashboard-account-links">
                 {[
-                  { to: "/orders",       icon: "📦", label: "My Orders"        },
-                  { to: "/addresses",    icon: "📍", label: "Saved Addresses"  },
-                  { to: "/quotations",   icon: "🧾", label: "My Quotations"    },
-                  { to: "/rfqs",         icon: "📋", label: "My RFQs"          },
-                  { to: "/wishlist",     icon: "❤️", label: "Wishlist"          },
-                  { to: "/notifications",icon: "🔔", label: "Notifications"    },
-                  { to: "/returns",      icon: "↩️", label: "Returns"           },
-                  { to: "/invoices",     icon: "🧾", label: "Invoices"         },
-                ].map(l => (
-                  <Link key={l.to} to={l.to} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", borderRadius: 8, fontSize: 13, fontWeight: 500, color: "var(--se-text-2)", transition: "all .2s" }}
-                    onMouseEnter={e => { e.currentTarget.style.background = "var(--se-teal-soft)"; e.currentTarget.style.color = "var(--se-teal-hover)"; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = ""; e.currentTarget.style.color = "var(--se-text-2)"; }}>
-                    <span style={{ fontSize: 16 }}>{l.icon}</span>
-                    {l.label}
-                    <span style={{ marginLeft: "auto", color: "var(--se-text-4)", fontSize: 12 }}>→</span>
+                  {
+                    to: "/orders",
+                    icon: <Package size={16} />,
+                    label: "My Orders",
+                  },
+                  {
+                    to: "/addresses",
+                    icon: <MapPin size={16} />,
+                    label: "Saved Addresses",
+                  },
+                  {
+                    to: "/quotations",
+                    icon: <FileText size={16} />,
+                    label: "My Quotations",
+                  },
+                  {
+                    to: "/rfqs",
+                    icon: <ClipboardList size={16} />,
+                    label: "My RFQs",
+                  },
+                  {
+                    to: "/wishlist",
+                    icon: <Heart size={16} />,
+                    label: "Wishlist",
+                  },
+                  {
+                    to: "/notifications",
+                    icon: <Bell size={16} />,
+                    label: "Notifications",
+                  },
+                  {
+                    to: "/returns",
+                    icon: <RefreshCw size={16} />,
+                    label: "Returns",
+                  },
+                  {
+                    to: "/invoices",
+                    icon: <FileText size={16} />,
+                    label: "Invoices",
+                  },
+                ].map((item) => (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    className="customer-dashboard-account-link"
+                  >
+                    <span className="customer-dashboard-account-link-icon">
+                      {item.icon}
+                    </span>
+
+                    <span>{item.label}</span>
+
+                    <ArrowRight
+                      size={14}
+                      aria-hidden="true"
+                    />
                   </Link>
                 ))}
+              </nav>
+            </section>
+
+            {/* MINI SHOPPING CARD */}
+
+            <section className="customer-dashboard-shopping-card">
+              <div className="customer-dashboard-shopping-icon">
+                <ShoppingCart
+                  size={21}
+                  aria-hidden="true"
+                />
               </div>
-            </div>
 
+              <span>Your Cart</span>
+
+              <h3>
+                {totalItems > 0
+                  ? `${totalItems} item${
+                      totalItems !== 1 ? "s" : ""
+                    } ready`
+                  : "Your cart is waiting"}
+              </h3>
+
+              <p>
+                {totalItems > 0
+                  ? `${fmt(
+                      subtotal
+                    )} current cart value.`
+                  : "Add products to build your next order."}
+              </p>
+
+              <Link
+                to="/cart"
+                className="customer-dashboard-shopping-button"
+              >
+                {totalItems > 0
+                  ? "Review Cart"
+                  : "Start Shopping"}
+
+                <ArrowRight
+                  size={15}
+                  aria-hidden="true"
+                />
+              </Link>
+            </section>
           </aside>
-
         </div>
       </div>
-
-      <style>{`@media(max-width:900px){div[style*="grid-template-columns: 1fr 320px"]{grid-template-columns:1fr!important} div[style*="grid-template-columns: repeat(5,1fr)"]{grid-template-columns:repeat(2,1fr)!important}}`}</style>
-    </div>
+    </main>
   );
 }
 

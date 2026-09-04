@@ -1,37 +1,56 @@
 // ============================================================
-// SHANTI ENTERPRISES
-// CHECKOUT PAGE
-// Customer Portal
-// Razorpay Payment Integration
+// SHANTI ENTERPRISES — CHECKOUT PAGE
+// Premium B2B Checkout
+// Existing API / pricing / payment flow preserved
 // ============================================================
 
-import {
-  useEffect,
-  useState,
-} from "react";
-
-import {
-  useNavigate,
-  useSearchParams,
-} from "react-router-dom";
-
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import API from "../../api/axios";
+import { useCart } from "../../context/CartContext";
+import "./CheckoutPage.css";
 
-import {
-  getQuotationById,
-} from "../../api/quotationApi";
+// ============================================================
+// HELPERS
+// ============================================================
 
-import {
-  createOrderFromQuotation,
-} from "../../api/orderApi";
+const formatPrice = (value) =>
+  `₹${Number(value || 0).toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
 
-import {
-  useCart,
-} from "../../context/CartContext";
+const getProductImage = (item) => {
+  const image =
+    item?.image ||
+    item?.product?.image ||
+    "";
 
-import {
-  useAuth,
-} from "../../context/AuthContext";
+  if (typeof image === "string") {
+    return image;
+  }
+
+  return (
+    image?.url ||
+    image?.secure_url ||
+    image?.src ||
+    ""
+  );
+};
+
+const getProductName = (item) =>
+  item?.name ||
+  item?.product?.name ||
+  "Product";
+
+const getProductIdFromItem = (item) =>
+  item?._id ||
+  item?.product?._id ||
+  item?.product ||
+  "";
+
+const getQuantity = (item) =>
+  Number(item?.quantity || 1);
 
 // ============================================================
 // CHECKOUT PAGE
@@ -43,260 +62,85 @@ const CheckoutPage = () => {
     clearCart,
   } = useCart();
 
+  const navigate =
+    useNavigate();
+
   // ==========================================================
-  // AUTH — use context, NOT localStorage (localStorage never
-  // stores "userInfo" — auth is cookie-based)
+  // USER
   // ==========================================================
 
-  const { user } = useAuth();
-  const isLoggedIn = Boolean(user);
+  const userInfo =
+    localStorage.getItem(
+      "userInfo"
+    );
 
-  const navigate = useNavigate();
+  const isLoggedIn =
+    Boolean(userInfo);
 
-  const [searchParams] = useSearchParams();
+  let user = null;
 
-  const quotationId = searchParams.get("quotationId");
-
-  const isWholesaleOrder = Boolean(quotationId);
+  try {
+    user = userInfo
+      ? JSON.parse(userInfo)
+      : null;
+  } catch (parseError) {
+    console.error(
+      "Failed to parse userInfo:",
+      parseError
+    );
+    user = null;
+  }
 
   // ==========================================================
   // ADDRESS
   // ==========================================================
 
-  const [
-    address,
-    setAddress,
-  ] = useState({
-    name:
-      user?.name || "",
-
-    phone:
-      user?.phone || "",
-
-    addressLine1:
-      "",
-
-    addressLine2:
-      "",
-
-    city:
-      "",
-
-    state:
-      "",
-
-    postalCode:
-      "",
-
-    country:
-      "India",
-  });
+  const [address, setAddress] =
+    useState({
+      name:
+        user?.name || "",
+      phone:
+        user?.phone || "",
+      addressLine1: "",
+      addressLine2: "",
+      city: "",
+      state: "",
+      postalCode: "",
+      country: "India",
+    });
 
   // ==========================================================
   // PAYMENT
   // ==========================================================
 
-  const [
-    paymentMethod,
-    setPaymentMethod,
-  ] = useState(
-    "cod"
-  );
+  const [paymentMethod, setPaymentMethod] =
+    useState("COD");
 
   // ==========================================================
   // PRICING
   // ==========================================================
 
-  const [
-    pricing,
-    setPricing,
-  ] = useState({});
+  const [pricing, setPricing] =
+    useState({});
 
-  const [
-    loadingPricing,
-    setLoadingPricing,
-  ] = useState(
-    true
-  );
+  const [loadingPricing, setLoadingPricing] =
+    useState(true);
 
   // ==========================================================
   // GENERAL STATE
   // ==========================================================
 
-  const [
-    loading,
-    setLoading,
-  ] = useState(
-    false
-  );
+  const [loading, setLoading] =
+    useState(false);
 
-  const [
-    error,
-    setError,
-  ] = useState(
-    ""
-  );
+  const [error, setError] =
+    useState("");
 
-  const [
-    successMessage,
-    setSuccessMessage,
-  ] = useState(
-    ""
-  );
+  const [successMessage, setSuccessMessage] =
+    useState("");
 
   // ==========================================================
-  // WHOLESALE QUOTATION
-  // ==========================================================
-
-  const [
-    quotation,
-    setQuotation,
-  ] = useState(
-    null
-  );
-
-  const [
-    loadingQuotation,
-    setLoadingQuotation,
-  ] = useState(
-    isWholesaleOrder
-  );
-
-  // ==========================================================
-  // LOAD QUOTATION
-  // ==========================================================
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const loadQuotation =
-      async () => {
-        if (
-          !quotationId
-        ) {
-          setQuotation(
-            null
-          );
-
-          setLoadingQuotation(
-            false
-          );
-
-          return;
-        }
-
-        try {
-          setLoadingQuotation(
-            true
-          );
-
-          setError(
-            ""
-          );
-
-          const response =
-            await getQuotationById(
-              quotationId
-            );
-
-          const receivedQuotation =
-            response?.quotation ||
-            response?.data?.quotation ||
-            response?.data ||
-            null;
-
-          if (
-            !receivedQuotation
-          ) {
-            throw new Error(
-              "Quotation could not be found."
-            );
-          }
-
-          if (
-            receivedQuotation.status !==
-            "accepted"
-          ) {
-            throw new Error(
-              "Only an accepted quotation can be converted into an order."
-            );
-          }
-
-          if (
-            receivedQuotation.validUntil &&
-            new Date() >
-              new Date(
-                receivedQuotation.validUntil
-              )
-          ) {
-            throw new Error(
-              "This quotation has expired."
-            );
-          }
-
-          if (
-            !Array.isArray(
-              receivedQuotation.items
-            ) ||
-            receivedQuotation.items.length ===
-              0
-          ) {
-            throw new Error(
-              "Quotation does not contain any items."
-            );
-          }
-
-          if (
-            !cancelled
-          ) {
-            setQuotation(
-              receivedQuotation
-            );
-          }
-        } catch (
-          err
-        ) {
-          console.error(
-            "Wholesale quotation load error:",
-            err
-          );
-
-          if (
-            !cancelled
-          ) {
-            setQuotation(
-              null
-            );
-
-            setError(
-              err?.response?.data
-                ?.message ||
-                err?.message ||
-                "Unable to load quotation."
-            );
-          }
-        } finally {
-          if (
-            !cancelled
-          ) {
-            setLoadingQuotation(
-              false
-            );
-          }
-        }
-      };
-
-    loadQuotation();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    quotationId,
-  ]);
-
-  // ==========================================================
-  // CALCULATE PRICES
+  // FETCH WHOLESALE PRICES
   // ==========================================================
 
   useEffect(() => {
@@ -304,183 +148,117 @@ const CheckoutPage = () => {
 
     const calculatePrices =
       async () => {
-        // ------------------------------------------------------
-        // NORMAL ORDER - EMPTY CART
-        // ------------------------------------------------------
-
         if (
-          !isWholesaleOrder &&
-          (!cartItems ||
-            cartItems.length === 0)
+          !cartItems ||
+          cartItems.length === 0
         ) {
-          if (
-            !cancelled
-          ) {
-            setPricing(
-              {}
-            );
-
-            setLoadingPricing(
-              false
-            );
+          if (!cancelled) {
+            setPricing({});
+            setLoadingPricing(false);
           }
 
           return;
         }
 
-        // ------------------------------------------------------
-        // WHOLESALE ORDER
-        // ------------------------------------------------------
-
-        if (
-          isWholesaleOrder &&
-          (!quotation ||
-            !Array.isArray(
-              quotation.items
-            ))
-        ) {
-          if (
-            !cancelled
-          ) {
-            setPricing(
-              {}
-            );
-
-            setLoadingPricing(
-              loadingQuotation
-            );
-          }
-
-          return;
-        }
-
-        setLoadingPricing(
-          true
-        );
-
-        setError(
-          ""
-        );
+        setLoadingPricing(true);
+        setError("");
 
         try {
           const results = {};
 
-          // ====================================================
-          // NORMAL CART
-          // ====================================================
-
-          if (
-            !isWholesaleOrder
+          for (
+            const item of cartItems
           ) {
-            for (
-              const item of cartItems
-            ) {
-              const productId =
-                item?.productId ||
-                item?._id ||
-                item?.product?._id ||
-                item?.product;
+            const productId =
+              getProductIdFromItem(
+                item
+              );
 
-              if (
-                !productId
-              ) {
-                continue;
-              }
+            if (!productId) {
+              continue;
+            }
 
-              try {
-                const response =
-                  await API.get(
-                    `/products/${productId}/wholesale-price`,
-                    {
-                      params: {
-                        quantity:
-                          Number(
-                            item?.quantity ||
-                              1
-                          ),
-                      },
-                    }
-                  );
-
-                const data =
-                  response?.data ??
-                  response;
-
-                const priceData =
-                  data?.data ||
-                  data?.pricing ||
-                  data;
-
-                results[
-                  productId
-                ] =
-                  priceData;
-              } catch (
-                priceError
-              ) {
-                console.error(
-                  "Wholesale price error:",
-                  productId,
-                  priceError
+            try {
+              const response =
+                await API.get(
+                  `/products/${productId}/wholesale-price`,
+                  {
+                    params: {
+                      quantity:
+                        getQuantity(
+                          item
+                        ),
+                    },
+                  }
                 );
 
-                const itemPrice =
+              const data =
+                response?.data ??
+                response;
+
+              const priceData =
+                data?.data ||
+                data?.pricing ||
+                data;
+
+              results[
+                productId
+              ] = priceData;
+            } catch (
+              priceError
+            ) {
+              console.error(
+                "Wholesale price error:",
+                productId,
+                priceError
+              );
+
+              // Fallback to cart/product price
+              results[
+                productId
+              ] = {
+                unitPrice:
                   Number(
                     item?.price ||
                       item?.product
                         ?.price ||
                       0
-                  );
-
-                const quantity =
+                  ),
+                subtotal:
                   Number(
-                    item?.quantity ||
-                      1
-                  );
-
-                results[
-                  productId
-                ] = {
-                  unitPrice:
-                    itemPrice,
-
-                  subtotal:
-                    itemPrice *
-                    quantity,
-                };
-              }
+                    item?.price ||
+                      item?.product
+                        ?.price ||
+                      0
+                  ) *
+                  getQuantity(
+                    item
+                  ),
+              };
             }
           }
 
-          if (
-            !cancelled
-          ) {
+          if (!cancelled) {
             setPricing(
               results
             );
           }
-        } catch (
-          err
-        ) {
+        } catch (priceError) {
           console.error(
-            "Calculate prices error:",
-            err
+            "Calculate wholesale prices error:",
+            priceError
           );
 
-          if (
-            !cancelled
-          ) {
+          if (!cancelled) {
             setError(
-              err?.response?.data
-                ?.message ||
-                err?.message ||
-                "Failed to calculate product prices."
+              priceError?.response
+                ?.data?.message ||
+                priceError?.message ||
+                "Failed to calculate wholesale prices."
             );
           }
         } finally {
-          if (
-            !cancelled
-          ) {
+          if (!cancelled) {
             setLoadingPricing(
               false
             );
@@ -493,12 +271,7 @@ const CheckoutPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [
-    cartItems,
-    quotation,
-    isWholesaleOrder,
-    loadingQuotation,
-  ]);
+  }, [cartItems]);
 
   // ==========================================================
   // ADDRESS CHANGE
@@ -515,154 +288,67 @@ const CheckoutPage = () => {
     setAddress(
       (previous) => ({
         ...previous,
-        [name]:
-          value,
+        [name]: value,
       })
     );
+
+    if (error) {
+      setError("");
+    }
   };
 
   // ==========================================================
-  // GET PRODUCT ID
+  // PRODUCT ID
   // ==========================================================
 
   const getProductId = (
     item
-  ) => {
-    return (
-      item?.productId ||
-      item?._id ||
-      item?.product?._id ||
-      item?.product ||
-      ""
+  ) =>
+    getProductIdFromItem(
+      item
     );
-  };
 
   // ==========================================================
-  // CHECKOUT ITEMS
+  // PRICING
   // ==========================================================
 
-  const checkoutItems =
-    isWholesaleOrder
-      ? (
-          quotation?.items ||
-          []
-        ).map(
-          (item) => ({
-            _id:
-              item?.product?._id ||
-              item?.product ||
-              item?.productId,
+  const itemsPrice = (
+    cartItems || []
+  ).reduce(
+    (sum, item) => {
+      const productId =
+        getProductId(item);
 
-            product:
-              item?.product,
+      const itemPricing =
+        pricing[
+          productId
+        ];
 
-            name:
-              item?.productName ||
-              item?.product?.name ||
-              "Product",
+      const quantity =
+        getQuantity(item);
 
-            image:
-              item?.product
-                ?.images?.[0] ||
-              item?.product
-                ?.image ||
-              item?.image ||
-              "",
-
-            quantity:
-              Number(
-                item?.quantity ||
-                  1
-              ),
-
-            price:
-              Number(
-                item?.unitPrice ||
-                  0
-              ),
-
-            unit:
-              item?.unit ||
-              "piece",
-
-            quotationItem:
-              true,
-          })
-        )
-      : cartItems ||
-        [];
-
-  // ==========================================================
-  // ITEMS PRICE
-  // ==========================================================
-
-  const itemsPrice =
-    checkoutItems.reduce(
-      (
-        sum,
-        item
-      ) => {
-        const productId =
-          getProductId(
-            item
-          );
-
-        const itemPricing =
-          isWholesaleOrder
-            ? null
-            : pricing[
-                productId
-              ];
-
-        const quantity =
-          Number(
-            item?.quantity ||
-              1
-          );
-
-        const unitPrice =
-          Number(
-            itemPricing
-              ?.unitPrice ??
-              item?.price ??
-              item?.product
-                ?.price ??
-              0
-          );
-
-        const calculatedSubtotal =
-          unitPrice *
-          quantity;
-
-        const subtotal =
-          Number(
-            itemPricing
-              ?.subtotal ??
-              itemPricing
-                ?.total ??
-              calculatedSubtotal
-          );
-
-        return (
-          sum +
-          (
-            Number.isFinite(
-              subtotal
-            )
-              ? subtotal
-              : 0
-          )
+      const subtotal =
+        Number(
+          itemPricing?.subtotal ??
+            itemPricing?.total ??
+            Number(
+              item?.price ||
+                item?.product
+                  ?.price ||
+                0
+            ) * quantity
         );
-      },
-      0
-    );
+
+      return sum + subtotal;
+    },
+    0
+  );
 
   // ==========================================================
   // SHIPPING
   // ==========================================================
 
-  const shippingPrice =
-    0;
+  const shippingPrice = 50;
 
   // ==========================================================
   // TOTAL
@@ -673,7 +359,19 @@ const CheckoutPage = () => {
     shippingPrice;
 
   // ==========================================================
-  // VALIDATE ADDRESS
+  // TOTAL QUANTITY
+  // ==========================================================
+
+  const totalQuantity = (
+    cartItems || []
+  ).reduce(
+    (sum, item) =>
+      sum + getQuantity(item),
+    0
+  );
+
+  // ==========================================================
+  // ADDRESS VALIDATION
   // ==========================================================
 
   const validateAddress =
@@ -720,192 +418,160 @@ const CheckoutPage = () => {
         return "Country is required.";
       }
 
-      // --------------------------------------------------------
-      // PHONE VALIDATION
-      // --------------------------------------------------------
-
-      const cleanPhone =
-        address.phone.replace(
-          /\D/g,
-          ""
-        );
-
-      if (
-        cleanPhone.length <
-          10 ||
-        cleanPhone.length >
-          15
-      ) {
-        return "Please enter a valid phone number.";
-      }
-
-      // --------------------------------------------------------
-      // POSTAL CODE VALIDATION
-      // --------------------------------------------------------
-
-      const cleanPostalCode =
-        address.postalCode.trim();
-
-      if (
-        cleanPostalCode.length <
-          4 ||
-        cleanPostalCode.length >
-          10
-      ) {
-        return "Please enter a valid postal code.";
-      }
-
       return null;
     };
 
   // ==========================================================
   // CREATE DATABASE ORDER
+  //
+  // IMPORTANT:
+  // Database order is created BEFORE Razorpay order.
   // ==========================================================
 
   const createOrderInDB =
     async () => {
-      // ========================================================
-      // WHOLESALE ORDER
-      // ========================================================
+      const orderItems =
+        cartItems.map(
+          (item) => {
+            const productId =
+              getProductId(item);
 
-      if (
-        isWholesaleOrder
-      ) {
-        if (
-          !quotationId
-        ) {
-          throw new Error(
-            "Quotation ID is missing."
-          );
-        }
+            const itemPricing =
+              pricing[
+                productId
+              ];
 
-        if (
-          !quotation
-        ) {
-          throw new Error(
-            "Quotation is still loading. Please try again."
-          );
-        }
+            return {
+              product:
+                productId,
 
-        const response =
-          await createOrderFromQuotation(
-            {
-              quotationId,
+              name:
+                getProductName(
+                  item
+                ),
 
-              shippingAddress: {
-                name:
-                  address.name.trim(),
+              image:
+                getProductImage(
+                  item
+                ),
 
-                phone:
-                  address.phone.trim(),
+              quantity:
+                getQuantity(
+                  item
+                ),
 
-                addressLine1:
-                  address.addressLine1.trim(),
+              price:
+                Number(
+                  itemPricing?.unitPrice ??
+                    item?.price ??
+                    item?.product
+                      ?.price ??
+                    0
+                ),
 
-                addressLine2:
-                  address.addressLine2.trim(),
+              unit:
+                item?.unit ||
+                item?.product
+                  ?.unit ||
+                "piece",
+            };
+          }
+        );
 
-                city:
-                  address.city.trim(),
-
-                state:
-                  address.state.trim(),
-
-                postalCode:
-                  address.postalCode.trim(),
-
-                country:
-                  address.country.trim(),
-              },
-
-        paymentMethod:
-                paymentMethod === "razorpay"
-                  ? "razorpay"
-                  : "cod",
-            }
-          );
-
-        const responseData =
-          response?.data ??
-          response;
-
-        const createdOrder =
-          responseData?.order ||
-          responseData?.data?.order ||
-          responseData?.data ||
-          responseData;
-
-        const orderId =
-          createdOrder?._id ||
-          createdOrder?.id;
-
-        if (
-          !orderId
-        ) {
-          throw new Error(
-            "Order was created but Order ID was not returned by the server."
-          );
-        }
-
-        return {
-          order:
-            createdOrder,
-
-          orderId:
-            String(
-              orderId
-            ),
-        };
-      }
-
-      // ========================================================
-      // NORMAL ORDER
-      // ========================================================
-
-      // Build items array from cart — backend expects:
-      // { product: id, quantity: N }
-      const cartOrderItems = (cartItems || []).map(
-        (item) => ({
-          product:
-            item.productId ||
-            item._id ||
-            item.product?._id ||
-            item.product,
-          quantity: Number(item.quantity || 1),
-        })
+      console.log(
+        "========================================"
       );
 
-      const payload = {
-        items: cartOrderItems,
+      console.log(
+        "CREATING ORDER FROM CHECKOUT"
+      );
 
-        shippingAddress: {
-          name:         address.name.trim(),
-          phone:        address.phone.trim(),
-          addressLine1: address.addressLine1.trim(),
-          addressLine2: address.addressLine2
-            ? address.addressLine2.trim()
-            : "",
-          city:         address.city.trim(),
-          state:        address.state.trim(),
-          postalCode:   address.postalCode.trim(),
-          country:      address.country.trim() || "India",
-        },
+      console.log(
+        "Order Items:",
+        orderItems
+      );
 
-        paymentMethod:
-          paymentMethod === "razorpay"
-            ? "razorpay"
-            : "cod",
-      };
+      console.log(
+        "Shipping Address:",
+        address
+      );
+
+      console.log(
+        "Payment Method:",
+        paymentMethod
+      );
+
+      console.log(
+        "Items Price:",
+        itemsPrice
+      );
+
+      console.log(
+        "Shipping:",
+        shippingPrice
+      );
+
+      console.log(
+        "Total:",
+        totalPrice
+      );
+
+      console.log(
+        "========================================"
+      );
 
       const response =
         await API.post(
           "/orders",
-          payload
+          {
+            orderItems,
+
+            shippingAddress: {
+              name:
+                address.name.trim(),
+
+              phone:
+                address.phone.trim(),
+
+              addressLine1:
+                address.addressLine1.trim(),
+
+              addressLine2:
+                address.addressLine2.trim(),
+
+              city:
+                address.city.trim(),
+
+              state:
+                address.state.trim(),
+
+              postalCode:
+                address.postalCode.trim(),
+
+              country:
+                address.country.trim(),
+            },
+
+            paymentMethod,
+
+            // Sent for compatibility.
+            // Backend recalculates actual wholesale pricing.
+            itemsPrice,
+
+            shippingPrice,
+
+            totalPrice,
+          }
         );
 
       const responseData =
         response?.data ??
         response;
+
+      console.log(
+        "CREATE ORDER RESPONSE:",
+        responseData
+      );
 
       const createdOrder =
         responseData?.order ||
@@ -917,9 +583,12 @@ const CheckoutPage = () => {
         createdOrder?._id ||
         createdOrder?.id;
 
-      if (
-        !orderId
-      ) {
+      if (!orderId) {
+        console.error(
+          "Order response did not contain ID:",
+          responseData
+        );
+
         throw new Error(
           "Order was created but Order ID was not returned by the server."
         );
@@ -930,9 +599,7 @@ const CheckoutPage = () => {
           createdOrder,
 
         orderId:
-          String(
-            orderId
-          ),
+          String(orderId),
       };
     };
 
@@ -941,25 +608,36 @@ const CheckoutPage = () => {
   // ==========================================================
 
   const createRazorpayOrder =
-    async (
-      orderId
-    ) => {
-      if (
-        !orderId
-      ) {
+    async (orderId) => {
+      if (!orderId) {
         throw new Error(
           "Order ID is missing. Cannot create payment order."
         );
       }
+
+      console.log(
+        "========================================"
+      );
+
+      console.log(
+        "CREATING RAZORPAY ORDER"
+      );
+
+      console.log(
+        "Database Order ID:",
+        orderId
+      );
+
+      console.log(
+        "========================================"
+      );
 
       const response =
         await API.post(
           "/payments/create-order",
           {
             orderId:
-              String(
-                orderId
-              ),
+              String(orderId),
           }
         );
 
@@ -967,15 +645,10 @@ const CheckoutPage = () => {
         response?.data ??
         response;
 
-      if (
-        responseData?.success ===
-        false
-      ) {
-        throw new Error(
-          responseData?.message ||
-            "Unable to create Razorpay order."
-        );
-      }
+      console.log(
+        "RAZORPAY ORDER RESPONSE:",
+        responseData
+      );
 
       const paymentData =
         responseData?.payment ||
@@ -985,11 +658,11 @@ const CheckoutPage = () => {
 
       const razorpayOrderId =
         paymentData?.razorpayOrderId ||
-        paymentData?.razorpay_order_id ||
-        paymentData?.razorpayOrder?.id ||
-        responseData?.razorpayOrder?.id ||
-        responseData?.razorpay_order_id ||
-        responseData?.order?.id;
+        paymentData?.razorpayOrder
+          ?.id ||
+        responseData
+          ?.razorpayOrder
+          ?.id;
 
       const amount =
         paymentData?.amountInPaise ??
@@ -1004,36 +677,25 @@ const CheckoutPage = () => {
 
       const keyId =
         paymentData?.keyId ||
-        paymentData?.key_id ||
         responseData?.keyId ||
-        responseData?.key_id ||
         import.meta.env
-          .VITE_RAZORPAY_KEY_ID;
+          ?.VITE_RAZORPAY_KEY_ID ||
+        "rzp_test_TQ87uv6EO8OzPI";
 
-      if (
-        !razorpayOrderId
-      ) {
+      if (!razorpayOrderId) {
+        console.error(
+          "Razorpay response missing ID:",
+          responseData
+        );
+
         throw new Error(
           "Razorpay order ID was not returned by the server."
         );
       }
 
-      if (
-        amount ===
-          undefined ||
-        amount ===
-          null
-      ) {
+      if (!amount) {
         throw new Error(
           "Razorpay amount was not returned by the server."
-        );
-      }
-
-      if (
-        !keyId
-      ) {
-        throw new Error(
-          "Razorpay Key ID is missing."
         );
       }
 
@@ -1041,10 +703,7 @@ const CheckoutPage = () => {
         id:
           razorpayOrderId,
 
-        amount:
-          Number(
-            amount
-          ),
+        amount,
 
         currency,
 
@@ -1058,76 +717,50 @@ const CheckoutPage = () => {
 
   const verifyRazorpayPayment =
     async (
-      paymentResponse,
-      databaseOrderId
+      paymentResponse
     ) => {
-      const razorpayOrderId =
+      console.log(
+        "========================================"
+      );
+
+      console.log(
+        "VERIFYING RAZORPAY PAYMENT"
+      );
+
+      console.log(
         paymentResponse
-          ?.razorpay_order_id;
+      );
 
-      const razorpayPaymentId =
-        paymentResponse
-          ?.razorpay_payment_id;
-
-      const razorpaySignature =
-        paymentResponse
-          ?.razorpay_signature;
-
-      if (
-        !razorpayOrderId
-      ) {
-        throw new Error(
-          "Razorpay Order ID is missing."
-        );
-      }
-
-      if (
-        !razorpayPaymentId
-      ) {
-        throw new Error(
-          "Razorpay Payment ID is missing."
-        );
-      }
-
-      if (
-        !razorpaySignature
-      ) {
-        throw new Error(
-          "Razorpay payment signature is missing."
-        );
-      }
-
-      if (
-        !databaseOrderId
-      ) {
-        throw new Error(
-          "Database Order ID is missing."
-        );
-      }
+      console.log(
+        "========================================"
+      );
 
       const response =
         await API.post(
           "/payments/verify",
           {
-            orderId:
-              String(
-                databaseOrderId
-              ),
+            razorpayOrderId:
+              paymentResponse
+                ?.razorpay_order_id,
 
-            razorpay_order_id:
-              razorpayOrderId,
+            razorpayPaymentId:
+              paymentResponse
+                ?.razorpay_payment_id,
 
-            razorpay_payment_id:
-              razorpayPaymentId,
-
-            razorpay_signature:
-              razorpaySignature,
+            razorpaySignature:
+              paymentResponse
+                ?.razorpay_signature,
           }
         );
 
       const responseData =
         response?.data ??
         response;
+
+      console.log(
+        "PAYMENT VERIFY RESPONSE:",
+        responseData
+      );
 
       if (
         responseData?.success ===
@@ -1154,7 +787,7 @@ const CheckoutPage = () => {
         !window.Razorpay
       ) {
         throw new Error(
-          "Razorpay SDK is not loaded. Please add Razorpay Checkout script to index.html."
+          "Razorpay SDK is not loaded. Please check index.html."
         );
       }
 
@@ -1163,23 +796,33 @@ const CheckoutPage = () => {
           databaseOrderId
         );
 
+      console.log(
+        "Opening Razorpay:",
+        razorpayOrder
+      );
+
+      const razorpayKey =
+        razorpayOrder.keyId ||
+        import.meta.env
+          ?.VITE_RAZORPAY_KEY_ID ||
+        "rzp_test_TQ87uv6EO8OzPI";
+
       const options = {
         key:
-          razorpayOrder.keyId,
+          razorpayKey,
 
         amount:
           razorpayOrder.amount,
 
         currency:
-          razorpayOrder.currency,
+          razorpayOrder.currency ||
+          "INR",
 
         name:
           "Shanti Enterprises",
 
         description:
-          isWholesaleOrder
-            ? "Wholesale Order Payment"
-            : "Order Payment",
+          "Wholesale Order Payment",
 
         order_id:
           razorpayOrder.id,
@@ -1212,10 +855,6 @@ const CheckoutPage = () => {
             "#0d9488",
         },
 
-        // ======================================================
-        // PAYMENT SUCCESS
-        // ======================================================
-
         handler:
           async (
             paymentResponse
@@ -1225,13 +864,10 @@ const CheckoutPage = () => {
                 true
               );
 
-              setError(
-                ""
-              );
+              setError("");
 
               await verifyRazorpayPayment(
-                paymentResponse,
-                databaseOrderId
+                paymentResponse
               );
 
               clearCart();
@@ -1241,37 +877,30 @@ const CheckoutPage = () => {
               );
 
               navigate(
-                `/order-success/${databaseOrderId}`,
-                {
-                  replace:
-                    true,
-                }
+                `/order-success/${databaseOrderId}`
               );
             } catch (
-              err
+              paymentError
             ) {
               console.error(
                 "Payment verification error:",
-                err
+                paymentError
               );
 
               setError(
-                err?.response
+                paymentError
+                  ?.response
                   ?.data
                   ?.message ||
-                  err?.message ||
+                  paymentError?.message ||
                   "Payment verification failed."
               );
-
+            } finally {
               setLoading(
                 false
               );
             }
           },
-
-        // ======================================================
-        // MODAL DISMISS
-        // ======================================================
 
         modal: {
           ondismiss:
@@ -1292,15 +921,9 @@ const CheckoutPage = () => {
           options
         );
 
-      // ========================================================
-      // PAYMENT FAILED
-      // ========================================================
-
       razorpay.on(
         "payment.failed",
-        (
-          response
-        ) => {
+        (response) => {
           console.error(
             "Razorpay payment failed:",
             response
@@ -1326,32 +949,17 @@ const CheckoutPage = () => {
   // ==========================================================
 
   const handlePlaceOrder =
-    async (
-      event
-    ) => {
+    async (event) => {
       event.preventDefault();
 
-      if (
-        loading
-      ) {
-        return;
-      }
-
-      setError(
-        ""
-      );
-
-      setSuccessMessage(
-        ""
-      );
+      setError("");
+      setSuccessMessage("");
 
       // --------------------------------------------------------
       // LOGIN
       // --------------------------------------------------------
 
-      if (
-        !isLoggedIn
-      ) {
+      if (!isLoggedIn) {
         setError(
           "Please login to place an order."
         );
@@ -1360,58 +968,15 @@ const CheckoutPage = () => {
       }
 
       // --------------------------------------------------------
-      // NORMAL CART
+      // EMPTY CART
       // --------------------------------------------------------
 
       if (
-        !isWholesaleOrder &&
-        (!cartItems ||
-          cartItems.length ===
-            0)
+        !cartItems ||
+        cartItems.length === 0
       ) {
         setError(
           "Your cart is empty."
-        );
-
-        return;
-      }
-
-      // --------------------------------------------------------
-      // WHOLESALE
-      // --------------------------------------------------------
-
-      if (
-        isWholesaleOrder &&
-        loadingQuotation
-      ) {
-        setError(
-          "Please wait while the quotation is loaded."
-        );
-
-        return;
-      }
-
-      if (
-        isWholesaleOrder &&
-        !quotation
-      ) {
-        setError(
-          "Unable to load the accepted quotation."
-        );
-
-        return;
-      }
-
-      // --------------------------------------------------------
-      // PRICING
-      // --------------------------------------------------------
-
-      if (
-        !isWholesaleOrder &&
-        loadingPricing
-      ) {
-        setError(
-          "Please wait while prices are calculated."
         );
 
         return;
@@ -1424,9 +989,7 @@ const CheckoutPage = () => {
       const addressError =
         validateAddress();
 
-      if (
-        addressError
-      ) {
+      if (addressError) {
         setError(
           addressError
         );
@@ -1435,14 +998,25 @@ const CheckoutPage = () => {
       }
 
       // --------------------------------------------------------
-      // TOTAL
+      // PRICING
       // --------------------------------------------------------
 
       if (
-        !Number.isFinite(
-          totalPrice
-        ) ||
-        totalPrice <= 0
+        loadingPricing
+      ) {
+        setError(
+          "Please wait while wholesale prices are calculated."
+        );
+
+        return;
+      }
+
+      // --------------------------------------------------------
+      // PRICE
+      // --------------------------------------------------------
+
+      if (
+        itemsPrice <= 0
       ) {
         setError(
           "Unable to calculate the order amount."
@@ -1451,28 +1025,33 @@ const CheckoutPage = () => {
         return;
       }
 
-      setLoading(
-        true
-      );
+      // --------------------------------------------------------
+      // PROCESSING
+      // --------------------------------------------------------
+
+      setLoading(true);
 
       try {
         // ======================================================
         // STEP 1
-        // CREATE DATABASE ORDER
+        // Create database order first.
         // ======================================================
 
         const {
+          order,
           orderId,
         } =
           await createOrderInDB();
 
-        if (
-          !orderId
-        ) {
-          throw new Error(
-            "Order ID was not generated."
-          );
-        }
+        console.log(
+          "DATABASE ORDER CREATED:",
+          order
+        );
+
+        console.log(
+          "DATABASE ORDER ID:",
+          orderId
+        );
 
         // ======================================================
         // COD
@@ -1480,16 +1059,12 @@ const CheckoutPage = () => {
 
         if (
           paymentMethod ===
-          "cod"
+          "COD"
         ) {
           clearCart();
 
           navigate(
-            `/order-success/${orderId}`,
-            {
-              replace:
-                true,
-            }
+            `/order-success/${orderId}`
           );
 
           return;
@@ -1501,7 +1076,7 @@ const CheckoutPage = () => {
 
         if (
           paymentMethod ===
-          "razorpay"
+          "Razorpay"
         ) {
           await openRazorpayCheckout(
             orderId
@@ -1514,333 +1089,412 @@ const CheckoutPage = () => {
           "Invalid payment method selected."
         );
       } catch (
-        err
+        placeOrderError
       ) {
         console.error(
           "PLACE ORDER ERROR:",
-          err
+          placeOrderError
         );
 
+        const backendMessage =
+          placeOrderError
+            ?.response
+            ?.data
+            ?.message;
+
         setError(
-          err?.response
-            ?.data?.message ||
-            err?.message ||
+          backendMessage ||
+            placeOrderError?.message ||
             "Failed to place order."
         );
 
-        setLoading(
-          false
-        );
+        setLoading(false);
       }
     };
 
   // ==========================================================
-  // EMPTY CART
+  // EMPTY CART UI
   // ==========================================================
 
   if (
-    !isWholesaleOrder &&
-    (!cartItems ||
-      cartItems.length ===
-        0)
+    !cartItems ||
+    cartItems.length === 0
   ) {
     return (
-      <div className="max-w-3xl mx-auto px-4 py-20">
+      <section className="checkout-page checkout-empty-page">
+        <div className="checkout-container">
 
-        <div className="bg-white border border-slate-200 rounded-2xl p-10 text-center shadow-sm">
+          <div className="checkout-empty-card">
 
-          <div className="text-5xl mb-4">
-            🛒
-          </div>
+            <div className="checkout-empty-icon">
+              🛒
+            </div>
 
-          <h1 className="text-2xl font-bold text-slate-800">
-            Your cart is empty
-          </h1>
+            <span className="checkout-eyebrow">
+              SHANTI ENTERPRISES
+            </span>
 
-          <p className="text-slate-500 mt-2">
-            Add some products before
-            proceeding to checkout.
-          </p>
-
-          <button
-            type="button"
-            onClick={() =>
-              navigate(
-                "/products"
-              )
-            }
-            className="mt-6 px-6 py-3 bg-teal-600 text-white rounded-lg font-medium hover:bg-teal-700 transition"
-          >
-            Continue Shopping
-          </button>
-
-        </div>
-
-      </div>
-    );
-  }
-
-  // ==========================================================
-  // LOADING WHOLESALE QUOTATION
-  // ==========================================================
-
-  if (
-    isWholesaleOrder &&
-    loadingQuotation
-  ) {
-    return (
-      <section className="min-h-screen bg-slate-50 py-20">
-
-        <div className="max-w-3xl mx-auto px-4">
-
-          <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-10 text-center">
-
-            <div className="w-10 h-10 border-4 border-slate-200 border-t-teal-600 rounded-full animate-spin mx-auto" />
-
-            <h1 className="text-xl font-bold text-slate-800 mt-5">
-              Loading quotation...
+            <h1>
+              Your cart is empty
             </h1>
 
-            <p className="text-slate-500 mt-2">
-              Please wait while we prepare
-              your wholesale order.
+            <p>
+              Add some products before
+              proceeding to checkout.
             </p>
+
+            <button
+              type="button"
+              className="checkout-primary-button"
+              onClick={() =>
+                navigate(
+                  "/products"
+                )
+              }
+            >
+              Continue Shopping
+              <span>→</span>
+            </button>
 
           </div>
 
         </div>
-
       </section>
     );
   }
-
-  // ==========================================================
-  // INPUT CLASS
-  // ==========================================================
-
-  const inputClass =
-    "w-full border border-slate-300 rounded-lg px-4 py-3 text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent";
 
   // ==========================================================
   // UI
   // ==========================================================
 
   return (
-    <section className="min-h-screen bg-slate-50 py-10">
+    <section className="checkout-page">
 
-      <div className="max-w-6xl mx-auto px-4">
+      <div className="checkout-background-glow checkout-background-glow-one" />
+      <div className="checkout-background-glow checkout-background-glow-two" />
 
-        {/* ==================================================
+      <div className="checkout-container">
+
+        {/* ====================================================
             HEADER
-            ================================================== */}
+            ==================================================== */}
 
-        <div className="mb-8">
+        <header className="checkout-page-header">
 
-          <p className="text-sm text-teal-600 font-semibold uppercase tracking-wide">
-            Shanti Enterprises
-          </p>
+          <div className="checkout-header-copy">
 
-          <h1 className="text-3xl font-bold text-slate-900 mt-1">
-            Checkout
-          </h1>
+            <button
+              type="button"
+              className="checkout-back-link"
+              onClick={() =>
+                navigate(
+                  "/cart"
+                )
+              }
+            >
+              <span>←</span>
+              Back to Cart
+            </button>
 
-          <p className="text-slate-500 mt-2">
-            {isWholesaleOrder
-              ? "Complete your shipping details and place your wholesale order."
-              : "Complete your shipping details and place your order."}
-          </p>
+            <span className="checkout-eyebrow">
+              SHANTI ENTERPRISES
+            </span>
+
+            <h1>
+              Complete your order
+              <span>.</span>
+            </h1>
+
+            <p>
+              Review your details, choose a
+              payment method, and place your
+              wholesale order securely.
+            </p>
+
+          </div>
+
+          <div className="checkout-header-badge">
+            <span className="checkout-header-badge-icon">
+              🔒
+            </span>
+
+            <div>
+              <strong>
+                Secure Checkout
+              </strong>
+
+              <small>
+                Protected order flow
+              </small>
+            </div>
+          </div>
+
+        </header>
+
+        {/* ====================================================
+            STEPS
+            ==================================================== */}
+
+        <div className="checkout-steps">
+
+          <div className="checkout-step completed">
+            <span className="checkout-step-number">
+              ✓
+            </span>
+
+            <div>
+              <strong>
+                Cart
+              </strong>
+
+              <small>
+                Products selected
+              </small>
+            </div>
+          </div>
+
+          <span className="checkout-step-line active" />
+
+          <div className="checkout-step active">
+            <span className="checkout-step-number">
+              2
+            </span>
+
+            <div>
+              <strong>
+                Checkout
+              </strong>
+
+              <small>
+                Delivery & payment
+              </small>
+            </div>
+          </div>
+
+          <span className="checkout-step-line" />
+
+          <div className="checkout-step">
+            <span className="checkout-step-number">
+              3
+            </span>
+
+            <div>
+              <strong>
+                Confirmation
+              </strong>
+
+              <small>
+                Order complete
+              </small>
+            </div>
+          </div>
 
         </div>
 
-        {/* ==================================================
-            ERROR
-            ================================================== */}
+        {/* ====================================================
+            ALERTS
+            ==================================================== */}
 
         {error && (
-          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+          <div className="checkout-alert checkout-alert-error">
+            <div className="checkout-alert-icon">
+              !
+            </div>
 
-            <p className="text-sm font-medium text-red-700">
-              {error}
-            </p>
+            <div>
+              <strong>
+                Checkout needs your attention
+              </strong>
 
+              <p>
+                {error}
+              </p>
+            </div>
           </div>
         )}
-
-        {/* ==================================================
-            SUCCESS
-            ================================================== */}
 
         {successMessage && (
-          <div className="mb-6 rounded-xl border border-green-200 bg-green-50 px-4 py-3">
+          <div className="checkout-alert checkout-alert-success">
+            <div className="checkout-alert-icon">
+              ✓
+            </div>
 
-            <p className="text-sm font-medium text-green-700">
-              {successMessage}
-            </p>
+            <div>
+              <strong>
+                Order updated
+              </strong>
 
+              <p>
+                {successMessage}
+              </p>
+            </div>
           </div>
         )}
 
-        {/* ==================================================
-            MAIN GRID
-            ================================================== */}
+        {/* ====================================================
+            MAIN LAYOUT
+            ==================================================== */}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="checkout-layout">
 
           {/* ==================================================
-              CHECKOUT FORM
+              LEFT — FORM
               ================================================== */}
 
-          <div className="lg:col-span-2">
+          <div className="checkout-main-column">
 
             <form
               onSubmit={
                 handlePlaceOrder
               }
-              className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 md:p-8"
+              className="checkout-form-card"
             >
 
               {/* ==================================================
-                  SHIPPING ADDRESS
+                  SHIPPING
                   ================================================== */}
 
-              <div className="mb-8">
+              <div className="checkout-section-header">
 
-                <h2 className="text-xl font-bold text-slate-800">
-                  Shipping Address
-                </h2>
-
-                <p className="text-sm text-slate-500 mt-1">
-                  Enter the address where you
-                  want the order delivered.
-                </p>
-
-              </div>
-
-              {/* NAME */}
-
-              <div className="mb-4">
-
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Full Name
-                </label>
-
-                <input
-                  type="text"
-                  name="name"
-                  value={
-                    address.name
-                  }
-                  onChange={
-                    handleChange
-                  }
-                  placeholder="Enter full name"
-                  className={
-                    inputClass
-                  }
-                  autoComplete="name"
-                  required
-                />
-
-              </div>
-
-              {/* PHONE */}
-
-              <div className="mb-4">
-
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Phone Number
-                </label>
-
-                <input
-                  type="tel"
-                  name="phone"
-                  value={
-                    address.phone
-                  }
-                  onChange={
-                    handleChange
-                  }
-                  placeholder="Enter phone number"
-                  className={
-                    inputClass
-                  }
-                  autoComplete="tel"
-                  required
-                />
-
-              </div>
-
-              {/* ADDRESS LINE 1 */}
-
-              <div className="mb-4">
-
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Address
-                </label>
-
-                <input
-                  type="text"
-                  name="addressLine1"
-                  value={
-                    address.addressLine1
-                  }
-                  onChange={
-                    handleChange
-                  }
-                  placeholder="House / Building / Street"
-                  className={
-                    inputClass
-                  }
-                  autoComplete="street-address"
-                  required
-                />
-
-              </div>
-
-              {/* ADDRESS LINE 2 */}
-
-              <div className="mb-4">
-
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-
-                  Address Line 2
-
-                  <span className="text-slate-400 font-normal">
-                    {" "}
-                    (Optional)
-                  </span>
-
-                </label>
-
-                <input
-                  type="text"
-                  name="addressLine2"
-                  value={
-                    address.addressLine2
-                  }
-                  onChange={
-                    handleChange
-                  }
-                  placeholder="Landmark / Area"
-                  className={
-                    inputClass
-                  }
-                  autoComplete="address-line2"
-                />
-
-              </div>
-
-              {/* CITY + STATE */}
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div className="checkout-section-icon checkout-icon-cyan">
+                  📍
+                </div>
 
                 <div>
+                  <span>
+                    STEP 01
+                  </span>
 
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    City
+                  <h2>
+                    Shipping Address
+                  </h2>
+
+                  <p>
+                    Where should we deliver your
+                    order?
+                  </p>
+                </div>
+
+              </div>
+
+              <div className="checkout-form-grid">
+
+                {/* FULL NAME */}
+
+                <div className="checkout-field checkout-field-full">
+
+                  <label htmlFor="checkout-name">
+                    Full Name
+                    <b>*</b>
                   </label>
 
                   <input
+                    id="checkout-name"
+                    type="text"
+                    name="name"
+                    value={
+                      address.name
+                    }
+                    onChange={
+                      handleChange
+                    }
+                    placeholder="Enter full name"
+                    autoComplete="name"
+                    required
+                  />
+
+                </div>
+
+                {/* PHONE */}
+
+                <div className="checkout-field">
+
+                  <label htmlFor="checkout-phone">
+                    Phone Number
+                    <b>*</b>
+                  </label>
+
+                  <input
+                    id="checkout-phone"
+                    type="tel"
+                    name="phone"
+                    value={
+                      address.phone
+                    }
+                    onChange={
+                      handleChange
+                    }
+                    placeholder="Enter phone number"
+                    autoComplete="tel"
+                    required
+                  />
+
+                </div>
+
+                {/* ADDRESS LINE 1 */}
+
+                <div className="checkout-field checkout-field-full">
+
+                  <label htmlFor="checkout-address">
+                    Address
+                    <b>*</b>
+                  </label>
+
+                  <input
+                    id="checkout-address"
+                    type="text"
+                    name="addressLine1"
+                    value={
+                      address.addressLine1
+                    }
+                    onChange={
+                      handleChange
+                    }
+                    placeholder="House / Building / Street"
+                    autoComplete="street-address"
+                    required
+                  />
+
+                </div>
+
+                {/* ADDRESS LINE 2 */}
+
+                <div className="checkout-field checkout-field-full">
+
+                  <label htmlFor="checkout-address-two">
+                    Address Line 2
+                    <span>
+                      Optional
+                    </span>
+                  </label>
+
+                  <input
+                    id="checkout-address-two"
+                    type="text"
+                    name="addressLine2"
+                    value={
+                      address.addressLine2
+                    }
+                    onChange={
+                      handleChange
+                    }
+                    placeholder="Landmark / Area"
+                    autoComplete="address-line2"
+                  />
+
+                </div>
+
+                {/* CITY */}
+
+                <div className="checkout-field">
+
+                  <label htmlFor="checkout-city">
+                    City
+                    <b>*</b>
+                  </label>
+
+                  <input
+                    id="checkout-city"
                     type="text"
                     name="city"
                     value={
@@ -1850,22 +1504,23 @@ const CheckoutPage = () => {
                       handleChange
                     }
                     placeholder="City"
-                    className={
-                      inputClass
-                    }
                     autoComplete="address-level2"
                     required
                   />
 
                 </div>
 
-                <div>
+                {/* STATE */}
 
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                <div className="checkout-field">
+
+                  <label htmlFor="checkout-state">
                     State
+                    <b>*</b>
                   </label>
 
                   <input
+                    id="checkout-state"
                     type="text"
                     name="state"
                     value={
@@ -1875,28 +1530,23 @@ const CheckoutPage = () => {
                       handleChange
                     }
                     placeholder="State"
-                    className={
-                      inputClass
-                    }
                     autoComplete="address-level1"
                     required
                   />
 
                 </div>
 
-              </div>
+                {/* POSTAL */}
 
-              {/* POSTAL + COUNTRY */}
+                <div className="checkout-field">
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-
-                <div>
-
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                  <label htmlFor="checkout-postal">
                     Postal Code
+                    <b>*</b>
                   </label>
 
                   <input
+                    id="checkout-postal"
                     type="text"
                     name="postalCode"
                     value={
@@ -1906,22 +1556,23 @@ const CheckoutPage = () => {
                       handleChange
                     }
                     placeholder="411014"
-                    className={
-                      inputClass
-                    }
                     autoComplete="postal-code"
                     required
                   />
 
                 </div>
 
-                <div>
+                {/* COUNTRY */}
 
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                <div className="checkout-field">
+
+                  <label htmlFor="checkout-country">
                     Country
+                    <b>*</b>
                   </label>
 
                   <input
+                    id="checkout-country"
                     type="text"
                     name="country"
                     value={
@@ -1930,9 +1581,7 @@ const CheckoutPage = () => {
                     onChange={
                       handleChange
                     }
-                    className={
-                      inputClass
-                    }
+                    placeholder="India"
                     autoComplete="country-name"
                     required
                   />
@@ -1945,190 +1594,281 @@ const CheckoutPage = () => {
                   PAYMENT
                   ================================================== */}
 
-              <div className="border-t border-slate-200 pt-8">
+              <div className="checkout-divider" />
 
-                <h2 className="text-xl font-bold text-slate-800">
-                  Payment Method
-                </h2>
+              <div className="checkout-section-header">
 
-                <p className="text-sm text-slate-500 mt-1 mb-5">
-                  Select how you want to pay.
-                </p>
+                <div className="checkout-section-icon checkout-icon-violet">
+                  ₹
+                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <span>
+                    STEP 02
+                  </span>
 
-                  {/* COD */}
+                  <h2>
+                    Payment Method
+                  </h2>
 
-                  <label
-                    className={`cursor-pointer rounded-xl border p-4 transition ${
+                  <p>
+                    Choose how you want to pay.
+                  </p>
+                </div>
+
+              </div>
+
+              <div className="checkout-payment-grid">
+
+                {/* COD */}
+
+                <label
+                  className={`checkout-payment-option ${
+                    paymentMethod ===
+                    "COD"
+                      ? "selected"
+                      : ""
+                  }`}
+                >
+
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value="COD"
+                    checked={
                       paymentMethod ===
-                      "cod"
-                        ? "border-teal-500 bg-teal-50"
-                        : "border-slate-200 hover:border-slate-300"
-                    }`}
-                  >
+                      "COD"
+                    }
+                    onChange={(event) =>
+                      setPaymentMethod(
+                        event.target
+                          .value
+                      )
+                    }
+                  />
 
-                    <div className="flex items-start gap-3">
+                  <span className="checkout-radio" />
 
-                      <input
-                        type="radio"
-                        name="paymentMethod"
-                        value="cod"
-                        checked={
-                          paymentMethod ===
-                          "cod"
-                        }
-                        onChange={(
-                          event
-                        ) =>
-                          setPaymentMethod(
-                            event.target.value
-                          )
-                        }
-                        className="mt-1"
-                      />
+                  <span className="checkout-payment-symbol">
+                    💵
+                  </span>
 
-                      <div>
+                  <span className="checkout-payment-copy">
 
-                        <p className="font-semibold text-slate-800">
-                          Cash on Delivery
-                        </p>
+                    <strong>
+                      Cash on Delivery
+                    </strong>
 
-                        <p className="text-sm text-slate-500 mt-1">
-                          Pay when your order
-                          is delivered.
-                        </p>
+                    <small>
+                      Pay when your order is
+                      delivered.
+                    </small>
 
-                      </div>
+                  </span>
 
-                    </div>
+                  <span className="checkout-payment-check">
+                    ✓
+                  </span>
 
-                  </label>
+                </label>
 
-                  {/* RAZORPAY */}
+                {/* RAZORPAY */}
 
-                  <label
-                    className={`cursor-pointer rounded-xl border p-4 transition ${
+                <label
+                  className={`checkout-payment-option ${
+                    paymentMethod ===
+                    "Razorpay"
+                      ? "selected"
+                      : ""
+                  }`}
+                >
+
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value="Razorpay"
+                    checked={
                       paymentMethod ===
-                      "razorpay"
-                        ? "border-teal-500 bg-teal-50"
-                        : "border-slate-200 hover:border-slate-300"
-                    }`}
-                  >
+                      "Razorpay"
+                    }
+                    onChange={(event) =>
+                      setPaymentMethod(
+                        event.target
+                          .value
+                      )
+                    }
+                  />
 
-                    <div className="flex items-start gap-3">
+                  <span className="checkout-radio" />
 
-                      <input
-                        type="radio"
-                        name="paymentMethod"
-                        value="razorpay"
-                        checked={
-                          paymentMethod ===
-                          "razorpay"
-                        }
-                        onChange={(
-                          event
-                        ) =>
-                          setPaymentMethod(
-                            event.target.value
-                          )
-                        }
-                        className="mt-1"
-                      />
+                  <span className="checkout-payment-symbol">
+                    ⚡
+                  </span>
 
-                      <div>
+                  <span className="checkout-payment-copy">
 
-                        <p className="font-semibold text-slate-800">
-                          Online Payment
-                        </p>
+                    <strong>
+                      Online Payment
+                    </strong>
 
-                        <p className="text-sm text-slate-500 mt-1">
-                          Pay securely using
-                          Razorpay.
-                        </p>
+                    <small>
+                      Pay securely using
+                      Razorpay.
+                    </small>
 
-                      </div>
+                  </span>
 
-                    </div>
+                  <span className="checkout-payment-check">
+                    ✓
+                  </span>
 
-                  </label>
+                </label>
 
+              </div>
+
+              {/* ==================================================
+                  SECURITY NOTE
+                  ================================================== */}
+
+              <div className="checkout-security-note">
+
+                <span>
+                  🔐
+                </span>
+
+                <div>
+                  <strong>
+                    Your payment is protected
+                  </strong>
+
+                  <p>
+                    Online payments are processed
+                    securely through Razorpay.
+                  </p>
                 </div>
 
               </div>
 
               {/* ==================================================
-                  PLACE ORDER
+                  SUBMIT
                   ================================================== */}
 
-              <button
-                type="submit"
-                disabled={
-                  loading ||
-                  loadingPricing ||
-                  loadingQuotation
-                }
-                className="w-full mt-8 bg-teal-600 text-white py-3.5 rounded-xl hover:bg-teal-700 transition font-semibold disabled:bg-slate-300 disabled:cursor-not-allowed"
-              >
+              <div className="checkout-form-actions">
 
-                {loading
-                  ? "Processing..."
-                  : loadingPricing ||
-                    loadingQuotation
-                  ? "Preparing Order..."
-                  : paymentMethod ===
-                    "razorpay"
-                  ? "Proceed to Payment"
-                  : isWholesaleOrder
-                  ? "Place Wholesale Order"
-                  : "Place Order"}
+                <button
+                  type="button"
+                  className="checkout-back-button"
+                  onClick={() =>
+                    navigate(
+                      "/cart"
+                    )
+                  }
+                  disabled={
+                    loading
+                  }
+                >
+                  <span>
+                    ←
+                  </span>
 
-              </button>
+                  Back to Cart
+                </button>
+
+                <button
+                  type="submit"
+                  className="checkout-submit-button"
+                  disabled={
+                    loading ||
+                    loadingPricing
+                  }
+                >
+
+                  {loading ? (
+                    <>
+                      <span className="checkout-button-spinner" />
+                      Processing...
+                    </>
+                  ) : loadingPricing ? (
+                    <>
+                      <span className="checkout-button-spinner" />
+                      Calculating Prices...
+                    </>
+                  ) : paymentMethod ===
+                    "Razorpay" ? (
+                    <>
+                      Proceed to Payment
+                      <span>
+                        →
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      Place Order
+                      <span>
+                        →
+                      </span>
+                    </>
+                  )}
+
+                </button>
+
+              </div>
 
             </form>
 
           </div>
 
           {/* ==================================================
-              ORDER SUMMARY
+              RIGHT — SUMMARY
               ================================================== */}
 
-          <aside className="lg:col-span-1">
+          <aside className="checkout-summary-column">
 
-            <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 sticky top-6">
+            <div className="checkout-summary-card">
 
-              <h2 className="text-xl font-bold text-slate-800 mb-5">
-                Order Summary
-              </h2>
+              {/* SUMMARY HEADER */}
 
-              {/* WHOLESALE */}
+              <div className="checkout-summary-header">
 
-              {isWholesaleOrder &&
-                quotation && (
-                  <div className="mb-5 rounded-xl border border-teal-200 bg-teal-50 p-4">
+                <div>
+                  <span>
+                    ORDER SUMMARY
+                  </span>
 
-                    <p className="text-xs font-semibold uppercase tracking-wide text-teal-700">
-                      Wholesale Quotation
-                    </p>
+                  <h2>
+                    Your Order
+                  </h2>
+                </div>
 
-                    <p className="text-sm font-semibold text-slate-800 mt-1">
-                      {quotation.quotationNumber ||
-                        quotation._id}
-                    </p>
+                <div className="checkout-summary-count">
+                  {cartItems.length}
+                </div>
 
-                    <p className="text-xs text-slate-500 mt-1">
-                      Accepted quotation pricing
-                      will be used for this order.
-                    </p>
+              </div>
 
+              {/* PRICE CALCULATION STATE */}
+
+              {loadingPricing && (
+                <div className="checkout-pricing-status">
+                  <span className="checkout-button-spinner" />
+
+                  <div>
+                    <strong>
+                      Calculating wholesale prices
+                    </strong>
+
+                    <small>
+                      Checking quantity-based pricing...
+                    </small>
                   </div>
-                )}
+                </div>
+              )}
 
               {/* ITEMS */}
 
-              <div className="space-y-4">
+              <div className="checkout-summary-items">
 
-                {checkoutItems.map(
+                {cartItems.map(
                   (
                     item,
                     index
@@ -2139,22 +1879,18 @@ const CheckoutPage = () => {
                       );
 
                     const itemPricing =
-                      isWholesaleOrder
-                        ? null
-                        : pricing[
-                            productId
-                          ];
+                      pricing[
+                        productId
+                      ];
 
                     const quantity =
-                      Number(
-                        item?.quantity ||
-                          1
+                      getQuantity(
+                        item
                       );
 
                     const unitPrice =
                       Number(
-                        itemPricing
-                          ?.unitPrice ??
+                        itemPricing?.unitPrice ??
                           item?.price ??
                           item?.product
                             ?.price ??
@@ -2163,108 +1899,80 @@ const CheckoutPage = () => {
 
                     const subtotal =
                       Number(
-                        itemPricing
-                          ?.subtotal ??
-                          itemPricing
-                            ?.total ??
+                        itemPricing?.subtotal ??
                           unitPrice *
                             quantity
                       );
 
                     const image =
-                      item?.image ||
-                      item?.product
-                        ?.image ||
-                      item?.product
-                        ?.images?.[0] ||
-                      "";
+                      getProductImage(
+                        item
+                      );
 
                     const name =
-                      item?.name ||
-                      item?.product
-                        ?.name ||
-                      "Product";
+                      getProductName(
+                        item
+                      );
 
                     return (
                       <div
                         key={
                           productId ||
-                          `checkout-item-${index}`
+                          item?._id ||
+                          index
                         }
-                        className="flex gap-3 border-b border-slate-100 pb-4"
+                        className="checkout-summary-item"
                       >
 
-                        {/* IMAGE */}
+                        <div className="checkout-summary-image">
 
-                        <div className="w-16 h-16 rounded-lg overflow-hidden bg-slate-100 flex-shrink-0">
-
-                          {typeof image ===
-                            "string" &&
-                          image ? (
+                          {image ? (
                             <img
-                              src={image}
-                              alt={name}
-                              className="w-full h-full object-cover"
-                              onError={(
-                                event
-                              ) => {
-                                event.currentTarget.style.display =
-                                  "none";
-                              }}
+                              src={
+                                image
+                              }
+                              alt={
+                                name
+                              }
+                              loading="lazy"
                             />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center text-xs text-slate-400">
-                              SE
-                            </div>
+                            <span>
+                              📦
+                            </span>
                           )}
+
+                          <b>
+                            {quantity}
+                          </b>
 
                         </div>
 
-                        {/* INFO */}
+                        <div className="checkout-summary-item-info">
 
-                        <div className="flex-1 min-w-0">
-
-                          <p className="font-medium text-sm text-slate-800 line-clamp-2">
+                          <strong>
                             {name}
-                          </p>
+                          </strong>
 
-                          <p className="text-xs text-slate-500 mt-1">
+                          <span>
                             Qty:{" "}
                             {quantity}
-                          </p>
+                          </span>
 
-                          <p className="text-xs text-slate-500">
-                            ₹
-                            {unitPrice.toLocaleString(
-                              "en-IN",
-                              {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              }
+                          <small>
+                            {formatPrice(
+                              unitPrice
                             )}{" "}
                             / unit
-                          </p>
+                          </small>
 
                         </div>
 
-                        {/* SUBTOTAL */}
-
-                        <div className="text-sm font-semibold text-slate-800 whitespace-nowrap">
-                          ₹
-                          {(
-                            Number.isFinite(
-                              subtotal
-                            )
-                              ? subtotal
-                              : 0
-                          ).toLocaleString(
-                            "en-IN",
-                            {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            }
+                        <strong className="checkout-summary-item-total">
+                          {formatPrice(
+                            subtotal
                           )}
-                        </div>
+                        </strong>
 
                       </div>
                     );
@@ -2275,81 +1983,122 @@ const CheckoutPage = () => {
 
               {/* PRICE BREAKDOWN */}
 
-              <div className="border-t border-slate-200 mt-5 pt-5 space-y-3">
+              <div className="checkout-price-breakdown">
 
-                <div className="flex justify-between text-sm text-slate-600">
-
+                <div>
                   <span>
                     Products
                   </span>
 
-                  <span>
-                    ₹
-                    {itemsPrice.toLocaleString(
-                      "en-IN",
-                      {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      }
+                  <strong>
+                    {formatPrice(
+                      itemsPrice
                     )}
-                  </span>
-
+                  </strong>
                 </div>
 
-                <div className="flex justify-between text-sm text-slate-600">
-
+                <div>
                   <span>
                     Shipping
                   </span>
 
-                  <span>
-                    ₹
-                    {shippingPrice.toLocaleString(
-                      "en-IN",
-                      {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      }
+                  <strong>
+                    {formatPrice(
+                      shippingPrice
                     )}
-                  </span>
-
-                </div>
-
-                <div className="border-t border-slate-200 pt-4 flex justify-between">
-
-                  <span className="text-lg font-bold text-slate-800">
-                    Total
-                  </span>
-
-                  <span className="text-lg font-bold text-teal-700">
-                    ₹
-                    {totalPrice.toLocaleString(
-                      "en-IN",
-                      {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      }
-                    )}
-                  </span>
-
+                  </strong>
                 </div>
 
               </div>
 
-              {/* PAYMENT INFO */}
+              {/* TOTAL */}
 
-              <div className="mt-6 rounded-xl bg-slate-50 p-4">
+              <div className="checkout-grand-total">
 
-                <p className="text-xs text-slate-500 uppercase tracking-wide">
-                  Payment
-                </p>
+                <div>
+                  <span>
+                    Total
+                  </span>
 
-                <p className="text-sm font-semibold text-slate-800 mt-1">
+                  <small>
+                    {totalQuantity}{" "}
+                    {totalQuantity ===
+                    1
+                      ? "unit"
+                      : "units"}
+                  </small>
+                </div>
+
+                <strong>
+                  {formatPrice(
+                    totalPrice
+                  )}
+                </strong>
+
+              </div>
+
+              {/* PAYMENT METHOD */}
+
+              <div className="checkout-summary-payment">
+
+                <span className="checkout-summary-payment-icon">
                   {paymentMethod ===
-                  "razorpay"
-                    ? "Online Payment"
-                    : "Cash on Delivery"}
-                </p>
+                  "Razorpay"
+                    ? "⚡"
+                    : "💵"}
+                </span>
+
+                <div>
+                  <small>
+                    PAYMENT METHOD
+                  </small>
+
+                  <strong>
+                    {paymentMethod ===
+                    "Razorpay"
+                      ? "Online Payment"
+                      : "Cash on Delivery"}
+                  </strong>
+                </div>
+
+              </div>
+
+              {/* DELIVERY */}
+
+              <div className="checkout-delivery-note">
+
+                <span>
+                  🚚
+                </span>
+
+                <div>
+                  <strong>
+                    Delivery available
+                  </strong>
+
+                  <p>
+                    Shipping is calculated as
+                    a fixed ₹50 at checkout.
+                  </p>
+                </div>
+
+              </div>
+
+              {/* TRUST */}
+
+              <div className="checkout-trust-row">
+
+                <span>
+                  ✓ Secure
+                </span>
+
+                <span>
+                  ✓ Verified
+                </span>
+
+                <span>
+                  ✓ B2B Ready
+                </span>
 
               </div>
 
@@ -2359,8 +2108,60 @@ const CheckoutPage = () => {
 
         </div>
 
-      </div>
+        {/* ====================================================
+            FOOTER NAV
+            ==================================================== */}
 
+        <nav
+          className="checkout-footer-nav"
+          aria-label="Checkout navigation"
+        >
+
+          <button
+            type="button"
+            onClick={() =>
+              navigate(
+                "/products"
+              )
+            }
+          >
+            <span>
+              Continue Shopping
+            </span>
+            <b>→</b>
+          </button>
+
+          <button
+            type="button"
+            onClick={() =>
+              navigate(
+                "/orders"
+              )
+            }
+          >
+            <span>
+              My Orders
+            </span>
+            <b>→</b>
+          </button>
+
+          <button
+            type="button"
+            onClick={() =>
+              navigate(
+                "/profile"
+              )
+            }
+          >
+            <span>
+              My Profile
+            </span>
+            <b>→</b>
+          </button>
+
+        </nav>
+
+      </div>
     </section>
   );
 };

@@ -1,0 +1,25 @@
+/* ============================================================
+   SHANTI ENTERPRISES — Address Page
+   Premium responsive light/dark theme
+   ============================================================ */
+.address-page{--addr-accent:#0d9488;--addr-accent-2:#2563eb;--addr-purple:#7c3aed;--addr-surface:#fff;--addr-surface-2:#f8fafc;--addr-border:#e2e8f0;--addr-text:#0f172a;--addr-muted:#64748b;--addr-danger:#dc2626;--addr-shadow:0 14px 40px rgba(15,23,42,.07)}
+.address-page>div{position:relative}
+.address-page input,.address-page textarea{box-sizing:border-box;width:100%;font-family:inherit;border:1px solid var(--addr-border)!important;border-radius:10px!important;background:var(--addr-surface)!important;color:var(--addr-text)!important;outline:none!important;transition:border-color .2s,box-shadow .2s,background .2s,transform .2s}
+.address-page input:focus,.address-page textarea:focus{border-color:rgba(13,148,136,.65)!important;box-shadow:0 0 0 4px rgba(13,148,136,.10)!important}
+.address-page input::placeholder,.address-page textarea::placeholder{color:#94a3b8}
+.address-page button,.address-page a{transition:transform .2s ease,box-shadow .2s ease,background .2s ease,border-color .2s ease}
+.address-page button:not(:disabled):hover{transform:translateY(-1px)}
+.address-page a.btn-secondary:hover{transform:translateY(-1px)}
+.address-page [style*="background: \"#fff\""]{color:var(--addr-text)}
+.address-page [style*="boxShadow: \"var(--shadow-sm)\""]{box-shadow:var(--addr-shadow)!important}
+.address-page [style*="borderRadius: 14"]{backdrop-filter:blur(10px)}
+.address-page [style*="borderRadius: 12"]{transition:transform .2s,box-shadow .2s,border-color .2s}
+.address-page [style*="borderRadius: 12"]:hover{box-shadow:0 10px 28px rgba(15,23,42,.08)}
+.dark .address-page{--addr-surface:#111827;--addr-surface-2:#172033;--addr-border:#293548;--addr-text:#f8fafc;--addr-muted:#94a3b8;--addr-shadow:0 18px 45px rgba(0,0,0,.24)}
+.dark .address-page [style*="background: \"#fff\""]{background:#111827!important;color:#f8fafc!important}
+.dark .address-page [style*="background: \"#fff\""] input,.dark .address-page input,.dark .address-page textarea{background:#0f172a!important;color:#f8fafc!important;border-color:#334155!important}
+.dark .address-page [style*="background: \"#fff\""]{border-color:#293548!important}
+.dark .address-page [style*="color: \"#fff\""]{color:#fff!important}
+@media(max-width:820px){.address-page{overflow-x:hidden}.address-page [style*="grid-template-columns: 1fr 380px"]{grid-template-columns:1fr!important}.address-page [style*="position: sticky"]{position:relative!important;top:auto!important}.address-page [style*="width: 900px"]{width:min(100% - 28px,900px)!important}.address-page [style*="width: min(100% - 40px, 900px)"]{width:min(100% - 28px,900px)!important}}
+@media(max-width:560px){.address-page>div:first-child{padding:28px 0 24px!important}.address-page [style*="padding: \"20px 28px\""]{padding:16px 12px!important}.address-page [style*="minWidth: 80"]{min-width:64px!important}.address-page [style*="width: 36px"]{width:32px!important;height:32px!important}.address-page [style*="display: \"flex\"; gap: 10"]{width:100%}.address-page [style*="display: flex"][style*="justify-content: space-between"]{align-items:flex-start!important}.address-page [style*="grid-template-columns: 1fr 1fr"]{grid-template-columns:1fr!important}}
+@media(prefers-reduced-motion:reduce){.address-page *{transition:none!important;animation:none!important}}

@@ -52,7 +52,6 @@ import OrderDetailsPage from "./pages/customer/OrderDetailsPage";
 import CustomerDashboardPage from "./pages/customer/CustomerDashboardPage";
 import ProfilePage from "./pages/customer/ProfilePage";
 import AddressesPage from "./pages/customer/AddressesPage";
-import CustomerTestPage from "./pages/customer/CustomerTestPage";
 
 // ============================================================
 // CUSTOMER WISHLIST / NOTIFICATIONS / RETURNS / INVOICES
@@ -600,19 +599,7 @@ function App() {
                 <QuotationDetailsPage />
               }
             />
-
-            {/* ==================================================
-                CUSTOMER TEST
-                ================================================== */}
-
-            <Route
-              path="/customer/test"
-              element={
-                <CustomerTestPage />
-              }
-            />
-
-          </Route>
+</Route>
 
           {/* ==================================================
               ADMIN ONLY ROUTES

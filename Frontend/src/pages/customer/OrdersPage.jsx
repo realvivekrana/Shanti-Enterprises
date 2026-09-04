@@ -1,265 +1,847 @@
 // ============================================================
-// SHANTI ENTERPRISES — OrdersPage (Premium)
+// SHANTI ENTERPRISES — Orders Page
+// Premium Customer Orders UI
 // ============================================================
 
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { getMyOrders } from "../../api/orderApi";
-import Loading    from "../../components/common/Loading";
+import Loading from "../../components/common/Loading";
 import ErrorMessage from "../../components/common/ErrorMessage";
+import "./OrdersPage.css";
 
-// ── helpers ───────────────────────────────────────────────────
+// ============================================================
+// HELPERS
+// ============================================================
+
 const fmt = (n) =>
-  `₹${Number(n || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  `₹${Number(n || 0).toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
 
 const fmtDate = (v) => {
   if (!v) return "—";
+
   const d = new Date(v);
-  return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+
+  return Number.isNaN(d.getTime())
+    ? "—"
+    : d.toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      });
 };
 
 const fmtLabel = (s) =>
-  String(s || "").replace(/[-_]/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+  String(s || "")
+    .replace(/[-_]/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
 
-const statusStyle = (s) => {
-  const v = String(s || "").toLowerCase();
-  if (v.includes("deliver") || v.includes("complete"))
-    return { bg: "#F0FDF4", color: "#15803D", border: "#A7F3D0" };
-  if (v.includes("cancel"))
-    return { bg: "#FEF2F2", color: "#DC2626", border: "#FECACA" };
-  if (v.includes("ship") || v.includes("transit"))
-    return { bg: "#EFF6FF", color: "#1D4ED8", border: "#BFDBFE" };
-  if (v.includes("confirm") || v.includes("process"))
-    return { bg: "#F0FDF4", color: "#166534", border: "#BBF7D0" };
-  return { bg: "#FFFBEB", color: "#B45309", border: "#FDE68A" };
+const getStatusKey = (s) =>
+  String(s || "pending")
+    .toLowerCase()
+    .replace(/\s/g, "_");
+
+const statusMeta = (s) => {
+  const v = getStatusKey(s);
+
+  if (v.includes("deliver") || v.includes("complete")) {
+    return {
+      tone: "success",
+      icon: "✓",
+    };
+  }
+
+  if (v.includes("cancel")) {
+    return {
+      tone: "danger",
+      icon: "×",
+    };
+  }
+
+  if (v.includes("ship") || v.includes("transit")) {
+    return {
+      tone: "info",
+      icon: "→",
+    };
+  }
+
+  if (v.includes("confirm") || v.includes("process")) {
+    return {
+      tone: "success",
+      icon: "•",
+    };
+  }
+
+  return {
+    tone: "warning",
+    icon: "•",
+  };
 };
 
-const payStyle = (s) => {
-  const v = String(s || "").toLowerCase();
-  if (v === "paid")    return { bg: "#F0FDF4", color: "#15803D", border: "#A7F3D0" };
-  if (v === "failed")  return { bg: "#FEF2F2", color: "#DC2626", border: "#FECACA" };
-  return { bg: "#FFFBEB", color: "#B45309", border: "#FDE68A" };
+const paymentMeta = (s) => {
+  const v = String(s || "pending").toLowerCase();
+
+  if (v === "paid") {
+    return {
+      tone: "success",
+      icon: "✓",
+    };
+  }
+
+  if (v === "failed") {
+    return {
+      tone: "danger",
+      icon: "×",
+    };
+  }
+
+  return {
+    tone: "warning",
+    icon: "•",
+  };
 };
 
 const extractOrders = (r) =>
-  Array.isArray(r?.orders) ? r.orders
-  : Array.isArray(r?.data?.orders) ? r.data.orders
-  : Array.isArray(r?.data) ? r.data
-  : Array.isArray(r) ? r : [];
+  Array.isArray(r?.orders)
+    ? r.orders
+    : Array.isArray(r?.data?.orders)
+      ? r.data.orders
+      : Array.isArray(r?.data)
+        ? r.data
+        : Array.isArray(r)
+          ? r
+          : [];
 
-// ─────────────────────────────────────────────────────────────
+// ============================================================
+// STATUS TABS
+// ============================================================
+
+const STATUS_TABS = [
+  { key: "all", label: "All" },
+  { key: "pending", label: "Pending" },
+  { key: "confirmed", label: "Confirmed" },
+  { key: "processing", label: "Processing" },
+  { key: "shipped", label: "Shipped" },
+  { key: "delivered", label: "Delivered" },
+  { key: "cancelled", label: "Cancelled" },
+];
+
+// ============================================================
+// ORDERS PAGE
+// ============================================================
+
 function OrdersPage() {
-  const [orders,    setOrders]    = useState([]);
-  const [loading,   setLoading]   = useState(true);
-  const [refreshing,setRefreshing]= useState(false);
-  const [error,     setError]     = useState("");
-  const [search,    setSearch]    = useState("");
-  const [filter,    setFilter]    = useState("all");
-  const [sort,      setSort]      = useState("newest");
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState("");
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("all");
+  const [sort, setSort] = useState("newest");
+
+  // ==========================================================
+  // LOAD ORDERS
+  // ==========================================================
 
   const loadOrders = async (isRefresh = false) => {
     try {
-      if (isRefresh) setRefreshing(true); else setLoading(true);
+      if (isRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+
       setError("");
-      const r = await getMyOrders({ page: 1, limit: 100 });
-      setOrders(extractOrders(r));
+
+      const response = await getMyOrders({
+        page: 1,
+        limit: 100,
+      });
+
+      setOrders(extractOrders(response));
     } catch (err) {
-      setError(err?.response?.data?.message || err?.message || "Unable to load your orders.");
+      console.error("Orders loading error:", err);
+
+      setError(
+        err?.response?.data?.message ||
+          err?.message ||
+          "Unable to load your orders."
+      );
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   };
 
-  useEffect(() => { loadOrders(); }, []);
+  useEffect(() => {
+    loadOrders();
+  }, []);
 
-  // counts per status
+  // ==========================================================
+  // STATUS COUNTS
+  // ==========================================================
+
   const counts = useMemo(() => {
-    const c = { all: orders.length, pending: 0, confirmed: 0, processing: 0, shipped: 0, delivered: 0, cancelled: 0 };
-    orders.forEach(o => {
-      const s = String(o?.orderStatus || o?.status || "pending").toLowerCase().replace(/\s/g,"_");
-      if (c[s] !== undefined) c[s]++;
+    const result = {
+      all: orders.length,
+      pending: 0,
+      confirmed: 0,
+      processing: 0,
+      shipped: 0,
+      delivered: 0,
+      cancelled: 0,
+    };
+
+    orders.forEach((order) => {
+      const status = getStatusKey(
+        order?.orderStatus || order?.status || "pending"
+      );
+
+      if (result[status] !== undefined) {
+        result[status] += 1;
+      }
     });
-    return c;
+
+    return result;
   }, [orders]);
 
-  // filtered + sorted
+  // ==========================================================
+  // FILTER + SEARCH + SORT
+  // ==========================================================
+
   const visible = useMemo(() => {
     let list = [...orders];
+
     if (filter !== "all") {
-      list = list.filter(o => {
-        const s = String(o?.orderStatus || o?.status || "pending").toLowerCase().replace(/\s/g,"_");
-        return s === filter;
+      list = list.filter((order) => {
+        const status = getStatusKey(
+          order?.orderStatus || order?.status || "pending"
+        );
+
+        return status === filter;
       });
     }
+
     if (search.trim()) {
-      const q = search.trim().toLowerCase();
-      list = list.filter(o =>
-        String(o?.orderNumber || "").toLowerCase().includes(q) ||
-        String(o?._id || "").toLowerCase().includes(q)
-      );
+      const query = search.trim().toLowerCase();
+
+      list = list.filter((order) => {
+        return (
+          String(order?.orderNumber || "")
+            .toLowerCase()
+            .includes(query) ||
+          String(order?._id || "")
+            .toLowerCase()
+            .includes(query)
+        );
+      });
     }
+
     list.sort((a, b) => {
-      const da = new Date(a?.createdAt || 0).getTime();
-      const db = new Date(b?.createdAt || 0).getTime();
-      return sort === "oldest" ? da - db : db - da;
+      const dateA = new Date(
+        a?.createdAt || 0
+      ).getTime();
+
+      const dateB = new Date(
+        b?.createdAt || 0
+      ).getTime();
+
+      return sort === "oldest"
+        ? dateA - dateB
+        : dateB - dateA;
     });
+
     return list;
   }, [orders, filter, search, sort]);
 
-  const STATUS_TABS = [
-    { key: "all",        label: "All"         },
-    { key: "pending",    label: "Pending"      },
-    { key: "confirmed",  label: "Confirmed"    },
-    { key: "processing", label: "Processing"   },
-    { key: "shipped",    label: "Shipped"      },
-    { key: "delivered",  label: "Delivered"    },
-    { key: "cancelled",  label: "Cancelled"    },
-  ];
+  // ==========================================================
+  // LOADING
+  // ==========================================================
 
-  if (loading) return (
-    <div style={{ padding: "64px 20px", width: "min(100%-40px,1240px)", margin: "0 auto" }}>
-      <Loading message="Loading your orders…" />
-    </div>
-  );
+  if (loading) {
+    return (
+      <section className="orders-page orders-loading-page">
+        <div className="orders-loading-shell">
+          <div className="orders-loading-orb" />
+
+          <span className="orders-loading-kicker">
+            SHANTI ENTERPRISES
+          </span>
+
+          <h1>Loading your orders</h1>
+
+          <p>
+            Fetching your latest order history...
+          </p>
+
+          <Loading message="Please wait…" />
+        </div>
+      </section>
+    );
+  }
+
+  // ==========================================================
+  // PAGE
+  // ==========================================================
 
   return (
-    <div style={{ background: "var(--se-bg)", minHeight: "calc(100vh - 68px)" }}>
+    <section className="orders-page">
 
-      {/* BANNER */}
-      <div style={{ background: "linear-gradient(135deg, var(--se-navy) 0%, #1E3A5F 100%)", padding: "40px 0 36px" }}>
-        <div style={{ width: "min(100% - 40px, 1240px)", margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
-          <div>
-            <span style={{ fontSize: 11, fontWeight: 700, color: "var(--se-teal-light)", letterSpacing: ".1em", textTransform: "uppercase", display: "block", marginBottom: 8 }}>Customer Account</span>
-            <h1 style={{ color: "#fff", fontSize: "clamp(1.5rem,2.5vw,2rem)", fontWeight: 800, letterSpacing: "-0.03em", marginBottom: 6 }}>My Orders</h1>
-            <p style={{ color: "#94A3B8", fontSize: 14 }}>{orders.length} total order{orders.length !== 1 ? "s" : ""}</p>
-          </div>
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            <button type="button" onClick={() => loadOrders(true)} disabled={refreshing}
-              style={{ height: 40, padding: "0 16px", background: "rgba(255,255,255,.08)", border: "1px solid rgba(255,255,255,.15)", borderRadius: 8, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", boxShadow: "none", transform: "none" }}>
-              {refreshing ? "Refreshing…" : "↻ Refresh"}
-            </button>
-            <Link to="/products" style={{ height: 40, padding: "0 18px", background: "var(--se-teal)", borderRadius: 8, color: "#fff", fontSize: 13, fontWeight: 700, display: "flex", alignItems: "center", gap: 6, boxShadow: "0 4px 12px rgba(13,148,136,.4)" }}>
-              Continue Shopping →
+      <div className="orders-page-glow orders-page-glow-one" />
+      <div className="orders-page-glow orders-page-glow-two" />
+
+      <div className="orders-container">
+
+        {/* ==================================================
+            HERO
+            ================================================== */}
+
+        <header className="orders-hero">
+
+          <div className="orders-hero-copy">
+
+            <Link
+              to="/dashboard"
+              className="orders-back-link"
+            >
+              <span className="orders-back-icon">
+                ←
+              </span>
+              Dashboard
             </Link>
+
+            <div className="orders-eyebrow">
+              <span />
+              CUSTOMER ACCOUNT
+            </div>
+
+            <h1>
+              My Orders
+              <span className="orders-title-accent">
+                .
+              </span>
+            </h1>
+
+            <p>
+              Track your purchases, review order details,
+              and keep your business ordering history organized.
+            </p>
+
           </div>
-        </div>
-      </div>
 
-      <div style={{ width: "min(100% - 40px, 1240px)", margin: "0 auto", padding: "28px 0 72px" }}>
+          <div className="orders-hero-actions">
 
-        {error && <div style={{ marginBottom: 20 }}><ErrorMessage message={error} onRetry={() => loadOrders()} /></div>}
+            <div className="orders-total-card">
+              <span>Total Orders</span>
+              <strong>{orders.length}</strong>
+            </div>
 
-        {/* STATUS TABS */}
-        <div style={{ background: "#fff", border: "1px solid var(--se-border)", borderRadius: 14, padding: "4px 8px", display: "flex", gap: 2, flexWrap: "wrap", marginBottom: 20, boxShadow: "var(--shadow-xs)" }}>
-          {STATUS_TABS.map(t => (
-            <button key={t.key} type="button" onClick={() => setFilter(t.key)}
-              style={{ height: 38, padding: "0 14px", borderRadius: 10, border: "none", background: filter === t.key ? "var(--se-navy)" : "transparent", color: filter === t.key ? "#fff" : "var(--se-text-3)", fontWeight: filter === t.key ? 700 : 500, fontSize: 13, cursor: "pointer", boxShadow: "none", transform: "none", transition: "all .18s", display: "flex", alignItems: "center", gap: 7 }}>
-              {t.label}
-              {counts[t.key] > 0 && (
-                <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 6px", borderRadius: 999, background: filter === t.key ? "rgba(255,255,255,.2)" : "var(--se-border-soft)", color: filter === t.key ? "#fff" : "var(--se-text-3)" }}>
-                  {counts[t.key]}
-                </span>
+            <button
+              type="button"
+              className="orders-refresh-button"
+              onClick={() => loadOrders(true)}
+              disabled={refreshing}
+            >
+              {refreshing ? (
+                <>
+                  <span className="orders-button-spinner" />
+                  Refreshing...
+                </>
+              ) : (
+                <>
+                  <span className="orders-refresh-icon">
+                    ↻
+                  </span>
+                  Refresh
+                </>
               )}
             </button>
-          ))}
-        </div>
 
-        {/* TOOLBAR */}
-        <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
-          <div style={{ flex: 1, minWidth: 200, position: "relative" }}>
-            <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--se-text-4)", fontSize: 15, pointerEvents: "none" }}>⌕</span>
-            <input type="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by order number…" style={{ paddingLeft: 36, height: 42, fontSize: 14 }} />
+            <Link
+              to="/products"
+              className="orders-shop-button"
+            >
+              Continue Shopping
+              <span>→</span>
+            </Link>
+
           </div>
-          <select value={sort} onChange={e => setSort(e.target.value)} style={{ height: 42, fontSize: 14, width: "auto", minWidth: 160 }}>
-            <option value="newest">Newest First</option>
-            <option value="oldest">Oldest First</option>
-          </select>
-        </div>
 
-        {/* EMPTY ORDERS */}
-        {orders.length === 0 && (
-          <div style={{ padding: "64px 32px", textAlign: "center", background: "#fff", border: "2px dashed var(--se-border)", borderRadius: 20 }}>
-            <div style={{ fontSize: 52, marginBottom: 16 }}>📦</div>
-            <h3 style={{ marginBottom: 8 }}>No orders yet</h3>
-            <p style={{ marginBottom: 24 }}>Your completed orders will appear here.</p>
-            <Link to="/products" className="btn-primary" style={{ display: "inline-flex" }}>Start Shopping →</Link>
-          </div>
-        )}
+        </header>
 
-        {/* NO SEARCH RESULTS */}
-        {orders.length > 0 && visible.length === 0 && (
-          <div style={{ padding: "48px 32px", textAlign: "center", background: "#fff", border: "1px solid var(--se-border)", borderRadius: 16 }}>
-            <div style={{ fontSize: 40, marginBottom: 12 }}>🔍</div>
-            <h3 style={{ marginBottom: 8 }}>No matching orders</h3>
-            <p style={{ marginBottom: 20 }}>Try a different search term or status filter.</p>
-            <button type="button" className="btn-secondary" onClick={() => { setSearch(""); setFilter("all"); }}>Clear Filters</button>
+        {/* ==================================================
+            ERROR
+            ================================================== */}
+
+        {error && (
+          <div className="orders-error-wrap">
+            <ErrorMessage
+              message={error}
+              onRetry={() => loadOrders()}
+            />
           </div>
         )}
 
-        {/* ORDERS LIST */}
-        {visible.length > 0 && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            {visible.map((order, i) => {
-              const oid    = order?._id || order?.id;
-              const num    = order?.orderNumber || oid;
-              const status = order?.orderStatus || order?.status || "pending";
-              const payS   = order?.paymentStatus || "pending";
-              const total  = Number(order?.totalAmount ?? order?.total ?? 0);
-              const itemC  = Array.isArray(order?.items) ? order.items.length : 0;
-              const ss     = statusStyle(status);
-              const ps     = payStyle(payS);
+        {/* ==================================================
+            STATUS FILTER
+            ================================================== */}
+
+        <div className="orders-filter-card">
+
+          <div className="orders-filter-heading">
+            <span>ORDER STATUS</span>
+            <small>
+              {visible.length} shown
+            </small>
+          </div>
+
+          <div className="orders-status-tabs">
+            {STATUS_TABS.map((tab) => {
+              const active =
+                filter === tab.key;
+
               return (
-                <div key={oid || i} style={{ background: "#fff", border: "1px solid var(--se-border)", borderRadius: 14, padding: "20px 24px", boxShadow: "var(--shadow-xs)", transition: "box-shadow .2s" }}
-                  onMouseEnter={e => e.currentTarget.style.boxShadow = "var(--shadow-md)"}
-                  onMouseLeave={e => e.currentTarget.style.boxShadow = "var(--shadow-xs)"}>
+                <button
+                  key={tab.key}
+                  type="button"
+                  className={`orders-status-tab ${
+                    active ? "active" : ""
+                  }`}
+                  onClick={() =>
+                    setFilter(tab.key)
+                  }
+                >
+                  <span>
+                    {tab.label}
+                  </span>
 
-                  {/* TOP ROW */}
-                  <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: 14 }}>
-                    <div>
-                      <p style={{ fontSize: 11, fontWeight: 700, color: "var(--se-text-4)", letterSpacing: ".08em", textTransform: "uppercase", marginBottom: 4 }}>Order</p>
-                      <h3 style={{ fontSize: "1rem", fontWeight: 800, color: "var(--se-navy)" }}>#{num}</h3>
-                    </div>
-                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                      <span style={{ padding: "4px 12px", borderRadius: 999, fontSize: 12, fontWeight: 700, background: ss.bg, color: ss.color, border: `1px solid ${ss.border}` }}>
-                        {fmtLabel(status)}
-                      </span>
-                      <span style={{ padding: "4px 12px", borderRadius: 999, fontSize: 12, fontWeight: 700, background: ps.bg, color: ps.color, border: `1px solid ${ps.border}` }}>
-                        {fmtLabel(payS)}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* META ROW */}
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px,1fr))", gap: 12, marginBottom: 16, padding: "14px 16px", background: "var(--se-surface-2)", borderRadius: 10 }}>
-                    {[
-                      { label: "Date",   value: fmtDate(order?.createdAt) },
-                      { label: "Items",  value: `${itemC} item${itemC !== 1 ? "s" : ""}` },
-                      { label: "Total",  value: fmt(total) },
-                      { label: "Method", value: fmtLabel(order?.paymentMethod || "—") },
-                    ].map(m => (
-                      <div key={m.label}>
-                        <p style={{ fontSize: 11, fontWeight: 700, color: "var(--se-text-4)", letterSpacing: ".06em", textTransform: "uppercase", marginBottom: 3 }}>{m.label}</p>
-                        <p style={{ fontSize: 14, fontWeight: 700, color: "var(--se-text-2)" }}>{m.value}</p>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* ACTIONS */}
-                  <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-                    {oid && (
-                      <Link to={`/orders/${oid}`} className="btn-primary" style={{ height: 38, padding: "0 18px", fontSize: 13 }}>
-                        View Order →
-                      </Link>
-                    )}
-                  </div>
-                </div>
+                  {counts[tab.key] > 0 && (
+                    <b>
+                      {counts[tab.key]}
+                    </b>
+                  )}
+                </button>
               );
             })}
           </div>
+
+        </div>
+
+        {/* ==================================================
+            TOOLBAR
+            ================================================== */}
+
+        <div className="orders-toolbar">
+
+          <div className="orders-search">
+
+            <span className="orders-search-icon">
+              ⌕
+            </span>
+
+            <input
+              type="search"
+              value={search}
+              onChange={(event) =>
+                setSearch(event.target.value)
+              }
+              placeholder="Search by order number..."
+              aria-label="Search orders"
+            />
+
+            {search && (
+              <button
+                type="button"
+                className="orders-clear-search"
+                onClick={() =>
+                  setSearch("")
+                }
+                aria-label="Clear search"
+              >
+                ×
+              </button>
+            )}
+
+          </div>
+
+          <label className="orders-sort">
+            <span>Sort by</span>
+
+            <select
+              value={sort}
+              onChange={(event) =>
+                setSort(event.target.value)
+              }
+              aria-label="Sort orders"
+            >
+              <option value="newest">
+                Newest First
+              </option>
+              <option value="oldest">
+                Oldest First
+              </option>
+            </select>
+          </label>
+
+        </div>
+
+        {/* ==================================================
+            EMPTY ORDERS
+            ================================================== */}
+
+        {orders.length === 0 && (
+          <div className="orders-empty">
+
+            <div className="orders-empty-icon">
+              <span>▣</span>
+            </div>
+
+            <span className="orders-empty-kicker">
+              YOUR ORDER HISTORY
+            </span>
+
+            <h2>
+              No orders yet
+            </h2>
+
+            <p>
+              Your completed purchases will appear here.
+              Start exploring our products and place your first order.
+            </p>
+
+            <Link
+              to="/products"
+              className="orders-empty-button"
+            >
+              Start Shopping
+              <span>→</span>
+            </Link>
+
+          </div>
         )}
+
+        {/* ==================================================
+            NO MATCHING RESULTS
+            ================================================== */}
+
+        {orders.length > 0 &&
+          visible.length === 0 && (
+            <div className="orders-no-results">
+
+              <div className="orders-no-results-icon">
+                ⌕
+              </div>
+
+              <h2>
+                No matching orders
+              </h2>
+
+              <p>
+                Try another order number or change the
+                status filter.
+              </p>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setSearch("");
+                  setFilter("all");
+                }}
+              >
+                Clear Filters
+              </button>
+
+            </div>
+          )}
+
+        {/* ==================================================
+            ORDERS LIST
+            ================================================== */}
+
+        {visible.length > 0 && (
+          <div className="orders-list">
+
+            {visible.map((order, index) => {
+
+              const orderId =
+                order?._id ||
+                order?.id;
+
+              const orderNumber =
+                order?.orderNumber ||
+                orderId ||
+                `Order ${index + 1}`;
+
+              const status =
+                order?.orderStatus ||
+                order?.status ||
+                "pending";
+
+              const paymentStatus =
+                order?.paymentStatus ||
+                "pending";
+
+              const total = Number(
+                order?.totalAmount ??
+                  order?.total ??
+                  0
+              );
+
+              const items = Array.isArray(
+                order?.items
+              )
+                ? order.items
+                : [];
+
+              const itemCount =
+                items.length;
+
+              const statusInfo =
+                statusMeta(status);
+
+              const paymentInfo =
+                paymentMeta(paymentStatus);
+
+              return (
+                <article
+                  key={
+                    orderId ||
+                    `${orderNumber}-${index}`
+                  }
+                  className="order-card"
+                >
+
+                  {/* TOP */}
+
+                  <div className="order-card-top">
+
+                    <div className="order-number-block">
+
+                      <span className="order-card-kicker">
+                        ORDER
+                      </span>
+
+                      <h2>
+                        #{orderNumber}
+                      </h2>
+
+                      <span className="order-date">
+                        Placed on{" "}
+                        {fmtDate(
+                          order?.createdAt
+                        )}
+                      </span>
+
+                    </div>
+
+                    <div className="order-statuses">
+
+                      <span
+                        className={`order-status-pill ${statusInfo.tone}`}
+                      >
+                        <b>
+                          {statusInfo.icon}
+                        </b>
+                        {fmtLabel(status)}
+                      </span>
+
+                      <span
+                        className={`order-status-pill ${paymentInfo.tone}`}
+                      >
+                        <b>
+                          {paymentInfo.icon}
+                        </b>
+                        {fmtLabel(
+                          paymentStatus
+                        )}
+                      </span>
+
+                    </div>
+
+                  </div>
+
+                  {/* SUMMARY */}
+
+                  <div className="order-summary-grid">
+
+                    <div className="order-summary-item">
+                      <span>
+                        ORDER DATE
+                      </span>
+
+                      <strong>
+                        {fmtDate(
+                          order?.createdAt
+                        )}
+                      </strong>
+                    </div>
+
+                    <div className="order-summary-item">
+                      <span>
+                        ITEMS
+                      </span>
+
+                      <strong>
+                        {itemCount}{" "}
+                        {itemCount === 1
+                          ? "item"
+                          : "items"}
+                      </strong>
+                    </div>
+
+                    <div className="order-summary-item order-total-item">
+                      <span>
+                        ORDER TOTAL
+                      </span>
+
+                      <strong>
+                        {fmt(total)}
+                      </strong>
+                    </div>
+
+                    <div className="order-summary-item">
+                      <span>
+                        PAYMENT
+                      </span>
+
+                      <strong>
+                        {fmtLabel(
+                          order?.paymentMethod ||
+                            "—"
+                        )}
+                      </strong>
+                    </div>
+
+                  </div>
+
+                  {/* ITEM PREVIEW */}
+
+                  {items.length > 0 && (
+                    <div className="order-items-preview">
+
+                      <div className="order-items-heading">
+                        <span>
+                          ITEMS IN THIS ORDER
+                        </span>
+
+                        {items.length > 3 && (
+                          <small>
+                            +{items.length - 3} more
+                          </small>
+                        )}
+                      </div>
+
+                      <div className="order-item-chips">
+
+                        {items
+                          .slice(0, 3)
+                          .map((item, itemIndex) => {
+
+                            const itemName =
+                              item?.product?.name ||
+                              item?.name ||
+                              `Item ${itemIndex + 1}`;
+
+                            const quantity =
+                              Number(
+                                item?.quantity || 0
+                              );
+
+                            return (
+                              <div
+                                key={
+                                  item?._id ||
+                                  item?.product?._id ||
+                                  itemIndex
+                                }
+                                className="order-item-chip"
+                              >
+                                <span className="order-item-chip-icon">
+                                  ◇
+                                </span>
+
+                                <div>
+                                  <strong>
+                                    {itemName}
+                                  </strong>
+
+                                  <span>
+                                    Qty: {quantity}
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })}
+
+                      </div>
+                    </div>
+                  )}
+
+                  {/* BOTTOM */}
+
+                  <div className="order-card-bottom">
+
+                    <div className="order-business-note">
+                      <span>✓</span>
+
+                      <p>
+                        Business-ready order tracking
+                      </p>
+                    </div>
+
+                    {orderId && (
+                      <Link
+                        to={`/orders/${orderId}`}
+                        className="order-view-button"
+                      >
+                        View Order
+                        <span>→</span>
+                      </Link>
+                    )}
+
+                  </div>
+
+                </article>
+              );
+            })}
+
+          </div>
+        )}
+
+        {/* ==================================================
+            FOOTER NAV
+            ================================================== */}
+
+        <nav
+          className="orders-footer-nav"
+          aria-label="Customer account navigation"
+        >
+          <Link to="/profile">
+            <span>Profile</span>
+            <span>→</span>
+          </Link>
+
+          <Link to="/addresses">
+            <span>Addresses</span>
+            <span>→</span>
+          </Link>
+
+          <Link to="/quotations">
+            <span>Quotations</span>
+            <span>→</span>
+          </Link>
+
+          <Link to="/rfqs">
+            <span>RFQs</span>
+            <span>→</span>
+          </Link>
+        </nav>
+
       </div>
-    </div>
+    </section>
   );
 }
 

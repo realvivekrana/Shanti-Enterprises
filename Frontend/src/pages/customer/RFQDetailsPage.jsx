@@ -22,6 +22,8 @@ import {
   getRFQById,
 } from "../../api/rfqApi";
 
+import "./RFQDetailsPage.css";
+
 // ============================================================
 // STATUS CONFIG
 // ============================================================
@@ -448,9 +450,9 @@ function RFQDetailsPage() {
 
   if (loading) {
     return (
-      <div className="app-page">
+      <div className="app-page rfq-details-page">
 
-        <div className="page-header">
+        <div className="page-header rfq-details-header">
 
           <div>
 
@@ -498,9 +500,9 @@ function RFQDetailsPage() {
     !rfq
   ) {
     return (
-      <div className="app-page">
+      <div className="app-page rfq-details-page">
 
-        <div className="page-header">
+        <div className="page-header rfq-details-header">
 
           <div>
 
@@ -517,6 +519,7 @@ function RFQDetailsPage() {
         </div>
 
         <div
+          className="rfq-alert rfq-alert-error"
           role="alert"
           style={{
             padding:
@@ -623,13 +626,13 @@ function RFQDetailsPage() {
   // ==========================================================
 
   return (
-    <div className="app-page">
+    <div className="app-page rfq-details-page">
 
       {/* ======================================================
           HEADER
           ====================================================== */}
 
-      <div className="page-header">
+      <div className="page-header rfq-details-header">
 
         <div>
 
@@ -661,7 +664,7 @@ function RFQDetailsPage() {
         }}
       >
 
-        <Link
+        <Link className="rfq-back-link"
           to="/rfqs"
         >
           ← Back to My RFQs
@@ -675,6 +678,7 @@ function RFQDetailsPage() {
 
       {successMessage && (
         <div
+          className="rfq-alert rfq-alert-success"
           role="status"
           style={{
             marginBottom:
@@ -701,6 +705,7 @@ function RFQDetailsPage() {
 
       {error && (
         <div
+          className="rfq-alert rfq-alert-error"
           role="alert"
           style={{
             marginBottom:
@@ -725,7 +730,7 @@ function RFQDetailsPage() {
           RFQ HEADER CARD
           ====================================================== */}
 
-      <section
+      <section className="rfq-section-card"
         style={{
           padding:
             "20px",
@@ -825,7 +830,7 @@ function RFQDetailsPage() {
           RFQ META
           ====================================================== */}
 
-      <section
+      <section className="rfq-section-card"
         style={{
           display:
             "grid",
@@ -948,7 +953,7 @@ function RFQDetailsPage() {
           PRODUCTS
           ====================================================== */}
 
-      <section
+      <section className="rfq-section-card"
         style={{
           marginBottom:
             "20px",
@@ -1017,7 +1022,7 @@ function RFQDetailsPage() {
                   );
 
                 return (
-                  <article
+                  <article className="rfq-product-card"
                     key={
                       item?._id ||
                       item?.productId ||
@@ -1222,7 +1227,7 @@ function RFQDetailsPage() {
           ====================================================== */}
 
       {rfq?.message && (
-        <section
+        <section className="rfq-section-card"
           style={{
             marginBottom:
               "20px",
@@ -1272,7 +1277,7 @@ function RFQDetailsPage() {
         rfq?.quotedPrice ||
         rfq?.totalQuote ||
         rfq?.quoteAmount) && (
-        <section
+        <section className="rfq-section-card"
           style={{
             marginBottom:
               "20px",
@@ -1375,7 +1380,7 @@ function RFQDetailsPage() {
         }}
       >
 
-        <Link
+        <Link className="rfq-back-link"
           to="/rfqs"
         >
           ← My RFQs
@@ -1383,6 +1388,7 @@ function RFQDetailsPage() {
 
         {canCancel && (
           <button
+            className="rfq-cancel-button"
             type="button"
             onClick={() =>
               setShowCancelConfirmation(
@@ -1405,6 +1411,7 @@ function RFQDetailsPage() {
 
       {showCancelConfirmation && (
         <div
+          className="rfq-modal-backdrop"
           role="dialog"
           aria-modal="true"
           style={{
@@ -1427,7 +1434,7 @@ function RFQDetailsPage() {
           }}
         >
 
-          <div
+          <div className="rfq-modal"
             style={{
               width:
                 "100%",

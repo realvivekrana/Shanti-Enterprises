@@ -17,6 +17,8 @@ import {
   useParams,
 } from "react-router-dom";
 
+import "./QuotationDetailsPage.css";
+
 import {
   acceptQuotation,
   getQuotationById,
@@ -465,7 +467,7 @@ function QuotationDetailsPage() {
 
   if (loading) {
     return (
-      <div className="app-page">
+      <div className="app-page quotation-details-page">
 
         <div className="page-header">
 

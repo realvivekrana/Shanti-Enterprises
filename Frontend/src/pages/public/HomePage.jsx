@@ -5,7 +5,9 @@
 // ============================================================
 
 import {
+  useCallback,
   useEffect,
+  useMemo,
   useState,
 } from "react";
 
@@ -21,6 +23,7 @@ import {
   CreditCard,
   LockKeyhole,
   Package,
+  RefreshCw,
   ShieldCheck,
   ShoppingBag,
   Truck,
@@ -47,7 +50,6 @@ import "./HomePage.css";
 // ============================================================
 
 const getImg = (img) => {
-
   if (!img) {
     return "";
   }
@@ -59,6 +61,7 @@ const getImg = (img) => {
   return (
     img.url ||
     img.secure_url ||
+    img.path ||
     ""
   );
 };
@@ -69,7 +72,6 @@ const getImg = (img) => {
 // ============================================================
 
 const getCatId = (cat) => {
-
   if (!cat) {
     return "";
   }
@@ -87,13 +89,44 @@ const getCatId = (cat) => {
 
 
 // ============================================================
+// SAFE ERROR MESSAGE
+// ============================================================
+
+const getErrorMessage = (error, fallback) => {
+  const message =
+    error?.response?.data?.message ||
+    error?.message ||
+    "";
+
+  return (
+    typeof message === "string" &&
+    message.trim()
+  )
+    ? message.trim()
+    : fallback;
+};
+
+
+// ============================================================
+// NORMALIZE ARRAY RESPONSE
+// ============================================================
+
+const getArray = (value) => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value;
+};
+
+
+// ============================================================
 // SKELETON
 // ============================================================
 
 function Skeleton({
   className = "",
 }) {
-
   return (
     <div
       className={`home-skeleton ${className}`}
@@ -111,10 +144,8 @@ function HeroStat({
   value,
   label,
 }) {
-
   return (
     <div className="home-hero-stat">
-
       <strong>
         {value}
       </strong>
@@ -122,7 +153,6 @@ function HeroStat({
       <span>
         {label}
       </span>
-
     </div>
   );
 }
@@ -137,10 +167,8 @@ function FeatureCard({
   title,
   desc,
 }) {
-
   return (
     <article className="home-feature-card">
-
       <div className="home-feature-icon">
         {icon}
       </div>
@@ -152,7 +180,6 @@ function FeatureCard({
       <p>
         {desc}
       </p>
-
     </article>
   );
 }
@@ -167,20 +194,15 @@ function Step({
   title,
   desc,
 }) {
-
   return (
     <div className="home-shopping-item">
-
       <div className="home-shopping-item-icon">
-
         <span>
           {num}
         </span>
-
       </div>
 
       <div className="home-shopping-item-content">
-
         <h4>
           {title}
         </h4>
@@ -188,9 +210,7 @@ function Step({
         <p>
           {desc}
         </p>
-
       </div>
-
     </div>
   );
 }
@@ -204,10 +224,8 @@ function TrustItem({
   icon,
   text,
 }) {
-
   return (
     <div className="home-trust-item">
-
       <span className="home-trust-icon">
         {icon}
       </span>
@@ -215,7 +233,6 @@ function TrustItem({
       <span>
         {text}
       </span>
-
     </div>
   );
 }
@@ -232,12 +249,9 @@ function SectionHeader({
   linkText = "View All",
   linkTo = "/products",
 }) {
-
   return (
     <div className="home-section-header">
-
       <div className="home-section-heading">
-
         <span className="home-eyebrow">
           {eyebrow}
         </span>
@@ -249,24 +263,67 @@ function SectionHeader({
         <p>
           {description}
         </p>
-
       </div>
 
       <Link
         to={linkTo}
         className="home-section-link"
       >
-
         <span>
           {linkText}
         </span>
 
         <ArrowRight
           size={16}
+          aria-hidden="true"
         />
-
       </Link>
+    </div>
+  );
+}
 
+
+// ============================================================
+// ERROR STATE
+// ============================================================
+
+function ErrorState({
+  title,
+  message,
+  onRetry,
+}) {
+  return (
+    <div className="home-empty-state">
+      <div className="home-empty-icon">
+        <RefreshCw
+          size={28}
+        />
+      </div>
+
+      <h3>
+        {title}
+      </h3>
+
+      <p>
+        {message}
+      </p>
+
+      {typeof onRetry === "function" && (
+        <button
+          type="button"
+          className="home-primary-button"
+          onClick={onRetry}
+        >
+          <RefreshCw
+            size={16}
+            aria-hidden="true"
+          />
+
+          <span>
+            Try Again
+          </span>
+        </button>
+      )}
     </div>
   );
 }
@@ -277,7 +334,6 @@ function SectionHeader({
 // ============================================================
 
 function HomePage() {
-
   const [
     products,
     setProducts,
@@ -298,118 +354,178 @@ function HomePage() {
     setLoadingC,
   ] = useState(true);
 
+  const [
+    productsError,
+    setProductsError,
+  ] = useState("");
+
+  const [
+    categoriesError,
+    setCategoriesError,
+  ] = useState("");
 
   // ==========================================================
-  // PRODUCTS
+  // LOAD PRODUCTS
   // ==========================================================
 
-  useEffect(() => {
+  const loadProducts = useCallback(
+    async () => {
+      setLoadingP(true);
+      setProductsError("");
 
-    let mounted = true;
+      try {
+        const response =
+          await getProducts({
+            page: 1,
+            limit: 8,
+          });
 
-    getProducts({
-      page: 1,
-      limit: 8,
-    })
-      .then((response) => {
-
-        if (!mounted) {
-          return;
-        }
+        const productList =
+          response?.products ??
+          response?.data?.products ??
+          response?.data ??
+          [];
 
         setProducts(
-          response?.products || []
+          getArray(productList)
         );
-
-      })
-      .catch(() => {
-
-        if (!mounted) {
-          return;
-        }
-
+      } catch (error) {
         setProducts([]);
 
-      })
-      .finally(() => {
-
-        if (!mounted) {
-          return;
-        }
-
+        setProductsError(
+          getErrorMessage(
+            error,
+            "We couldn't load the featured products right now."
+          )
+        );
+      } finally {
         setLoadingP(false);
-
-      });
-
-    return () => {
-      mounted = false;
-    };
-
-  }, []);
-
+      }
+    },
+    []
+  );
 
   // ==========================================================
-  // CATEGORIES
+  // LOAD CATEGORIES
+  // ==========================================================
+
+  const loadCategories = useCallback(
+    async () => {
+      setLoadingC(true);
+      setCategoriesError("");
+
+      try {
+        const response =
+          await getCategories();
+
+        const categoryList =
+          response?.categories ??
+          response?.data?.categories ??
+          response?.data ??
+          [];
+
+        setCategories(
+          getArray(categoryList)
+        );
+      } catch (error) {
+        setCategories([]);
+
+        setCategoriesError(
+          getErrorMessage(
+            error,
+            "We couldn't load categories right now."
+          )
+        );
+      } finally {
+        setLoadingC(false);
+      }
+    },
+    []
+  );
+
+  // ==========================================================
+  // INITIAL DATA LOAD
   // ==========================================================
 
   useEffect(() => {
-
     let mounted = true;
 
-    getCategories()
-      .then((response) => {
+    const loadInitialData =
+      async () => {
+        const [
+          productsResult,
+          categoriesResult,
+        ] = await Promise.allSettled([
+          loadProducts(),
+          loadCategories(),
+        ]);
 
         if (!mounted) {
           return;
         }
 
-        setCategories(
-          response?.categories || []
-        );
+        // Promise.allSettled is intentionally used so
+        // one section does not prevent the other from loading.
+        void productsResult;
+        void categoriesResult;
+      };
 
-      })
-      .catch(() => {
-
-        if (!mounted) {
-          return;
-        }
-
-        setCategories([]);
-
-      })
-      .finally(() => {
-
-        if (!mounted) {
-          return;
-        }
-
-        setLoadingC(false);
-
-      });
+    loadInitialData();
 
     return () => {
       mounted = false;
     };
-
-  }, []);
-
+  }, [
+    loadProducts,
+    loadCategories,
+  ]);
 
   // ==========================================================
   // LIMIT HOME DATA
   // ==========================================================
 
-  const cats =
-    categories.slice(
-      0,
-      6
-    );
+  const cats = useMemo(
+    () => categories.slice(0, 6),
+    [categories]
+  );
 
-  const prods =
-    products.slice(
-      0,
-      8
-    );
+  const prods = useMemo(
+    () => products.slice(0, 8),
+    [products]
+  );
 
+  // ==========================================================
+  // DYNAMIC HERO COUNTS
+  // ==========================================================
+  //
+  // We only use values that are actually available from
+  // the current API response. We do not invent customer
+  // statistics or business numbers.
+  //
+
+  const productCount =
+    Array.isArray(products)
+      ? products.length
+      : 0;
+
+  const categoryCount =
+    Array.isArray(categories)
+      ? categories.length
+      : 0;
+
+  const productStat =
+    loadingP
+      ? "..."
+      : productCount > 0
+        ? `${productCount}${productCount >= 8 ? "+" : ""}`
+        : "—";
+
+  const categoryStat =
+    loadingC
+      ? "..."
+      : categoryCount > 0
+        ? `${categoryCount}${categoryCount >= 6 ? "+" : ""}`
+        : "—";
 
   // ==========================================================
   // PAGE
@@ -418,17 +534,13 @@ function HomePage() {
   return (
     <div className="home-page">
 
-
       {/* ====================================================
           HERO
           ==================================================== */}
 
       <section className="home-hero">
-
         <div className="home-container">
-
           <div className="home-hero-grid">
-
 
             {/* ==================================================
                 HERO CONTENT
@@ -437,20 +549,17 @@ function HomePage() {
             <div className="home-hero-content">
 
               <span className="home-hero-badge">
-
                 <ShieldCheck
                   size={15}
+                  aria-hidden="true"
                 />
 
                 <span>
-                  Trusted B2B Partner since 2010
+                  Business Supply Partner
                 </span>
-
               </span>
 
-
               <h1>
-
                 Quality Products.
 
                 <br />
@@ -458,19 +567,16 @@ function HomePage() {
                 <span>
                   Reliable Business.
                 </span>
-
               </h1>
-
 
               <p>
                 Shanti Enterprises delivers
                 premium industrial &amp; wholesale
                 products with transparent pricing,
-                bulk ordering, and fast fulfilment —
-                everything your business needs in
-                one place.
+                bulk ordering, and reliable fulfilment —
+                everything your business needs
+                in one place.
               </p>
-
 
               {/* ==================================================
                   HERO ACTIONS
@@ -482,17 +588,15 @@ function HomePage() {
                   to="/products"
                   className="home-primary-button"
                 >
-
                   <span>
                     Explore Products
                   </span>
 
                   <ArrowRight
                     size={17}
+                    aria-hidden="true"
                   />
-
                 </Link>
-
 
                 <Link
                   to="/categories"
@@ -502,7 +606,6 @@ function HomePage() {
                 </Link>
 
               </div>
-
 
               {/* ==================================================
                   TRUST ROW
@@ -514,6 +617,7 @@ function HomePage() {
                   icon={
                     <Check
                       size={15}
+                      aria-hidden="true"
                     />
                   }
                   text="Quality Assured"
@@ -523,6 +627,7 @@ function HomePage() {
                   icon={
                     <LockKeyhole
                       size={15}
+                      aria-hidden="true"
                     />
                   }
                   text="Secure Checkout"
@@ -532,6 +637,7 @@ function HomePage() {
                   icon={
                     <Zap
                       size={15}
+                      aria-hidden="true"
                     />
                   }
                   text="Fast Dispatch"
@@ -547,20 +653,17 @@ function HomePage() {
                 ================================================== */}
 
             <div className="home-hero-visual">
-
               <div className="home-hero-glow" />
-
 
               <div className="home-hero-card">
 
                 <div className="home-hero-card-top">
 
                   <div className="home-hero-card-icon">
-
                     <Building2
                       size={28}
+                      aria-hidden="true"
                     />
-
                   </div>
 
                   <span className="home-hero-card-label">
@@ -569,66 +672,54 @@ function HomePage() {
 
                 </div>
 
-
                 <h2>
                   Shanti Enterprises
                 </h2>
-
 
                 <p>
                   Your one-stop wholesale &
                   industrial supply partner.
                 </p>
 
-
                 <div className="home-hero-card-divider" />
-
 
                 <div className="home-hero-stats">
 
                   <HeroStat
-                    value="500+"
+                    value={productStat}
                     label="Products"
                   />
 
                   <HeroStat
-                    value="1K+"
-                    label="Customers"
+                    value="B2B"
+                    label="Business"
                   />
 
                   <HeroStat
-                    value="15+"
+                    value={categoryStat}
                     label="Categories"
                   />
 
                   <HeroStat
                     value="24h"
-                    label="Dispatch"
+                    label="Response"
                   />
 
                 </div>
 
-
                 <div className="home-hero-card-footer">
-
                   <span>
-
                     <span className="home-status-dot" />
 
                     Business orders accepted
-
                   </span>
-
                 </div>
 
               </div>
-
             </div>
 
           </div>
-
         </div>
-
       </section>
 
 
@@ -637,7 +728,6 @@ function HomePage() {
           ==================================================== */}
 
       <section className="home-section">
-
         <div className="home-container">
 
           <SectionHeader
@@ -647,7 +737,6 @@ function HomePage() {
             linkText="View All"
             linkTo="/categories"
           />
-
 
           {/* ==================================================
               CATEGORY GRID
@@ -662,7 +751,7 @@ function HomePage() {
               }).map((_, index) => (
 
                 <div
-                  key={index}
+                  key={`category-skeleton-${index}`}
                   className="home-category-card home-category-skeleton"
                 >
 
@@ -686,16 +775,25 @@ function HomePage() {
 
               ))
 
+            ) : categoriesError ? (
+
+              <div className="home-category-empty">
+                <ErrorState
+                  title="Categories unavailable"
+                  message={categoriesError}
+                  onRetry={loadCategories}
+                />
+              </div>
+
             ) : cats.length === 0 ? (
 
               <div className="home-empty-state home-category-empty">
 
                 <div className="home-empty-icon">
-
                   <Package
                     size={28}
+                    aria-hidden="true"
                   />
-
                 </div>
 
                 <h3>
@@ -707,6 +805,20 @@ function HomePage() {
                   once they are added.
                 </p>
 
+                <Link
+                  to="/products"
+                  className="home-primary-button"
+                >
+                  <span>
+                    Browse Products
+                  </span>
+
+                  <ArrowRight
+                    size={16}
+                    aria-hidden="true"
+                  />
+                </Link>
+
               </div>
 
             ) : (
@@ -717,21 +829,28 @@ function HomePage() {
                   getCatId(cat);
 
                 const img =
-                  getImg(cat.image);
+                  getImg(
+                    cat?.image
+                  );
+
+                const categoryName =
+                  cat?.name ||
+                  cat?.title ||
+                  "Category";
 
                 return (
-
                   <Link
                     key={
                       id ||
-                      cat.name
+                      categoryName
                     }
                     to={
                       id
-                        ? `/products?category=${id}`
+                        ? `/products?category=${encodeURIComponent(id)}`
                         : "/products"
                     }
                     className="home-category-card"
+                    aria-label={`Browse ${categoryName} products`}
                   >
 
                     <div className="home-category-image">
@@ -740,59 +859,52 @@ function HomePage() {
 
                         <img
                           src={img}
-                          alt={
-                            cat.name ||
-                            "Product category"
-                          }
+                          alt={categoryName}
                           loading="lazy"
+                          decoding="async"
                         />
 
                       ) : (
 
-                        <div className="home-category-placeholder">
-
+                        <div
+                          className="home-category-placeholder"
+                          aria-hidden="true"
+                        >
                           <Package
                             size={38}
                           />
-
                         </div>
 
                       )}
 
-
                       <span className="home-category-overlay">
-
                         <ArrowRight
                           size={17}
+                          aria-hidden="true"
                         />
-
                       </span>
 
                     </div>
 
-
                     <div className="home-category-content">
 
                       <h3>
-                        {cat.name}
+                        {categoryName}
                       </h3>
 
                       <span>
-
                         Browse Products
 
                         <ChevronRight
                           size={14}
+                          aria-hidden="true"
                         />
-
                       </span>
 
                     </div>
 
                   </Link>
-
                 );
-
               })
 
             )}
@@ -800,7 +912,6 @@ function HomePage() {
           </div>
 
         </div>
-
       </section>
 
 
@@ -809,7 +920,6 @@ function HomePage() {
           ==================================================== */}
 
       <section className="home-section home-products-section">
-
         <div className="home-container">
 
           <SectionHeader
@@ -819,7 +929,6 @@ function HomePage() {
             linkText="View All"
             linkTo="/products"
           />
-
 
           {/* ==================================================
               PRODUCTS
@@ -834,7 +943,7 @@ function HomePage() {
               }).map((_, index) => (
 
                 <div
-                  key={index}
+                  key={`product-skeleton-${index}`}
                   className="home-product-skeleton"
                 >
 
@@ -868,16 +977,23 @@ function HomePage() {
 
             </div>
 
+          ) : productsError ? (
+
+            <ErrorState
+              title="Products unavailable"
+              message={productsError}
+              onRetry={loadProducts}
+            />
+
           ) : prods.length === 0 ? (
 
             <div className="home-empty-state">
 
               <div className="home-empty-icon">
-
                 <Package
                   size={30}
+                  aria-hidden="true"
                 />
-
               </div>
 
               <h2>
@@ -893,13 +1009,14 @@ function HomePage() {
                 to="/categories"
                 className="home-primary-button"
               >
-
-                Explore Categories
+                <span>
+                  Explore Categories
+                </span>
 
                 <ArrowRight
                   size={16}
+                  aria-hidden="true"
                 />
-
               </Link>
 
             </div>
@@ -912,8 +1029,10 @@ function HomePage() {
 
                 <ProductCard
                   key={
-                    product._id ||
-                    product.id
+                    product?._id ||
+                    product?.id ||
+                    product?.slug ||
+                    product?.name
                   }
                   product={product}
                 />
@@ -923,7 +1042,6 @@ function HomePage() {
             </div>
 
           )}
-
 
           {/* ==================================================
               PRODUCTS CTA
@@ -935,21 +1053,19 @@ function HomePage() {
               to="/products"
               className="home-primary-button"
             >
-
               <span>
                 See All Products
               </span>
 
               <ArrowRight
                 size={17}
+                aria-hidden="true"
               />
-
             </Link>
 
           </div>
 
         </div>
-
       </section>
 
 
@@ -958,9 +1074,7 @@ function HomePage() {
           ==================================================== */}
 
       <section className="home-section">
-
         <div className="home-container">
-
 
           <div className="home-section-heading home-centered-heading">
 
@@ -980,56 +1094,55 @@ function HomePage() {
 
           </div>
 
-
           <div className="home-feature-grid">
 
             <FeatureCard
               icon={
                 <ShieldCheck
                   size={25}
+                  aria-hidden="true"
                 />
               }
               title="Verified Quality"
-              desc="Every product is sourced from trusted suppliers and meets strict quality standards."
+              desc="Quality-focused products from trusted suppliers for dependable business purchasing."
             />
-
 
             <FeatureCard
               icon={
                 <Truck
                   size={25}
+                  aria-hidden="true"
                 />
               }
               title="Fast Dispatch"
-              desc="Orders confirmed before noon are dispatched the same business day."
+              desc="A streamlined order process helps get confirmed orders ready for dispatch quickly."
             />
-
 
             <FeatureCard
               icon={
                 <ShoppingBag
                   size={25}
+                  aria-hidden="true"
                 />
               }
               title="Wholesale Pricing"
-              desc="Volume-based pricing tiers that scale with your order quantity."
+              desc="Designed for business purchases, bulk orders and quantity-focused buying."
             />
-
 
             <FeatureCard
               icon={
                 <CreditCard
                   size={25}
+                  aria-hidden="true"
                 />
               }
               title="Secure Payments"
-              desc="Razorpay-powered checkout with UPI, cards, net banking & more."
+              desc="Razorpay-powered checkout with UPI, cards, net banking and other supported methods."
             />
 
           </div>
 
         </div>
-
       </section>
 
 
@@ -1042,7 +1155,6 @@ function HomePage() {
         <div className="home-container">
 
           <div className="home-shopping-grid">
-
 
             {/* ==================================================
                 INTRO
@@ -1070,15 +1182,14 @@ function HomePage() {
                 to="/products"
                 className="home-cta-button"
               >
-
                 <span>
                   Start Shopping
                 </span>
 
                 <ArrowRight
                   size={17}
+                  aria-hidden="true"
                 />
-
               </Link>
 
             </div>
@@ -1093,19 +1204,19 @@ function HomePage() {
               <Step
                 num="01"
                 title="Browse & Add"
-                desc="Find products by category or search. Add to cart with one click."
+                desc="Find products by category or search. Add the products you need to your cart."
               />
 
               <Step
                 num="02"
                 title="Set Address"
-                desc="Use a saved address or enter a new delivery location."
+                desc="Use a saved address or enter a new delivery location during checkout."
               />
 
               <Step
                 num="03"
                 title="Pay & Confirm"
-                desc="Razorpay or Cash on Delivery — your order is confirmed instantly."
+                desc="Choose a supported payment method and confirm your business order securely."
               />
 
             </div>
@@ -1136,11 +1247,9 @@ function HomePage() {
             </h2>
 
             <p>
-              Join hundreds of businesses that
-              trust Shanti Enterprises for their
-              supply needs.
+              Explore the catalogue and find the
+              products your business needs.
             </p>
-
 
             <div className="home-final-cta-actions">
 
@@ -1148,17 +1257,15 @@ function HomePage() {
                 to="/products"
                 className="home-cta-button"
               >
-
                 <span>
                   Browse Products
                 </span>
 
                 <ArrowRight
                   size={17}
+                  aria-hidden="true"
                 />
-
               </Link>
-
 
               <Link
                 to="/register"

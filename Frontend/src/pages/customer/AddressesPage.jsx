@@ -1,7 +1,7 @@
 // ============================================================
 // SHANTI ENTERPRISES
 // Saved Addresses Page
-// Frontend Phase 6 - UI/UX
+// Customer Account
 // ============================================================
 
 import {
@@ -15,6 +15,8 @@ import {
 import {
   useAddress,
 } from "../../context/AddressContext";
+
+import "./AddressesPage.css";
 
 // ============================================================
 // EMPTY FORM
@@ -30,6 +32,20 @@ const emptyForm = {
 };
 
 // ============================================================
+// ADDRESS ID
+// ============================================================
+
+const getAddressId = (
+  address
+) => {
+  return (
+    address?._id ||
+    address?.id ||
+    ""
+  );
+};
+
+// ============================================================
 // ADDRESSES PAGE
 // ============================================================
 
@@ -41,12 +57,16 @@ function AddressesPage() {
     updateAddress,
     deleteAddress,
     selectAddress,
+    loading,
+    error: contextError,
   } = useAddress();
 
   const [
     form,
     setForm,
-  ] = useState(emptyForm);
+  ] = useState({
+    ...emptyForm,
+  });
 
   const [
     editingId,
@@ -63,6 +83,11 @@ function AddressesPage() {
     setSuccess,
   ] = useState("");
 
+  const [
+    actionLoading,
+    setActionLoading,
+  ] = useState(false);
+
   // ==========================================================
   // FORM CHANGE
   // ==========================================================
@@ -78,7 +103,10 @@ function AddressesPage() {
     setForm(
       (current) => ({
         ...current,
-        [name]: value,
+        [name]:
+          name === "pincode"
+            ? value.replace(/\D/g, "").slice(0, 6)
+            : value,
       })
     );
 
@@ -143,7 +171,7 @@ function AddressesPage() {
   // SAVE
   // ==========================================================
 
-  const handleSubmit = (
+  const handleSubmit = async (
     event
   ) => {
     event.preventDefault();
@@ -155,7 +183,6 @@ function AddressesPage() {
       setError(
         validationError
       );
-
       return;
     }
 
@@ -179,30 +206,44 @@ function AddressesPage() {
         form.pincode.trim(),
     };
 
-    if (editingId) {
-      updateAddress(
-        editingId,
-        addressData
-      );
+    try {
+      setActionLoading(true);
+      setError("");
+      setSuccess("");
 
-      setSuccess(
-        "Address updated successfully."
-      );
-    } else {
-      addAddress(
-        addressData
-      );
+      if (editingId) {
+        await updateAddress(
+          editingId,
+          addressData
+        );
 
-      setSuccess(
-        "Address added successfully."
+        setSuccess(
+          "Address updated successfully."
+        );
+      } else {
+        await addAddress(
+          addressData
+        );
+
+        setSuccess(
+          "Address added successfully."
+        );
+      }
+
+      setForm({
+        ...emptyForm,
+      });
+
+      setEditingId(null);
+    } catch (err) {
+      setError(
+        err?.response?.data?.message ||
+        err?.message ||
+        "Unable to save address."
       );
+    } finally {
+      setActionLoading(false);
     }
-
-    setForm({
-      ...emptyForm,
-    });
-
-    setEditingId(null);
   };
 
   // ==========================================================
@@ -212,8 +253,11 @@ function AddressesPage() {
   const handleEdit = (
     address
   ) => {
+    const addressId =
+      getAddressId(address);
+
     setEditingId(
-      address.id
+      addressId
     );
 
     setForm({
@@ -238,13 +282,18 @@ function AddressesPage() {
 
     setError("");
     setSuccess("");
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
   };
 
   // ==========================================================
   // DELETE
   // ==========================================================
 
-  const handleDelete = (
+  const handleDelete = async (
     addressId
   ) => {
     const confirmed =
@@ -256,37 +305,78 @@ function AddressesPage() {
       return;
     }
 
-    deleteAddress(
-      addressId
-    );
+    try {
+      setActionLoading(true);
+      setError("");
+      setSuccess("");
 
-    if (
-      editingId ===
-      addressId
-    ) {
-      resetForm();
+      await deleteAddress(
+        addressId
+      );
+
+      if (
+        String(editingId) ===
+        String(addressId)
+      ) {
+        setForm({
+          ...emptyForm,
+        });
+
+        setEditingId(null);
+      }
+
+      setSuccess(
+        "Address deleted successfully."
+      );
+    } catch (err) {
+      setError(
+        err?.response?.data?.message ||
+        err?.message ||
+        "Unable to delete address."
+      );
+    } finally {
+      setActionLoading(false);
     }
-
-    setSuccess(
-      "Address deleted successfully."
-    );
   };
 
   // ==========================================================
   // SELECT
   // ==========================================================
 
-  const handleSelect = (
+  const handleSelect = async (
     addressId
   ) => {
-    selectAddress(
-      addressId
-    );
+    try {
+      setActionLoading(true);
+      setError("");
+      setSuccess("");
 
-    setSuccess(
-      "Delivery address selected."
-    );
+      await selectAddress(
+        addressId
+      );
+
+      setSuccess(
+        "Delivery address selected."
+      );
+    } catch (err) {
+      setError(
+        err?.response?.data?.message ||
+        err?.message ||
+        "Unable to select address."
+      );
+    } finally {
+      setActionLoading(false);
+    }
   };
+
+  // ==========================================================
+  // DISPLAY ERROR
+  // ==========================================================
+
+  const displayError =
+    error ||
+    contextError ||
+    "";
 
   // ==========================================================
   // PAGE
@@ -295,72 +385,117 @@ function AddressesPage() {
   return (
     <section className="addresses-page">
 
+      <div className="addresses-bg-orb addresses-bg-orb-one" />
+      <div className="addresses-bg-orb addresses-bg-orb-two" />
+
       <div className="addresses-container">
 
         {/* ==================================================
             HEADER
             ================================================== */}
 
-        <div className="addresses-header">
+        <header className="addresses-header">
 
-          <div>
+          <div className="addresses-header-copy">
 
             <Link
               to="/dashboard"
               className="addresses-back-link"
             >
-              ← Dashboard
+              <span className="addresses-back-icon">
+                ←
+              </span>
+              Dashboard
             </Link>
 
-            <span className="addresses-eyebrow">
-              DELIVERY SETTINGS
-            </span>
+            <div className="addresses-eyebrow-row">
+              <span className="addresses-eyebrow-dot" />
+              <span className="addresses-eyebrow">
+                DELIVERY SETTINGS
+              </span>
+            </div>
 
             <h1>
               Saved Addresses
+              <span className="addresses-title-accent">
+                .
+              </span>
             </h1>
 
             <p>
-              Manage your delivery
-              addresses for faster checkout.
+              Manage your delivery addresses for
+              faster and easier business checkout.
             </p>
-
           </div>
 
           <Link
             to="/products"
             className="addresses-shop-link"
           >
-            Continue Shopping →
+            <span>Continue Shopping</span>
+            <span>→</span>
           </Link>
 
-        </div>
+        </header>
 
         {/* ==================================================
             MESSAGES
             ================================================== */}
 
-        {error && (
-          <div className="addresses-error">
-            <span>
+        {displayError && (
+          <div
+            className="addresses-alert addresses-alert-error"
+            role="alert"
+          >
+            <span className="addresses-alert-icon">
               !
             </span>
 
-            <p>
-              {error}
-            </p>
+            <div>
+              <strong>
+                Something needs attention
+              </strong>
+              <p>
+                {displayError}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setError("")}
+              aria-label="Dismiss error"
+            >
+              ×
+            </button>
           </div>
         )}
 
         {success && (
-          <div className="addresses-success">
-            <span>
+          <div
+            className="addresses-alert addresses-alert-success"
+            role="status"
+            aria-live="polite"
+          >
+            <span className="addresses-alert-icon">
               ✓
             </span>
 
-            <p>
-              {success}
-            </p>
+            <div>
+              <strong>
+                Done
+              </strong>
+              <p>
+                {success}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setSuccess("")}
+              aria-label="Dismiss success message"
+            >
+              ×
+            </button>
           </div>
         )}
 
@@ -379,8 +514,7 @@ function AddressesPage() {
             <div className="addresses-section-heading">
 
               <div>
-
-                <span>
+                <span className="addresses-section-kicker">
                   YOUR ADDRESSES
                 </span>
 
@@ -388,29 +522,82 @@ function AddressesPage() {
                   Saved Addresses
                 </h2>
 
+                <p>
+                  Select an address to use during checkout.
+                </p>
               </div>
 
-              <strong>
-                {addresses.length}
-              </strong>
+              <div className="addresses-count">
+                <strong>
+                  {addresses.length}
+                </strong>
+                <span>
+                  {addresses.length === 1
+                    ? "Address"
+                    : "Addresses"}
+                </span>
+              </div>
 
             </div>
 
-            {addresses.length === 0 ? (
+            {loading ? (
+              <div className="address-list">
+                {[1, 2, 3].map(
+                  (item) => (
+                    <div
+                      key={item}
+                      className="address-card address-card-skeleton"
+                    >
+                      <div className="address-skeleton-line address-skeleton-small" />
+                      <div className="address-skeleton-line address-skeleton-title" />
+                      <div className="address-skeleton-line" />
+                      <div className="address-skeleton-line address-skeleton-medium" />
+                      <div className="address-skeleton-actions">
+                        <span />
+                        <span />
+                      </div>
+                    </div>
+                  )
+                )}
+              </div>
+            ) : addresses.length === 0 ? (
               <div className="addresses-empty">
 
-                <div className="addresses-empty-icon">
-                  📍
+                <div className="addresses-empty-illustration">
+                  <span className="addresses-empty-pin">
+                    ●
+                  </span>
+                  <span className="addresses-empty-ring" />
                 </div>
+
+                <span className="addresses-empty-kicker">
+                  NOTHING SAVED YET
+                </span>
 
                 <h3>
                   No saved addresses
                 </h3>
 
                 <p>
-                  Add a delivery address to
-                  make checkout faster.
+                  Add your first delivery address using
+                  the form to make future checkout faster.
                 </p>
+
+                <button
+                  type="button"
+                  className="addresses-empty-button"
+                  onClick={() =>
+                    document
+                      .getElementById("address-form")
+                      ?.scrollIntoView({
+                        behavior: "smooth",
+                        block: "center",
+                      })
+                  }
+                >
+                  Add Your First Address
+                  <span>→</span>
+                </button>
 
               </div>
             ) : (
@@ -418,19 +605,39 @@ function AddressesPage() {
 
                 {addresses.map(
                   (address) => {
+                    const addressId =
+                      getAddressId(
+                        address
+                      );
 
                     const isSelected =
-                      selectedAddressId ===
-                      address.id;
+                      String(
+                        selectedAddressId
+                      ) ===
+                      String(
+                        addressId
+                      );
+
+                    const isEditing =
+                      String(
+                        editingId
+                      ) ===
+                      String(
+                        addressId
+                      );
 
                     return (
                       <article
                         key={
-                          address.id
+                          addressId
                         }
                         className={`address-card ${
                           isSelected
                             ? "selected"
+                            : ""
+                        } ${
+                          isEditing
+                            ? "editing"
                             : ""
                         }`}
                       >
@@ -439,32 +646,39 @@ function AddressesPage() {
 
                         <div className="address-card-top">
 
-                          <label className="address-select">
-
-                            <input
-                              type="radio"
-                              name="selectedAddress"
-                              checked={
-                                isSelected
-                              }
-                              onChange={() =>
-                                handleSelect(
-                                  address.id
-                                )
-                              }
-                            />
+                          <button
+                            type="button"
+                            className={`address-select-button ${
+                              isSelected
+                                ? "selected"
+                                : ""
+                            }`}
+                            onClick={() =>
+                              handleSelect(
+                                addressId
+                              )
+                            }
+                            disabled={
+                              actionLoading
+                            }
+                          >
+                            <span className="address-radio">
+                              {isSelected && (
+                                <span />
+                              )}
+                            </span>
 
                             <span>
                               {isSelected
-                                ? "Selected"
-                                : "Select Address"}
+                                ? "Selected address"
+                                : "Use this address"}
                             </span>
-
-                          </label>
+                          </button>
 
                           {isSelected && (
                             <span className="selected-address-badge">
-                              ✓ Selected
+                              <span>✓</span>
+                              Default
                             </span>
                           )}
 
@@ -474,23 +688,37 @@ function AddressesPage() {
 
                         <div className="address-card-content">
 
-                          <h3>
-                            {address.name}
-                          </h3>
+                          <div className="address-name-row">
+                            <h3>
+                              {address.name}
+                            </h3>
 
-                          <p className="address-phone">
+                            {address.isDefault && (
+                              <span className="address-default-label">
+                                PRIMARY
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="address-phone">
+                            <span>☎</span>
                             {address.phone}
-                          </p>
+                          </div>
 
-                          <p>
-                            {address.address}
-                          </p>
+                          <div className="address-copy">
+                            <p>
+                              {address.address}
+                            </p>
 
-                          <p>
-                            {address.city},{" "}
-                            {address.state} -{" "}
-                            {address.pincode}
-                          </p>
+                            <p>
+                              {address.city},{" "}
+                              {address.state}
+                              {" "}
+                              <strong>
+                                {address.pincode}
+                              </strong>
+                            </p>
+                          </div>
 
                         </div>
 
@@ -506,7 +734,11 @@ function AddressesPage() {
                                 address
                               )
                             }
+                            disabled={
+                              actionLoading
+                            }
                           >
+                            <span>✎</span>
                             Edit
                           </button>
 
@@ -515,10 +747,14 @@ function AddressesPage() {
                             className="address-delete-button"
                             onClick={() =>
                               handleDelete(
-                                address.id
+                                addressId
                               )
                             }
+                            disabled={
+                              actionLoading
+                            }
                           >
+                            <span>×</span>
                             Delete
                           </button>
 
@@ -538,26 +774,37 @@ function AddressesPage() {
               ADD / EDIT FORM
               ================================================== */}
 
-          <div className="address-form-card">
+          <div
+            id="address-form"
+            className="address-form-card"
+          >
+
+            <div className="address-form-decoration" />
 
             <div className="address-form-header">
 
-              <span>
-                {editingId
-                  ? "UPDATE ADDRESS"
-                  : "NEW ADDRESS"}
-              </span>
+              <div className="address-form-icon">
+                {editingId ? "✎" : "+"}
+              </div>
 
-              <h2>
-                {editingId
-                  ? "Edit Address"
-                  : "Add New Address"}
-              </h2>
+              <div>
+                <span className="address-form-kicker">
+                  {editingId
+                    ? "UPDATE ADDRESS"
+                    : "NEW ADDRESS"}
+                </span>
 
-              <p>
-                Enter your complete delivery
-                information.
-              </p>
+                <h2>
+                  {editingId
+                    ? "Edit Address"
+                    : "Add New Address"}
+                </h2>
+
+                <p>
+                  Enter your complete delivery
+                  information below.
+                </p>
+              </div>
 
             </div>
 
@@ -573,22 +820,32 @@ function AddressesPage() {
               <div className="address-form-group">
 
                 <label htmlFor="name">
-                  Full Name
+                  <span>Full Name</span>
+                  <small>Required</small>
                 </label>
 
-                <input
-                  id="name"
-                  type="text"
-                  name="name"
-                  value={
-                    form.name
-                  }
-                  onChange={
-                    handleChange
-                  }
-                  placeholder="Enter full name"
-                  autoComplete="name"
-                />
+                <div className="address-input-wrap">
+                  <span className="address-input-icon">
+                    A
+                  </span>
+
+                  <input
+                    id="name"
+                    type="text"
+                    name="name"
+                    value={
+                      form.name
+                    }
+                    onChange={
+                      handleChange
+                    }
+                    placeholder="Enter full name"
+                    autoComplete="name"
+                    disabled={
+                      actionLoading
+                    }
+                  />
+                </div>
 
               </div>
 
@@ -597,22 +854,32 @@ function AddressesPage() {
               <div className="address-form-group">
 
                 <label htmlFor="phone">
-                  Phone Number
+                  <span>Phone Number</span>
+                  <small>Required</small>
                 </label>
 
-                <input
-                  id="phone"
-                  type="tel"
-                  name="phone"
-                  value={
-                    form.phone
-                  }
-                  onChange={
-                    handleChange
-                  }
-                  placeholder="Enter phone number"
-                  autoComplete="tel"
-                />
+                <div className="address-input-wrap">
+                  <span className="address-input-icon">
+                    #
+                  </span>
+
+                  <input
+                    id="phone"
+                    type="tel"
+                    name="phone"
+                    value={
+                      form.phone
+                    }
+                    onChange={
+                      handleChange
+                    }
+                    placeholder="Enter phone number"
+                    autoComplete="tel"
+                    disabled={
+                      actionLoading
+                    }
+                  />
+                </div>
 
               </div>
 
@@ -621,21 +888,31 @@ function AddressesPage() {
               <div className="address-form-group">
 
                 <label htmlFor="address">
-                  Complete Address
+                  <span>Complete Address</span>
+                  <small>Required</small>
                 </label>
 
-                <textarea
-                  id="address"
-                  name="address"
-                  value={
-                    form.address
-                  }
-                  onChange={
-                    handleChange
-                  }
-                  placeholder="House number, street, area"
-                  rows="4"
-                />
+                <div className="address-input-wrap address-textarea-wrap">
+                  <span className="address-input-icon address-textarea-icon">
+                    ▤
+                  </span>
+
+                  <textarea
+                    id="address"
+                    name="address"
+                    value={
+                      form.address
+                    }
+                    onChange={
+                      handleChange
+                    }
+                    placeholder="House number, street, area"
+                    rows="4"
+                    disabled={
+                      actionLoading
+                    }
+                  />
+                </div>
 
               </div>
 
@@ -646,42 +923,62 @@ function AddressesPage() {
                 <div className="address-form-group">
 
                   <label htmlFor="city">
-                    City
+                    <span>City</span>
+                    <small>Required</small>
                   </label>
 
-                  <input
-                    id="city"
-                    type="text"
-                    name="city"
-                    value={
-                      form.city
-                    }
-                    onChange={
-                      handleChange
-                    }
-                    placeholder="Enter city"
-                  />
+                  <div className="address-input-wrap">
+                    <span className="address-input-icon">
+                      C
+                    </span>
+
+                    <input
+                      id="city"
+                      type="text"
+                      name="city"
+                      value={
+                        form.city
+                      }
+                      onChange={
+                        handleChange
+                      }
+                      placeholder="Enter city"
+                      disabled={
+                        actionLoading
+                      }
+                    />
+                  </div>
 
                 </div>
 
                 <div className="address-form-group">
 
                   <label htmlFor="state">
-                    State
+                    <span>State</span>
+                    <small>Required</small>
                   </label>
 
-                  <input
-                    id="state"
-                    type="text"
-                    name="state"
-                    value={
-                      form.state
-                    }
-                    onChange={
-                      handleChange
-                    }
-                    placeholder="Enter state"
-                  />
+                  <div className="address-input-wrap">
+                    <span className="address-input-icon">
+                      S
+                    </span>
+
+                    <input
+                      id="state"
+                      type="text"
+                      name="state"
+                      value={
+                        form.state
+                      }
+                      onChange={
+                        handleChange
+                      }
+                      placeholder="Enter state"
+                      disabled={
+                        actionLoading
+                      }
+                    />
+                  </div>
 
                 </div>
 
@@ -692,23 +989,34 @@ function AddressesPage() {
               <div className="address-form-group">
 
                 <label htmlFor="pincode">
-                  Pincode
+                  <span>Pincode</span>
+                  <small>6 digits</small>
                 </label>
 
-                <input
-                  id="pincode"
-                  type="text"
-                  name="pincode"
-                  value={
-                    form.pincode
-                  }
-                  onChange={
-                    handleChange
-                  }
-                  placeholder="6 digit pincode"
-                  maxLength="6"
-                  inputMode="numeric"
-                />
+                <div className="address-input-wrap">
+                  <span className="address-input-icon">
+                    #
+                  </span>
+
+                  <input
+                    id="pincode"
+                    type="text"
+                    name="pincode"
+                    value={
+                      form.pincode
+                    }
+                    onChange={
+                      handleChange
+                    }
+                    placeholder="6 digit pincode"
+                    maxLength="6"
+                    inputMode="numeric"
+                    autoComplete="postal-code"
+                    disabled={
+                      actionLoading
+                    }
+                  />
+                </div>
 
               </div>
 
@@ -723,6 +1031,9 @@ function AddressesPage() {
                     onClick={
                       resetForm
                     }
+                    disabled={
+                      actionLoading
+                    }
                   >
                     Cancel
                   </button>
@@ -731,46 +1042,73 @@ function AddressesPage() {
                 <button
                   type="submit"
                   className="address-save-button"
+                  disabled={
+                    actionLoading
+                  }
                 >
-                  {editingId
-                    ? "Update Address"
-                    : "Save Address"}
+                  {actionLoading ? (
+                    <>
+                      <span className="address-button-spinner" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      {editingId
+                        ? "Update Address"
+                        : "Save Address"}
+                      <span>→</span>
+                    </>
+                  )}
                 </button>
 
               </div>
 
             </form>
 
+            <div className="address-form-note">
+              <span>✓</span>
+              <p>
+                Your saved address is used only for
+                your Shanti Enterprises deliveries.
+              </p>
+            </div>
+
           </div>
 
         </div>
 
         {/* ==================================================
-            CHECKOUT
+            CHECKOUT CTA
             ================================================== */}
 
         {selectedAddressId && (
           <div className="addresses-checkout">
 
-            <div>
+            <div className="addresses-checkout-copy">
+              <div className="addresses-checkout-icon">
+                ✓
+              </div>
 
-              <span>
-                READY FOR CHECKOUT?
-              </span>
+              <div>
+                <span>
+                  READY FOR CHECKOUT?
+                </span>
 
-              <p>
-                Your selected delivery address
-                will be used for your order.
-              </p>
-
+                <p>
+                  Your selected delivery address
+                  will be used for your order.
+                </p>
+              </div>
             </div>
 
             <Link
               to="/checkout/summary"
               className="addresses-checkout-button"
             >
-              Continue to Checkout
               <span>
+                Continue to Checkout
+              </span>
+              <span className="addresses-checkout-arrow">
                 →
               </span>
             </Link>
@@ -778,8 +1116,36 @@ function AddressesPage() {
           </div>
         )}
 
-      </div>
+        {/* ==================================================
+            FOOTER NAV
+            ================================================== */}
 
+        <nav
+          className="addresses-footer-nav"
+          aria-label="Account navigation"
+        >
+          <Link to="/orders">
+            <span>Orders</span>
+            <span>→</span>
+          </Link>
+
+          <Link to="/quotations">
+            <span>Quotations</span>
+            <span>→</span>
+          </Link>
+
+          <Link to="/rfqs">
+            <span>RFQs</span>
+            <span>→</span>
+          </Link>
+
+          <Link to="/profile">
+            <span>Profile</span>
+            <span>→</span>
+          </Link>
+        </nav>
+
+      </div>
     </section>
   );
 }

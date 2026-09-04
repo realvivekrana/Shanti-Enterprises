@@ -4,6 +4,7 @@
 
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import "./PaymentPage.css";
 import { createPaymentOrder, verifyPayment } from "../../api/paymentApi";
 import { useCart } from "../../context/CartContext";
 

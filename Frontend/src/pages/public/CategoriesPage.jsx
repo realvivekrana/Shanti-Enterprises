@@ -421,7 +421,6 @@ function CategoriesPage() {
               <ArrowRight
                 size={16}
               />
-
             </Link>
 
           </div>
@@ -477,7 +476,6 @@ function CategoriesPage() {
             <ArrowRight
               size={17}
             />
-
           </Link>
 
         </header>
@@ -491,9 +489,11 @@ function CategoriesPage() {
           <div className="categories-summary-left">
 
             <div className="categories-summary-icon">
+
               <Grid2X2
                 size={20}
               />
+
             </div>
 
             <div>
@@ -585,6 +585,7 @@ function CategoriesPage() {
                         onError={(
                           event
                         ) => {
+
                           event.currentTarget.style.display =
                             "none";
 
@@ -599,6 +600,7 @@ function CategoriesPage() {
                             fallback.style.display =
                               "flex";
                           }
+
                         }}
                       />
                     ) : null}
@@ -663,9 +665,11 @@ function CategoriesPage() {
                       </span>
 
                       <span className="categories-card-link-arrow">
+
                         <ArrowRight
                           size={15}
                         />
+
                       </span>
 
                     </Link>
@@ -686,9 +690,11 @@ function CategoriesPage() {
         <section className="categories-bottom-cta">
 
           <div className="categories-bottom-icon">
+
             <Boxes
               size={25}
             />
+
           </div>
 
           <div className="categories-bottom-content">
@@ -713,6 +719,7 @@ function CategoriesPage() {
             to="/products"
             className="categories-primary-button"
           >
+
             <span>
               View All Products
             </span>

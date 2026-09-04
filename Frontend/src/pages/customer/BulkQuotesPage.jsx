@@ -26,6 +26,7 @@ import {
 import Loading from "../../components/common/Loading";
 
 import ErrorMessage from "../../components/common/ErrorMessage";
+import "./BulkQuotesPage.css";
 
 // ============================================================
 // HELPERS
@@ -203,7 +204,7 @@ function BulkQuotesPage() {
 
   if (loading && quotes.length === 0) {
     return (
-      <section className="app-page">
+      <section className="app-page bulk-quotes-page">
         <div className="page-container">
           <Loading message="Loading your bulk quotes..." />
         </div>
@@ -213,7 +214,7 @@ function BulkQuotesPage() {
 
   if (error && quotes.length === 0) {
     return (
-      <section className="app-page">
+      <section className="app-page bulk-quotes-page">
         <div className="page-container">
           <ErrorMessage message={error} onRetry={() => loadQuotes(1)} />
         </div>
@@ -226,7 +227,7 @@ function BulkQuotesPage() {
   // ==========================================================
 
   return (
-    <section className="app-page">
+    <section className="app-page bulk-quotes-page">
       <div className="page-container">
 
         {/* HEADER */}

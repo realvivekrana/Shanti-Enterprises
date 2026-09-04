@@ -388,24 +388,42 @@ function LoginPage() {
   // REDIRECT ALREADY LOGGED IN USER
   // ==========================================================
 
+  // Redirect already logged-in users.
+  // If the user was sent to login from a protected page,
+  // keep that destination instead of always sending them to /orders.
   useEffect(() => {
-
     if (!user) {
       return;
     }
 
+    const fromLocation = location.state?.from;
+
+    const redirectPath =
+      typeof fromLocation === "string"
+        ? fromLocation
+        : fromLocation?.pathname
+          ? `${fromLocation.pathname}${fromLocation.search || ""}${fromLocation.hash || ""}`
+          : "";
+
+    const safeRedirect =
+      redirectPath &&
+      redirectPath !== "/login" &&
+      redirectPath !== "/admin/login"
+        ? redirectPath
+        : "";
+
     navigate(
       user.role === "admin"
         ? "/admin"
-        : "/orders",
+        : safeRedirect || "/orders",
       {
         replace: true,
       }
     );
-
   }, [
     user,
     navigate,
+    location.state,
   ]);
 
 
@@ -591,10 +609,28 @@ function LoginPage() {
       // REDIRECT
       // ------------------------------------------------------
 
+      // Return the customer to the protected page that originally
+      // triggered the login redirect (for example /payment/:orderId).
+      const fromLocation = location.state?.from;
+
+      const redirectPath =
+        typeof fromLocation === "string"
+          ? fromLocation
+          : fromLocation?.pathname
+            ? `${fromLocation.pathname}${fromLocation.search || ""}${fromLocation.hash || ""}`
+            : "";
+
+      const safeRedirect =
+        redirectPath &&
+        redirectPath !== "/login" &&
+        redirectPath !== "/admin/login"
+          ? redirectPath
+          : "";
+
       navigate(
         loggedInUser.role === "admin"
           ? "/admin"
-          : "/orders",
+          : safeRedirect || "/orders",
         {
           replace: true,
         }

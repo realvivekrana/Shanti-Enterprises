@@ -22,6 +22,7 @@ import {
 import Loading from "../../components/common/Loading";
 
 import ErrorMessage from "../../components/common/ErrorMessage";
+import "./ShipmentTrackingPage.css";
 
 // ============================================================
 // HELPERS
@@ -106,7 +107,7 @@ function ShipmentListView() {
 
   if (loading && shipments.length === 0) {
     return (
-      <section className="app-page">
+      <section className="app-page shipment-tracking-page">
         <div className="page-container">
           <Loading message="Loading your shipments..." />
         </div>

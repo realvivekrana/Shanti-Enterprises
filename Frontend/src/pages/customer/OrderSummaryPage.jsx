@@ -9,6 +9,7 @@ import { useAddress } from "../../context/AddressContext";
 import { createOrder, createOrderFromQuotation } from "../../api/orderApi";
 import { getQuotationById } from "../../api/quotationApi";
 import Loading from "../../components/common/Loading";
+import "./OrderSummaryPage.css";
 
 // ── helpers ───────────────────────────────────────────────────
 const fmt = (n) =>
@@ -174,7 +175,7 @@ function OrderSummaryPage() {
   };
 
   return (
-    <div style={{ background: "var(--se-bg)", minHeight: "calc(100vh - 68px)" }}>
+    <div className="order-summary-page" style={{ background: "var(--se-bg)", minHeight: "calc(100vh - 68px)" }}>
 
       {/* BANNER */}
       <div style={{ background: "linear-gradient(135deg, var(--se-navy) 0%, #1E3A5F 100%)", padding: "36px 0 30px" }}>

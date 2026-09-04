@@ -1,0 +1,260 @@
+/* ============================================================
+   SHANTI ENTERPRISES — RFQ DETAILS
+   Premium customer wholesale interface
+   ============================================================ */
+
+.rfq-details-page {
+  --rfq-surface: #ffffff;
+  --rfq-surface-soft: #f8fafc;
+  --rfq-border: #e2e8f0;
+  --rfq-text: #0f172a;
+  --rfq-muted: #64748b;
+  --rfq-primary: #4f46e5;
+  --rfq-primary-2: #7c3aed;
+  --rfq-cyan: #0891b2;
+  --rfq-success: #059669;
+  --rfq-danger: #dc2626;
+  --rfq-shadow: 0 14px 40px rgba(15, 23, 42, .07);
+  color: var(--rfq-text);
+}
+
+.rfq-details-page .page-header {
+  margin-bottom: 18px;
+}
+
+.rfq-details-page .page-eyebrow {
+  letter-spacing: .14em;
+  font-weight: 800;
+}
+
+.rfq-details-page .page-header h1 {
+  letter-spacing: -.035em;
+}
+
+.rfq-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--rfq-primary);
+  font-weight: 800;
+  text-decoration: none;
+  padding: 9px 13px;
+  border-radius: 10px;
+  transition: .2s ease;
+}
+
+.rfq-back-link:hover {
+  background: rgba(79, 70, 229, .08);
+  transform: translateX(-2px);
+}
+
+.rfq-alert {
+  border-radius: 14px !important;
+  padding: 14px 16px !important;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, .04);
+}
+
+.rfq-alert-success {
+  background: linear-gradient(135deg, #ecfdf5, #f0fdfa) !important;
+  border-color: #a7f3d0 !important;
+  color: #047857 !important;
+}
+
+.rfq-alert-error {
+  background: linear-gradient(135deg, #fff1f2, #fef2f2) !important;
+  border-color: #fecdd3 !important;
+  color: #b91c1c !important;
+}
+
+.rfq-section-card {
+  background: var(--rfq-surface) !important;
+  border: 1px solid var(--rfq-border) !important;
+  border-radius: 18px !important;
+  box-shadow: var(--rfq-shadow);
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+
+.rfq-section-card:hover {
+  border-color: rgba(99, 102, 241, .28) !important;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, .09);
+}
+
+.rfq-section-card h2 {
+  color: var(--rfq-text);
+  letter-spacing: -.025em;
+}
+
+.rfq-product-card {
+  background: linear-gradient(135deg, var(--rfq-surface), var(--rfq-surface-soft)) !important;
+  border: 1px solid var(--rfq-border) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 8px 25px rgba(15, 23, 42, .045);
+  transition: .2s ease;
+}
+
+.rfq-product-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(79, 70, 229, .3) !important;
+  box-shadow: 0 15px 35px rgba(79, 70, 229, .09);
+}
+
+.rfq-product-card img {
+  transition: transform .25s ease;
+}
+
+.rfq-product-card:hover img {
+  transform: scale(1.04);
+}
+
+.rfq-cancel-button {
+  border: 1px solid #fecaca !important;
+  background: #fff1f2 !important;
+  color: #be123c !important;
+  font-weight: 800 !important;
+  border-radius: 11px !important;
+  padding: 10px 15px !important;
+  cursor: pointer;
+  transition: .2s ease;
+}
+
+.rfq-cancel-button:hover:not(:disabled) {
+  background: #ffe4e6 !important;
+  border-color: #fda4af !important;
+  transform: translateY(-1px);
+}
+
+.rfq-cancel-button:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+.rfq-modal-backdrop {
+  backdrop-filter: blur(7px);
+  background: rgba(15, 23, 42, .58) !important;
+}
+
+.rfq-modal {
+  background: var(--rfq-surface) !important;
+  border: 1px solid var(--rfq-border);
+  color: var(--rfq-text);
+  border-radius: 20px !important;
+  box-shadow: 0 30px 80px rgba(15, 23, 42, .3) !important;
+}
+
+.rfq-modal h2 {
+  color: var(--rfq-text);
+  letter-spacing: -.025em;
+}
+
+.rfq-modal p {
+  color: var(--rfq-muted) !important;
+}
+
+.rfq-modal button {
+  border: 1px solid var(--rfq-border);
+  background: var(--rfq-surface-soft);
+  color: var(--rfq-text);
+  border-radius: 10px;
+  padding: 10px 15px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: .2s ease;
+}
+
+.rfq-modal button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: rgba(79, 70, 229, .35);
+}
+
+.rfq-modal button:last-child {
+  background: linear-gradient(135deg, #dc2626, #e11d48);
+  color: #fff;
+  border-color: transparent;
+}
+
+.rfq-details-page a,
+.rfq-details-page button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.rfq-details-page strong {
+  color: var(--rfq-text);
+}
+
+.dark .rfq-details-page {
+  --rfq-surface: #111827;
+  --rfq-surface-soft: #172033;
+  --rfq-border: #273449;
+  --rfq-text: #f8fafc;
+  --rfq-muted: #94a3b8;
+  --rfq-shadow: 0 16px 40px rgba(0, 0, 0, .24);
+}
+
+.dark .rfq-details-page .rfq-section-card,
+.dark .rfq-details-page .rfq-product-card {
+  color: var(--rfq-text);
+}
+
+.dark .rfq-details-page .rfq-product-card {
+  background: linear-gradient(135deg, #111827, #172033) !important;
+}
+
+.dark .rfq-details-page .rfq-cancel-button {
+  background: rgba(190, 24, 93, .13) !important;
+  border-color: rgba(251, 113, 133, .25) !important;
+  color: #fda4af !important;
+}
+
+.dark .rfq-details-page .rfq-alert-success {
+  background: rgba(5, 150, 105, .13) !important;
+  border-color: rgba(52, 211, 153, .25) !important;
+  color: #6ee7b7 !important;
+}
+
+.dark .rfq-details-page .rfq-alert-error {
+  background: rgba(220, 38, 38, .13) !important;
+  border-color: rgba(248, 113, 113, .25) !important;
+  color: #fca5a5 !important;
+}
+
+.dark .rfq-modal button {
+  background: #172033;
+  color: #f8fafc;
+}
+
+@media (max-width: 800px) {
+  .rfq-details-page .page-header {
+    padding-bottom: 4px;
+  }
+
+  .rfq-details-page .rfq-section-card {
+    border-radius: 15px !important;
+  }
+
+  .rfq-details-page section[style*="grid-template-columns"] {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 560px) {
+  .rfq-details-page .rfq-product-card {
+    padding: 14px !important;
+  }
+
+  .rfq-details-page .rfq-product-card > div:first-child {
+    width: 72px !important;
+    height: 72px !important;
+  }
+
+  .rfq-modal {
+    padding: 20px !important;
+  }
+
+  .rfq-modal > div:last-child {
+    flex-direction: column-reverse;
+  }
+
+  .rfq-modal button {
+    width: 100%;
+  }
+}

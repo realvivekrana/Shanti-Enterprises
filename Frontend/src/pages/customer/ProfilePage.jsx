@@ -26,6 +26,8 @@ import Loading from "../../components/common/Loading";
 
 import ErrorMessage from "../../components/common/ErrorMessage";
 
+import "./ProfilePage.css";
+
 // ============================================================
 // PROFILE PAGE
 // ============================================================
@@ -76,7 +78,6 @@ function ProfilePage() {
     async () => {
       try {
         setLoading(true);
-
         setError("");
 
         const response =
@@ -88,15 +89,12 @@ function ProfilePage() {
           response?.data ||
           response;
 
-        setProfile(
-          profileData
-        );
+        setProfile(profileData);
 
         setForm({
           name:
             profileData?.name ||
             "",
-
           phone:
             profileData?.phone ||
             "",
@@ -114,7 +112,6 @@ function ProfilePage() {
             name:
               user.name ||
               "",
-
             phone:
               user.phone ||
               "",
@@ -122,10 +119,9 @@ function ProfilePage() {
         }
 
         setError(
-          err.response?.data
-            ?.message ||
-            err.message ||
-            "Unable to load profile."
+          err.response?.data?.message ||
+          err.message ||
+          "Unable to load profile."
         );
       } finally {
         setLoading(false);
@@ -159,7 +155,6 @@ function ProfilePage() {
       );
 
       setSuccess("");
-
       setError("");
     };
 
@@ -168,16 +163,12 @@ function ProfilePage() {
   // ==========================================================
 
   const handleSubmit =
-    async (
-      event
-    ) => {
+    async (event) => {
       event.preventDefault();
 
       try {
         setSaving(true);
-
         setError("");
-
         setSuccess("");
 
         if (!form.name.trim()) {
@@ -196,7 +187,6 @@ function ProfilePage() {
           await updateMyProfile({
             name:
               form.name.trim(),
-
             phone:
               form.phone.trim(),
           });
@@ -209,18 +199,14 @@ function ProfilePage() {
 
         if (
           updatedUser &&
-          typeof updatedUser ===
-            "object"
+          typeof updatedUser === "object"
         ) {
-          setProfile(
-            updatedUser
-          );
+          setProfile(updatedUser);
 
           setForm({
             name:
               updatedUser.name ||
               form.name,
-
             phone:
               updatedUser.phone ||
               form.phone,
@@ -229,7 +215,7 @@ function ProfilePage() {
 
         setSuccess(
           response?.message ||
-            "Profile updated successfully."
+          "Profile updated successfully."
         );
       } catch (err) {
         console.error(
@@ -238,10 +224,9 @@ function ProfilePage() {
         );
 
         setError(
-          err.response?.data
-            ?.message ||
-            err.message ||
-            "Unable to update profile."
+          err.response?.data?.message ||
+          err.message ||
+          "Unable to update profile."
         );
       } finally {
         setSaving(false);
@@ -254,9 +239,20 @@ function ProfilePage() {
 
   if (loading) {
     return (
-      <Loading
-        message="Loading profile..."
-      />
+      <section className="profile-page profile-page-loading">
+        <div className="profile-loading-shell">
+          <div className="profile-loading-orb" />
+          <div className="profile-loading-content">
+            <span className="profile-loading-kicker">
+              SHANTI ENTERPRISES
+            </span>
+            <h1>Loading your profile</h1>
+            <p>
+              Fetching your account information...
+            </p>
+          </div>
+        </div>
+      </section>
     );
   }
 
@@ -295,6 +291,8 @@ function ProfilePage() {
 
   return (
     <section className="profile-page">
+      <div className="profile-page-glow profile-page-glow-one" />
+      <div className="profile-page-glow profile-page-glow-two" />
 
       <div className="profile-container">
 
@@ -302,68 +300,74 @@ function ProfilePage() {
             HEADER
             ================================================== */}
 
-        <div className="profile-header">
-
-          <div>
-
+        <header className="profile-header">
+          <div className="profile-header-copy">
             <Link
               to="/dashboard"
               className="profile-back-link"
             >
-              ← Dashboard
+              <span className="profile-back-icon">
+                ←
+              </span>
+              Dashboard
             </Link>
 
-            <span className="profile-eyebrow">
-              ACCOUNT SETTINGS
-            </span>
+            <div className="profile-eyebrow-row">
+              <span className="profile-eyebrow-dot" />
+              <span className="profile-eyebrow">
+                ACCOUNT SETTINGS
+              </span>
+            </div>
 
             <h1>
               My Profile
+              <span className="profile-title-accent">.</span>
             </h1>
 
             <p>
-              Manage your personal
-              information and account
-              details.
+              Keep your personal information up to date
+              for a smoother business ordering experience.
             </p>
-
           </div>
 
-        </div>
+          <div className="profile-header-badge">
+            <span className="profile-header-badge-icon">
+              ✓
+            </span>
+            <div>
+              <strong>Account active</strong>
+              <span>Your profile is protected</span>
+            </div>
+          </div>
+        </header>
 
         {/* ==================================================
-            ERROR
+            MESSAGES
             ================================================== */}
 
         {error && (
           <div className="profile-message-error">
-
             <ErrorMessage
               message={error}
               onRetry={loadProfile}
             />
-
           </div>
         )}
-
-        {/* ==================================================
-            SUCCESS
-            ================================================== */}
 
         {success && (
           <div
             className="profile-success-message"
             role="status"
+            aria-live="polite"
           >
-
-            <span>
+            <span className="profile-success-icon">
               ✓
             </span>
 
-            <p>
-              {success}
-            </p>
-
+            <div>
+              <strong>Profile updated</strong>
+              <p>{success}</p>
+            </div>
           </div>
         )}
 
@@ -378,63 +382,72 @@ function ProfilePage() {
               ================================================== */}
 
           <aside className="profile-account-card">
+            <div className="profile-account-card-top">
+              <span className="profile-card-label">
+                ACCOUNT
+              </span>
 
-            <div className="profile-avatar">
-              {initial}
+              <span className="profile-status-dot">
+                <span />
+                Active
+              </span>
             </div>
 
-            <h2>
-              {profileName}
-            </h2>
+            <div className="profile-avatar-wrap">
+              <div className="profile-avatar-ring" />
+              <div className="profile-avatar">
+                {initial}
+              </div>
+              <span className="profile-avatar-check">
+                ✓
+              </span>
+            </div>
+
+            <h2>{profileName}</h2>
 
             <p className="profile-account-email">
               {profileEmail}
             </p>
 
             <span className="profile-role-badge">
-              {profileRole}
+              {String(profileRole).toUpperCase()}
             </span>
 
             <div className="profile-account-divider" />
 
             <div className="profile-account-info">
-
-              <div>
-
-                <span>
-                  EMAIL
+              <div className="profile-info-row">
+                <span className="profile-info-icon profile-info-icon-email">
+                  @
                 </span>
-
-                <strong>
-                  {profileEmail}
-                </strong>
-
+                <div>
+                  <span>EMAIL</span>
+                  <strong>{profileEmail}</strong>
+                </div>
               </div>
 
-              <div>
-
-                <span>
-                  PHONE
+              <div className="profile-info-row">
+                <span className="profile-info-icon profile-info-icon-phone">
+                  #
                 </span>
-
-                <strong>
-                  {profilePhone}
-                </strong>
-
+                <div>
+                  <span>PHONE</span>
+                  <strong>{profilePhone}</strong>
+                </div>
               </div>
-
             </div>
 
             <Link
               to="/addresses"
               className="profile-address-link"
             >
-              Manage Addresses
               <span>
+                Manage Addresses
+              </span>
+              <span className="profile-address-arrow">
                 →
               </span>
             </Link>
-
           </aside>
 
           {/* ==================================================
@@ -442,113 +455,125 @@ function ProfilePage() {
               ================================================== */}
 
           <div className="profile-edit-card">
-
             <div className="profile-card-header">
-
               <div>
-
-                <span>
+                <div className="profile-card-header-kicker">
+                  <span />
                   PERSONAL INFORMATION
-                </span>
+                </div>
 
                 <h2>
                   Edit Profile
                 </h2>
 
                 <p>
-                  Update your name and phone
-                  number below.
+                  Update your contact details below.
+                  Your email remains connected to your account.
                 </p>
-
               </div>
 
+              <div className="profile-edit-icon">
+                ✦
+              </div>
             </div>
+
+            <div className="profile-form-divider" />
 
             <form
               className="profile-form"
-              onSubmit={
-                handleSubmit
-              }
+              onSubmit={handleSubmit}
             >
 
               {/* NAME */}
 
               <div className="profile-form-group">
-
                 <label htmlFor="profile-name">
-                  Full Name
+                  <span>Full Name</span>
+                  <small>Required</small>
                 </label>
 
-                <input
-                  id="profile-name"
-                  type="text"
-                  name="name"
-                  value={
-                    form.name
-                  }
-                  onChange={
-                    handleChange
-                  }
-                  placeholder="Enter your name"
-                  autoComplete="name"
-                />
+                <div className="profile-input-wrap">
+                  <span className="profile-input-symbol">
+                    A
+                  </span>
 
+                  <input
+                    id="profile-name"
+                    type="text"
+                    name="name"
+                    value={form.name}
+                    onChange={handleChange}
+                    placeholder="Enter your full name"
+                    autoComplete="name"
+                    disabled={saving}
+                  />
+                </div>
               </div>
 
               {/* PHONE */}
 
               <div className="profile-form-group">
-
                 <label htmlFor="profile-phone">
-                  Phone Number
+                  <span>Phone Number</span>
+                  <small>Required</small>
                 </label>
 
-                <input
-                  id="profile-phone"
-                  type="tel"
-                  name="phone"
-                  value={
-                    form.phone
-                  }
-                  onChange={
-                    handleChange
-                  }
-                  placeholder="Enter phone number"
-                  autoComplete="tel"
-                />
+                <div className="profile-input-wrap">
+                  <span className="profile-input-symbol">
+                    #
+                  </span>
 
+                  <input
+                    id="profile-phone"
+                    type="tel"
+                    name="phone"
+                    value={form.phone}
+                    onChange={handleChange}
+                    placeholder="Enter your phone number"
+                    autoComplete="tel"
+                    disabled={saving}
+                  />
+                </div>
               </div>
 
               {/* EMAIL */}
 
               <div className="profile-form-group">
-
                 <label htmlFor="profile-email">
-                  Email Address
+                  <span>Email Address</span>
+                  <small>Account email</small>
                 </label>
 
-                <input
-                  id="profile-email"
-                  type="email"
-                  value={
-                    profileEmail === "-"
-                      ? ""
-                      : profileEmail
-                  }
-                  disabled
-                />
+                <div className="profile-input-wrap profile-input-disabled">
+                  <span className="profile-input-symbol">
+                    @
+                  </span>
 
-                <small>
-                  Email cannot be changed
-                  from this page.
+                  <input
+                    id="profile-email"
+                    type="email"
+                    value={
+                      profileEmail === "-"
+                        ? ""
+                        : profileEmail
+                    }
+                    disabled
+                    readOnly
+                  />
+
+                  <span className="profile-input-lock">
+                    🔒
+                  </span>
+                </div>
+
+                <small className="profile-field-hint">
+                  Email cannot be changed from this page.
                 </small>
-
               </div>
 
               {/* ACTIONS */}
 
               <div className="profile-form-actions">
-
                 <Link
                   to="/dashboard"
                   className="profile-cancel-button"
@@ -559,25 +584,64 @@ function ProfilePage() {
                 <button
                   type="submit"
                   className="profile-save-button"
-                  disabled={
-                    saving
-                  }
+                  disabled={saving}
                 >
-                  {saving
-                    ? "Saving..."
-                    : "Save Changes"}
+                  {saving ? (
+                    <>
+                      <span className="profile-button-spinner" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      Save Changes
+                      <span>→</span>
+                    </>
+                  )}
                 </button>
-
               </div>
-
             </form>
 
+            <div className="profile-security-note">
+              <span className="profile-security-icon">
+                ✓
+              </span>
+              <div>
+                <strong>Your information is secure</strong>
+                <p>
+                  Profile changes are saved securely to your
+                  Shanti Enterprises account.
+                </p>
+              </div>
+            </div>
           </div>
-
         </div>
 
-      </div>
+        {/* ==================================================
+            FOOTER NAVIGATION
+            ================================================== */}
 
+        <nav className="profile-footer-nav" aria-label="Account navigation">
+          <Link to="/orders">
+            <span>Orders</span>
+            <span>→</span>
+          </Link>
+
+          <Link to="/quotations">
+            <span>Quotations</span>
+            <span>→</span>
+          </Link>
+
+          <Link to="/rfqs">
+            <span>RFQs</span>
+            <span>→</span>
+          </Link>
+
+          <Link to="/addresses">
+            <span>Addresses</span>
+            <span>→</span>
+          </Link>
+        </nav>
+      </div>
     </section>
   );
 }

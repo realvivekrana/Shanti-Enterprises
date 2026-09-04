@@ -21,6 +21,7 @@ import {
 import Loading from "../../components/common/Loading";
 
 import ErrorMessage from "../../components/common/ErrorMessage";
+import "./ReturnsPage.css";
 
 // ============================================================
 // HELPERS
@@ -142,7 +143,7 @@ function ReturnsPage() {
 
   if (loading && returns.length === 0) {
     return (
-      <section className="app-page">
+      <section className="app-page returns-page">
         <div className="page-container">
           <Loading message="Loading your returns..." />
         </div>

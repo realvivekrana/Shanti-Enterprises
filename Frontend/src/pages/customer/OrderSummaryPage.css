@@ -1,0 +1,453 @@
+/* ============================================================
+   SHANTI ENTERPRISES
+   Order Summary Page
+   Premium Responsive UI — Light / Dark Mode
+   ============================================================ */
+
+.order-summary-page {
+  --os-bg: #f6f8fc;
+  --os-card: rgba(255, 255, 255, 0.94);
+  --os-card-solid: #ffffff;
+  --os-border: #e5eaf2;
+  --os-text: #172033;
+  --os-muted: #687386;
+  --os-soft: #f1f4f9;
+  --os-primary: #2563eb;
+  --os-primary-dark: #1d4ed8;
+  --os-purple: #7c3aed;
+  --os-green: #059669;
+  --os-orange: #ea580c;
+  --os-red: #dc2626;
+  --os-shadow: 0 18px 50px rgba(30, 41, 59, 0.08);
+  --os-shadow-sm: 0 8px 24px rgba(30, 41, 59, 0.07);
+  --os-radius: 22px;
+  color: var(--os-text);
+  min-height: calc(100vh - 68px);
+  position: relative;
+  overflow: hidden;
+}
+
+.order-summary-page::before {
+  content: "";
+  position: absolute;
+  width: 420px;
+  height: 420px;
+  top: -220px;
+  right: -140px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.11), transparent 68%);
+  pointer-events: none;
+}
+
+.order-summary-page::after {
+  content: "";
+  position: absolute;
+  width: 360px;
+  height: 360px;
+  bottom: -220px;
+  left: -150px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(124, 58, 237, 0.09), transparent 68%);
+  pointer-events: none;
+}
+
+/* Common page wrappers */
+.order-summary-page .order-summary-container,
+.order-summary-page .order-summary-content,
+.order-summary-page .summary-container,
+.order-summary-page .summary-content {
+  position: relative;
+  z-index: 1;
+}
+
+.order-summary-page button {
+  font: inherit;
+}
+
+.order-summary-page a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* ============================================================
+   Generic premium surfaces
+   These selectors intentionally cover the existing JSX's
+   common wrapper/card class names without changing logic.
+   ============================================================ */
+
+.order-summary-page .order-summary-card,
+.order-summary-page .summary-card,
+.order-summary-page .order-card,
+.order-summary-page .address-card,
+.order-summary-page .payment-card {
+  background: var(--os-card);
+  border: 1px solid var(--os-border);
+  border-radius: var(--os-radius);
+  box-shadow: var(--os-shadow-sm);
+  backdrop-filter: blur(14px);
+}
+
+.order-summary-page .order-summary-header,
+.order-summary-page .summary-header,
+.order-summary-page .section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.order-summary-page .order-summary-title,
+.order-summary-page .summary-title {
+  margin: 0;
+  color: var(--os-text);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+}
+
+.order-summary-page .order-summary-subtitle,
+.order-summary-page .summary-subtitle {
+  margin: 6px 0 0;
+  color: var(--os-muted);
+  line-height: 1.65;
+}
+
+/* ============================================================
+   Empty / Loading / Error states
+   ============================================================ */
+
+.order-summary-page .empty-state,
+.order-summary-page .loading-state,
+.order-summary-page .error-state {
+  width: min(760px, calc(100% - 32px));
+  margin: 40px auto;
+  padding: 42px 28px;
+  text-align: center;
+  border: 1px solid var(--os-border);
+  border-radius: var(--os-radius);
+  background: var(--os-card);
+  box-shadow: var(--os-shadow);
+}
+
+.order-summary-page .empty-state h2,
+.order-summary-page .loading-state h2,
+.order-summary-page .error-state h2 {
+  margin: 14px 0 8px;
+  color: var(--os-text);
+  font-size: 1.35rem;
+  font-weight: 800;
+}
+
+.order-summary-page .empty-state p,
+.order-summary-page .loading-state p,
+.order-summary-page .error-state p {
+  margin: 0;
+  color: var(--os-muted);
+  line-height: 1.7;
+}
+
+/* ============================================================
+   Buttons
+   ============================================================ */
+
+.order-summary-page .primary-button,
+.order-summary-page .btn-primary,
+.order-summary-page .continue-button,
+.order-summary-page .place-order-button {
+  border: 0;
+  border-radius: 13px;
+  background: linear-gradient(135deg, var(--os-primary), var(--os-purple));
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.22);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+
+.order-summary-page .primary-button:hover,
+.order-summary-page .btn-primary:hover,
+.order-summary-page .continue-button:hover,
+.order-summary-page .place-order-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(37, 99, 235, 0.28);
+  filter: brightness(1.03);
+}
+
+.order-summary-page .secondary-button,
+.order-summary-page .btn-secondary,
+.order-summary-page .back-button {
+  border: 1px solid var(--os-border);
+  border-radius: 13px;
+  background: var(--os-card-solid);
+  color: var(--os-text);
+  font-weight: 750;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.order-summary-page .secondary-button:hover,
+.order-summary-page .btn-secondary:hover,
+.order-summary-page .back-button:hover {
+  border-color: rgba(37, 99, 235, 0.35);
+  color: var(--os-primary);
+  transform: translateY(-1px);
+}
+
+/* ============================================================
+   Inputs / Forms
+   ============================================================ */
+
+.order-summary-page input,
+.order-summary-page textarea,
+.order-summary-page select {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--os-border);
+  border-radius: 12px;
+  background: var(--os-card-solid);
+  color: var(--os-text);
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.order-summary-page input:focus,
+.order-summary-page textarea:focus,
+.order-summary-page select:focus {
+  border-color: rgba(37, 99, 235, 0.65);
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.09);
+}
+
+.order-summary-page label {
+  color: var(--os-text);
+  font-weight: 700;
+}
+
+/* ============================================================
+   Tables / Product rows
+   ============================================================ */
+
+.order-summary-page .product-row,
+.order-summary-page .order-item,
+.order-summary-page .summary-item,
+.order-summary-page .cart-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--os-border);
+}
+
+.order-summary-page .product-row:last-child,
+.order-summary-page .order-item:last-child,
+.order-summary-page .summary-item:last-child,
+.order-summary-page .cart-item:last-child {
+  border-bottom: 0;
+}
+
+.order-summary-page .product-image,
+.order-summary-page .item-image {
+  width: 68px;
+  height: 68px;
+  flex: 0 0 68px;
+  border-radius: 14px;
+  object-fit: cover;
+  background: var(--os-soft);
+  border: 1px solid var(--os-border);
+}
+
+.order-summary-page .product-name,
+.order-summary-page .item-name {
+  color: var(--os-text);
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.order-summary-page .product-meta,
+.order-summary-page .item-meta {
+  margin-top: 4px;
+  color: var(--os-muted);
+  font-size: 0.86rem;
+}
+
+/* ============================================================
+   Price / totals
+   ============================================================ */
+
+.order-summary-page .price-row,
+.order-summary-page .summary-row,
+.order-summary-page .total-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 9px 0;
+  color: var(--os-muted);
+}
+
+.order-summary-page .price-row strong,
+.order-summary-page .summary-row strong,
+.order-summary-page .total-row strong {
+  color: var(--os-text);
+}
+
+.order-summary-page .grand-total,
+.order-summary-page .final-total {
+  margin-top: 10px;
+  padding-top: 17px;
+  border-top: 1px dashed var(--os-border);
+  color: var(--os-text);
+  font-size: 1.18rem;
+  font-weight: 900;
+}
+
+.order-summary-page .grand-total strong,
+.order-summary-page .final-total strong {
+  color: var(--os-primary);
+  font-size: 1.32rem;
+}
+
+/* ============================================================
+   Status / badges
+   ============================================================ */
+
+.order-summary-page .badge,
+.order-summary-page .status-badge,
+.order-summary-page .payment-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.09);
+  color: var(--os-primary);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.order-summary-page .success,
+.order-summary-page .success-badge {
+  background: rgba(5, 150, 105, 0.10);
+  color: var(--os-green);
+}
+
+.order-summary-page .warning,
+.order-summary-page .warning-badge {
+  background: rgba(234, 88, 12, 0.10);
+  color: var(--os-orange);
+}
+
+/* ============================================================
+   Dark Mode
+   ============================================================ */
+
+.dark .order-summary-page {
+  --os-bg: #0b1020;
+  --os-card: rgba(17, 24, 39, 0.88);
+  --os-card-solid: #111827;
+  --os-border: #263149;
+  --os-text: #f3f6fb;
+  --os-muted: #9aa7bc;
+  --os-soft: #182136;
+  --os-primary: #60a5fa;
+  --os-primary-dark: #3b82f6;
+  --os-purple: #a78bfa;
+  --os-green: #34d399;
+  --os-orange: #fb923c;
+  --os-red: #f87171;
+  --os-shadow: 0 20px 55px rgba(0, 0, 0, 0.28);
+  --os-shadow-sm: 0 10px 28px rgba(0, 0, 0, 0.24);
+}
+
+.dark .order-summary-page::before {
+  background: radial-gradient(circle, rgba(96, 165, 250, 0.10), transparent 68%);
+}
+
+.dark .order-summary-page::after {
+  background: radial-gradient(circle, rgba(167, 139, 250, 0.09), transparent 68%);
+}
+
+.dark .order-summary-page input,
+.dark .order-summary-page textarea,
+.dark .order-summary-page select {
+  background: #0f172a;
+  color: var(--os-text);
+  border-color: var(--os-border);
+}
+
+.dark .order-summary-page .secondary-button,
+.dark .order-summary-page .btn-secondary,
+.dark .order-summary-page .back-button {
+  background: #111827;
+  color: var(--os-text);
+}
+
+/* ============================================================
+   Responsive
+   ============================================================ */
+
+@media (max-width: 900px) {
+  .order-summary-page .order-summary-header,
+  .order-summary-page .summary-header,
+  .order-summary-page .section-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .order-summary-page .product-row,
+  .order-summary-page .order-item,
+  .order-summary-page .summary-item,
+  .order-summary-page .cart-item {
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 640px) {
+  .order-summary-page {
+    min-height: calc(100vh - 60px);
+  }
+
+  .order-summary-page .empty-state,
+  .order-summary-page .loading-state,
+  .order-summary-page .error-state {
+    width: calc(100% - 22px);
+    margin: 22px auto;
+    padding: 30px 18px;
+    border-radius: 18px;
+  }
+
+  .order-summary-page .product-row,
+  .order-summary-page .order-item,
+  .order-summary-page .summary-item,
+  .order-summary-page .cart-item {
+    gap: 10px;
+    padding: 13px 0;
+  }
+
+  .order-summary-page .product-image,
+  .order-summary-page .item-image {
+    width: 56px;
+    height: 56px;
+    flex-basis: 56px;
+    border-radius: 11px;
+  }
+
+  .order-summary-page .grand-total,
+  .order-summary-page .final-total {
+    font-size: 1.05rem;
+  }
+
+  .order-summary-page .grand-total strong,
+  .order-summary-page .final-total strong {
+    font-size: 1.18rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .order-summary-page *,
+  .order-summary-page *::before,
+  .order-summary-page *::after {
+    scroll-behavior: auto !important;
+    transition: none !important;
+    animation: none !important;
+  }
+}
