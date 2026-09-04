@@ -9,6 +9,8 @@ import {
   useState,
 } from "react";
 
+import "./AdminReportsPage.css";
+
 import {
   getAdminOverviewReport,
   getOrderStatusReport,
@@ -120,8 +122,8 @@ function AdminReportsPage() {
 
   if (loading) {
     return (
-      <section className="app-page">
-        <div className="page-container">
+      <section className="app-page admin-reports-page">
+        <div className="page-container admin-reports-container">
           <Loading message="Loading reports..." />
         </div>
       </section>
@@ -130,8 +132,8 @@ function AdminReportsPage() {
 
   if (error) {
     return (
-      <section className="app-page">
-        <div className="page-container">
+      <section className="app-page admin-reports-page">
+        <div className="page-container admin-reports-container">
           <ErrorMessage message={error} onRetry={() => loadAll(year)} />
         </div>
       </section>
@@ -153,8 +155,8 @@ function AdminReportsPage() {
   );
 
   return (
-    <section className="app-page">
-      <div className="page-container">
+    <section className="app-page admin-reports-page">
+      <div className="page-container admin-reports-container">
 
         {/* HEADER */}
         <div className="page-header">

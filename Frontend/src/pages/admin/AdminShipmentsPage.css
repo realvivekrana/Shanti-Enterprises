@@ -1,0 +1,412 @@
+/* ============================================================
+   SHANTI ENTERPRISES
+   Admin Shipments Page
+   Premium Multi-Color UI
+   ============================================================ */
+
+.admin-shipments-page,
+.admin-shipments-page * {
+  box-sizing: border-box;
+}
+
+.admin-shipments-page {
+  --ship-text: #172033;
+  --ship-muted: #667085;
+  --ship-border: #e4e8f0;
+  --ship-card: #ffffff;
+  --ship-soft: #f7f9fc;
+  --ship-primary: #635bff;
+  --ship-purple: #8b5cf6;
+  --ship-cyan: #06b6d4;
+  --ship-green: #16a34a;
+  --ship-amber: #d97706;
+  --ship-red: #dc2626;
+  color: var(--ship-text);
+}
+
+.admin-shipments-page .page-container {
+  width: min(100%, 1440px);
+  margin: 0 auto;
+}
+
+/* Header */
+
+.admin-shipments-page .page-header {
+  position: relative;
+  overflow: hidden;
+  display: flex !important;
+  align-items: flex-end !important;
+  justify-content: space-between !important;
+  gap: 22px !important;
+  margin-bottom: 22px !important;
+  padding: 26px !important;
+  border: 1px solid #e1e6f0 !important;
+  border-radius: 22px !important;
+  background:
+    radial-gradient(circle at 96% 5%, rgba(6,182,212,.14), transparent 25%),
+    radial-gradient(circle at 5% 100%, rgba(139,92,246,.14), transparent 28%),
+    linear-gradient(135deg, #ffffff, #f8f7ff 55%, #f0fdff) !important;
+  box-shadow: 0 16px 44px rgba(15,23,42,.075);
+}
+
+.admin-shipments-page .page-header::after {
+  content: "";
+  position: absolute;
+  width: 190px;
+  height: 190px;
+  right: -80px;
+  bottom: -115px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(99,91,255,.15), rgba(6,182,212,.08));
+  pointer-events: none;
+}
+
+.admin-shipments-page .page-header > * {
+  position: relative;
+  z-index: 1;
+}
+
+.admin-shipments-page .page-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  min-height: 27px;
+  padding: 4px 10px;
+  border: 1px solid #ddd6fe !important;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #f5f3ff, #ecfeff) !important;
+  color: #5b21b6 !important;
+  font-size: 10px !important;
+  font-weight: 900 !important;
+  letter-spacing: .14em;
+}
+
+.admin-shipments-page .page-header h1 {
+  margin: 9px 0 5px !important;
+  color: var(--ship-text) !important;
+  font-size: clamp(28px, 4vw, 40px) !important;
+  line-height: 1.05;
+  letter-spacing: -.04em;
+}
+
+.admin-shipments-page .page-header p {
+  margin: 0 !important;
+  color: var(--ship-muted) !important;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* Buttons */
+
+.admin-shipments-page .btn-primary,
+.admin-shipments-page .btn-secondary {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 42px;
+  padding: 0 14px !important;
+  border-radius: 11px !important;
+  font: inherit;
+  font-size: 12px !important;
+  font-weight: 850 !important;
+  text-decoration: none !important;
+  cursor: pointer;
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+
+.admin-shipments-page .btn-primary {
+  border: 1px solid transparent !important;
+  background: linear-gradient(135deg, var(--ship-primary), var(--ship-purple)) !important;
+  color: #fff !important;
+  box-shadow: 0 8px 18px rgba(99,91,255,.18);
+}
+
+.admin-shipments-page .btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 13px 26px rgba(99,91,255,.25);
+}
+
+.admin-shipments-page .btn-secondary {
+  border: 1px solid #dbe3f0 !important;
+  background: #fff !important;
+  color: #334155 !important;
+  box-shadow: 0 6px 18px rgba(15,23,42,.045);
+}
+
+.admin-shipments-page .btn-secondary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  border-color: #c8c8ff !important;
+}
+
+.admin-shipments-page button:disabled {
+  cursor: not-allowed;
+  opacity: .58;
+}
+
+/* Alerts */
+
+.admin-shipments-page .alert-error,
+.admin-shipments-page .alert-success {
+  margin-bottom: 16px !important;
+  padding: 13px 15px !important;
+  border: 1px solid !important;
+  border-radius: 14px !important;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.admin-shipments-page .alert-error {
+  border-color: #fecaca !important;
+  background: #fff7f7 !important;
+  color: #991b1b !important;
+}
+
+.admin-shipments-page .alert-success {
+  border-color: #bbf7d0 !important;
+  background: #f0fdf4 !important;
+  color: #166534 !important;
+}
+
+/* Generic content cards */
+
+.admin-shipments-page .page-container > div:not(.page-header):not(.alert-error):not(.alert-success) {
+  color: var(--ship-text);
+}
+
+.admin-shipments-page .page-container > div[style*="background"],
+.admin-shipments-page .page-container article {
+  border-radius: 19px !important;
+  box-shadow: 0 10px 32px rgba(15,23,42,.055);
+}
+
+/* Detail view cards / panels */
+
+.admin-shipments-page input,
+.admin-shipments-page select,
+.admin-shipments-page textarea {
+  font: inherit;
+}
+
+.admin-shipments-page input,
+.admin-shipments-page select {
+  min-height: 44px;
+  border: 1px solid #d9e0eb !important;
+  border-radius: 11px !important;
+  background: #fff !important;
+  color: var(--ship-text) !important;
+  outline: none;
+  transition: .2s ease;
+}
+
+.admin-shipments-page input:focus,
+.admin-shipments-page select:focus,
+.admin-shipments-page textarea:focus {
+  border-color: var(--ship-primary) !important;
+  box-shadow: 0 0 0 4px rgba(99,91,255,.1) !important;
+}
+
+.admin-shipments-page textarea {
+  border: 1px solid #d9e0eb !important;
+  border-radius: 11px !important;
+  outline: none;
+  padding: 11px 13px;
+}
+
+/* Shipment list/detail visual hierarchy */
+
+.admin-shipments-page [style*="borderRadius"][style*="padding"] {
+  border-color: var(--ship-border) !important;
+}
+
+.admin-shipments-page [style*="fontWeight: 700"],
+.admin-shipments-page [style*="fontWeight:700"] {
+  color: var(--ship-text);
+}
+
+.admin-shipments-page [style*="fontSize: \"11px\""],
+.admin-shipments-page [style*="fontSize:\"11px\""] {
+  letter-spacing: .1em;
+}
+
+/* Status pills */
+
+.admin-shipments-page span[style*="borderRadius: \"999px\""],
+.admin-shipments-page span[style*="borderRadius:\"999px\""] {
+  min-height: 29px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 11px !important;
+  font-size: 11px !important;
+  font-weight: 850 !important;
+}
+
+/* Tables */
+
+.admin-shipments-page table {
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  overflow: hidden;
+}
+
+.admin-shipments-page th {
+  font-size: 10px !important;
+  font-weight: 900 !important;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.admin-shipments-page td,
+.admin-shipments-page th {
+  border-bottom-color: #edf0f5 !important;
+}
+
+.admin-shipments-page tbody tr {
+  transition: background .18s ease;
+}
+
+.admin-shipments-page tbody tr:hover {
+  background: #fafbff !important;
+}
+
+/* Empty state */
+
+.admin-shipments-page .empty-state {
+  padding: 65px 25px !important;
+  border: 1px dashed #cfd7e5 !important;
+  border-radius: 20px !important;
+  background: linear-gradient(135deg, #fff, #fafbff) !important;
+  text-align: center;
+}
+
+.admin-shipments-page .empty-state h2 {
+  color: var(--ship-text);
+  font-size: 20px;
+}
+
+.admin-shipments-page .empty-state p {
+  color: var(--ship-muted);
+  font-size: 13px;
+}
+
+/* Detail back link */
+
+.admin-shipments-page a {
+  transition: color .18s ease;
+}
+
+.admin-shipments-page a:hover {
+  color: var(--ship-primary);
+}
+
+/* ============================================================
+   DARK MODE
+   ============================================================ */
+
+.dark .admin-shipments-page,
+[data-theme="dark"] .admin-shipments-page {
+  --ship-text: #edf2ff;
+  --ship-muted: #98a4bd;
+  --ship-border: #29334b;
+  --ship-card: #12182a;
+  --ship-soft: #171e32;
+}
+
+.dark .admin-shipments-page .page-header,
+[data-theme="dark"] .admin-shipments-page .page-header {
+  border-color: #2a3450 !important;
+  background:
+    radial-gradient(circle at 96% 5%, rgba(6,182,212,.1), transparent 25%),
+    radial-gradient(circle at 5% 100%, rgba(139,92,246,.12), transparent 28%),
+    linear-gradient(135deg, #12182a, #171a32 55%, #10232c) !important;
+}
+
+.dark .admin-shipments-page .btn-secondary,
+[data-theme="dark"] .admin-shipments-page .btn-secondary {
+  border-color: #34405b !important;
+  background: #171e32 !important;
+  color: #dbe4f7 !important;
+}
+
+.dark .admin-shipments-page input,
+.dark .admin-shipments-page select,
+.dark .admin-shipments-page textarea,
+[data-theme="dark"] .admin-shipments-page input,
+[data-theme="dark"] .admin-shipments-page select,
+[data-theme="dark"] .admin-shipments-page textarea {
+  border-color: #34405a !important;
+  background: #171e32 !important;
+  color: #edf2ff !important;
+}
+
+.dark .admin-shipments-page .empty-state,
+[data-theme="dark"] .admin-shipments-page .empty-state {
+  border-color: #34405a !important;
+  background: #12182a !important;
+}
+
+.dark .admin-shipments-page .alert-error,
+[data-theme="dark"] .admin-shipments-page .alert-error {
+  border-color: #5f2b32 !important;
+  background: #25151a !important;
+  color: #fda4af !important;
+}
+
+.dark .admin-shipments-page .alert-success,
+[data-theme="dark"] .admin-shipments-page .alert-success {
+  border-color: #245c3b !important;
+  background: #10251a !important;
+  color: #86efac !important;
+}
+
+.dark .admin-shipments-page tbody tr:hover,
+[data-theme="dark"] .admin-shipments-page tbody tr:hover {
+  background: #171e32 !important;
+}
+
+.dark .admin-shipments-page td,
+.dark .admin-shipments-page th,
+[data-theme="dark"] .admin-shipments-page td,
+[data-theme="dark"] .admin-shipments-page th {
+  border-bottom-color: #252e43 !important;
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 760px) {
+  .admin-shipments-page .page-header {
+    align-items: flex-start !important;
+    flex-direction: column !important;
+    padding: 20px !important;
+  }
+
+  .admin-shipments-page .page-header .btn-primary,
+  .admin-shipments-page .page-header .btn-secondary {
+    width: 100%;
+  }
+
+  .admin-shipments-page .page-container {
+    width: 100%;
+  }
+}
+
+@media (max-width: 520px) {
+  .admin-shipments-page .page-header h1 {
+    font-size: 30px !important;
+  }
+
+  .admin-shipments-page .page-header p {
+    font-size: 13px;
+  }
+
+  .admin-shipments-page .empty-state {
+    padding: 48px 18px !important;
+  }
+
+  .admin-shipments-page .btn-primary,
+  .admin-shipments-page .btn-secondary {
+    min-height: 40px;
+  }
+}

@@ -19,6 +19,8 @@ import {
   getAdminRFQs,
 } from "../../api/rfqApi";
 
+import "./AdminRFQsPage.css";
+
 // ============================================================
 // STATUS CONFIG
 // ============================================================
@@ -503,7 +505,7 @@ function AdminRFQsPage() {
 
   if (loading) {
     return (
-      <div className="app-page">
+      <div className="app-page admin-rfqs-page">
 
         <div className="page-header">
 
@@ -546,7 +548,7 @@ function AdminRFQsPage() {
   // ==========================================================
 
   return (
-    <div className="app-page">
+    <div className="app-page admin-rfqs-page">
 
       {/* ======================================================
           HEADER

@@ -24,6 +24,8 @@ import Loading from "../../components/common/Loading";
 
 import ErrorMessage from "../../components/common/ErrorMessage";
 
+import "./AdminInventoryPage.css";
+
 // ============================================================
 // HELPERS
 // ============================================================
@@ -218,8 +220,8 @@ function AdminInventoryPage() {
   // ==========================================================
 
   return (
-    <section className="app-page">
-      <div className="page-container">
+    <section className="app-page admin-inventory-page">
+      <div className="page-container admin-inventory-container">
 
         {/* HEADER */}
         <div className="page-header">

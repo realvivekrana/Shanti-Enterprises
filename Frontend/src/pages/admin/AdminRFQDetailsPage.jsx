@@ -596,7 +596,7 @@ function AdminRFQDetailsPage() {
   };
 
   // ==========================================================
-  // CREATE QUOTATION HELPERS
+  // QUOTATION TOTAL
   // ==========================================================
 
   const getQuotationItemTotal = (
@@ -620,6 +620,19 @@ function AdminRFQDetailsPage() {
 
     return quantity * unitPrice;
   };
+
+  const quotationSubtotal =
+    items.reduce(
+      (
+        total,
+        item
+      ) =>
+        total +
+        getQuotationItemTotal(
+          item
+        ),
+      0
+    );
 
   // ==========================================================
   // CREATE QUOTATION
@@ -969,19 +982,6 @@ function AdminRFQDetailsPage() {
       "rejected",
     ].includes(
       currentStatus
-    );
-
-  const quotationSubtotal =
-    items.reduce(
-      (
-        total,
-        item
-      ) =>
-        total +
-        getQuotationItemTotal(
-          item
-        ),
-      0
     );
 
   // ==========================================================

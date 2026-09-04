@@ -1,9 +1,3 @@
-// ============================================================
-// SHANTI ENTERPRISES
-// Admin Order Details Page
-// Frontend Phase 6 - UI/UX
-// ============================================================
-
 import {
   useEffect,
   useState,
@@ -20,12 +14,8 @@ import {
 } from "../../api/adminOrderApi";
 
 import Loading from "../../components/common/Loading";
-
 import ErrorMessage from "../../components/common/ErrorMessage";
-
-// ============================================================
-// ORDER STATUSES
-// ============================================================
+import "./AdminOrderDetailsPage.css";
 
 const ORDER_STATUSES = [
   "pending",
@@ -36,53 +26,21 @@ const ORDER_STATUSES = [
   "cancelled",
 ];
 
-// ============================================================
-// ADMIN ORDER DETAILS PAGE
-// ============================================================
-
 function AdminOrderDetailsPage() {
-  const {
-    orderId,
-  } = useParams();
+  const { orderId } = useParams();
 
-  const [
-    order,
-    setOrder,
-  ] = useState(null);
-
-  const [
-    loading,
-    setLoading,
-  ] = useState(true);
-
-  const [
-    updating,
-    setUpdating,
-  ] = useState(false);
-
-  const [
-    error,
-    setError,
-  ] = useState("");
-
-  const [
-    success,
-    setSuccess,
-  ] = useState("");
-
-  // ==========================================================
-  // LOAD ORDER
-  // ==========================================================
+  const [order, setOrder] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const loadOrder = async () => {
     try {
       setLoading(true);
       setError("");
 
-      const response =
-        await getAdminOrderById(
-          orderId
-        );
+      const response = await getAdminOrderById(orderId);
 
       const orderData =
         response?.order ||
@@ -91,34 +49,22 @@ function AdminOrderDetailsPage() {
         response;
 
       if (!orderData) {
-        throw new Error(
-          "Order not found."
-        );
+        throw new Error("Order not found.");
       }
 
-      setOrder(
-        orderData
-      );
+      setOrder(orderData);
     } catch (err) {
-      console.error(
-        "Admin order details error:",
-        err
-      );
+      console.error("Admin order details error:", err);
 
       setError(
-        err.response?.data
-          ?.message ||
-        err.message ||
-        "Unable to load order."
+        err.response?.data?.message ||
+          err.message ||
+          "Unable to load order."
       );
     } finally {
       setLoading(false);
     }
   };
-
-  // ==========================================================
-  // INITIAL LOAD
-  // ==========================================================
 
   useEffect(() => {
     if (orderId) {
@@ -126,78 +72,43 @@ function AdminOrderDetailsPage() {
     }
   }, [orderId]);
 
-  // ==========================================================
-  // UPDATE STATUS
-  // ==========================================================
+  const handleStatusChange = async (newStatus) => {
+    if (!orderId) return;
 
-  const handleStatusChange =
-    async (
-      newStatus
-    ) => {
-      if (!orderId) {
-        return;
-      }
+    try {
+      setUpdating(true);
+      setError("");
+      setSuccess("");
 
-      try {
-        setUpdating(true);
-        setError("");
-        setSuccess("");
+      await updateOrderStatus(orderId, newStatus);
 
-        await updateOrderStatus(
-          orderId,
-          newStatus
-        );
+      setOrder((current) => ({
+        ...current,
+        status: newStatus,
+      }));
 
-        setOrder(
-          (current) => ({
-            ...current,
-            status:
-              newStatus,
-          })
-        );
+      setSuccess("Order status updated successfully.");
+    } catch (err) {
+      console.error("Order status update error:", err);
 
-        setSuccess(
-          "Order status updated successfully."
-        );
-      } catch (err) {
-        console.error(
-          "Order status update error:",
-          err
-        );
-
-        setError(
-          err.response?.data
-            ?.message ||
+      setError(
+        err.response?.data?.message ||
           err.message ||
           "Unable to update order status."
-        );
-      } finally {
-        setUpdating(false);
-      }
-    };
-
-  // ==========================================================
-  // LOADING
-  // ==========================================================
+      );
+    } finally {
+      setUpdating(false);
+    }
+  };
 
   if (loading) {
-    return (
-      <Loading
-        message="Loading order details..."
-      />
-    );
+    return <Loading message="Loading order details..." />;
   }
-
-  // ==========================================================
-  // ERROR / NOT FOUND
-  // ==========================================================
 
   if (error && !order) {
     return (
       <section className="admin-order-details-page">
-
         <div className="admin-order-details-container">
-
           <Link
             to="/admin/orders"
             className="admin-order-details-back"
@@ -209,9 +120,7 @@ function AdminOrderDetailsPage() {
             message={error}
             onRetry={loadOrder}
           />
-
         </div>
-
       </section>
     );
   }
@@ -219,9 +128,7 @@ function AdminOrderDetailsPage() {
   if (!order) {
     return (
       <section className="admin-order-details-page">
-
         <div className="admin-order-details-container">
-
           <Link
             to="/admin/orders"
             className="admin-order-details-back"
@@ -230,43 +137,27 @@ function AdminOrderDetailsPage() {
           </Link>
 
           <div className="admin-order-not-found">
-
-            <h1>
-              Order Not Found
-            </h1>
-
-            <p>
-              The requested order could
-              not be found.
-            </p>
-
+            <div className="admin-empty-icon">📦</div>
+            <h1>Order Not Found</h1>
+            <p>The requested order could not be found.</p>
           </div>
-
         </div>
-
       </section>
     );
   }
 
-  // ==========================================================
-  // ORDER DATA
-  // ==========================================================
-
-  const currentStatus =
-    (
-      order.status ||
-      order.orderStatus ||
-      "pending"
-    )
-      .toString()
-      .toLowerCase();
+  const currentStatus = (
+    order.status ||
+    order.orderStatus ||
+    "pending"
+  )
+    .toString()
+    .toLowerCase();
 
   const customer =
-    typeof order.user ===
-    "object"
+    typeof order.user === "object"
       ? order.user
-      : typeof order.customer ===
-        "object"
+      : typeof order.customer === "object"
         ? order.customer
         : null;
 
@@ -291,29 +182,29 @@ function AdminOrderDetailsPage() {
 
   const total = Number(
     order.totalAmount ??
-    order.totalPrice ??
-    order.grandTotal ??
-    order.total ??
-    0
+      order.totalPrice ??
+      order.grandTotal ??
+      order.total ??
+      0
   );
 
   const subtotal = Number(
     order.subtotal ??
-    order.subTotal ??
-    0
+      order.subTotal ??
+      0
   );
 
   const shipping = Number(
     order.shippingFee ??
-    order.shippingCost ??
-    order.deliveryFee ??
-    0
+      order.shippingCost ??
+      order.deliveryFee ??
+      0
   );
 
   const tax = Number(
     order.tax ??
-    order.taxAmount ??
-    0
+      order.taxAmount ??
+      0
   );
 
   const paymentStatus =
@@ -331,25 +222,15 @@ function AdminOrderDetailsPage() {
     order.created_at ||
     order.date;
 
-  const formattedDate =
-    createdAt
-      ? new Date(
-          createdAt
-        ).toLocaleString(
-          "en-IN"
-        )
-      : "N/A";
+  const formattedDate = createdAt
+    ? new Date(createdAt).toLocaleString("en-IN")
+    : "N/A";
 
-  const items =
-    Array.isArray(
-      order.items
-    )
-      ? order.items
-      : Array.isArray(
-          order.orderItems
-        )
-        ? order.orderItems
-        : [];
+  const items = Array.isArray(order.items)
+    ? order.items
+    : Array.isArray(order.orderItems)
+      ? order.orderItems
+      : [];
 
   const address =
     order.shippingAddress ||
@@ -357,34 +238,17 @@ function AdminOrderDetailsPage() {
     order.address ||
     null;
 
-  const getStatusLabel = (
-    status
-  ) => {
-    return (
-      status
-        .charAt(0)
-        .toUpperCase() +
-      status.slice(1)
-    );
-  };
+  const getStatusLabel = (status) =>
+    status.charAt(0).toUpperCase() + status.slice(1);
 
-  // ==========================================================
-  // PAGE
-  // ==========================================================
+  const formatMoney = (value) =>
+    `₹${Number(value || 0).toLocaleString("en-IN")}`;
 
   return (
     <section className="admin-order-details-page">
-
       <div className="admin-order-details-container">
-
-        {/* ==================================================
-            HEADER
-            ================================================== */}
-
         <div className="admin-order-details-header">
-
-          <div>
-
+          <div className="admin-order-header-copy">
             <Link
               to="/admin/orders"
               className="admin-order-details-back"
@@ -396,538 +260,275 @@ function AdminOrderDetailsPage() {
               ORDER DETAILS
             </span>
 
-            <h1>
-              Order #{orderId}
-            </h1>
+            <h1>Order #{orderId}</h1>
 
             <p>
-              Review customer, payment,
-              shipping and order information.
+              Review customer, payment, shipping and order
+              information.
             </p>
-
           </div>
 
           <span
             className={`admin-order-details-status ${currentStatus}`}
           >
-            {getStatusLabel(
-              currentStatus
-            )}
+            <span className="admin-status-dot" />
+            {getStatusLabel(currentStatus)}
           </span>
-
         </div>
-
-        {/* ==================================================
-            ERROR
-            ================================================== */}
 
         {error && (
           <div className="admin-order-details-error">
-
             <ErrorMessage
               message={error}
               onRetry={loadOrder}
             />
-
           </div>
         )}
-
-        {/* ==================================================
-            SUCCESS
-            ================================================== */}
 
         {success && (
           <div className="admin-order-details-success">
-
-            <strong>
-              ✓ Success
-            </strong>
-
-            <span>
-              {success}
-            </span>
-
+            <strong>✓ Success</strong>
+            <span>{success}</span>
           </div>
         )}
 
-        {/* ==================================================
-            TOP SUMMARY
-            ================================================== */}
-
         <div className="admin-order-details-summary">
-
-          <div>
-
-            <span>
-              ORDER ID
-            </span>
-
-            <strong>
-              #{orderId}
-            </strong>
-
+          <div className="admin-summary-item">
+            <span>ORDER ID</span>
+            <strong>#{orderId}</strong>
           </div>
 
-          <div>
+          <div className="admin-summary-divider" />
 
-            <span>
-              ORDER DATE
-            </span>
-
-            <strong>
-              {formattedDate}
-            </strong>
-
+          <div className="admin-summary-item">
+            <span>ORDER DATE</span>
+            <strong>{formattedDate}</strong>
           </div>
 
-          <div>
+          <div className="admin-summary-divider" />
 
-            <span>
-              ORDER TOTAL
-            </span>
-
-            <strong>
-              ₹
-              {total.toLocaleString(
-                "en-IN"
-              )}
-            </strong>
-
+          <div className="admin-summary-item admin-summary-total">
+            <span>ORDER TOTAL</span>
+            <strong>{formatMoney(total)}</strong>
           </div>
-
         </div>
 
-        {/* ==================================================
-            MAIN GRID
-            ================================================== */}
-
         <div className="admin-order-details-grid">
-
-          {/* ==================================================
-              LEFT
-              ================================================== */}
-
-          <div className="admin-order-details-main">
-
-            {/* ==================================================
-                ORDER STATUS
-                ================================================== */}
-
-            <div className="admin-details-card">
-
+          <main className="admin-order-details-main">
+            <div className="admin-details-card admin-status-card">
               <div className="admin-details-card-header">
-
                 <div>
-
-                  <span>
-                    ORDER STATUS
-                  </span>
-
-                  <h2>
-                    Manage Order
-                  </h2>
-
+                  <span>ORDER STATUS</span>
+                  <h2>Manage Order</h2>
                 </div>
-
+                <div className="admin-card-icon">↗</div>
               </div>
 
               <div className="admin-status-update-box">
-
-                <div>
-
-                  <span>
-                    Current Status
-                  </span>
-
-                  <strong
-                    className={`admin-order-status-text ${currentStatus}`}
-                  >
-                    {getStatusLabel(
-                      currentStatus
-                    )}
+                <div className="admin-current-status">
+                  <span>Current Status</span>
+                  <strong className={`admin-order-status-text ${currentStatus}`}>
+                    {getStatusLabel(currentStatus)}
                   </strong>
-
                 </div>
 
-                <div>
-
-                  <label
-                    htmlFor="adminOrderStatus"
-                  >
+                <div className="admin-status-control">
+                  <label htmlFor="adminOrderStatus">
                     Update Status
                   </label>
 
                   <select
                     id="adminOrderStatus"
-                    value={
-                      currentStatus
-                    }
-                    disabled={
-                      updating
-                    }
+                    value={currentStatus}
+                    disabled={updating}
                     onChange={(event) =>
-                      handleStatusChange(
-                        event.target.value
-                      )
+                      handleStatusChange(event.target.value)
                     }
                   >
-
-                    {ORDER_STATUSES.map(
-                      (
-                        status
-                      ) => (
-                        <option
-                          key={
-                            status
-                          }
-                          value={
-                            status
-                          }
-                        >
-                          {getStatusLabel(
-                            status
-                          )}
-                        </option>
-                      )
-                    )}
-
+                    {ORDER_STATUSES.map((status) => (
+                      <option key={status} value={status}>
+                        {getStatusLabel(status)}
+                      </option>
+                    ))}
                   </select>
-
                 </div>
-
               </div>
 
               {updating && (
                 <p className="admin-order-updating-message">
+                  <span className="admin-spinner" />
                   Updating order status...
                 </p>
               )}
-
             </div>
 
-            {/* ==================================================
-                ORDER ITEMS
-                ================================================== */}
-
             <div className="admin-details-card">
-
               <div className="admin-details-card-header">
-
                 <div>
-
-                  <span>
-                    PRODUCTS
-                  </span>
-
-                  <h2>
-                    Order Items
-                  </h2>
-
+                  <span>PRODUCTS</span>
+                  <h2>Order Items</h2>
                 </div>
 
                 <span className="admin-items-count">
-                  {items.length} items
+                  {items.length} {items.length === 1 ? "item" : "items"}
                 </span>
-
               </div>
 
-              {items.length ===
-              0 ? (
+              {items.length === 0 ? (
                 <div className="admin-no-items">
-                  No order items found.
+                  <span>📦</span>
+                  <p>No order items found.</p>
                 </div>
               ) : (
                 <div className="admin-order-items">
+                  {items.map((item, index) => {
+                    const product =
+                      typeof item.product === "object"
+                        ? item.product
+                        : null;
 
-                  {items.map(
-                    (
-                      item,
-                      index
-                    ) => {
+                    const itemName =
+                      item.name ||
+                      item.productName ||
+                      product?.name ||
+                      product?.title ||
+                      "Product";
 
-                      const product =
-                        typeof item.product ===
-                        "object"
-                          ? item.product
-                          : null;
+                    const quantity = Number(
+                      item.quantity ??
+                        item.qty ??
+                        1
+                    );
 
-                      const itemName =
-                        item.name ||
-                        item.productName ||
-                        product?.name ||
-                        product?.title ||
-                        "Product";
+                    const itemPrice = Number(
+                      item.price ??
+                        item.unitPrice ??
+                        product?.price ??
+                        0
+                    );
 
-                      const quantity =
-                        Number(
-                          item.quantity ??
-                          item.qty ??
-                          1
-                        );
+                    const itemTotal = itemPrice * quantity;
 
-                      const itemPrice =
-                        Number(
-                          item.price ??
-                          item.unitPrice ??
-                          product?.price ??
-                          0
-                        );
+                    const itemImage =
+                      item.image ||
+                      product?.image ||
+                      (Array.isArray(product?.images)
+                        ? product.images[0]
+                        : "");
 
-                      const itemTotal =
-                        itemPrice *
-                        quantity;
+                    return (
+                      <article
+                        key={item._id || item.id || index}
+                        className="admin-order-item"
+                      >
+                        <div className="admin-order-item-image">
+                          {itemImage ? (
+                            <img
+                              src={itemImage}
+                              alt={itemName}
+                            />
+                          ) : (
+                            <span>📦</span>
+                          )}
+                        </div>
 
-                      const itemImage =
-                        item.image ||
-                        product?.image ||
-                        (
-                          Array.isArray(
-                            product?.images
-                          )
-                            ? product
-                                .images[0]
-                            : ""
-                        );
+                        <div className="admin-order-item-info">
+                          <h3>{itemName}</h3>
 
-                      return (
-                        <article
-                          key={
-                            item._id ||
-                            item.id ||
-                            index
-                          }
-                          className="admin-order-item"
-                        >
-
-                          <div className="admin-order-item-image">
-
-                            {itemImage ? (
-                              <img
-                                src={
-                                  itemImage
-                                }
-                                alt={
-                                  itemName
-                                }
-                              />
-                            ) : (
-                              <span>
-                                📦
-                              </span>
-                            )}
-
-                          </div>
-
-                          <div className="admin-order-item-info">
-
-                            <h3>
-                              {itemName}
-                            </h3>
-
-                            <p>
-                              Quantity:{" "}
-                              {quantity}
-                            </p>
-
+                          <div className="admin-item-meta">
                             <span>
-                              Unit Price: ₹
-                              {itemPrice.toLocaleString(
-                                "en-IN"
-                              )}
+                              Qty: <strong>{quantity}</strong>
                             </span>
-
+                            <span>
+                              Unit Price:{" "}
+                              <strong>{formatMoney(itemPrice)}</strong>
+                            </span>
                           </div>
+                        </div>
 
-                          <strong className="admin-order-item-total">
-                            ₹
-                            {itemTotal.toLocaleString(
-                              "en-IN"
-                            )}
-                          </strong>
-
-                        </article>
-                      );
-                    }
-                  )}
-
+                        <strong className="admin-order-item-total">
+                          {formatMoney(itemTotal)}
+                        </strong>
+                      </article>
+                    );
+                  })}
                 </div>
               )}
-
             </div>
 
-            {/* ==================================================
-                PRICE BREAKDOWN
-                ================================================== */}
-
             <div className="admin-details-card">
-
               <div className="admin-details-card-header">
-
                 <div>
-
-                  <span>
-                    PAYMENT SUMMARY
-                  </span>
-
-                  <h2>
-                    Price Breakdown
-                  </h2>
-
+                  <span>PAYMENT SUMMARY</span>
+                  <h2>Price Breakdown</h2>
                 </div>
-
+                <div className="admin-card-icon">₹</div>
               </div>
 
               <div className="admin-price-breakdown">
-
                 {subtotal > 0 && (
                   <div>
-
-                    <span>
-                      Subtotal
-                    </span>
-
-                    <strong>
-                      ₹
-                      {subtotal.toLocaleString(
-                        "en-IN"
-                      )}
-                    </strong>
-
+                    <span>Subtotal</span>
+                    <strong>{formatMoney(subtotal)}</strong>
                   </div>
                 )}
 
                 {shipping > 0 && (
                   <div>
-
-                    <span>
-                      Shipping
-                    </span>
-
-                    <strong>
-                      ₹
-                      {shipping.toLocaleString(
-                        "en-IN"
-                      )}
-                    </strong>
-
+                    <span>Shipping</span>
+                    <strong>{formatMoney(shipping)}</strong>
                   </div>
                 )}
 
                 {tax > 0 && (
                   <div>
-
-                    <span>
-                      Tax
-                    </span>
-
-                    <strong>
-                      ₹
-                      {tax.toLocaleString(
-                        "en-IN"
-                      )}
-                    </strong>
-
+                    <span>Tax</span>
+                    <strong>{formatMoney(tax)}</strong>
                   </div>
                 )}
 
                 <div className="admin-grand-total">
-
-                  <span>
-                    Grand Total
-                  </span>
-
-                  <strong>
-                    ₹
-                    {total.toLocaleString(
-                      "en-IN"
-                    )}
-                  </strong>
-
+                  <span>Grand Total</span>
+                  <strong>{formatMoney(total)}</strong>
                 </div>
-
               </div>
-
             </div>
-
-          </div>
-
-          {/* ==================================================
-              RIGHT SIDEBAR
-              ================================================== */}
+          </main>
 
           <aside className="admin-order-details-sidebar">
-
-            {/* ==================================================
-                CUSTOMER
-                ================================================== */}
-
             <div className="admin-details-card">
-
               <div className="admin-details-card-header">
-
                 <div>
-
-                  <span>
-                    CUSTOMER
-                  </span>
-
-                  <h2>
-                    Customer Information
-                  </h2>
-
+                  <span>CUSTOMER</span>
+                  <h2>Customer Information</h2>
                 </div>
-
               </div>
 
               <div className="admin-customer-info">
-
                 <div className="admin-customer-avatar">
-                  {customerName
-                    .charAt(0)
-                    .toUpperCase()}
+                  {customerName.charAt(0).toUpperCase()}
                 </div>
 
-                <h3>
-                  {customerName}
-                </h3>
-
-                <p>
+                <h3>{customerName}</h3>
+                <a href={`mailto:${customerEmail}`}>
                   {customerEmail}
-                </p>
-
-                <p>
+                </a>
+                <a href={`tel:${customerPhone}`}>
                   {customerPhone}
-                </p>
-
+                </a>
               </div>
-
             </div>
 
-            {/* ==================================================
-                SHIPPING
-                ================================================== */}
-
             <div className="admin-details-card">
-
               <div className="admin-details-card-header">
-
                 <div>
-
-                  <span>
-                    DELIVERY
-                  </span>
-
-                  <h2>
-                    Shipping Address
-                  </h2>
-
+                  <span>DELIVERY</span>
+                  <h2>Shipping Address</h2>
                 </div>
-
               </div>
 
               {address ? (
                 <div className="admin-shipping-address">
-
                   <strong>
                     {address.name ||
                       address.fullName ||
@@ -942,24 +543,13 @@ function AdminOrderDetailsPage() {
                   </p>
 
                   {address.addressLine2 && (
-                    <p>
-                      {
-                        address.addressLine2
-                      }
-                    </p>
+                    <p>{address.addressLine2}</p>
                   )}
 
                   <p>
-                    {address.city ||
-                      ""}
-
-                    {address.city &&
-                      address.state
-                      ? ", "
-                      : ""}
-
-                    {address.state ||
-                      ""}
+                    {address.city || ""}
+                    {address.city && address.state ? ", " : ""}
+                    {address.state || ""}
                   </p>
 
                   <p>
@@ -969,62 +559,31 @@ function AdminOrderDetailsPage() {
                       ""}
                   </p>
 
-                  <p>
-                    {address.country ||
-                      "India"}
-                  </p>
-
+                  <p>{address.country || "India"}</p>
                 </div>
               ) : (
                 <p className="admin-not-available">
                   Shipping address not available.
                 </p>
               )}
-
             </div>
 
-            {/* ==================================================
-                PAYMENT
-                ================================================== */}
-
             <div className="admin-details-card">
-
               <div className="admin-details-card-header">
-
                 <div>
-
-                  <span>
-                    PAYMENT
-                  </span>
-
-                  <h2>
-                    Payment Information
-                  </h2>
-
+                  <span>PAYMENT</span>
+                  <h2>Payment Information</h2>
                 </div>
-
               </div>
 
               <div className="admin-payment-info">
-
-                <div>
-
-                  <span>
-                    METHOD
-                  </span>
-
-                  <strong>
-                    {paymentMethod}
-                  </strong>
-
+                <div className="admin-payment-row">
+                  <span>METHOD</span>
+                  <strong>{paymentMethod}</strong>
                 </div>
 
-                <div>
-
-                  <span>
-                    STATUS
-                  </span>
-
+                <div className="admin-payment-row">
+                  <span>STATUS</span>
                   <strong
                     className={`admin-payment-status ${paymentStatus
                       .toString()
@@ -1032,19 +591,12 @@ function AdminOrderDetailsPage() {
                   >
                     {paymentStatus}
                   </strong>
-
                 </div>
-
               </div>
-
             </div>
-
           </aside>
-
         </div>
-
       </div>
-
     </section>
   );
 }

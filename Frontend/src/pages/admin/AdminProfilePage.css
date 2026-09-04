@@ -1,0 +1,306 @@
+.admin-profile-page {
+  --ap-text: #172033;
+  --ap-muted: #68738a;
+  --ap-border: rgba(100, 116, 139, 0.18);
+  --ap-card: rgba(255,255,255,.94);
+  --ap-primary: #5b5cf0;
+  --ap-primary-2: #7c3aed;
+  --ap-accent: #06b6d4;
+  --ap-success: #16a34a;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 34px 24px 56px;
+  color: var(--ap-text);
+}
+
+.admin-profile-page > div:first-child {
+  position: relative;
+  overflow: hidden;
+  padding: 34px;
+  border-radius: 26px;
+  background: linear-gradient(135deg, #111827 0%, #312e81 52%, #0e7490 100%);
+  box-shadow: 0 22px 55px rgba(15,23,42,.18);
+  margin-bottom: 24px;
+}
+
+.admin-profile-page > div:first-child::after {
+  content: "";
+  position: absolute;
+  width: 220px;
+  height: 220px;
+  right: -70px;
+  top: -100px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.10);
+}
+
+.admin-profile-page > div:first-child a {
+  position: relative;
+  z-index: 1;
+  color: rgba(255,255,255,.82);
+  text-decoration: none;
+  font-weight: 700;
+  font-size: .9rem;
+}
+
+.admin-profile-page > div:first-child h1 {
+  position: relative;
+  z-index: 1;
+  margin: 18px 0 7px;
+  color: #fff;
+  font-size: clamp(2rem, 4vw, 3rem);
+  letter-spacing: -.045em;
+}
+
+.admin-profile-page > div:first-child p {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  color: rgba(255,255,255,.72);
+}
+
+.admin-profile-page > div:nth-of-type(2) {
+  margin-bottom: 18px;
+}
+
+.admin-profile-page > div:nth-of-type(3) {
+  margin-bottom: 22px;
+}
+
+.admin-profile-page form,
+.admin-profile-page > div:nth-of-type(4) {
+  border: 1px solid var(--ap-border);
+  border-radius: 24px;
+  background: var(--ap-card);
+  box-shadow: 0 15px 45px rgba(15,23,42,.07);
+  backdrop-filter: blur(14px);
+}
+
+.admin-profile-page > div:nth-of-type(2) {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: 14px;
+  padding: 24px;
+  background: linear-gradient(135deg, rgba(91,92,240,.10), rgba(6,182,212,.08));
+  border: 1px solid var(--ap-border);
+  border-radius: 22px;
+}
+
+.admin-profile-page > div:nth-of-type(2) h2 {
+  grid-column: 1 / -1;
+  margin: 0 0 3px;
+  font-size: 1.15rem;
+}
+
+.admin-profile-page > div:nth-of-type(2) p {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgba(255,255,255,.68);
+  color: var(--ap-muted);
+  font-size: .93rem;
+}
+
+.admin-profile-page > div:nth-of-type(2) p:first-of-type {
+  color: var(--ap-primary);
+  font-weight: 800;
+}
+
+.admin-profile-page > div:nth-of-type(3) > div,
+.admin-profile-page > div:nth-of-type(3) {
+  color: inherit;
+}
+
+.admin-profile-page form {
+  padding: 28px;
+  display: grid;
+  gap: 20px;
+}
+
+.admin-profile-page form > div {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-profile-page label {
+  font-size: .86rem;
+  font-weight: 800;
+  color: var(--ap-text);
+}
+
+.admin-profile-page input {
+  width: 100%;
+  min-height: 50px;
+  box-sizing: border-box;
+  border: 1px solid rgba(100,116,139,.23);
+  border-radius: 14px;
+  padding: 0 15px;
+  outline: none;
+  background: #fff;
+  color: var(--ap-text);
+  font: inherit;
+  transition: .2s ease;
+}
+
+.admin-profile-page input:focus {
+  border-color: var(--ap-primary);
+  box-shadow: 0 0 0 4px rgba(91,92,240,.12);
+}
+
+.admin-profile-page input:disabled {
+  background: #f1f5f9;
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+.admin-profile-page small {
+  color: var(--ap-muted);
+  font-size: .78rem;
+}
+
+.admin-profile-page form > div:last-child {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  padding-top: 5px;
+}
+
+.admin-profile-page button,
+.admin-profile-page form > div:last-child a {
+  min-height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 13px;
+  padding: 0 20px;
+  font: inherit;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform .2s ease, box-shadow .2s ease, opacity .2s ease;
+}
+
+.admin-profile-page button {
+  border: 0;
+  color: #fff;
+  background: linear-gradient(135deg, var(--ap-primary), var(--ap-primary-2));
+  box-shadow: 0 10px 22px rgba(91,92,240,.22);
+}
+
+.admin-profile-page button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 28px rgba(91,92,240,.28);
+}
+
+.admin-profile-page button:disabled {
+  opacity: .65;
+  cursor: not-allowed;
+}
+
+.admin-profile-page form > div:last-child a {
+  color: var(--ap-text);
+  border: 1px solid var(--ap-border);
+  background: #fff;
+}
+
+.admin-profile-page form > div:last-child a:hover {
+  transform: translateY(-2px);
+}
+
+.admin-profile-page > div:nth-of-type(3) {
+  padding: 15px 18px;
+  border-radius: 16px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+}
+
+.admin-profile-page > div:nth-of-type(3) strong {
+  color: var(--ap-success);
+}
+
+.admin-profile-page > div:nth-of-type(3) p {
+  margin: 4px 0 0;
+  color: #9a3412;
+}
+
+.admin-profile-page .error-message,
+.admin-profile-page [role="alert"] {
+  margin: 0 0 18px;
+  border-radius: 16px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .admin-profile-page {
+    --ap-text: #eef2ff;
+    --ap-muted: #9aa6bc;
+    --ap-border: rgba(148,163,184,.17);
+    --ap-card: rgba(15,23,42,.82);
+  }
+
+  .admin-profile-page > div:nth-of-type(2) p,
+  .admin-profile-page input,
+  .admin-profile-page form > div:last-child a {
+    background: #111827;
+    color: var(--ap-text);
+  }
+
+  .admin-profile-page input:disabled {
+    background: #1e293b;
+    color: #94a3b8;
+  }
+
+  .admin-profile-page > div:nth-of-type(3) {
+    background: rgba(120,53,15,.20);
+    border-color: rgba(251,146,60,.25);
+  }
+}
+
+.admin-profile-page.dark input,
+.dark .admin-profile-page input {
+  background: #111827;
+  color: #eef2ff;
+}
+
+.admin-profile-page.dark input:disabled,
+.dark .admin-profile-page input:disabled {
+  background: #1e293b;
+}
+
+@media (max-width: 700px) {
+  .admin-profile-page {
+    padding: 20px 14px 40px;
+  }
+
+  .admin-profile-page > div:first-child {
+    padding: 26px 22px;
+    border-radius: 21px;
+  }
+
+  .admin-profile-page > div:nth-of-type(2) {
+    grid-template-columns: 1fr;
+    padding: 18px;
+  }
+
+  .admin-profile-page form {
+    padding: 20px;
+    border-radius: 20px;
+  }
+
+  .admin-profile-page form > div:last-child {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-profile-page button,
+  .admin-profile-page form > div:last-child a {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-profile-page * {
+    scroll-behavior: auto !important;
+    transition: none !important;
+  }
+}

@@ -1,1701 +1,387 @@
 // ============================================================
 // SHANTI ENTERPRISES
-// Admin Quotation Details Page
+// Admin Quotations Page
 // Admin - Wholesale Quotation Management
 // ============================================================
 
-import {
-  useCallback,
-  useEffect,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { getAdminQuotations } from "../../api/quotationApi";
+import Loading from "../../components/common/Loading";
+import ErrorMessage from "../../components/common/ErrorMessage";
+import EmptyState from "../../components/common/EmptyState";
+import "./AdminQuotationsPage.css";
 
-import {
-  Link,
-  useNavigate,
-  useParams,
-} from "react-router-dom";
+const STATUS_OPTIONS = ["pending", "sent", "accepted", "rejected", "expired"];
 
-import {
-  cancelAdminQuotation,
-  getAdminQuotationById,
-  updateAdminQuotationStatus,
-} from "../../api/quotationApi";
-
-// ============================================================
-// STATUS CONFIG
-// ============================================================
-
-const STATUS_OPTIONS = [
-  "pending",
-  "sent",
-  "accepted",
-  "rejected",
-  "expired",
-];
-
-const getStatusLabel = (status) => {
-  const labels = {
-    pending: "Pending",
-    sent: "Sent",
-    accepted: "Accepted",
-    rejected: "Rejected",
-    expired: "Expired",
-  };
-
-  return (
-    labels[status] ||
-    status ||
-    "Unknown"
-  );
+const STATUS_CONFIG = {
+  pending: { label: "Pending", tone: "warning" },
+  sent: { label: "Sent", tone: "info" },
+  accepted: { label: "Accepted", tone: "success" },
+  rejected: { label: "Rejected", tone: "danger" },
+  expired: { label: "Expired", tone: "muted" },
 };
 
-// ============================================================
-// HELPERS
-// ============================================================
+const getQuotationId = (quotation) => quotation?._id || quotation?.id || "";
+const getQuotationNumber = (quotation) => quotation?.quotationNumber || "Quotation";
+const getRFQNumber = (quotation) => quotation?.rfq?.rfqNumber || quotation?.rfqNumber || "—";
 
-const getQuotationId = (
-  quotation
-) => {
-  return (
-    quotation?._id ||
-    quotation?.id ||
-    ""
-  );
+const getCustomer = (quotation) =>
+  quotation?.user || quotation?.customer || quotation?.createdBy || null;
+
+const getCustomerName = (quotation) => {
+  const customer = getCustomer(quotation);
+  if (typeof customer === "string") return customer;
+  return customer?.name || customer?.fullName || customer?.username || customer?.email || "Customer";
 };
 
-const getQuotationNumber = (
-  quotation
-) => {
-  return (
-    quotation?.quotationNumber ||
-    "Quotation"
-  );
+const getCustomerEmail = (quotation) => {
+  const customer = getCustomer(quotation);
+  if (customer && typeof customer === "object") return customer.email || "";
+  return quotation?.customerEmail || quotation?.email || "";
 };
 
-const getRFQNumber = (
-  quotation
-) => {
-  return (
-    quotation?.rfq?.rfqNumber ||
-    quotation?.rfqNumber ||
-    "—"
-  );
-};
+const getStatus = (quotation) => quotation?.status || "pending";
 
-const getCustomer = (
-  quotation
-) => {
-  return (
-    quotation?.user ||
-    quotation?.customer ||
-    quotation?.createdBy ||
-    null
-  );
-};
+const getItems = (quotation) => (Array.isArray(quotation?.items) ? quotation.items : []);
 
-const getCustomerName = (
-  quotation
-) => {
-  const customer =
-    getCustomer(quotation);
+const getItemCount = (quotation) => getItems(quotation).length;
 
-  if (
-    typeof customer ===
-    "string"
-  ) {
-    return customer;
+const getTotalQuantity = (quotation) =>
+  getItems(quotation).reduce((total, item) => total + Number(item?.quantity || 0), 0);
+
+const getTotalAmount = (quotation) => {
+  if (quotation?.totalAmount !== undefined && quotation?.totalAmount !== null) {
+    return Number(quotation.totalAmount || 0);
   }
-
-  return (
-    customer?.name ||
-    customer?.fullName ||
-    customer?.username ||
-    customer?.email ||
-    "Customer"
-  );
-};
-
-const getCustomerEmail = (
-  quotation
-) => {
-  const customer =
-    getCustomer(quotation);
-
-  if (
-    customer &&
-    typeof customer ===
-      "object"
-  ) {
-    return (
-      customer.email ||
-      ""
-    );
+  if (quotation?.subtotal !== undefined && quotation?.subtotal !== null) {
+    return Number(quotation.subtotal || 0);
   }
-
-  return (
-    quotation?.customerEmail ||
-    quotation?.email ||
-    ""
-  );
+  return getItems(quotation).reduce((total, item) => {
+    const quantity = Number(item?.quantity || 0);
+    const unitPrice = Number(item?.unitPrice || 0);
+    const itemTotal = item?.totalPrice !== undefined ? Number(item.totalPrice || 0) : quantity * unitPrice;
+    return total + itemTotal;
+  }, 0);
 };
 
-const getProductName = (
-  item
-) => {
-  return (
-    item?.product?.name ||
-    item?.product?.title ||
-    item?.productName ||
-    "Product"
-  );
+const getFirstProductName = (quotation) => {
+  const item = getItems(quotation)[0];
+  return item?.product?.name || item?.product?.title || item?.productName || "No products";
 };
 
-const getProductUnit = (
-  item
-) => {
-  return (
-    item?.unit ||
-    item?.product?.unit ||
-    "piece"
-  );
+const formatCurrency = (value) =>
+  `₹${Number(value || 0).toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+
+const formatDate = (value) => {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  return date.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 };
 
-const getQuantity = (
-  item
-) => {
-  return Number(
-    item?.quantity || 0
-  );
-};
+const getStatusLabel = (status) => STATUS_CONFIG[status]?.label || status || "Unknown";
 
-const getUnitPrice = (
-  item
-) => {
-  return Number(
-    item?.unitPrice || 0
-  );
-};
+function AdminQuotationsPage() {
+  const navigate = useNavigate();
 
-const getItemTotal = (
-  item
-) => {
-  if (
-    item?.totalPrice !==
-      undefined &&
-    item?.totalPrice !==
-      null
-  ) {
-    return Number(
-      item.totalPrice
-    );
-  }
+  const [quotations, setQuotations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState("");
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("");
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 20,
+    totalQuotations: 0,
+    totalPages: 1,
+  });
 
-  return (
-    getQuantity(item) *
-    getUnitPrice(item)
-  );
-};
+  const loadQuotations = useCallback(async (requestedPage = page, showRefresh = false) => {
+    try {
+      setError("");
+      if (showRefresh) setRefreshing(true);
+      else setLoading(true);
 
-const formatCurrency = (
-  value
-) => {
-  return `₹${Number(
-    value || 0
-  ).toLocaleString(
-    "en-IN",
-    {
-      minimumFractionDigits:
-        2,
-      maximumFractionDigits:
-        2,
+      const response = await getAdminQuotations({
+        page: requestedPage,
+        limit: 20,
+        search: search.trim(),
+        status,
+      });
+
+      const responseData = response?.data || response;
+      const quotationData = Array.isArray(responseData?.quotations)
+        ? responseData.quotations
+        : Array.isArray(responseData?.data?.quotations)
+          ? responseData.data.quotations
+          : Array.isArray(responseData)
+            ? responseData
+            : [];
+
+      setQuotations(quotationData);
+
+      const serverPagination = responseData?.pagination || responseData?.data?.pagination || {};
+      const nextPagination = {
+        page: Number(serverPagination.page || requestedPage || 1),
+        limit: Number(serverPagination.limit || 20),
+        totalQuotations: Number(serverPagination.totalQuotations ?? quotationData.length),
+        totalPages: Math.max(Number(serverPagination.totalPages || 1), 1),
+      };
+
+      setPagination(nextPagination);
+      setPage(nextPagination.page);
+    } catch (err) {
+      console.error("Admin quotations fetch error:", err);
+      setError(
+        err?.response?.data?.message ||
+          err?.response?.data?.error ||
+          err?.message ||
+          "Unable to load quotations."
+      );
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
     }
-  )}`;
-};
-
-const formatDate = (
-  value
-) => {
-  if (!value) {
-    return "—";
-  }
-
-  const date =
-    new Date(value);
-
-  if (
-    Number.isNaN(
-      date.getTime()
-    )
-  ) {
-    return "—";
-  }
-
-  return date.toLocaleDateString(
-    "en-IN",
-    {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    }
-  );
-};
-
-const formatDateTime = (
-  value
-) => {
-  if (!value) {
-    return "—";
-  }
-
-  const date =
-    new Date(value);
-
-  if (
-    Number.isNaN(
-      date.getTime()
-    )
-  ) {
-    return "—";
-  }
-
-  return date.toLocaleString(
-    "en-IN",
-    {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    }
-  );
-};
-
-const getStatusStyle = (
-  status
-) => {
-  const styles = {
-    pending: {
-      background:
-        "#fff7ed",
-      color:
-        "#c2410c",
-      border:
-        "1px solid #fed7aa",
-    },
-
-    sent: {
-      background:
-        "#eff6ff",
-      color:
-        "#1d4ed8",
-      border:
-        "1px solid #bfdbfe",
-    },
-
-    accepted: {
-      background:
-        "#ecfdf5",
-      color:
-        "#047857",
-      border:
-        "1px solid #a7f3d0",
-    },
-
-    rejected: {
-      background:
-        "#fef2f2",
-      color:
-        "#b91c1c",
-      border:
-        "1px solid #fecaca",
-    },
-
-    expired: {
-      background:
-        "#f3f4f6",
-      color:
-        "#4b5563",
-      border:
-        "1px solid #d1d5db",
-    },
-  };
-
-  return (
-    styles[status] || {
-      background:
-        "#f3f4f6",
-      color:
-        "#4b5563",
-      border:
-        "1px solid #d1d5db",
-    }
-  );
-};
-
-// ============================================================
-// COMPONENT
-// ============================================================
-
-function AdminQuotationDetailsPage() {
-  const {
-    quotationId,
-  } = useParams();
-
-  const navigate =
-    useNavigate();
-
-  // ==========================================================
-  // STATE
-  // ==========================================================
-
-  const [
-    quotation,
-    setQuotation,
-  ] = useState(null);
-
-  const [
-    loading,
-    setLoading,
-  ] = useState(true);
-
-  const [
-    error,
-    setError,
-  ] = useState("");
-
-  const [
-    actionLoading,
-    setActionLoading,
-  ] = useState(false);
-
-  const [
-    selectedStatus,
-    setSelectedStatus,
-  ] = useState("");
-
-  // ==========================================================
-  // LOAD QUOTATION
-  // ==========================================================
-
-  const loadQuotation =
-    useCallback(
-      async () => {
-        if (!quotationId) {
-          setError(
-            "Quotation ID is missing."
-          );
-
-          setLoading(false);
-
-          return;
-        }
-
-        try {
-          setLoading(true);
-          setError("");
-
-          const response =
-            await getAdminQuotationById(
-              quotationId
-            );
-
-          const receivedQuotation =
-            response?.quotation ||
-            response?.data?.quotation ||
-            response?.data ||
-            null;
-
-          if (
-            !receivedQuotation
-          ) {
-            throw new Error(
-              "Quotation data was not found."
-            );
-          }
-
-          setQuotation(
-            receivedQuotation
-          );
-
-          setSelectedStatus(
-            receivedQuotation.status ||
-              "pending"
-          );
-        } catch (err) {
-          console.error(
-            "Admin quotation details error:",
-            err
-          );
-
-          setError(
-            err?.response?.data
-              ?.message ||
-              err?.response?.data
-                ?.error ||
-              err?.message ||
-              "Unable to load quotation."
-          );
-        } finally {
-          setLoading(false);
-        }
-      },
-      [quotationId]
-    );
-
-  // ==========================================================
-  // FETCH
-  // ==========================================================
+  }, [page, search, status]);
 
   useEffect(() => {
-    loadQuotation();
-  }, [loadQuotation]);
+    const timer = window.setTimeout(() => {
+      loadQuotations(page);
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [loadQuotations]);
 
-  // ==========================================================
-  // UPDATE STATUS
-  // ==========================================================
-
-  const handleStatusUpdate =
-    async () => {
-      if (
-        !quotationId ||
-        !selectedStatus
-      ) {
-        return;
-      }
-
-      if (
-        selectedStatus ===
-        quotation?.status
-      ) {
-        return;
-      }
-
-      try {
-        setActionLoading(
-          true
-        );
-        setError("");
-
-        const response =
-          await updateAdminQuotationStatus(
-            quotationId,
-            selectedStatus
-          );
-
-        const updatedQuotation =
-          response?.quotation ||
-          response?.data?.quotation;
-
-        if (
-          updatedQuotation
-        ) {
-          setQuotation(
-            (current) => ({
-              ...current,
-              ...updatedQuotation,
-            })
-          );
-        } else {
-          await loadQuotation();
-        }
-      } catch (err) {
-        console.error(
-          "Update quotation status error:",
-          err
-        );
-
-        setError(
-          err?.response?.data
-            ?.message ||
-            err?.response?.data
-              ?.error ||
-            err?.message ||
-            "Unable to update quotation status."
-        );
-
-        setSelectedStatus(
-          quotation?.status ||
-            "pending"
-        );
-      } finally {
-        setActionLoading(
-          false
-        );
-      }
+  const summary = useMemo(() => {
+    const counts = {
+      total: pagination.totalQuotations,
+      pending: 0,
+      sent: 0,
+      accepted: 0,
+      rejected: 0,
+      expired: 0,
     };
 
-  // ==========================================================
-  // CANCEL QUOTATION
-  // ==========================================================
+    quotations.forEach((quotation) => {
+      const currentStatus = getStatus(quotation);
+      if (counts[currentStatus] !== undefined) counts[currentStatus] += 1;
+    });
 
-  const handleCancel =
-    async () => {
-      if (!quotationId) {
-        return;
-      }
+    return counts;
+  }, [quotations, pagination.totalQuotations]);
 
-      const confirmed =
-        window.confirm(
-          "Are you sure you want to cancel this quotation?"
-        );
+  const handleStatusChange = (value) => {
+    setStatus(value);
+    setPage(1);
+  };
 
-      if (!confirmed) {
-        return;
-      }
+  const handleSearchChange = (event) => {
+    setSearch(event.target.value);
+    setPage(1);
+  };
 
-      try {
-        setActionLoading(
-          true
-        );
-        setError("");
+  const clearFilters = () => {
+    setSearch("");
+    setStatus("");
+    setPage(1);
+  };
 
-        await cancelAdminQuotation(
-          quotationId
-        );
-
-        await loadQuotation();
-      } catch (err) {
-        console.error(
-          "Cancel quotation error:",
-          err
-        );
-
-        setError(
-          err?.response?.data
-            ?.message ||
-            err?.response?.data
-              ?.error ||
-            err?.message ||
-            "Unable to cancel quotation."
-        );
-      } finally {
-        setActionLoading(
-          false
-        );
-      }
-    };
-
-  // ==========================================================
-  // LOADING
-  // ==========================================================
+  const goToPage = (nextPage) => {
+    const safePage = Math.min(Math.max(nextPage, 1), pagination.totalPages);
+    if (safePage !== page) setPage(safePage);
+  };
 
   if (loading) {
     return (
-      <div className="app-page">
-
-        <div className="page-header">
-
-          <div>
-
-            <span className="page-eyebrow">
-              ADMIN
-            </span>
-
-            <h1>
-              Quotation Details
-            </h1>
-
-            <p>
-              Loading quotation information...
-            </p>
-
-          </div>
-
+      <div className="app-page admin-quotations-page">
+        <div className="admin-quotations-loading">
+          <Loading />
         </div>
-
-        <div
-          style={{
-            padding:
-              "60px 20px",
-            textAlign:
-              "center",
-          }}
-        >
-          Loading quotation...
-        </div>
-
       </div>
     );
   }
-
-  // ==========================================================
-  // ERROR / NOT FOUND
-  // ==========================================================
-
-  if (
-    !quotation &&
-    error
-  ) {
-    return (
-      <div className="app-page">
-
-        <div className="page-header">
-
-          <div>
-
-            <span className="page-eyebrow">
-              ADMIN
-            </span>
-
-            <h1>
-              Quotation Details
-            </h1>
-
-            <p>
-              Unable to load this quotation.
-            </p>
-
-          </div>
-
-          <button
-            type="button"
-            onClick={() =>
-              navigate(
-                "/admin/quotations"
-              )
-            }
-          >
-            ← Back to Quotations
-          </button>
-
-        </div>
-
-        <section
-          style={{
-            padding:
-              "30px",
-            background:
-              "#fef2f2",
-            color:
-              "#b91c1c",
-            border:
-              "1px solid #fecaca",
-            borderRadius:
-              "12px",
-          }}
-        >
-
-          <p
-            style={{
-              margin:
-                "0 0 16px",
-            }}
-          >
-            {error}
-          </p>
-
-          <button
-            type="button"
-            onClick={
-              loadQuotation
-            }
-          >
-            Try Again
-          </button>
-
-        </section>
-
-      </div>
-    );
-  }
-
-  // ==========================================================
-  // DATA
-  // ==========================================================
-
-  const status =
-    quotation?.status ||
-    "pending";
-
-  const items =
-    Array.isArray(
-      quotation?.items
-    )
-      ? quotation.items
-      : [];
-
-  const subtotal =
-    Number(
-      quotation?.subtotal || 0
-    );
-
-  const totalAmount =
-    Number(
-      quotation?.totalAmount ??
-        subtotal
-    );
-
-  const canCancel =
-    ![
-      "accepted",
-      "rejected",
-      "expired",
-    ].includes(status);
-
-  // ==========================================================
-  // PAGE
-  // ==========================================================
 
   return (
-    <div className="app-page">
-
-      {/* ======================================================
-          HEADER
-          ====================================================== */}
-
-      <div className="page-header">
-
+    <div className="app-page admin-quotations-page">
+      <div className="admin-quotations-hero">
         <div>
-
-          <span className="page-eyebrow">
-            ADMIN
-          </span>
-
-          <h1>
-            {
-              getQuotationNumber(
-                quotation
-              )
-            }
-          </h1>
-
-          <p>
-            Wholesale quotation
-            details and management.
-          </p>
-
+          <span className="admin-quotations-eyebrow">WHOLESALE • ADMIN</span>
+          <h1>Quotations</h1>
+          <p>Manage wholesale quotations, pricing proposals and customer responses.</p>
         </div>
-
-        <div
-          style={{
-            display:
-              "flex",
-            gap:
-              "10px",
-            flexWrap:
-              "wrap",
-          }}
-        >
-
-          <Link
-            to="/admin/quotations"
-          >
-            ← All Quotations
-          </Link>
-
-          {quotation?.rfq?._id && (
-            <Link
-              to={`/admin/rfqs/${quotation.rfq._id}`}
-            >
-              View RFQ
-            </Link>
-          )}
-
-        </div>
-
-      </div>
-
-      {/* ======================================================
-          ERROR
-          ====================================================== */}
-
-      {error && (
-        <div
-          role="alert"
-          style={{
-            marginBottom:
-              "20px",
-            padding:
-              "14px 16px",
-            borderRadius:
-              "10px",
-            background:
-              "#fef2f2",
-            color:
-              "#b91c1c",
-            border:
-              "1px solid #fecaca",
-          }}
-        >
-          {error}
-        </div>
-      )}
-
-      {/* ======================================================
-          TOP INFO
-          ====================================================== */}
-
-      <div
-        style={{
-          display:
-            "grid",
-          gridTemplateColumns:
-            "repeat(3, minmax(0, 1fr))",
-          gap:
-            "16px",
-          marginBottom:
-            "20px",
-        }}
-      >
-
-        {/* STATUS */}
-
-        <section
-          style={{
-            padding:
-              "18px",
-            background:
-              "#ffffff",
-            border:
-              "1px solid #e5e7eb",
-            borderRadius:
-              "12px",
-          }}
-        >
-
-          <span
-            style={{
-              display:
-                "block",
-              fontSize:
-                "13px",
-              color:
-                "#6b7280",
-              marginBottom:
-                "8px",
-            }}
-          >
-            Status
-          </span>
-
-          <span
-            style={{
-              display:
-                "inline-flex",
-              padding:
-                "7px 12px",
-              borderRadius:
-                "999px",
-              fontSize:
-                "13px",
-              fontWeight:
-                700,
-              ...getStatusStyle(
-                status
-              ),
-            }}
-          >
-            {
-              getStatusLabel(
-                status
-              )
-            }
-          </span>
-
-        </section>
-
-        {/* RFQ */}
-
-        <section
-          style={{
-            padding:
-              "18px",
-            background:
-              "#ffffff",
-            border:
-              "1px solid #e5e7eb",
-            borderRadius:
-              "12px",
-          }}
-        >
-
-          <span
-            style={{
-              display:
-                "block",
-              fontSize:
-                "13px",
-              color:
-                "#6b7280",
-              marginBottom:
-                "8px",
-            }}
-          >
-            RFQ Number
-          </span>
-
-          <strong>
-            {
-              getRFQNumber(
-                quotation
-              )
-            }
-          </strong>
-
-        </section>
-
-        {/* TOTAL */}
-
-        <section
-          style={{
-            padding:
-              "18px",
-            background:
-              "#ffffff",
-            border:
-              "1px solid #e5e7eb",
-            borderRadius:
-              "12px",
-          }}
-        >
-
-          <span
-            style={{
-              display:
-                "block",
-              fontSize:
-                "13px",
-              color:
-                "#6b7280",
-              marginBottom:
-                "8px",
-            }}
-          >
-            Total Amount
-          </span>
-
-          <strong
-            style={{
-              fontSize:
-                "24px",
-            }}
-          >
-            {formatCurrency(
-              totalAmount
-            )}
-          </strong>
-
-        </section>
-
-      </div>
-
-      {/* ======================================================
-          CUSTOMER + QUOTATION META
-          ====================================================== */}
-
-      <div
-        style={{
-          display:
-            "grid",
-          gridTemplateColumns:
-            "repeat(2, minmax(0, 1fr))",
-          gap:
-            "20px",
-          marginBottom:
-            "20px",
-        }}
-      >
-
-        {/* CUSTOMER */}
-
-        <section
-          style={{
-            padding:
-              "20px",
-            background:
-              "#ffffff",
-            border:
-              "1px solid #e5e7eb",
-            borderRadius:
-              "12px",
-          }}
-        >
-
-          <h2>
-            Customer
-          </h2>
-
-          <div
-            style={{
-              display:
-                "grid",
-              gap:
-                "10px",
-            }}
-          >
-
-            <div>
-
-              <span
-                style={{
-                  display:
-                    "block",
-                  fontSize:
-                    "12px",
-                  color:
-                    "#6b7280",
-                }}
-              >
-                Name
-              </span>
-
-              <strong>
-                {
-                  getCustomerName(
-                    quotation
-                  )
-                }
-              </strong>
-
-            </div>
-
-            <div>
-
-              <span
-                style={{
-                  display:
-                    "block",
-                  fontSize:
-                    "12px",
-                  color:
-                    "#6b7280",
-                }}
-              >
-                Email
-              </span>
-
-              <span>
-                {
-                  getCustomerEmail(
-                    quotation
-                  ) ||
-                  "—"
-                }
-              </span>
-
-            </div>
-
-          </div>
-
-        </section>
-
-        {/* QUOTATION META */}
-
-        <section
-          style={{
-            padding:
-              "20px",
-            background:
-              "#ffffff",
-            border:
-              "1px solid #e5e7eb",
-            borderRadius:
-              "12px",
-          }}
-        >
-
-          <h2>
-            Quotation Information
-          </h2>
-
-          <div
-            style={{
-              display:
-                "grid",
-              gap:
-                "10px",
-            }}
-          >
-
-            <div>
-
-              <span
-                style={{
-                  display:
-                    "block",
-                  fontSize:
-                    "12px",
-                  color:
-                    "#6b7280",
-                }}
-              >
-                Created
-              </span>
-
-              <span>
-                {
-                  formatDateTime(
-                    quotation?.createdAt
-                  )
-                }
-              </span>
-
-            </div>
-
-            <div>
-
-              <span
-                style={{
-                  display:
-                    "block",
-                  fontSize:
-                    "12px",
-                  color:
-                    "#6b7280",
-                }}
-              >
-                Valid Until
-              </span>
-
-              <span>
-                {
-                  formatDate(
-                    quotation?.validUntil
-                  )
-                }
-              </span>
-
-            </div>
-
-            <div>
-
-              <span
-                style={{
-                  display:
-                    "block",
-                  fontSize:
-                    "12px",
-                  color:
-                    "#6b7280",
-                }}
-              >
-                Sent At
-              </span>
-
-              <span>
-                {
-                  formatDateTime(
-                    quotation?.sentAt
-                  )
-                }
-              </span>
-
-            </div>
-
-          </div>
-
-        </section>
-
-      </div>
-
-      {/* ======================================================
-          ITEMS
-          ====================================================== */}
-
-      <section
-        style={{
-          background:
-            "#ffffff",
-          border:
-            "1px solid #e5e7eb",
-          borderRadius:
-            "12px",
-          overflow:
-            "hidden",
-          marginBottom:
-            "20px",
-        }}
-      >
-
-        <div
-          style={{
-            padding:
-              "18px 20px",
-            borderBottom:
-              "1px solid #e5e7eb",
-          }}
-        >
-
-          <h2
-            style={{
-              margin:
-                0,
-            }}
-          >
-            Quotation Items
-          </h2>
-
-        </div>
-
-        {items.length ===
-          0 ? (
-          <div
-            style={{
-              padding:
-                "40px 20px",
-              textAlign:
-                "center",
-              color:
-                "#6b7280",
-            }}
-          >
-            No quotation items found.
-          </div>
-        ) : (
-          <div
-            style={{
-              overflowX:
-                "auto",
-            }}
-          >
-
-            <table
-              style={{
-                width:
-                  "100%",
-                borderCollapse:
-                  "collapse",
-                minWidth:
-                  "700px",
-              }}
-            >
-
-              <thead>
-
-                <tr
-                  style={{
-                    background:
-                      "#f9fafb",
-                  }}
-                >
-
-                  <th
-                    style={{
-                      textAlign:
-                        "left",
-                      padding:
-                        "14px 16px",
-                    }}
-                  >
-                    Product
-                  </th>
-
-                  <th
-                    style={{
-                      textAlign:
-                        "center",
-                      padding:
-                        "14px 16px",
-                    }}
-                  >
-                    Quantity
-                  </th>
-
-                  <th
-                    style={{
-                      textAlign:
-                        "right",
-                      padding:
-                        "14px 16px",
-                    }}
-                  >
-                    Unit Price
-                  </th>
-
-                  <th
-                    style={{
-                      textAlign:
-                        "right",
-                      padding:
-                        "14px 16px",
-                    }}
-                  >
-                    Total
-                  </th>
-
-                </tr>
-
-              </thead>
-
-              <tbody>
-
-                {items.map(
-                  (
-                    item,
-                    index
-                  ) => (
-                    <tr
-                      key={
-                        item?.product?._id ||
-                        item?.product ||
-                        index
-                      }
-                      style={{
-                        borderTop:
-                          "1px solid #f3f4f6",
-                      }}
-                    >
-
-                      <td
-                        style={{
-                          padding:
-                            "16px",
-                        }}
-                      >
-
-                        <strong>
-                          {
-                            getProductName(
-                              item
-                            )
-                          }
-                        </strong>
-
-                        <span
-                          style={{
-                            display:
-                              "block",
-                            marginTop:
-                              "4px",
-                            fontSize:
-                              "12px",
-                            color:
-                              "#6b7280",
-                          }}
-                        >
-                          Unit:{" "}
-                          {
-                            getProductUnit(
-                              item
-                            )
-                          }
-                        </span>
-
-                      </td>
-
-                      <td
-                        style={{
-                          padding:
-                            "16px",
-                          textAlign:
-                            "center",
-                        }}
-                      >
-                        {
-                          getQuantity(
-                            item
-                          )
-                        }
-                      </td>
-
-                      <td
-                        style={{
-                          padding:
-                            "16px",
-                          textAlign:
-                            "right",
-                        }}
-                      >
-                        {formatCurrency(
-                          getUnitPrice(
-                            item
-                          )
-                        )}
-                      </td>
-
-                      <td
-                        style={{
-                          padding:
-                            "16px",
-                          textAlign:
-                            "right",
-                          fontWeight:
-                            700,
-                        }}
-                      >
-                        {formatCurrency(
-                          getItemTotal(
-                            item
-                          )
-                        )}
-                      </td>
-
-                    </tr>
-                  )
-                )}
-
-              </tbody>
-
-            </table>
-
-          </div>
-        )}
-
-      </section>
-
-      {/* ======================================================
-          TOTALS
-          ====================================================== */}
-
-      <section
-        style={{
-          display:
-            "flex",
-          justifyContent:
-            "flex-end",
-          marginBottom:
-            "20px",
-        }}
-      >
-
-        <div
-          style={{
-            width:
-              "100%",
-            maxWidth:
-              "380px",
-            padding:
-              "20px",
-            background:
-              "#ffffff",
-            border:
-              "1px solid #e5e7eb",
-            borderRadius:
-              "12px",
-          }}
-        >
-
-          <div
-            style={{
-              display:
-                "flex",
-              justifyContent:
-                "space-between",
-              paddingBottom:
-                "10px",
-            }}
-          >
-
-            <span>
-              Subtotal
-            </span>
-
-            <strong>
-              {formatCurrency(
-                subtotal
-              )}
-            </strong>
-
-          </div>
-
-          <div
-            style={{
-              borderTop:
-                "1px solid #e5e7eb",
-              paddingTop:
-                "12px",
-              display:
-                "flex",
-              justifyContent:
-                "space-between",
-              fontSize:
-                "18px",
-            }}
-          >
-
-            <strong>
-              Total
-            </strong>
-
-            <strong>
-              {formatCurrency(
-                totalAmount
-              )}
-            </strong>
-
-          </div>
-
-        </div>
-
-      </section>
-
-      {/* ======================================================
-          NOTE
-          ====================================================== */}
-
-      {quotation?.note && (
-        <section
-          style={{
-            padding:
-              "20px",
-            background:
-              "#ffffff",
-            border:
-              "1px solid #e5e7eb",
-            borderRadius:
-              "12px",
-            marginBottom:
-              "20px",
-          }}
-        >
-
-          <h2>
-            Note
-          </h2>
-
-          <p
-            style={{
-              margin:
-                0,
-              whiteSpace:
-                "pre-wrap",
-              color:
-                "#374151",
-            }}
-          >
-            {
-              quotation.note
-            }
-          </p>
-
-        </section>
-      )}
-
-      {/* ======================================================
-          ADMIN ACTIONS
-          ====================================================== */}
-
-      <section
-        style={{
-          padding:
-            "20px",
-          background:
-            "#ffffff",
-          border:
-            "1px solid #e5e7eb",
-          borderRadius:
-            "12px",
-          marginBottom:
-            "30px",
-        }}
-      >
-
-        <h2>
-          Manage Quotation
-        </h2>
-
-        <div
-          style={{
-            display:
-              "flex",
-            alignItems:
-              "center",
-            gap:
-              "12px",
-            flexWrap:
-              "wrap",
-          }}
-        >
-
-          {/* STATUS SELECT */}
-
-          <select
-            value={
-              selectedStatus
-            }
-            onChange={(
-              event
-            ) =>
-              setSelectedStatus(
-                event.target.value
-              )
-            }
-            disabled={
-              actionLoading
-            }
-            style={{
-              minWidth:
-                "180px",
-              padding:
-                "10px 12px",
-              border:
-                "1px solid #d1d5db",
-              borderRadius:
-                "8px",
-              background:
-                "#ffffff",
-            }}
-          >
-
-            {STATUS_OPTIONS.map(
-              (option) => (
-                <option
-                  key={
-                    option
-                  }
-                  value={
-                    option
-                  }
-                >
-                  {
-                    getStatusLabel(
-                      option
-                    )
-                  }
-                </option>
-              )
-            )}
-
-          </select>
-
-          {/* UPDATE */}
-
+        <div className="admin-quotations-hero-actions">
           <button
             type="button"
-            onClick={
-              handleStatusUpdate
-            }
-            disabled={
-              actionLoading ||
-              !selectedStatus ||
-              selectedStatus ===
-                quotation?.status
-            }
+            className="admin-quotations-button admin-quotations-button--secondary"
+            onClick={() => loadQuotations(page, true)}
+            disabled={refreshing}
           >
-            {actionLoading
-              ? "Updating..."
-              : "Update Status"}
+            {refreshing ? "Refreshing…" : "↻ Refresh"}
           </button>
+          <Link
+            to="/admin/quotations/create"
+            className="admin-quotations-button admin-quotations-button--primary"
+          >
+            + Create Quotation
+          </Link>
+        </div>
+      </div>
 
-          {/* CANCEL */}
+      <div className="admin-quotations-stats">
+        <div className="admin-quotation-stat admin-quotation-stat--total">
+          <span className="admin-quotation-stat-icon">◈</span>
+          <div><strong>{summary.total}</strong><span>Total Quotations</span></div>
+        </div>
+        <div className="admin-quotation-stat admin-quotation-stat--pending">
+          <span className="admin-quotation-stat-icon">◷</span>
+          <div><strong>{summary.pending}</strong><span>Pending</span></div>
+        </div>
+        <div className="admin-quotation-stat admin-quotation-stat--sent">
+          <span className="admin-quotation-stat-icon">↗</span>
+          <div><strong>{summary.sent}</strong><span>Sent</span></div>
+        </div>
+        <div className="admin-quotation-stat admin-quotation-stat--accepted">
+          <span className="admin-quotation-stat-icon">✓</span>
+          <div><strong>{summary.accepted}</strong><span>Accepted</span></div>
+        </div>
+        <div className="admin-quotation-stat admin-quotation-stat--rejected">
+          <span className="admin-quotation-stat-icon">×</span>
+          <div><strong>{summary.rejected}</strong><span>Rejected</span></div>
+        </div>
+      </div>
 
-          {canCancel && (
-            <button
-              type="button"
-              onClick={
-                handleCancel
-              }
-              disabled={
-                actionLoading
-              }
-            >
-              {actionLoading
-                ? "Processing..."
-                : "Cancel Quotation"}
-            </button>
-          )}
-
+      <section className="admin-quotations-panel admin-quotations-filters">
+        <div className="admin-quotations-filter-search">
+          <label htmlFor="quotation-search">Search quotations</label>
+          <div className="admin-quotations-search-box">
+            <span>⌕</span>
+            <input
+              id="quotation-search"
+              type="search"
+              value={search}
+              onChange={handleSearchChange}
+              placeholder="Search by quotation number…"
+            />
+          </div>
         </div>
 
+        <div className="admin-quotations-filter-field">
+          <label htmlFor="quotation-status">Status</label>
+          <select id="quotation-status" value={status} onChange={(event) => handleStatusChange(event.target.value)}>
+            <option value="">All statuses</option>
+            {STATUS_OPTIONS.map((option) => (
+              <option key={option} value={option}>{getStatusLabel(option)}</option>
+            ))}
+          </select>
+        </div>
+
+        <button type="button" className="admin-quotations-clear" onClick={clearFilters}>
+          Clear filters
+        </button>
       </section>
 
+      {error && (
+        <section className="admin-quotations-error">
+          <ErrorMessage message={error} />
+          <button type="button" onClick={() => loadQuotations(page)}>Try Again</button>
+        </section>
+      )}
+
+      {quotations.length === 0 ? (
+        <section className="admin-quotations-panel admin-quotations-empty">
+          <EmptyState
+            title="No quotations found"
+            message={search || status ? "Try changing your filters or search term." : "Create your first wholesale quotation to get started."}
+          />
+          <Link to="/admin/quotations/create" className="admin-quotations-button admin-quotations-button--primary">
+            Create Quotation
+          </Link>
+        </section>
+      ) : (
+        <section className="admin-quotations-panel admin-quotations-table-panel">
+          <div className="admin-quotations-table-wrap">
+            <table className="admin-quotations-table">
+              <thead>
+                <tr>
+                  <th>Quotation</th>
+                  <th>Customer</th>
+                  <th>RFQ</th>
+                  <th>Items</th>
+                  <th>Amount</th>
+                  <th>Created</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {quotations.map((quotation) => {
+                  const quotationId = getQuotationId(quotation);
+                  const currentStatus = getStatus(quotation);
+                  const statusConfig = STATUS_CONFIG[currentStatus] || { label: currentStatus, tone: "muted" };
+
+                  return (
+                    <tr key={quotationId || getQuotationNumber(quotation)}>
+                      <td>
+                        <Link className="admin-quotation-number" to={`/admin/quotations/${quotationId}`}>
+                          {getQuotationNumber(quotation)}
+                        </Link>
+                        <span className="admin-quotation-product">{getFirstProductName(quotation)}</span>
+                      </td>
+                      <td>
+                        <strong className="admin-quotation-customer">{getCustomerName(quotation)}</strong>
+                        {getCustomerEmail(quotation) && <span className="admin-quotation-email">{getCustomerEmail(quotation)}</span>}
+                      </td>
+                      <td>
+                        {quotation?.rfq?._id ? (
+                          <Link to={`/admin/rfqs/${quotation.rfq._id}`} className="admin-quotation-rfq">{getRFQNumber(quotation)}</Link>
+                        ) : <span>{getRFQNumber(quotation)}</span>}
+                      </td>
+                      <td>
+                        <strong>{getItemCount(quotation)}</strong>
+                        <span className="admin-quotation-subtext">{getTotalQuantity(quotation)} qty</span>
+                      </td>
+                      <td><strong className="admin-quotation-amount">{formatCurrency(getTotalAmount(quotation))}</strong></td>
+                      <td>{formatDate(quotation?.createdAt)}</td>
+                      <td><span className={`admin-quotation-status admin-quotation-status--${statusConfig.tone}`}>{statusConfig.label}</span></td>
+                      <td>
+                        <button
+                          type="button"
+                          className="admin-quotation-view"
+                          onClick={() => navigate(`/admin/quotations/${quotationId}`)}
+                        >
+                          View Details →
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="admin-quotations-pagination">
+            <span>
+              Showing {quotations.length} of {pagination.totalQuotations} quotations
+            </span>
+            <div>
+              <button type="button" onClick={() => goToPage(page - 1)} disabled={page <= 1}>← Previous</button>
+              <span className="admin-quotations-page-number">Page {page} of {pagination.totalPages}</span>
+              <button type="button" onClick={() => goToPage(page + 1)} disabled={page >= pagination.totalPages}>Next →</button>
+            </div>
+          </div>
+        </section>
+      )}
     </div>
   );
 }
 
-// ============================================================
-// DEFAULT EXPORT
-// ============================================================
-
-export default AdminQuotationDetailsPage;
+export default AdminQuotationsPage;

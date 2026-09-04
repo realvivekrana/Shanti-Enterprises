@@ -1,0 +1,334 @@
+
+/* =========================================================
+   SHANTI ENTERPRISES
+   Admin RFQ Details — Premium Responsive UI
+   ========================================================= */
+
+.admin-rfq-details-page {
+  --rfq-bg: #f7f8fc;
+  --rfq-card: #ffffff;
+  --rfq-text: #172033;
+  --rfq-muted: #697386;
+  --rfq-border: #e7eaf1;
+  --rfq-primary: #5b4bdb;
+  --rfq-primary-2: #7c3aed;
+  --rfq-accent: #0ea5a4;
+  --rfq-warning: #f59e0b;
+  --rfq-danger: #dc2626;
+  --rfq-success: #059669;
+  --rfq-shadow: 0 16px 45px rgba(28, 36, 64, 0.08);
+  color: var(--rfq-text);
+}
+
+.admin-rfq-details-page .page-header {
+  position: relative;
+  overflow: hidden;
+  padding: 28px;
+  margin-bottom: 22px;
+  border: 1px solid var(--rfq-border);
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 90% 10%, rgba(124, 58, 237, .16), transparent 34%),
+    radial-gradient(circle at 10% 90%, rgba(14, 165, 164, .10), transparent 32%),
+    var(--rfq-card);
+  box-shadow: var(--rfq-shadow);
+}
+
+.admin-rfq-details-page .page-header h1 {
+  margin: 6px 0 8px;
+  font-size: clamp(1.7rem, 3vw, 2.4rem);
+  line-height: 1.1;
+  letter-spacing: -.035em;
+}
+
+.admin-rfq-details-page .page-header p {
+  margin: 0;
+  color: var(--rfq-muted);
+}
+
+.admin-rfq-details-page .page-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--rfq-primary);
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .12em;
+}
+
+.admin-rfq-details-page section {
+  border-color: var(--rfq-border) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 10px 30px rgba(28, 36, 64, .055);
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+
+.admin-rfq-details-page section:hover {
+  border-color: rgba(91, 75, 219, .22) !important;
+}
+
+.admin-rfq-details-page button,
+.admin-rfq-details-page select,
+.admin-rfq-details-page input,
+.admin-rfq-details-page textarea {
+  font: inherit;
+}
+
+.admin-rfq-details-page button {
+  border: 1px solid transparent;
+  border-radius: 12px;
+  min-height: 42px;
+  padding: 10px 16px;
+  font-weight: 750;
+  cursor: pointer;
+  transition: transform .18s ease, box-shadow .18s ease, opacity .18s ease, background .18s ease;
+}
+
+.admin-rfq-details-page button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.admin-rfq-details-page button:disabled {
+  cursor: not-allowed;
+  opacity: .58;
+}
+
+.admin-rfq-details-page input,
+.admin-rfq-details-page select,
+.admin-rfq-details-page textarea {
+  width: 100%;
+  border: 1px solid var(--rfq-border);
+  border-radius: 12px;
+  background: var(--rfq-card);
+  color: var(--rfq-text);
+  padding: 11px 13px;
+  outline: none;
+  transition: border-color .18s ease, box-shadow .18s ease;
+}
+
+.admin-rfq-details-page input:focus,
+.admin-rfq-details-page select:focus,
+.admin-rfq-details-page textarea:focus {
+  border-color: var(--rfq-primary);
+  box-shadow: 0 0 0 4px rgba(91, 75, 219, .11);
+}
+
+.admin-rfq-details-page textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+
+.admin-rfq-details-page table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-rfq-details-page th {
+  background: #f7f7fb !important;
+  color: #60697a !important;
+  font-size: .73rem;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+
+.admin-rfq-details-page th,
+.admin-rfq-details-page td {
+  border-color: var(--rfq-border) !important;
+  padding: 14px 12px;
+  vertical-align: middle;
+}
+
+.admin-rfq-details-page tbody tr {
+  transition: background .18s ease;
+}
+
+.admin-rfq-details-page tbody tr:hover {
+  background: rgba(91, 75, 219, .035);
+}
+
+.admin-rfq-details-page a {
+  color: var(--rfq-primary);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.admin-rfq-details-page a:hover {
+  text-decoration: underline;
+}
+
+.admin-rfq-details-page [role="alert"] {
+  border-radius: 14px !important;
+  box-shadow: none !important;
+}
+
+.admin-rfq-details-page .rfq-details-back,
+.admin-rfq-details-page .back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 18px;
+}
+
+.admin-rfq-details-page .rfq-status,
+.admin-rfq-details-page .status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  font-size: .76rem;
+  font-weight: 800;
+}
+
+.admin-rfq-details-page .rfq-detail-grid,
+.admin-rfq-details-page .details-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.admin-rfq-details-page .detail-card {
+  min-width: 0;
+}
+
+.admin-rfq-details-page .quotation-panel {
+  background:
+    linear-gradient(145deg, rgba(91, 75, 219, .07), rgba(14, 165, 164, .045)),
+    var(--rfq-card) !important;
+}
+
+.admin-rfq-details-page .quotation-summary,
+.admin-rfq-details-page .quotation-total {
+  border-radius: 16px;
+}
+
+.admin-rfq-details-page .quotation-total {
+  background: linear-gradient(135deg, rgba(91, 75, 219, .10), rgba(124, 58, 237, .07));
+}
+
+.admin-rfq-details-page .create-quotation-btn,
+.admin-rfq-details-page button[type="submit"] {
+  background: linear-gradient(135deg, var(--rfq-primary), var(--rfq-primary-2)) !important;
+  color: #fff !important;
+  box-shadow: 0 10px 24px rgba(91, 75, 219, .22);
+}
+
+.admin-rfq-details-page .cancel-btn {
+  background: #fff !important;
+  color: var(--rfq-danger) !important;
+  border-color: #fecaca !important;
+}
+
+.admin-rfq-details-page .success-message {
+  color: var(--rfq-success);
+}
+
+.admin-rfq-details-page .error-message {
+  color: var(--rfq-danger);
+}
+
+.admin-rfq-details-page img {
+  max-width: 100%;
+}
+
+.admin-rfq-details-page .product-image,
+.admin-rfq-details-page img[alt*="product" i] {
+  border-radius: 12px;
+  object-fit: cover;
+  background: #f5f6fa;
+}
+
+@media (max-width: 900px) {
+  .admin-rfq-details-page .rfq-detail-grid,
+  .admin-rfq-details-page .details-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-rfq-details-page table {
+    min-width: 720px;
+  }
+
+  .admin-rfq-details-page .table-wrap,
+  .admin-rfq-details-page [style*="overflow"] {
+    overflow-x: auto;
+  }
+}
+
+@media (max-width: 640px) {
+  .admin-rfq-details-page .page-header {
+    padding: 20px;
+    border-radius: 18px;
+  }
+
+  .admin-rfq-details-page section {
+    border-radius: 16px !important;
+  }
+
+  .admin-rfq-details-page .rfq-detail-grid,
+  .admin-rfq-details-page .details-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-rfq-details-page button {
+    width: 100%;
+  }
+
+  .admin-rfq-details-page input,
+  .admin-rfq-details-page select,
+  .admin-rfq-details-page textarea {
+    font-size: 16px;
+  }
+}
+
+/* Dark mode */
+.dark .admin-rfq-details-page,
+[data-theme="dark"] .admin-rfq-details-page {
+  --rfq-bg: #0b1020;
+  --rfq-card: #121827;
+  --rfq-text: #edf1f8;
+  --rfq-muted: #9ba6b8;
+  --rfq-border: #273044;
+  --rfq-shadow: 0 18px 50px rgba(0, 0, 0, .22);
+}
+
+.dark .admin-rfq-details-page .page-header,
+[data-theme="dark"] .admin-rfq-details-page .page-header {
+  background:
+    radial-gradient(circle at 90% 10%, rgba(124, 58, 237, .18), transparent 34%),
+    radial-gradient(circle at 10% 90%, rgba(14, 165, 164, .11), transparent 32%),
+    var(--rfq-card);
+}
+
+.dark .admin-rfq-details-page th,
+[data-theme="dark"] .admin-rfq-details-page th {
+  background: #171e2d !important;
+  color: #aeb7c7 !important;
+}
+
+.dark .admin-rfq-details-page input,
+.dark .admin-rfq-details-page select,
+.dark .admin-rfq-details-page textarea,
+[data-theme="dark"] .admin-rfq-details-page input,
+[data-theme="dark"] .admin-rfq-details-page select,
+[data-theme="dark"] .admin-rfq-details-page textarea {
+  background: #0f1523;
+  color: var(--rfq-text);
+  border-color: var(--rfq-border);
+}
+
+.dark .admin-rfq-details-page .cancel-btn,
+[data-theme="dark"] .admin-rfq-details-page .cancel-btn {
+  background: #24171b !important;
+  border-color: #5a2b32 !important;
+}
+
+.dark .admin-rfq-details-page .quotation-total,
+[data-theme="dark"] .admin-rfq-details-page .quotation-total {
+  background: linear-gradient(135deg, rgba(91, 75, 219, .16), rgba(124, 58, 237, .10));
+}
+
+.dark .admin-rfq-details-page tbody tr:hover,
+[data-theme="dark"] .admin-rfq-details-page tbody tr:hover {
+  background: rgba(124, 58, 237, .07);
+}

@@ -24,6 +24,7 @@ import Loading from "../../components/common/Loading";
 import ErrorMessage from "../../components/common/ErrorMessage";
 
 import EmptyState from "../../components/common/EmptyState";
+import "./AdminProductsPage.css";
 
 // ============================================================
 // ADMIN PRODUCTS PAGE

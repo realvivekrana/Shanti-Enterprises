@@ -19,6 +19,8 @@ import Loading from "../../components/common/Loading";
 
 import ErrorMessage from "../../components/common/ErrorMessage";
 
+import "./AdminProfilePage.css";
+
 // ============================================================
 // ADMIN PROFILE PAGE
 // ============================================================
@@ -242,7 +244,7 @@ function AdminProfilePage() {
 
   if (error && !profile) {
     return (
-      <section className="app-page">
+      <section className="app-page admin-profile-page">
 
         <Link to="/admin">
           ← Admin Dashboard
@@ -262,7 +264,7 @@ function AdminProfilePage() {
   // ==========================================================
 
   return (
-    <section className="app-page">
+    <section className="app-page admin-profile-page">
 
       {/* ====================================================
           HEADER

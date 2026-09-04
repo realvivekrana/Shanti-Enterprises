@@ -1,0 +1,553 @@
+/* =========================================================
+   SHANTI ENTERPRISES — ADMIN QUOTATION DETAILS
+   Target: Frontend/src/pages/admin/AdminQuotationDetailsPage.css
+   Premium multi-color • Light/Dark • Responsive
+   ========================================================= */
+
+.admin-quotation-details-page {
+  --aqd-bg: #f6f8fc;
+  --aqd-surface: #ffffff;
+  --aqd-surface-soft: #f8fafc;
+  --aqd-border: #e5e7eb;
+  --aqd-border-strong: #d7dce5;
+  --aqd-text: #111827;
+  --aqd-text-soft: #667085;
+  --aqd-text-muted: #98a2b3;
+  --aqd-primary: #635bff;
+  --aqd-primary-dark: #4f46e5;
+  --aqd-primary-soft: #eef2ff;
+  --aqd-blue: #2563eb;
+  --aqd-cyan: #0891b2;
+  --aqd-green: #059669;
+  --aqd-green-soft: #ecfdf3;
+  --aqd-orange: #ea580c;
+  --aqd-orange-soft: #fff7ed;
+  --aqd-red: #dc2626;
+  --aqd-red-soft: #fef2f2;
+  --aqd-purple: #9333ea;
+  --aqd-purple-soft: #faf5ff;
+  --aqd-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+  --aqd-shadow-sm: 0 6px 20px rgba(15, 23, 42, 0.06);
+
+  min-height: 100%;
+  padding: 28px;
+  color: var(--aqd-text);
+  background:
+    radial-gradient(circle at 100% 0%, rgba(99, 91, 255, 0.09), transparent 28rem),
+    radial-gradient(circle at 0% 40%, rgba(8, 145, 178, 0.055), transparent 24rem),
+    var(--aqd-bg);
+}
+
+/* ---------- Generic typography ---------- */
+
+.admin-quotation-details-page h1,
+.admin-quotation-details-page h2,
+.admin-quotation-details-page h3 {
+  color: var(--aqd-text);
+}
+
+.admin-quotation-details-page h2 {
+  margin: 0 0 16px;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.2px;
+}
+
+.admin-quotation-details-page p {
+  line-height: 1.65;
+}
+
+/* ---------- Header ---------- */
+
+.admin-quotation-details-page .page-header {
+  position: relative;
+  overflow: hidden;
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 22px;
+  padding: 25px 28px;
+  border: 1px solid rgba(99, 91, 255, 0.13) !important;
+  border-radius: 22px !important;
+  background:
+    linear-gradient(135deg, rgba(99, 91, 255, 0.10), rgba(37, 99, 235, 0.035) 48%, rgba(8, 145, 178, 0.06)),
+    var(--aqd-surface) !important;
+  box-shadow: var(--aqd-shadow-sm);
+}
+
+.admin-quotation-details-page .page-header::after {
+  content: "";
+  position: absolute;
+  width: 190px;
+  height: 190px;
+  top: -110px;
+  right: -65px;
+  border-radius: 50%;
+  background: rgba(147, 51, 234, 0.09);
+  pointer-events: none;
+}
+
+.admin-quotation-details-page .page-header > div {
+  position: relative;
+  z-index: 1;
+}
+
+.admin-quotation-details-page .page-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: var(--aqd-primary-soft);
+  color: var(--aqd-primary);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 1px;
+}
+
+.admin-quotation-details-page .page-header h1 {
+  margin: 8px 0 5px;
+  font-size: clamp(25px, 3vw, 34px);
+  font-weight: 850;
+  letter-spacing: -0.8px;
+}
+
+.admin-quotation-details-page .page-header p {
+  margin: 0;
+  color: var(--aqd-text-soft);
+  font-size: 13px;
+}
+
+.admin-quotation-details-page .page-header > div:last-child {
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.admin-quotation-details-page .page-header a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0 15px;
+  border: 1px solid var(--aqd-border-strong);
+  border-radius: 11px;
+  background: var(--aqd-surface);
+  color: var(--aqd-text);
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+  transition: 0.2s ease;
+}
+
+.admin-quotation-details-page .page-header a:hover {
+  border-color: var(--aqd-primary);
+  color: var(--aqd-primary);
+  background: var(--aqd-primary-soft);
+  transform: translateY(-1px);
+}
+
+/* ---------- Cards / sections ---------- */
+
+.admin-quotation-details-page > section,
+.admin-quotation-details-page > div:not(.page-header) > section {
+  border-color: var(--aqd-border) !important;
+  border-radius: 18px !important;
+  background: var(--aqd-surface) !important;
+  box-shadow: var(--aqd-shadow-sm);
+}
+
+.admin-quotation-details-page section {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.admin-quotation-details-page section:hover {
+  border-color: rgba(99, 91, 255, 0.16) !important;
+}
+
+/* ---------- Top information cards ---------- */
+
+.admin-quotation-details-page .page-header + div {
+  gap: 16px !important;
+}
+
+.admin-quotation-details-page .page-header + div > section {
+  position: relative;
+  overflow: hidden;
+  min-height: 112px;
+}
+
+.admin-quotation-details-page .page-header + div > section::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, var(--aqd-primary), var(--aqd-blue));
+}
+
+.admin-quotation-details-page .page-header + div > section:nth-child(2)::before {
+  background: linear-gradient(90deg, var(--aqd-cyan), #06b6d4);
+}
+
+.admin-quotation-details-page .page-header + div > section:nth-child(3)::before {
+  background: linear-gradient(90deg, #8b5cf6, #ec4899);
+}
+
+.admin-quotation-details-page .page-header + div > section > span:first-child {
+  color: var(--aqd-text-soft) !important;
+  font-size: 11px !important;
+  font-weight: 800;
+  letter-spacing: 0.45px;
+  text-transform: uppercase;
+}
+
+.admin-quotation-details-page .page-header + div > section strong {
+  color: var(--aqd-text);
+}
+
+/* Status */
+
+.admin-quotation-details-page .page-header + div > section:first-child > span:last-child {
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+}
+
+/* ---------- Customer and quotation information ---------- */
+
+.admin-quotation-details-page section h2 {
+  padding-bottom: 11px;
+  border-bottom: 1px solid var(--aqd-border);
+}
+
+.admin-quotation-details-page section div span[style*="color"] {
+  color: var(--aqd-text-soft) !important;
+}
+
+.admin-quotation-details-page strong {
+  color: var(--aqd-text);
+}
+
+/* ---------- Items card ---------- */
+
+.admin-quotation-details-page table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-quotation-details-page table thead tr {
+  background: linear-gradient(180deg, var(--aqd-surface-soft), var(--aqd-surface)) !important;
+}
+
+.admin-quotation-details-page table th {
+  color: var(--aqd-text-soft);
+  border-bottom: 1px solid var(--aqd-border);
+  font-size: 11px;
+  font-weight: 850;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.admin-quotation-details-page table td {
+  color: var(--aqd-text);
+  border-top-color: var(--aqd-border) !important;
+  font-size: 13px;
+}
+
+.admin-quotation-details-page table tbody tr {
+  transition: background 0.18s ease;
+}
+
+.admin-quotation-details-page table tbody tr:hover {
+  background: rgba(99, 91, 255, 0.035);
+}
+
+.admin-quotation-details-page table td:first-child strong {
+  font-weight: 750;
+}
+
+.admin-quotation-details-page table td span {
+  color: var(--aqd-text-soft) !important;
+}
+
+.admin-quotation-details-page table td:last-child {
+  font-weight: 800;
+}
+
+/* ---------- Totals ---------- */
+
+.admin-quotation-details-page section > div[style*="maxWidth"] {
+  border-color: var(--aqd-border) !important;
+  background:
+    linear-gradient(135deg, rgba(99, 91, 255, 0.045), rgba(8, 145, 178, 0.025)),
+    var(--aqd-surface) !important;
+  box-shadow: var(--aqd-shadow-sm);
+}
+
+.admin-quotation-details-page section > div[style*="maxWidth"] > div:last-child {
+  border-top-color: var(--aqd-border) !important;
+}
+
+.admin-quotation-details-page section > div[style*="maxWidth"] > div:last-child strong {
+  color: var(--aqd-primary);
+}
+
+/* ---------- Note ---------- */
+
+.admin-quotation-details-page section p[style*="whiteSpace"] {
+  color: var(--aqd-text-soft) !important;
+  font-size: 14px;
+}
+
+/* ---------- Error ---------- */
+
+.admin-quotation-details-page [role="alert"] {
+  border: 1px solid #fecaca !important;
+  border-radius: 13px !important;
+  background: var(--aqd-red-soft) !important;
+  color: var(--aqd-red) !important;
+  box-shadow: 0 6px 18px rgba(220, 38, 38, 0.05);
+}
+
+/* ---------- Manage quotation ---------- */
+
+.admin-quotation-details-page select {
+  min-height: 44px !important;
+  padding: 0 13px !important;
+  border: 1px solid var(--aqd-border-strong) !important;
+  border-radius: 11px !important;
+  outline: none;
+  background: var(--aqd-surface) !important;
+  color: var(--aqd-text) !important;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.admin-quotation-details-page select:focus {
+  border-color: var(--aqd-primary) !important;
+  box-shadow: 0 0 0 4px rgba(99, 91, 255, 0.11);
+}
+
+.admin-quotation-details-page button {
+  min-height: 43px;
+  padding: 0 16px;
+  border: 1px solid var(--aqd-border-strong);
+  border-radius: 11px;
+  background: var(--aqd-surface);
+  color: var(--aqd-text);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.admin-quotation-details-page button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: var(--aqd-primary);
+  color: var(--aqd-primary);
+  background: var(--aqd-primary-soft);
+}
+
+.admin-quotation-details-page button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-quotation-details-page section:last-child button:first-of-type {
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--aqd-primary), var(--aqd-blue));
+  color: #fff;
+  box-shadow: 0 9px 20px rgba(79, 70, 229, 0.18);
+}
+
+.admin-quotation-details-page section:last-child button:first-of-type:hover:not(:disabled) {
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--aqd-primary-dark), var(--aqd-blue));
+  color: #fff;
+  box-shadow: 0 12px 25px rgba(79, 70, 229, 0.25);
+}
+
+.admin-quotation-details-page section:last-child button:last-child {
+  border-color: #fecaca;
+  background: var(--aqd-red-soft);
+  color: var(--aqd-red);
+}
+
+.admin-quotation-details-page section:last-child button:last-child:hover:not(:disabled) {
+  border-color: #fca5a5;
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+/* ---------- Loading / error page buttons ---------- */
+
+.admin-quotation-details-page .page-header + div button,
+.admin-quotation-details-page [role="alert"] + button {
+  cursor: pointer;
+}
+
+/* ---------- Dark mode ---------- */
+
+@media (prefers-color-scheme: dark) {
+  .admin-quotation-details-page {
+    --aqd-bg: #0b1020;
+    --aqd-surface: #121827;
+    --aqd-surface-soft: #171e30;
+    --aqd-border: #273148;
+    --aqd-border-strong: #34405a;
+    --aqd-text: #f3f4f6;
+    --aqd-text-soft: #a7b0c2;
+    --aqd-text-muted: #717c92;
+    --aqd-primary: #8b83ff;
+    --aqd-primary-dark: #766cff;
+    --aqd-primary-soft: rgba(99, 91, 255, 0.14);
+    --aqd-shadow: 0 18px 45px rgba(0, 0, 0, 0.30);
+    --aqd-shadow-sm: 0 8px 25px rgba(0, 0, 0, 0.22);
+
+    background:
+      radial-gradient(circle at 100% 0%, rgba(99, 91, 255, 0.13), transparent 28rem),
+      radial-gradient(circle at 0% 40%, rgba(8, 145, 178, 0.08), transparent 24rem),
+      var(--aqd-bg);
+  }
+
+  .admin-quotation-details-page .page-header {
+    border-color: rgba(139, 131, 255, 0.18) !important;
+  }
+
+  .admin-quotation-details-page table thead tr {
+    background: var(--aqd-surface-soft) !important;
+  }
+
+  .admin-quotation-details-page table tbody tr:hover {
+    background: rgba(139, 131, 255, 0.055);
+  }
+
+  .admin-quotation-details-page section p[style*="whiteSpace"] {
+    color: var(--aqd-text-soft) !important;
+  }
+
+  .admin-quotation-details-page [role="alert"] {
+    background: rgba(220, 38, 38, 0.10) !important;
+    border-color: rgba(248, 113, 113, 0.22) !important;
+    color: #fca5a5 !important;
+  }
+
+  .admin-quotation-details-page section:last-child button:last-child {
+    border-color: rgba(248, 113, 113, 0.25);
+    background: rgba(220, 38, 38, 0.12);
+    color: #fca5a5;
+  }
+
+  .admin-quotation-details-page section:last-child button:last-child:hover:not(:disabled) {
+    background: rgba(220, 38, 38, 0.18);
+    color: #fecaca;
+  }
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 1000px) {
+  .admin-quotation-details-page {
+    padding: 20px;
+  }
+
+  .admin-quotation-details-page .page-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .admin-quotation-details-page .page-header > div:last-child {
+    width: 100%;
+  }
+
+  .admin-quotation-details-page .page-header > div:last-child a {
+    flex: 1;
+  }
+
+  .admin-quotation-details-page .page-header + div {
+    grid-template-columns: 1fr !important;
+  }
+
+  .admin-quotation-details-page .page-header + div + div {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 700px) {
+  .admin-quotation-details-page {
+    padding: 14px;
+  }
+
+  .admin-quotation-details-page .page-header {
+    padding: 20px;
+    border-radius: 17px !important;
+  }
+
+  .admin-quotation-details-page .page-header h1 {
+    font-size: 25px;
+  }
+
+  .admin-quotation-details-page .page-header > div:last-child {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .admin-quotation-details-page .page-header > div:last-child a {
+    width: 100%;
+  }
+
+  .admin-quotation-details-page table {
+    min-width: 700px;
+  }
+
+  .admin-quotation-details-page section {
+    border-radius: 15px !important;
+  }
+
+  .admin-quotation-details-page section:last-child > div {
+    align-items: stretch !important;
+    flex-direction: column;
+  }
+
+  .admin-quotation-details-page section:last-child select,
+  .admin-quotation-details-page section:last-child button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 450px) {
+  .admin-quotation-details-page {
+    padding: 10px;
+  }
+
+  .admin-quotation-details-page .page-header {
+    padding: 17px;
+  }
+
+  .admin-quotation-details-page .page-header h1 {
+    font-size: 23px;
+  }
+
+  .admin-quotation-details-page .page-header p {
+    font-size: 12px;
+  }
+}
+
+/* ---------- Reduced motion ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-quotation-details-page *,
+  .admin-quotation-details-page *::before,
+  .admin-quotation-details-page *::after {
+    transition: none !important;
+    animation: none !important;
+    scroll-behavior: auto !important;
+  }
+}

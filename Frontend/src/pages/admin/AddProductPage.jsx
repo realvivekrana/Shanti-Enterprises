@@ -20,10 +20,6 @@ import {
 } from "../../api/productApi";
 
 import {
-  getCategories,
-} from "../../api/categoryApi";
-
-import {
   uploadImage,
 } from "../../api/uploadApi";
 
@@ -99,50 +95,6 @@ function AddProductPage() {
     success,
     setSuccess,
   ] = useState("");
-
-  const [
-    categories,
-    setCategories,
-  ] = useState([]);
-
-  const [
-    categoriesLoading,
-    setCategoriesLoading,
-  ] = useState(true);
-
-  // ==========================================================
-  // LOAD ACTIVE CATEGORIES
-  // ==========================================================
-
-  useEffect(() => {
-    let isMounted = true;
-
-    getCategories()
-      .then((response) => {
-        if (!isMounted) {
-          return;
-        }
-
-        setCategories(
-          response?.categories || []
-        );
-      })
-      .catch((loadError) => {
-        console.error(
-          "Load categories error:",
-          loadError
-        );
-      })
-      .finally(() => {
-        if (isMounted) {
-          setCategoriesLoading(false);
-        }
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
 
   // ==========================================================
   // CLEANUP IMAGE PREVIEW
@@ -489,7 +441,7 @@ function AddProductPage() {
           Number(form.moq),
 
         category:
-          form.category || null,
+          form.category.trim(),
 
         brand:
           form.brand.trim(),
@@ -533,7 +485,7 @@ function AddProductPage() {
   // ==========================================================
 
   return (
-    <section className="app-page">
+    <section className="app-page admin-product-editor admin-product-editor--add">
 
       {/* ====================================================
           HEADER
@@ -595,6 +547,7 @@ function AddProductPage() {
           ==================================================== */}
 
       <form
+        className="admin-product-form"
         onSubmit={
           handleSubmit
         }
@@ -750,34 +703,18 @@ function AddProductPage() {
             Category
           </label>
 
-          <select
+          <input
             id="category"
             name="category"
+            type="text"
             value={
               form.category
             }
             onChange={
               handleChange
             }
-            disabled={categoriesLoading}
-          >
-
-            <option value="">
-              {categoriesLoading
-                ? "Loading categories..."
-                : "No category"}
-            </option>
-
-            {categories.map((category) => (
-              <option
-                key={category._id}
-                value={category._id}
-              >
-                {category.name}
-              </option>
-            ))}
-
-          </select>
+            placeholder="Enter category"
+          />
 
         </div>
 

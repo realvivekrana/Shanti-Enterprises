@@ -1,293 +1,643 @@
 // ============================================================
-// SHANTI ENTERPRISES — AdminUserDetailsPage (Premium)
+// SHANTI ENTERPRISES
+// Admin User Details Page
+// Premium Admin UI - User Management
 // ============================================================
 
-import { useEffect, useState } from "react";
-import { Link, useParams }     from "react-router-dom";
+import {
+  useEffect,
+  useState,
+} from "react";
+
+import {
+  Link,
+  useParams,
+} from "react-router-dom";
+
 import {
   getAdminUserById,
   updateUserRole,
   updateUserStatus,
 } from "../../api/adminUserApi";
-import Loading      from "../../components/common/Loading";
+
+import Loading from "../../components/common/Loading";
 import ErrorMessage from "../../components/common/ErrorMessage";
 
-const USER_ROLES    = ["customer", "admin"];
-const USER_STATUSES = ["active", "inactive"];
+import "./AdminUserDetailsPage.css";
 
-const fmtDate = (v) => {
-  if (!v) return "N/A";
-  const d = new Date(v);
-  return Number.isNaN(d.getTime())
-    ? "N/A"
-    : d.toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
-};
+// ============================================================
+// OPTIONS
+// ============================================================
 
-// ── info row ─────────────────────────────────────────────────
-function InfoRow({ label, value }) {
-  return (
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "12px 0", borderBottom: "1px solid var(--se-border-soft)", gap: 20 }}>
-      <span style={{ fontSize: 13, fontWeight: 600, color: "var(--se-text-3)", flexShrink: 0 }}>{label}</span>
-      <span style={{ fontSize: 13, fontWeight: 600, color: "var(--se-text)", textAlign: "right", wordBreak: "break-all" }}>{value || "—"}</span>
-    </div>
-  );
-}
+const USER_ROLES = [
+  "customer",
+  "admin",
+];
 
-// ── control select ───────────────────────────────────────────
-function ControlSelect({ label, id, value, options, disabled, onChange }) {
-  return (
-    <div>
-      <label htmlFor={id} style={{ fontSize: 12, fontWeight: 700, color: "var(--se-text-3)", textTransform: "uppercase", letterSpacing: ".07em", display: "block", marginBottom: 8 }}>
-        {label}
-      </label>
-      <select
-        id={id}
-        value={value}
-        disabled={disabled}
-        onChange={(e) => onChange(e.target.value)}
-        style={{ height: 44, fontSize: 14, fontWeight: 600 }}
-      >
-        {options.map(o => (
-          <option key={o} value={o}>
-            {o.charAt(0).toUpperCase() + o.slice(1)}
-          </option>
-        ))}
-      </select>
-    </div>
-  );
-}
+const USER_STATUSES = [
+  "active",
+  "inactive",
+  "blocked",
+];
 
-// ─────────────────────────────────────────────────────────────
+// ============================================================
+// HELPERS
+// ============================================================
+
+const getInitials = (name = "User") =>
+  name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join("") || "U";
+
+const formatLabel = (value = "") =>
+  value
+    .toString()
+    .replace(/[_-]/g, " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+
+// ============================================================
+// ADMIN USER DETAILS
+// ============================================================
+
 function AdminUserDetailsPage() {
   const { userId } = useParams();
 
-  const [user,     setUser]     = useState(null);
-  const [loading,  setLoading]  = useState(true);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
-  const [error,    setError]    = useState("");
-  const [success,  setSuccess]  = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-  // load
+  // ==========================================================
+  // LOAD USER
+  // ==========================================================
+
   const loadUser = async () => {
     try {
-      setLoading(true); setError("");
-      const r = await getAdminUserById(userId);
-      const u = r?.user || r?.data?.user || r?.data || r;
-      if (!u) throw new Error("User not found.");
-      setUser(u);
+      setLoading(true);
+      setError("");
+
+      const response = await getAdminUserById(userId);
+
+      const userData =
+        response?.user ||
+        response?.data?.user ||
+        response?.data ||
+        response;
+
+      if (!userData) {
+        throw new Error("User not found.");
+      }
+
+      setUser(userData);
     } catch (err) {
-      setError(err.response?.data?.message || err.message || "Unable to load user.");
+      console.error("User details error:", err);
+
+      setError(
+        err.response?.data?.message ||
+          err.message ||
+          "Unable to load user."
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { if (userId) loadUser(); }, [userId]);
+  // ==========================================================
+  // INITIAL LOAD
+  // ==========================================================
 
-  // derived
-  const getRole   = () => String(user?.role   || "customer").toLowerCase();
-  const getStatus = () => typeof user?.isActive === "boolean" ? (user.isActive ? "active" : "inactive") : String(user?.status || "active").toLowerCase();
+  useEffect(() => {
+    if (userId) {
+      loadUser();
+    }
+  }, [userId]);
 
-  // update role
+  // ==========================================================
+  // GET ROLE
+  // ==========================================================
+
+  const getRole = () => {
+    return (
+      user?.role ||
+      user?.userRole ||
+      "customer"
+    )
+      .toString()
+      .toLowerCase();
+  };
+
+  // ==========================================================
+  // GET STATUS
+  // ==========================================================
+
+  const getStatus = () => {
+    if (typeof user?.isActive === "boolean") {
+      return user.isActive ? "active" : "inactive";
+    }
+
+    return (
+      user?.status ||
+      "active"
+    )
+      .toString()
+      .toLowerCase();
+  };
+
+  // ==========================================================
+  // UPDATE ROLE
+  // ==========================================================
+
   const handleRoleChange = async (newRole) => {
     try {
-      setUpdating(true); setError(""); setSuccess("");
+      setUpdating(true);
+      setError("");
+      setSuccess("");
+
       await updateUserRole(userId, newRole);
-      setUser(u => ({ ...u, role: newRole }));
-      setSuccess("Role updated successfully.");
+
+      setUser((current) => ({
+        ...current,
+        role: newRole,
+      }));
+
+      setSuccess("User role updated successfully.");
     } catch (err) {
-      setError(err.response?.data?.message || err.message || "Unable to update role.");
+      console.error("Update role error:", err);
+
+      setError(
+        err.response?.data?.message ||
+          err.message ||
+          "Unable to update user role."
+      );
     } finally {
       setUpdating(false);
     }
   };
 
-  // update status
+  // ==========================================================
+  // UPDATE STATUS
+  // ==========================================================
+
   const handleStatusChange = async (newStatus) => {
     try {
-      setUpdating(true); setError(""); setSuccess("");
+      setUpdating(true);
+      setError("");
+      setSuccess("");
+
       await updateUserStatus(userId, newStatus);
-      setUser(u => ({ ...u, status: newStatus, isActive: newStatus === "active" }));
-      setSuccess("Status updated successfully.");
+
+      setUser((current) => ({
+        ...current,
+        status: newStatus,
+        isActive: newStatus === "active",
+      }));
+
+      setSuccess("User status updated successfully.");
     } catch (err) {
-      setError(err.response?.data?.message || err.message || "Unable to update status.");
+      console.error("Update status error:", err);
+
+      setError(
+        err.response?.data?.message ||
+          err.message ||
+          "Unable to update user status."
+      );
     } finally {
       setUpdating(false);
     }
   };
 
-  // ── states ──────────────────────────────────────────────────
-  if (loading) return (
-    <div style={{ padding: "64px 20px" }}><Loading message="Loading user details…" /></div>
-  );
+  // ==========================================================
+  // LOADING
+  // ==========================================================
 
-  if (error && !user) return (
-    <div className="page-container">
-      <Link to="/admin/users" style={{ fontSize: 13, fontWeight: 600, color: "var(--se-text-3)", display: "inline-block", marginBottom: 20 }}>← User Management</Link>
-      <ErrorMessage message={error} onRetry={loadUser} />
-    </div>
-  );
+  if (loading) {
+    return <Loading message="Loading user details..." />;
+  }
 
-  if (!user) return (
-    <div className="page-container">
-      <Link to="/admin/users" style={{ fontSize: 13, fontWeight: 600, color: "var(--se-text-3)", display: "inline-block", marginBottom: 20 }}>← User Management</Link>
-      <div className="empty-state"><h2>User not found</h2></div>
-    </div>
-  );
+  // ==========================================================
+  // ERROR
+  // ==========================================================
 
-  const name    = user.name || user.fullName || "User";
-  const email   = user.email || "N/A";
-  const phone   = user.phone || user.mobile || "N/A";
-  const role    = getRole();
-  const status  = getStatus();
-  const initial = name.charAt(0).toUpperCase();
-  const address = user.address || user.shippingAddress || null;
+  if (error && !user) {
+    return (
+      <section className="app-page admin-user-details-page">
+        <Link
+          to="/admin/users"
+          className="admin-user-back-link"
+        >
+          <span>←</span>
+          User Management
+        </Link>
 
-  const roleBadge   = role   === "admin"    ? { bg: "#EFF6FF", color: "#1D4ED8", border: "#BFDBFE" } : { bg: "var(--se-teal-soft)", color: "var(--se-teal-hover)", border: "var(--se-teal-light)" };
-  const statusBadge = status === "active"   ? { bg: "var(--se-success-bg)", color: "var(--se-success)", border: "#A7F3D0" } : { bg: "var(--se-danger-bg)", color: "var(--se-danger)", border: "#FECACA" };
+        <ErrorMessage
+          message={error}
+          onRetry={loadUser}
+        />
+      </section>
+    );
+  }
+
+  // ==========================================================
+  // NOT FOUND
+  // ==========================================================
+
+  if (!user) {
+    return (
+      <section className="app-page admin-user-details-page">
+        <Link
+          to="/admin/users"
+          className="admin-user-back-link"
+        >
+          <span>←</span>
+          User Management
+        </Link>
+
+        <div className="admin-user-empty-card">
+          <div className="admin-user-empty-icon">?</div>
+          <h1>User Not Found</h1>
+          <p>
+            The requested user could not be found.
+          </p>
+        </div>
+      </section>
+    );
+  }
+
+  // ==========================================================
+  // USER DATA
+  // ==========================================================
+
+  const name =
+    user.name ||
+    user.fullName ||
+    user.username ||
+    "User";
+
+  const email = user.email || "N/A";
+
+  const phone =
+    user.phone ||
+    user.mobile ||
+    user.contactNumber ||
+    "N/A";
+
+  const role = getRole();
+  const status = getStatus();
+
+  const createdAt =
+    user.createdAt ||
+    user.created_at ||
+    user.date;
+
+  const formattedDate = createdAt
+    ? new Date(createdAt).toLocaleString("en-IN")
+    : "N/A";
+
+  const address =
+    user.address ||
+    user.shippingAddress ||
+    null;
+
+  // ==========================================================
+  // PAGE
+  // ==========================================================
 
   return (
-    <div style={{ background: "var(--se-bg)", minHeight: "calc(100vh - 68px)" }}>
+    <section className="app-page admin-user-details-page">
 
-      {/* BANNER */}
-      <div style={{ background: "linear-gradient(135deg, var(--se-navy) 0%, #1E293B 100%)", padding: "36px 0 30px" }}>
-        <div style={{ width: "min(100% - 40px, 1100px)", margin: "0 auto" }}>
-          <Link to="/admin/users" style={{ fontSize: 12, fontWeight: 700, color: "var(--se-teal-light)", display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 14 }}>
-            ← User Management
-          </Link>
-          <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-            <div style={{ width: 56, height: 56, borderRadius: "50%", background: "var(--se-teal)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: 800, color: "#fff", flexShrink: 0, boxShadow: "0 4px 16px rgba(13,148,136,.4)" }}>
-              {initial}
-            </div>
+      {/* HEADER */}
+
+      <div className="admin-user-details-topbar">
+        <Link
+          to="/admin/users"
+          className="admin-user-back-link"
+        >
+          <span>←</span>
+          User Management
+        </Link>
+
+        <div className="admin-user-top-actions">
+          <button
+            type="button"
+            className="admin-user-refresh-btn"
+            onClick={loadUser}
+            disabled={loading || updating}
+          >
+            ↻ Refresh
+          </button>
+        </div>
+      </div>
+
+      <header className="admin-user-page-header">
+        <div>
+          <span className="admin-user-eyebrow">
+            SHANTI ENTERPRISES · USER MANAGEMENT
+          </span>
+
+          <h1>User Details</h1>
+
+          <p>
+            Review account information and manage
+            access permissions for this customer.
+          </p>
+        </div>
+
+        <div className="admin-user-id-chip">
+          <span>User ID</span>
+          <strong>{userId}</strong>
+        </div>
+      </header>
+
+      {/* ALERTS */}
+
+      {error && (
+        <div className="admin-user-alert admin-user-alert-error">
+          <div className="admin-user-alert-icon">!</div>
+          <div>
+            <strong>Something went wrong</strong>
+            <p>{error}</p>
+          </div>
+        </div>
+      )}
+
+      {success && (
+        <div className="admin-user-alert admin-user-alert-success">
+          <div className="admin-user-alert-icon">✓</div>
+          <div>
+            <strong>Update successful</strong>
+            <p>{success}</p>
+          </div>
+        </div>
+      )}
+
+      {/* PROFILE HERO */}
+
+      <section className="admin-user-profile-card">
+        <div className="admin-user-avatar">
+          {getInitials(name)}
+        </div>
+
+        <div className="admin-user-profile-main">
+          <div className="admin-user-name-row">
+            <h2>{name}</h2>
+            <span className={`admin-user-status-badge status-${status}`}>
+              <span className="admin-user-status-dot" />
+              {formatLabel(status)}
+            </span>
+          </div>
+
+          <p className="admin-user-email">
+            {email}
+          </p>
+
+          <div className="admin-user-profile-meta">
+            <span>Role: {formatLabel(role)}</span>
+            <span>Registered: {formattedDate}</span>
+          </div>
+        </div>
+
+        <div className="admin-user-profile-side">
+          <span>Account status</span>
+          <strong>{formatLabel(status)}</strong>
+        </div>
+      </section>
+
+      {/* CONTENT GRID */}
+
+      <div className="admin-user-details-grid">
+
+        {/* BASIC INFORMATION */}
+
+        <section className="admin-user-panel admin-user-basic-panel">
+          <div className="admin-user-panel-heading">
+            <div className="admin-user-panel-icon">◈</div>
             <div>
-              <p style={{ fontSize: 11, fontWeight: 700, color: "var(--se-teal-light)", letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 4 }}>Admin · User Details</p>
-              <h1 style={{ color: "#fff", fontSize: "clamp(1.3rem,2vw,1.8rem)", fontWeight: 800, letterSpacing: "-0.03em", marginBottom: 4 }}>{name}</h1>
-              <p style={{ color: "#94A3B8", fontSize: 14 }}>{email}</p>
-            </div>
-            <div style={{ marginLeft: "auto", display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <span style={{ padding: "5px 14px", borderRadius: 999, fontSize: 12, fontWeight: 700, background: roleBadge.bg, color: roleBadge.color, border: `1px solid ${roleBadge.border}` }}>
-                {role.charAt(0).toUpperCase() + role.slice(1)}
-              </span>
-              <span style={{ padding: "5px 14px", borderRadius: 999, fontSize: 12, fontWeight: 700, background: statusBadge.bg, color: statusBadge.color, border: `1px solid ${statusBadge.border}` }}>
-                {status.charAt(0).toUpperCase() + status.slice(1)}
-              </span>
+              <h2>Basic Information</h2>
+              <p>Registered account information</p>
             </div>
           </div>
-        </div>
-      </div>
 
-      <div style={{ width: "min(100% - 40px, 1100px)", margin: "0 auto", padding: "28px 0 72px" }}>
-
-        {/* alerts */}
-        {error   && <div className="alert-error"   style={{ marginBottom: 20 }}>⚠ {error}</div>}
-        {success && <div className="alert-success" style={{ marginBottom: 20 }}>✓ {success}</div>}
-
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: 24, alignItems: "start" }}>
-
-          {/* ── LEFT ──────────────────────────────────────── */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-
-            {/* Basic info */}
-            <div style={{ background: "#fff", border: "1px solid var(--se-border)", borderRadius: 16, padding: "22px 24px", boxShadow: "var(--shadow-sm)" }}>
-              <p style={{ fontSize: 11, fontWeight: 700, color: "var(--se-text-4)", letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 16 }}>Basic Information</p>
-              <InfoRow label="Full Name"    value={name}              />
-              <InfoRow label="Email"        value={email}             />
-              <InfoRow label="Phone"        value={phone}             />
-              <InfoRow label="User ID"      value={userId}            />
-              <InfoRow label="Registered"   value={fmtDate(user.createdAt)} />
-              <InfoRow label="Last Updated" value={fmtDate(user.updatedAt)} />
+          <div className="admin-user-info-grid">
+            <div className="admin-user-info-item">
+              <span>Full Name</span>
+              <strong>{name}</strong>
             </div>
 
-            {/* Address */}
-            <div style={{ background: "#fff", border: "1px solid var(--se-border)", borderRadius: 16, padding: "22px 24px", boxShadow: "var(--shadow-sm)" }}>
-              <p style={{ fontSize: 11, fontWeight: 700, color: "var(--se-text-4)", letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 16 }}>Address</p>
-              {address ? (
-                <div style={{ fontSize: 14, lineHeight: 1.85, color: "var(--se-text-2)" }}>
-                  {address.name        && <p style={{ fontWeight: 700, color: "var(--se-text)" }}>{address.name}</p>}
-                  {address.addressLine1 || address.address || address.street
-                    ? <p>{address.addressLine1 || address.address || address.street}</p>
-                    : null}
-                  {address.addressLine2 && <p>{address.addressLine2}</p>}
-                  {(address.city || address.state || address.pincode || address.postalCode) && (
-                    <p>{[address.city, address.state, address.pincode || address.postalCode].filter(Boolean).join(", ")}</p>
-                  )}
-                  <p>{address.country || "India"}</p>
-                </div>
-              ) : (
-                <p style={{ fontSize: 14, color: "var(--se-text-4)" }}>No address saved.</p>
-              )}
+            <div className="admin-user-info-item">
+              <span>Email Address</span>
+              <strong>{email}</strong>
             </div>
 
+            <div className="admin-user-info-item">
+              <span>Phone Number</span>
+              <strong>{phone}</strong>
+            </div>
+
+            <div className="admin-user-info-item">
+              <span>User ID</span>
+              <strong className="admin-user-mono">
+                {userId}
+              </strong>
+            </div>
+
+            <div className="admin-user-info-item admin-user-info-wide">
+              <span>Registered On</span>
+              <strong>{formattedDate}</strong>
+            </div>
+          </div>
+        </section>
+
+        {/* ROLE MANAGEMENT */}
+
+        <section className="admin-user-panel admin-user-control-panel">
+          <div className="admin-user-panel-heading">
+            <div className="admin-user-panel-icon role-icon">◆</div>
+            <div>
+              <h2>Role Management</h2>
+              <p>Control administrator permissions</p>
+            </div>
           </div>
 
-          {/* ── RIGHT ─────────────────────────────────────── */}
-          <aside style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          <div className="admin-user-current-state">
+            <span>Current Role</span>
+            <strong className={`role-${role}`}>
+              {formatLabel(role)}
+            </strong>
+          </div>
 
-            {/* Role & Status Management */}
-            <div style={{ background: "#fff", border: "1px solid var(--se-border)", borderRadius: 16, padding: "22px 24px", boxShadow: "var(--shadow-sm)" }}>
-              <p style={{ fontSize: 11, fontWeight: 700, color: "var(--se-text-4)", letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 20 }}>Account Management</p>
+          <label
+            htmlFor="userRole"
+            className="admin-user-field-label"
+          >
+            Change Role
+          </label>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                <ControlSelect
-                  label="User Role"
-                  id="userRole"
-                  value={role}
-                  options={USER_ROLES}
-                  disabled={updating}
-                  onChange={handleRoleChange}
-                />
-                <ControlSelect
-                  label="Account Status"
-                  id="userStatus"
-                  value={status}
-                  options={USER_STATUSES}
-                  disabled={updating}
-                  onChange={handleStatusChange}
-                />
+          <select
+            id="userRole"
+            className="admin-user-select"
+            value={role}
+            disabled={updating}
+            onChange={(event) =>
+              handleRoleChange(event.target.value)
+            }
+          >
+            {USER_ROLES.map((userRole) => (
+              <option
+                key={userRole}
+                value={userRole}
+              >
+                {formatLabel(userRole)}
+              </option>
+            ))}
+          </select>
+
+          <p className="admin-user-control-note">
+            Admin accounts can access protected
+            management areas.
+          </p>
+        </section>
+
+        {/* STATUS MANAGEMENT */}
+
+        <section className="admin-user-panel admin-user-control-panel">
+          <div className="admin-user-panel-heading">
+            <div className="admin-user-panel-icon status-icon">●</div>
+            <div>
+              <h2>Account Status</h2>
+              <p>Manage customer account access</p>
+            </div>
+          </div>
+
+          <div className="admin-user-current-state">
+            <span>Current Status</span>
+            <strong className={`status-text-${status}`}>
+              {formatLabel(status)}
+            </strong>
+          </div>
+
+          <label
+            htmlFor="userStatus"
+            className="admin-user-field-label"
+          >
+            Change Status
+          </label>
+
+          <select
+            id="userStatus"
+            className="admin-user-select"
+            value={status}
+            disabled={updating}
+            onChange={(event) =>
+              handleStatusChange(event.target.value)
+            }
+          >
+            {USER_STATUSES.map((userStatus) => (
+              <option
+                key={userStatus}
+                value={userStatus}
+              >
+                {formatLabel(userStatus)}
+              </option>
+            ))}
+          </select>
+
+          <p className="admin-user-control-note">
+            Inactive or blocked accounts may lose
+            access depending on backend rules.
+          </p>
+        </section>
+
+        {/* ADDRESS */}
+
+        <section className="admin-user-panel admin-user-address-panel">
+          <div className="admin-user-panel-heading">
+            <div className="admin-user-panel-icon address-icon">⌖</div>
+            <div>
+              <h2>Address</h2>
+              <p>Saved customer address information</p>
+            </div>
+          </div>
+
+          {address ? (
+            <div className="admin-user-address-card">
+              <div className="admin-user-address-title">
+                <span className="admin-user-address-pin">⌖</span>
+                <strong>
+                  {address.name ||
+                    address.fullName ||
+                    "Customer Address"}
+                </strong>
               </div>
 
-              {updating && (
-                <p style={{ fontSize: 13, color: "var(--se-text-3)", marginTop: 12, display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ width: 14, height: 14, border: "2px solid var(--se-border)", borderTopColor: "var(--se-teal)", borderRadius: "50%", animation: "spin .8s linear infinite", display: "inline-block" }} />
-                  Saving…
-                </p>
+              <p>
+                {address.addressLine1 ||
+                  address.address ||
+                  address.street ||
+                  ""}
+              </p>
+
+              {address.addressLine2 && (
+                <p>{address.addressLine2}</p>
               )}
+
+              <p>
+                {address.city || ""}
+                {address.city && address.state
+                  ? ", "
+                  : ""}
+                {address.state || ""}
+              </p>
+
+              <p>
+                {address.pincode ||
+                  address.zipCode ||
+                  address.postalCode ||
+                  ""}
+              </p>
+
+              <p>
+                {address.country || "India"}
+              </p>
             </div>
-
-            {/* Quick stats */}
-            <div style={{ background: "#fff", border: "1px solid var(--se-border)", borderRadius: 16, padding: "20px 22px", boxShadow: "var(--shadow-sm)" }}>
-              <p style={{ fontSize: 11, fontWeight: 700, color: "var(--se-text-4)", letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 14 }}>Account Status</p>
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
-                  <span style={{ color: "var(--se-text-3)" }}>Role</span>
-                  <span style={{ fontWeight: 700, padding: "2px 10px", borderRadius: 999, fontSize: 12, background: roleBadge.bg, color: roleBadge.color }}>
-                    {role.charAt(0).toUpperCase() + role.slice(1)}
-                  </span>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
-                  <span style={{ color: "var(--se-text-3)" }}>Status</span>
-                  <span style={{ fontWeight: 700, padding: "2px 10px", borderRadius: 999, fontSize: 12, background: statusBadge.bg, color: statusBadge.color }}>
-                    {status.charAt(0).toUpperCase() + status.slice(1)}
-                  </span>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
-                  <span style={{ color: "var(--se-text-3)" }}>Verified</span>
-                  <span style={{ fontWeight: 600, color: "var(--se-success)" }}>{user.isVerified ? "Yes" : "No"}</span>
-                </div>
-              </div>
+          ) : (
+            <div className="admin-user-no-address">
+              <div>⌂</div>
+              <strong>Address not available</strong>
+              <p>
+                No saved address information is
+                available for this user.
+              </p>
             </div>
+          )}
+        </section>
 
-            {/* Back link */}
-            <Link to="/admin/users" className="btn-secondary" style={{ justifyContent: "center", width: "100%" }}>
-              ← Back to Users
-            </Link>
-
-          </aside>
-        </div>
       </div>
 
-      <style>{`@keyframes spin{to{transform:rotate(360deg)}} @media(max-width:820px){div[style*="grid-template-columns: 1fr 320px"]{grid-template-columns:1fr!important}}`}</style>
-    </div>
+      {/* FOOTER ACTIONS */}
+
+      <div className="admin-user-footer-actions">
+        <Link
+          to="/admin/users"
+          className="admin-user-secondary-btn"
+        >
+          ← Back to Users
+        </Link>
+
+        <button
+          type="button"
+          className="admin-user-primary-btn"
+          onClick={loadUser}
+          disabled={loading || updating}
+        >
+          ↻ Reload User
+        </button>
+      </div>
+
+    </section>
   );
 }
 

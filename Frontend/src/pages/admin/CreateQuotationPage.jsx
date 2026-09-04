@@ -17,6 +17,8 @@ import {
   useSearchParams,
 } from "react-router-dom";
 
+import "./CreateQuotationPage.css";
+
 import {
   getAdminRFQById,
 } from "../../api/rfqApi";
@@ -750,7 +752,7 @@ function CreateQuotationPage() {
 
   if (loading) {
     return (
-      <div className="app-page">
+      <div className="app-page admin-create-quotation-page">
 
         <div className="page-header">
 
@@ -796,7 +798,7 @@ function CreateQuotationPage() {
     error
   ) {
     return (
-      <div className="app-page">
+      <div className="app-page admin-create-quotation-page">
 
         <div className="page-header">
 
@@ -859,7 +861,7 @@ function CreateQuotationPage() {
   // ==========================================================
 
   return (
-    <div className="app-page">
+    <div className="app-page admin-create-quotation-page">
 
       {/* ======================================================
           HEADER
