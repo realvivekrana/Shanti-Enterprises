@@ -17,6 +17,8 @@ import {
 } from "lucide-react";
 
 import MainLayout from "./components/layout/MainLayout";
+import CustomerDashboardLayout from "./layouts/CustomerDashboardLayout";
+import AdminDashboardLayout from "./layouts/AdminDashboardLayout";
 
 import ProtectedRoute from "./components/common/ProtectedRoute";
 
@@ -398,6 +400,12 @@ function App() {
             }
           >
 
+          <Route
+            element={
+              <CustomerDashboardLayout />
+            }
+          >
+
             <Route
               path="/dashboard"
               element={
@@ -599,7 +607,10 @@ function App() {
                 <QuotationDetailsPage />
               }
             />
-</Route>
+
+          </Route>
+
+          </Route>
 
           {/* ==================================================
               ADMIN ONLY ROUTES
@@ -612,6 +623,12 @@ function App() {
                   "admin",
                 ]}
               />
+            }
+          >
+
+          <Route
+            element={
+              <AdminDashboardLayout />
             }
           >
 
@@ -834,6 +851,8 @@ function App() {
                 <AdminTestPage />
               }
             />
+
+          </Route>
 
           </Route>
 

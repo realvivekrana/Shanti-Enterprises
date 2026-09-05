@@ -1,0 +1,269 @@
+/* ============================================================
+   SHANTI ENTERPRISES
+   Dashboard Sidebar (Customer + Admin)
+   Mobile First • Premium Responsive UI
+   ============================================================ */
+
+/* ─────────────────────────────────────────────────────────────
+   OVERLAY (MOBILE)
+   ───────────────────────────────────────────────────────────── */
+
+.dash-sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(2px);
+  z-index: 60;
+  animation: dashFadeIn 0.2s ease;
+}
+
+@keyframes dashFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SIDEBAR SHELL
+   ───────────────────────────────────────────────────────────── */
+
+.dash-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 272px;
+  background: var(--se-navy);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  z-index: 70;
+  transform: translateX(-100%);
+  transition: transform var(--tx, 0.22s ease);
+  box-shadow: var(--shadow-xl);
+}
+
+.dash-sidebar-open {
+  transform: translateX(0);
+}
+
+.dash-sidebar-admin {
+  background: linear-gradient(180deg, var(--se-navy) 0%, #0f2942 100%);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   HEADER
+   ───────────────────────────────────────────────────────────── */
+
+.dash-sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 20px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dash-sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.dash-sidebar-avatar {
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: var(--se-teal);
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 16px;
+  color: #fff;
+}
+
+.dash-sidebar-avatar-admin {
+  background: linear-gradient(135deg, #14b8a6, #0ea5e9);
+}
+
+.dash-sidebar-user-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.dash-sidebar-user-info strong {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dash-sidebar-user-info span {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dash-sidebar-close {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.dash-sidebar-close:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   NAV
+   ───────────────────────────────────────────────────────────── */
+
+.dash-sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dash-sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background var(--tx, 0.2s ease), color var(--tx, 0.2s ease);
+}
+
+.dash-sidebar-link:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.dash-sidebar-link-active {
+  background: var(--se-teal);
+  color: #fff;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   FOOTER
+   ───────────────────────────────────────────────────────────── */
+
+.dash-sidebar-footer {
+  padding: 14px 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dash-sidebar-logout {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: none;
+  background: rgba(220, 38, 38, 0.15);
+  color: #fecaca;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background var(--tx, 0.2s ease);
+}
+
+.dash-sidebar-logout:hover {
+  background: rgba(220, 38, 38, 0.28);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   LAYOUT (SIDEBAR + CONTENT)
+   ───────────────────────────────────────────────────────────── */
+
+.dash-layout {
+  display: flex;
+  min-height: calc(100vh - 68px);
+}
+
+.dash-layout-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.dash-layout-topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--se-surface, #fff);
+  border-bottom: 1px solid var(--se-border, #e2e8f0);
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+
+.dash-layout-menu-btn {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid var(--se-border, #e2e8f0);
+  background: var(--se-surface, #fff);
+  color: var(--se-text, #0f172a);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.dash-layout-menu-btn:hover {
+  background: var(--se-surface-2, #f8fafc);
+}
+
+.dash-layout-topbar-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--se-text, #0f172a);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   DESKTOP: PERSISTENT SIDEBAR
+   ───────────────────────────────────────────────────────────── */
+
+@media (min-width: 1024px) {
+  .dash-sidebar {
+    position: sticky;
+    transform: none;
+    top: 0;
+    height: calc(100vh);
+    box-shadow: none;
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .dash-sidebar-overlay {
+    display: none;
+  }
+
+  .dash-sidebar-close {
+    display: none;
+  }
+
+  .dash-layout-topbar {
+    display: none;
+  }
+}
