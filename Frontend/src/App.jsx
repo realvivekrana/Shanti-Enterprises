@@ -105,7 +105,6 @@ const AdminUsersPage = lazy(() => import("./pages/admin/AdminUsersPage"));
 const AdminUserDetailsPage = lazy(() => import("./pages/admin/AdminUserDetailsPage"));
 const AdminAnalyticsPage = lazy(() => import("./pages/admin/AdminAnalyticsPage"));
 const AdminProfilePage = lazy(() => import("./pages/admin/AdminProfilePage"));
-const AdminTestPage = lazy(() => import("./pages/admin/AdminTestPage"));
 
 // ============================================================
 // ADMIN INVENTORY / SHIPMENTS / REPORTS
@@ -846,17 +845,6 @@ function App() {
               path="/admin/reports"
               element={
                 <AdminReportsPage />
-              }
-            />
-
-            {/* ==================================================
-                ADMIN TEST
-                ================================================== */}
-
-            <Route
-              path="/admin/test"
-              element={
-                <AdminTestPage />
               }
             />
 
