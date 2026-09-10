@@ -109,6 +109,16 @@
   --z-modal-backdrop: 1300;
   --z-modal: 1400;
   --z-toast: 1500;
+
+    /* Signature Brand Gradients */
+  --brand-gradient:
+    linear-gradient(135deg, #0d9488 0%, #0369a1 100%);
+  --brand-gradient-soft:
+    linear-gradient(135deg, rgba(13, 148, 136, 0.10), rgba(3, 105, 161, 0.10));
+  --ink-gradient:
+    linear-gradient(160deg, #0b1220 0%, #101b2e 55%, #0c1c22 100%);
+  --brand-glow:
+    0 10px 28px rgba(13, 148, 136, 0.28);
 }
 
 

@@ -5,6 +5,11 @@
 // ============================================================
 
 import {
+  lazy,
+  Suspense,
+} from "react";
+
+import {
   BrowserRouter,
   Routes,
   Route,
@@ -21,108 +26,109 @@ import CustomerDashboardLayout from "./layouts/CustomerDashboardLayout";
 import AdminDashboardLayout from "./layouts/AdminDashboardLayout";
 
 import ProtectedRoute from "./components/common/ProtectedRoute";
+import Loading from "./components/common/Loading";
 
 // ============================================================
 // PUBLIC PAGES
 // ============================================================
 
-import HomePage from "./pages/public/HomePage";
-import CategoriesPage from "./pages/public/CategoriesPage";
-import ProductsPage from "./pages/public/ProductsPage";
-import ProductDetailsPage from "./pages/public/ProductDetailsPage";
-import CartPage from "./pages/public/CartPage";
-import LoginPage from "./pages/public/LoginPage";
-import UnauthorizedPage from "./pages/public/UnauthorizedPage";
+const HomePage = lazy(() => import("./pages/public/HomePage"));
+const CategoriesPage = lazy(() => import("./pages/public/CategoriesPage"));
+const ProductsPage = lazy(() => import("./pages/public/ProductsPage"));
+const ProductDetailsPage = lazy(() => import("./pages/public/ProductDetailsPage"));
+const CartPage = lazy(() => import("./pages/public/CartPage"));
+const LoginPage = lazy(() => import("./pages/public/LoginPage"));
+const UnauthorizedPage = lazy(() => import("./pages/public/UnauthorizedPage"));
 
 // ============================================================
 // AUTH
 // ============================================================
 
-import RegisterPage from "./pages/auth/RegisterPage";
+const RegisterPage = lazy(() => import("./pages/auth/RegisterPage"));
 
 // ============================================================
 // CUSTOMER PAGES
 // ============================================================
 
-import CheckoutPage from "./pages/customer/CheckoutPage";
-import AddressPage from "./pages/customer/AddressPage";
-import OrderSummaryPage from "./pages/customer/OrderSummaryPage";
-import PaymentPage from "./pages/customer/PaymentPage";
-import OrderSuccessPage from "./pages/customer/OrderSuccessPage";
-import OrdersPage from "./pages/customer/OrdersPage";
-import OrderDetailsPage from "./pages/customer/OrderDetailsPage";
-import CustomerDashboardPage from "./pages/customer/CustomerDashboardPage";
-import ProfilePage from "./pages/customer/ProfilePage";
-import AddressesPage from "./pages/customer/AddressesPage";
+const CheckoutPage = lazy(() => import("./pages/customer/CheckoutPage"));
+const AddressPage = lazy(() => import("./pages/customer/AddressPage"));
+const OrderSummaryPage = lazy(() => import("./pages/customer/OrderSummaryPage"));
+const PaymentPage = lazy(() => import("./pages/customer/PaymentPage"));
+const OrderSuccessPage = lazy(() => import("./pages/customer/OrderSuccessPage"));
+const OrdersPage = lazy(() => import("./pages/customer/OrdersPage"));
+const OrderDetailsPage = lazy(() => import("./pages/customer/OrderDetailsPage"));
+const CustomerDashboardPage = lazy(() => import("./pages/customer/CustomerDashboardPage"));
+const ProfilePage = lazy(() => import("./pages/customer/ProfilePage"));
+const AddressesPage = lazy(() => import("./pages/customer/AddressesPage"));
 
 // ============================================================
 // CUSTOMER WISHLIST / NOTIFICATIONS / RETURNS / INVOICES
 // ============================================================
 
-import WishlistPage from "./pages/customer/WishlistPage";
-import NotificationsPage from "./pages/customer/NotificationsPage";
-import ReturnsPage from "./pages/customer/ReturnsPage";
-import InvoicesPage from "./pages/customer/InvoicesPage";
-import ShipmentTrackingPage from "./pages/customer/ShipmentTrackingPage";
+const WishlistPage = lazy(() => import("./pages/customer/WishlistPage"));
+const NotificationsPage = lazy(() => import("./pages/customer/NotificationsPage"));
+const ReturnsPage = lazy(() => import("./pages/customer/ReturnsPage"));
+const InvoicesPage = lazy(() => import("./pages/customer/InvoicesPage"));
+const ShipmentTrackingPage = lazy(() => import("./pages/customer/ShipmentTrackingPage"));
 
-import BulkQuotesPage from "./pages/customer/BulkQuotesPage";
+const BulkQuotesPage = lazy(() => import("./pages/customer/BulkQuotesPage"));
 
 // ============================================================
 // CUSTOMER RFQ
 // ============================================================
 
-import RFQCreatePage from "./pages/customer/RFQCreatePage";
-import RFQsPage from "./pages/customer/RFQsPage";
-import RFQDetailsPage from "./pages/customer/RFQDetailsPage";
+const RFQCreatePage = lazy(() => import("./pages/customer/RFQCreatePage"));
+const RFQsPage = lazy(() => import("./pages/customer/RFQsPage"));
+const RFQDetailsPage = lazy(() => import("./pages/customer/RFQDetailsPage"));
 
 // ============================================================
 // CUSTOMER QUOTATIONS
 // ============================================================
 
-import QuotationsPage from "./pages/customer/QuotationsPage";
-import QuotationDetailsPage from "./pages/customer/QuotationDetailsPage";
+const QuotationsPage = lazy(() => import("./pages/customer/QuotationsPage"));
+const QuotationDetailsPage = lazy(() => import("./pages/customer/QuotationDetailsPage"));
 
 // ============================================================
 // ADMIN PAGES
 // ============================================================
 
-import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
-import AdminProductsPage from "./pages/admin/AdminProductsPage";
-import AddProductPage from "./pages/admin/AddProductPage";
-import EditProductPage from "./pages/admin/EditProductPage";
-import AdminCategoriesPage from "./pages/admin/AdminCategoriesPage";
-import AddCategoryPage from "./pages/admin/AddCategoryPage";
-import EditCategoryPage from "./pages/admin/EditCategoryPage";
-import AdminOrdersPage from "./pages/admin/AdminOrdersPage";
-import AdminOrderDetailsPage from "./pages/admin/AdminOrderDetailsPage";
-import AdminUsersPage from "./pages/admin/AdminUsersPage";
-import AdminUserDetailsPage from "./pages/admin/AdminUserDetailsPage";
-import AdminAnalyticsPage from "./pages/admin/AdminAnalyticsPage";
-import AdminProfilePage from "./pages/admin/AdminProfilePage";
-import AdminTestPage from "./pages/admin/AdminTestPage";
+const AdminDashboardPage = lazy(() => import("./pages/admin/AdminDashboardPage"));
+const AdminProductsPage = lazy(() => import("./pages/admin/AdminProductsPage"));
+const AddProductPage = lazy(() => import("./pages/admin/AddProductPage"));
+const EditProductPage = lazy(() => import("./pages/admin/EditProductPage"));
+const AdminCategoriesPage = lazy(() => import("./pages/admin/AdminCategoriesPage"));
+const AddCategoryPage = lazy(() => import("./pages/admin/AddCategoryPage"));
+const EditCategoryPage = lazy(() => import("./pages/admin/EditCategoryPage"));
+const AdminOrdersPage = lazy(() => import("./pages/admin/AdminOrdersPage"));
+const AdminOrderDetailsPage = lazy(() => import("./pages/admin/AdminOrderDetailsPage"));
+const AdminUsersPage = lazy(() => import("./pages/admin/AdminUsersPage"));
+const AdminUserDetailsPage = lazy(() => import("./pages/admin/AdminUserDetailsPage"));
+const AdminAnalyticsPage = lazy(() => import("./pages/admin/AdminAnalyticsPage"));
+const AdminProfilePage = lazy(() => import("./pages/admin/AdminProfilePage"));
+const AdminTestPage = lazy(() => import("./pages/admin/AdminTestPage"));
 
 // ============================================================
 // ADMIN INVENTORY / SHIPMENTS / REPORTS
 // ============================================================
 
-import AdminInventoryPage from "./pages/admin/AdminInventoryPage";
-import AdminShipmentsPage from "./pages/admin/AdminShipmentsPage";
-import AdminReportsPage from "./pages/admin/AdminReportsPage";
+const AdminInventoryPage = lazy(() => import("./pages/admin/AdminInventoryPage"));
+const AdminShipmentsPage = lazy(() => import("./pages/admin/AdminShipmentsPage"));
+const AdminReportsPage = lazy(() => import("./pages/admin/AdminReportsPage"));
 
 // ============================================================
 // ADMIN RFQ
 // ============================================================
 
-import AdminRFQsPage from "./pages/admin/AdminRFQsPage";
-import AdminRFQDetailsPage from "./pages/admin/AdminRFQDetailsPage";
+const AdminRFQsPage = lazy(() => import("./pages/admin/AdminRFQsPage"));
+const AdminRFQDetailsPage = lazy(() => import("./pages/admin/AdminRFQDetailsPage"));
 
 // ============================================================
 // ADMIN QUOTATIONS
 // ============================================================
 
-import AdminQuotationsPage from "./pages/admin/AdminQuotationsPage";
-import AdminQuotationDetailsPage from "./pages/admin/AdminQuotationDetailsPage";
-import CreateQuotationPage from "./pages/admin/CreateQuotationPage";
+const AdminQuotationsPage = lazy(() => import("./pages/admin/AdminQuotationsPage"));
+const AdminQuotationDetailsPage = lazy(() => import("./pages/admin/AdminQuotationDetailsPage"));
+const CreateQuotationPage = lazy(() => import("./pages/admin/CreateQuotationPage"));
 
 // ============================================================
 // 404 PAGE
@@ -290,6 +296,8 @@ function NotFoundPage() {
 function App() {
   return (
     <BrowserRouter>
+
+      <Suspense fallback={<Loading message="Loading page..." />}>
 
       <Routes>
 
@@ -870,6 +878,8 @@ function App() {
         </Route>
 
       </Routes>
+
+      </Suspense>
 
     </BrowserRouter>
   );

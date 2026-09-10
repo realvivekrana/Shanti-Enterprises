@@ -16,7 +16,6 @@ import {
 import {
   ArrowRight,
   Boxes,
-  ChevronRight,
   Grid2X2,
   PackageOpen,
   RefreshCw,
@@ -26,8 +25,6 @@ import {
 import {
   getCategories,
 } from "../../api/categoryApi";
-
-import Loading from "../../components/common/Loading";
 
 import ErrorMessage from "../../components/common/ErrorMessage";
 
