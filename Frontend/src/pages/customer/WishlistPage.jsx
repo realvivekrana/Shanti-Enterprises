@@ -22,6 +22,7 @@ import {
 import Loading from "../../components/common/Loading";
 
 import ErrorMessage from "../../components/common/ErrorMessage";
+import ConfirmModal from "../../components/common/ConfirmModal";
 import "./WishlistPage.css";
 
 // ============================================================
@@ -45,6 +46,7 @@ function WishlistPage() {
   const [removing, setRemoving] = useState("");
   const [clearing, setClearing] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
+  const [confirmClear, setConfirmClear] = useState(false);
 
   // ==========================================================
   // LOAD WISHLIST
@@ -98,15 +100,11 @@ function WishlistPage() {
   // CLEAR WISHLIST
   // ==========================================================
 
-  const handleClear = async () => {
-    if (
-      !window.confirm(
-        "Are you sure you want to clear your entire wishlist?"
-      )
-    ) {
-      return;
-    }
+  const handleClear = () => {
+    setConfirmClear(true);
+  };
 
+  const confirmClearWishlist = async () => {
     try {
       setClearing(true);
       setSuccessMsg("");
@@ -118,6 +116,7 @@ function WishlistPage() {
       setError(err.message || "Failed to clear wishlist.");
     } finally {
       setClearing(false);
+      setConfirmClear(false);
     }
   };
 
@@ -342,6 +341,17 @@ function WishlistPage() {
         )}
 
       </div>
+
+      <ConfirmModal
+        open={confirmClear}
+        title="Clear your wishlist?"
+        message="This will remove every item from your wishlist. This action cannot be undone."
+        confirmText="Clear Wishlist"
+        variant="danger"
+        loading={clearing}
+        onConfirm={confirmClearWishlist}
+        onCancel={() => setConfirmClear(false)}
+      />
     </section>
   );
 }

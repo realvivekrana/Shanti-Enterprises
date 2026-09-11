@@ -24,6 +24,7 @@ import Loading from "../../components/common/Loading";
 import ErrorMessage from "../../components/common/ErrorMessage";
 
 import EmptyState from "../../components/common/EmptyState";
+import ConfirmModal from "../../components/common/ConfirmModal";
 import "./AdminProductsPage.css";
 
 // ============================================================
@@ -63,6 +64,11 @@ function AdminProductsPage() {
     stockFilter,
     setStockFilter,
   ] = useState("all");
+
+  const [
+    confirmDeleteId,
+    setConfirmDeleteId,
+  ] = useState(null);
 
   // ==========================================================
   // LOAD PRODUCTS
@@ -242,7 +248,7 @@ function AdminProductsPage() {
   // ==========================================================
 
   const handleDelete =
-    async (
+    (
       productId
     ) => {
       if (!productId) {
@@ -253,52 +259,50 @@ function AdminProductsPage() {
         return;
       }
 
-      const confirmed =
-        window.confirm(
-          "Are you sure you want to delete this product?"
-        );
-
-      if (!confirmed) {
-        return;
-      }
-
-      try {
-        setDeletingId(
-          productId
-        );
-
-        setError("");
-
-        await deleteProduct(
-          productId
-        );
-
-        setProducts(
-          (currentProducts) =>
-            currentProducts.filter(
-              (product) =>
-                (
-                  product._id ||
-                  product.id
-                ) !== productId
-            )
-        );
-      } catch (err) {
-        console.error(
-          "Delete product error:",
-          err
-        );
-
-        setError(
-          err.response?.data
-            ?.message ||
-          err.message ||
-          "Unable to delete product."
-        );
-      } finally {
-        setDeletingId(null);
-      }
+      setConfirmDeleteId(productId);
     };
+
+  const confirmDelete = async () => {
+    const productId = confirmDeleteId;
+
+    try {
+      setDeletingId(
+        productId
+      );
+
+      setError("");
+
+      await deleteProduct(
+        productId
+      );
+
+      setProducts(
+        (currentProducts) =>
+          currentProducts.filter(
+            (product) =>
+              (
+                product._id ||
+                product.id
+              ) !== productId
+          )
+      );
+    } catch (err) {
+      console.error(
+        "Delete product error:",
+        err
+      );
+
+      setError(
+        err.response?.data
+          ?.message ||
+        err.message ||
+        "Unable to delete product."
+      );
+    } finally {
+      setDeletingId(null);
+      setConfirmDeleteId(null);
+    }
+  };
 
   // ==========================================================
   // LOADING
@@ -745,6 +749,17 @@ function AdminProductsPage() {
         )}
 
       </div>
+
+      <ConfirmModal
+        open={!!confirmDeleteId}
+        title="Delete this product?"
+        message="This action cannot be undone."
+        confirmText="Delete"
+        variant="danger"
+        loading={!!deletingId}
+        onConfirm={confirmDelete}
+        onCancel={() => setConfirmDeleteId(null)}
+      />
 
     </section>
   );

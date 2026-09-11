@@ -5,6 +5,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAddress } from "../../context/AddressContext";
+import { ConfirmModal } from "../../components/common";
 import "./AddressPage.css";
 
 const INIT = { name: "", phone: "", address: "", city: "", state: "", pincode: "" };
@@ -62,6 +63,7 @@ function AddressPage() {
   const [success,   setSuccess]   = useState("");
   const [saving,    setSaving]    = useState(false);
   const [deletingId,setDeletingId]= useState(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
   const change = (e) => { setForm(f => ({ ...f, [e.target.name]: e.target.value })); setError(""); setSuccess(""); };
   const reset  = () => { setForm(INIT); setEditingId(null); setError(""); };
@@ -101,8 +103,12 @@ function AddressPage() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Delete this address?")) return;
+  const handleDelete = (id) => {
+    setConfirmDeleteId(id);
+  };
+
+  const confirmDelete = async () => {
+    const id = confirmDeleteId;
     try {
       setDeletingId(id); setError(""); setSuccess("");
       await deleteAddress(id);
@@ -112,6 +118,7 @@ function AddressPage() {
       setError(err?.message || "Unable to delete address.");
     } finally {
       setDeletingId(null);
+      setConfirmDeleteId(null);
     }
   };
 
@@ -275,6 +282,17 @@ function AddressPage() {
       </div>
 
       <style>{`@keyframes spin{to{transform:rotate(360deg)}} @media(max-width:820px){div[style*="grid-template-columns: 1fr 380px"]{grid-template-columns:1fr!important}}`}</style>
+
+      <ConfirmModal
+        open={!!confirmDeleteId}
+        title="Delete this address?"
+        message="This action cannot be undone."
+        confirmText="Delete"
+        variant="danger"
+        loading={!!deletingId}
+        onConfirm={confirmDelete}
+        onCancel={() => setConfirmDeleteId(null)}
+      />
     </div>
   );
 }

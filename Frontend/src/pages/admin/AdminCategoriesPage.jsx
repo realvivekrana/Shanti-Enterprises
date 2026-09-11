@@ -22,6 +22,7 @@ import {
 import Loading from "../../components/common/Loading";
 import ErrorMessage from "../../components/common/ErrorMessage";
 import EmptyState from "../../components/common/EmptyState";
+import ConfirmModal from "../../components/common/ConfirmModal";
 
 import "./AdminCategoriesPage.css";
 
@@ -37,6 +38,7 @@ function AdminCategoriesPage() {
   const [deletingId, setDeletingId] = useState(null);
   const [search, setSearch] = useState("");
   const [error, setError] = useState("");
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
   // ==========================================================
   // LOAD CATEGORIES
@@ -99,19 +101,17 @@ function AdminCategoriesPage() {
   // DELETE
   // ==========================================================
 
-  const handleDelete = async (categoryId) => {
+  const handleDelete = (categoryId) => {
     if (!categoryId) {
       setError("Category ID is missing.");
       return;
     }
 
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this category?"
-    );
+    setConfirmDeleteId(categoryId);
+  };
 
-    if (!confirmed) {
-      return;
-    }
+  const confirmDelete = async () => {
+    const categoryId = confirmDeleteId;
 
     try {
       setDeletingId(categoryId);
@@ -135,6 +135,7 @@ function AdminCategoriesPage() {
       );
     } finally {
       setDeletingId(null);
+      setConfirmDeleteId(null);
     }
   };
 
@@ -379,6 +380,17 @@ function AdminCategoriesPage() {
           </div>
         )}
       </div>
+
+      <ConfirmModal
+        open={!!confirmDeleteId}
+        title="Delete this category?"
+        message="Products in this category will not be deleted, but the category link will be removed. This action cannot be undone."
+        confirmText="Delete"
+        variant="danger"
+        loading={!!deletingId}
+        onConfirm={confirmDelete}
+        onCancel={() => setConfirmDeleteId(null)}
+      />
     </section>
   );
 }

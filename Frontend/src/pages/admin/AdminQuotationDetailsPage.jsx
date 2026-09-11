@@ -18,6 +18,8 @@ import {
 
 import "./AdminQuotationDetailsPage.css";
 
+import ConfirmModal from "../../components/common/ConfirmModal";
+
 import {
   cancelAdminQuotation,
   getAdminQuotationById,
@@ -376,6 +378,11 @@ function AdminQuotationDetailsPage() {
     setSelectedStatus,
   ] = useState("");
 
+  const [
+    confirmCancel,
+    setConfirmCancel,
+  ] = useState(false);
+
   // ==========================================================
   // LOAD QUOTATION
   // ==========================================================
@@ -532,20 +539,16 @@ function AdminQuotationDetailsPage() {
   // ==========================================================
 
   const handleCancel =
-    async () => {
+    () => {
       if (!quotationId) {
         return;
       }
 
-      const confirmed =
-        window.confirm(
-          "Are you sure you want to cancel this quotation?"
-        );
+      setConfirmCancel(true);
+    };
 
-      if (!confirmed) {
-        return;
-      }
-
+  const confirmCancelQuotation =
+    async () => {
       try {
         setActionLoading(
           true
@@ -575,6 +578,7 @@ function AdminQuotationDetailsPage() {
         setActionLoading(
           false
         );
+        setConfirmCancel(false);
       }
     };
 
@@ -1691,6 +1695,17 @@ function AdminQuotationDetailsPage() {
         </div>
 
       </section>
+
+      <ConfirmModal
+        open={confirmCancel}
+        title="Cancel this quotation?"
+        message="This action cannot be undone."
+        confirmText="Cancel Quotation"
+        variant="danger"
+        loading={actionLoading}
+        onConfirm={confirmCancelQuotation}
+        onCancel={() => setConfirmCancel(false)}
+      />
 
     </div>
   );

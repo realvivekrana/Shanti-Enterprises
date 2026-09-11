@@ -21,6 +21,7 @@ import {
 import Loading from "../../components/common/Loading";
 
 import ErrorMessage from "../../components/common/ErrorMessage";
+import ConfirmModal from "../../components/common/ConfirmModal";
 import "./ReturnsPage.css";
 
 // ============================================================
@@ -78,6 +79,7 @@ function ReturnsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [confirmCancelId, setConfirmCancelId] = useState(null);
 
   // ==========================================================
   // LOAD RETURNS
@@ -111,10 +113,12 @@ function ReturnsPage() {
   // CANCEL RETURN
   // ==========================================================
 
-  const handleCancel = async (returnId) => {
-    if (!window.confirm("Are you sure you want to cancel this return request?")) {
-      return;
-    }
+  const handleCancel = (returnId) => {
+    setConfirmCancelId(returnId);
+  };
+
+  const confirmCancel = async () => {
+    const returnId = confirmCancelId;
 
     try {
       setCancellingId(returnId);
@@ -134,6 +138,7 @@ function ReturnsPage() {
       setError(err.message || "Failed to cancel return request.");
     } finally {
       setCancellingId("");
+      setConfirmCancelId(null);
     }
   };
 
@@ -414,6 +419,17 @@ function ReturnsPage() {
         )}
 
       </div>
+
+      <ConfirmModal
+        open={!!confirmCancelId}
+        title="Cancel this return request?"
+        message="This action cannot be undone."
+        confirmText="Cancel Return"
+        variant="danger"
+        loading={!!cancellingId}
+        onConfirm={confirmCancel}
+        onCancel={() => setConfirmCancelId(null)}
+      />
     </section>
   );
 }

@@ -1,0 +1,123 @@
+/* ============================================================
+   SHANTI ENTERPRISES
+   Confirm Modal
+   ============================================================ */
+
+.confirm-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: var(--z-modal-backdrop);
+  animation: confirmModalFadeIn var(--transition-fast) ease;
+}
+
+.confirm-modal {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  background: var(--bg-surface);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
+  padding: 28px 24px 24px;
+  z-index: var(--z-modal);
+  animation: confirmModalPopIn var(--transition-normal) ease;
+}
+
+.confirm-modal-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--radius-full);
+  background: var(--bg-soft);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.confirm-modal-close:hover:not(:disabled) {
+  background: var(--gray-200);
+  color: var(--text-primary);
+}
+
+.confirm-modal-close:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.confirm-modal-icon {
+  width: 48px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  margin-bottom: 16px;
+}
+
+.confirm-modal-icon--danger {
+  background: var(--danger-light);
+  color: var(--danger);
+}
+
+.confirm-modal-icon--primary {
+  background: var(--brand-primary-light);
+  color: var(--brand-primary);
+}
+
+.confirm-modal-title {
+  margin: 0 0 8px;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+
+.confirm-modal-message {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.confirm-modal-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.confirm-modal-actions .btn {
+  flex: 1;
+}
+
+@keyframes confirmModalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes confirmModalPopIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 480px) {
+  .confirm-modal {
+    padding: 24px 18px 18px;
+  }
+}

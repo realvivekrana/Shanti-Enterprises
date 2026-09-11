@@ -16,6 +16,8 @@ import {
   useAddress,
 } from "../../context/AddressContext";
 
+import ConfirmModal from "../../components/common/ConfirmModal";
+
 import "./AddressesPage.css";
 
 // ============================================================
@@ -87,6 +89,11 @@ function AddressesPage() {
     actionLoading,
     setActionLoading,
   ] = useState(false);
+
+  const [
+    confirmDeleteId,
+    setConfirmDeleteId,
+  ] = useState(null);
 
   // ==========================================================
   // FORM CHANGE
@@ -293,17 +300,14 @@ function AddressesPage() {
   // DELETE
   // ==========================================================
 
-  const handleDelete = async (
+  const handleDelete = (
     addressId
   ) => {
-    const confirmed =
-      window.confirm(
-        "Are you sure you want to delete this address?"
-      );
+    setConfirmDeleteId(addressId);
+  };
 
-    if (!confirmed) {
-      return;
-    }
+  const confirmDelete = async () => {
+    const addressId = confirmDeleteId;
 
     try {
       setActionLoading(true);
@@ -336,6 +340,7 @@ function AddressesPage() {
       );
     } finally {
       setActionLoading(false);
+      setConfirmDeleteId(null);
     }
   };
 
@@ -1146,6 +1151,17 @@ function AddressesPage() {
         </nav>
 
       </div>
+
+      <ConfirmModal
+        open={!!confirmDeleteId}
+        title="Delete this address?"
+        message="This action cannot be undone."
+        confirmText="Delete"
+        variant="danger"
+        loading={actionLoading}
+        onConfirm={confirmDelete}
+        onCancel={() => setConfirmDeleteId(null)}
+      />
     </section>
   );
 }

@@ -26,6 +26,8 @@ import ErrorMessage from "../../components/common/ErrorMessage";
 
 import EmptyState from "../../components/common/EmptyState";
 
+import ConfirmModal from "../../components/common/ConfirmModal";
+
 import "./AdminUsersPage.css";
 
 // ============================================================
@@ -89,6 +91,11 @@ function AdminUsersPage() {
   const [
     deletingId,
     setDeletingId,
+  ] = useState(null);
+
+  const [
+    confirmDeleteId,
+    setConfirmDeleteId,
   ] = useState(null);
 
   // ==========================================================
@@ -504,56 +511,54 @@ function AdminUsersPage() {
   // ==========================================================
 
   const handleDelete =
-    async (
+    (
       userId
     ) => {
-      const confirmed =
-        window.confirm(
-          "Are you sure you want to delete this user?"
-        );
-
-      if (!confirmed) {
-        return;
-      }
-
-      try {
-        setDeletingId(
-          userId
-        );
-
-        setError("");
-
-        await deleteAdminUser(
-          userId
-        );
-
-        setUsers(
-          (currentUsers) =>
-            currentUsers.filter(
-              (user) =>
-                getUserId(
-                  user
-                ) !== userId
-            )
-        );
-      } catch (err) {
-        console.error(
-          "Delete user error:",
-          err
-        );
-
-        setError(
-          err.response?.data
-            ?.message ||
-          err.message ||
-          "Unable to delete user."
-        );
-      } finally {
-        setDeletingId(
-          null
-        );
-      }
+      setConfirmDeleteId(userId);
     };
+
+  const confirmDelete = async () => {
+    const userId = confirmDeleteId;
+
+    try {
+      setDeletingId(
+        userId
+      );
+
+      setError("");
+
+      await deleteAdminUser(
+        userId
+      );
+
+      setUsers(
+        (currentUsers) =>
+          currentUsers.filter(
+            (user) =>
+              getUserId(
+                user
+              ) !== userId
+          )
+      );
+    } catch (err) {
+      console.error(
+        "Delete user error:",
+        err
+      );
+
+      setError(
+        err.response?.data
+          ?.message ||
+        err.message ||
+        "Unable to delete user."
+      );
+    } finally {
+      setDeletingId(
+        null
+      );
+      setConfirmDeleteId(null);
+    }
+  };
 
   // ==========================================================
   // STATISTICS
@@ -1180,6 +1185,17 @@ function AdminUsersPage() {
         )}
 
       </div>
+
+      <ConfirmModal
+        open={!!confirmDeleteId}
+        title="Delete this user?"
+        message="This will permanently remove the user account. This action cannot be undone."
+        confirmText="Delete"
+        variant="danger"
+        loading={!!deletingId}
+        onConfirm={confirmDelete}
+        onCancel={() => setConfirmDeleteId(null)}
+      />
 
     </section>
   );

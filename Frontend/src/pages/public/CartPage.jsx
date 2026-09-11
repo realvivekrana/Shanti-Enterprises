@@ -23,6 +23,7 @@ import { Link, useNavigate } from "react-router-dom";
 
 import { useCart } from "../../context/CartContext";
 import EmptyState from "../../components/common/EmptyState";
+import ConfirmModal from "../../components/common/ConfirmModal";
 
 import "./CartPage.css";
 
@@ -71,6 +72,7 @@ function CartPage() {
   const [removingProductId, setRemovingProductId] = useState(null);
   const [clearingCart, setClearingCart] = useState(false);
   const [quantityErrors, setQuantityErrors] = useState({});
+  const [confirmClearCart, setConfirmClearCart] = useState(false);
 
   // ==========================================================
   // GET PRODUCT ID
@@ -118,19 +120,15 @@ function CartPage() {
   // CLEAR CART
   // ==========================================================
 
-  const handleClearCart = async () => {
+  const handleClearCart = () => {
     if (clearingCart || cartItems.length === 0) {
       return;
     }
 
-    const confirmed = window.confirm(
-      "Are you sure you want to remove all items from your cart?"
-    );
+    setConfirmClearCart(true);
+  };
 
-    if (!confirmed) {
-      return;
-    }
-
+  const confirmClearCartAction = async () => {
     try {
       setClearingCart(true);
 
@@ -142,6 +140,7 @@ function CartPage() {
       console.error("Clear cart error:", error);
     } finally {
       setClearingCart(false);
+      setConfirmClearCart(false);
     }
   };
 
@@ -1047,6 +1046,17 @@ function CartPage() {
           </aside>
         </div>
       </div>
+
+      <ConfirmModal
+        open={confirmClearCart}
+        title="Clear your cart?"
+        message="This will remove all items from your cart. This action cannot be undone."
+        confirmText="Clear Cart"
+        variant="danger"
+        loading={clearingCart}
+        onConfirm={confirmClearCartAction}
+        onCancel={() => setConfirmClearCart(false)}
+      />
     </section>
   );
 }
