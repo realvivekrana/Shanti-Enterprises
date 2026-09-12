@@ -4,6 +4,8 @@
 // Frontend Phase 6 - Admin
 // ============================================================
 
+import "./AddProductPage.css";
+
 import {
   useEffect,
   useRef,

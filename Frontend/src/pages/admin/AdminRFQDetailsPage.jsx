@@ -4,6 +4,8 @@
 // Admin - Wholesale RFQ Management
 // ============================================================
 
+import "./AdminRFQDetailsPage.css";
+
 import { useCallback, useEffect, useState } from "react";
 
 import { Link, useNavigate, useParams } from "react-router-dom";
