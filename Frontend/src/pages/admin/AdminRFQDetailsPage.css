@@ -1,4 +1,3 @@
-
 /* =========================================================
    SHANTI ENTERPRISES
    Admin RFQ Details — Premium Responsive UI
@@ -190,6 +189,31 @@
 
 .admin-rfq-details-page .detail-card {
   min-width: 0;
+  padding: 18px;
+  border: 1px solid var(--rfq-border);
+  border-radius: 12px;
+  background: var(--rfq-card);
+}
+
+.admin-rfq-details-page .detail-label {
+  display: block;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--rfq-muted);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.admin-rfq-details-page .field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.admin-rfq-details-page .field-row {
+  display: block;
+  margin-bottom: 5px;
 }
 
 .admin-rfq-details-page .quotation-panel {
@@ -237,6 +261,215 @@
   border-radius: 12px;
   object-fit: cover;
   background: #f5f6fa;
+}
+
+.admin-rfq-details-page .empty-state {
+  padding: 24px;
+  border: 1px solid var(--rfq-border);
+  border-radius: 12px;
+  background: var(--rfq-card);
+  color: var(--rfq-muted);
+  text-align: center;
+}
+
+.admin-rfq-details-page .rfq-product-card {
+  display: flex;
+  gap: 16px;
+  padding: 18px;
+  border: 1px solid var(--rfq-border);
+  border-radius: 12px;
+  background: var(--rfq-card);
+  flex-wrap: wrap;
+}
+
+.admin-rfq-details-page .rfq-product-thumb {
+  width: 90px;
+  height: 90px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f3f4f6;
+}
+
+.admin-rfq-details-page .rfq-product-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.admin-rfq-details-page .rfq-product-thumb-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .7rem;
+  color: var(--rfq-muted);
+}
+
+.admin-rfq-details-page .rfq-product-info {
+  flex: 1;
+  min-width: 220px;
+}
+
+.admin-rfq-details-page .rfq-product-info h3 {
+  margin: 0 0 8px;
+}
+
+.admin-rfq-details-page .rfq-product-info p {
+  margin: 0 0 6px;
+  color: var(--rfq-muted);
+}
+
+.admin-rfq-details-page .rfq-product-note {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--rfq-bg);
+}
+
+.admin-rfq-details-page .section-intro {
+  margin-bottom: 20px;
+}
+
+.admin-rfq-details-page .section-intro h2 {
+  margin: 0 0 8px;
+}
+
+.admin-rfq-details-page .section-intro p {
+  margin: 0;
+  color: var(--rfq-muted);
+  line-height: 1.5;
+}
+
+.admin-rfq-details-page .quotation-item-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 140px 150px;
+  gap: 14px;
+  align-items: end;
+  padding: 16px;
+  border: 1px solid var(--rfq-border);
+  border-radius: 10px;
+  background: var(--rfq-bg);
+}
+
+.admin-rfq-details-page .quotation-item-row strong.item-name {
+  display: block;
+  margin-bottom: 5px;
+}
+
+.admin-rfq-details-page .quotation-item-row .item-meta {
+  font-size: .8rem;
+  color: var(--rfq-muted);
+}
+
+.admin-rfq-details-page .quotation-item-row .item-total {
+  display: block;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--rfq-card);
+  border: 1px solid var(--rfq-border);
+}
+
+.admin-rfq-details-page .field-label {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 7px;
+}
+
+.admin-rfq-details-page .char-count {
+  margin-top: 5px;
+  text-align: right;
+  font-size: .76rem;
+  color: var(--rfq-muted);
+}
+
+.admin-rfq-details-page .quotation-total-row {
+  margin-top: 20px;
+  padding: 16px;
+  border-radius: 10px;
+  background: var(--rfq-bg);
+  border: 1px solid var(--rfq-border);
+}
+
+.admin-rfq-details-page .quotation-total-row .row-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.admin-rfq-details-page .quotation-total-row .row-inner span {
+  font-weight: 700;
+}
+
+.admin-rfq-details-page .quotation-total-row .row-inner strong {
+  font-size: 1.35rem;
+}
+
+.admin-rfq-details-page .quotation-created-panel {
+  padding: 20px;
+  border: 1px solid #a7f3d0;
+  border-radius: 12px;
+  background: #ecfdf5;
+  margin-bottom: 20px;
+}
+
+.dark .admin-rfq-details-page .quotation-created-panel,
+[data-theme="dark"] .admin-rfq-details-page .quotation-created-panel {
+  background: rgba(5, 150, 105, .12);
+  border-color: rgba(5, 150, 105, .3);
+}
+
+.admin-rfq-details-page .quotation-created-panel .detail-label {
+  color: var(--rfq-success);
+}
+
+.admin-rfq-details-page .quotation-created-panel h2 {
+  margin: 0 0 12px;
+}
+
+.admin-rfq-details-page .quotation-created-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.admin-rfq-details-page .danger-zone {
+  padding: 20px;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  background: #fffafa;
+}
+
+.dark .admin-rfq-details-page .danger-zone,
+[data-theme="dark"] .admin-rfq-details-page .danger-zone {
+  background: rgba(220, 38, 38, .08);
+  border-color: rgba(220, 38, 38, .35);
+}
+
+.admin-rfq-details-page .danger-zone p {
+  color: var(--rfq-muted);
+  font-size: .875rem;
+  line-height: 1.5;
+}
+
+.admin-rfq-details-page .danger-zone button {
+  background: #fff;
+  color: var(--rfq-danger);
+  border-color: #fecaca;
+}
+
+@media (max-width: 640px) {
+  .admin-rfq-details-page .quotation-created-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .admin-rfq-details-page .quotation-item-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 900px) {
