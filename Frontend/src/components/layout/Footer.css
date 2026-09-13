@@ -1064,3 +1064,135 @@
   }
 
 }
+
+/* ============================================================
+   PREMIUM ENHANCEMENTS
+   Entrance motion • Logo glow • Business icons • Shine
+   ============================================================ */
+
+@keyframes footer-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.footer-brand,
+.footer-column {
+  animation: footer-fade-up 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.footer-column:nth-of-type(2) { animation-delay: 0.06s; }
+.footer-column:nth-of-type(3) { animation-delay: 0.12s; }
+.footer-support-column { animation-delay: 0.18s; }
+
+
+/* ---- logo mark glow on hover ---- */
+
+.footer-logo-mark {
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.35s ease;
+}
+
+.footer-logo:hover .footer-logo-mark {
+  transform: rotate(-4deg) scale(1.06);
+  box-shadow: 0 8px 20px rgba(20, 184, 166, 0.35);
+}
+
+
+/* ---- trust badge subtle shimmer ---- */
+
+.footer-trust-badge {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.footer-trust-badge::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -60%;
+  width: 40%;
+  height: 100%;
+
+  background: linear-gradient(
+    115deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.18) 50%,
+    transparent 100%
+  );
+
+  transform: skewX(-20deg);
+  animation: footer-badge-sweep 5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes footer-badge-sweep {
+  0%, 60%, 100% { left: -60%; }
+  85% { left: 130%; }
+}
+
+
+/* ---- quick-link chevrons glide further on hover ---- */
+
+.footer-column > a:not(.footer-contact-link):hover svg {
+  transform: translateX(0);
+}
+
+
+/* ---- contact icon lift ---- */
+
+.footer-contact-icon {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+    background 0.3s ease, color 0.3s ease;
+}
+
+.footer-contact-link:hover .footer-contact-icon {
+  transform: scale(1.1) rotate(-4deg);
+}
+
+
+/* ---- business strip icon float + hover pop ---- */
+
+@keyframes footer-icon-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+.footer-business-icon {
+  animation: footer-icon-float 3.6s ease-in-out infinite;
+  transition: transform 0.3s ease, background 0.3s ease;
+}
+
+.footer-business-item:nth-child(2) .footer-business-icon { animation-delay: 0.4s; }
+.footer-business-item:nth-child(3) .footer-business-icon { animation-delay: 0.8s; }
+
+.footer-business-item:hover .footer-business-icon {
+  transform: scale(1.1);
+}
+
+
+/* ---- footer heading underline grows on hover of column ---- */
+
+.footer-column h3::after {
+  transition: width 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.footer-column:hover h3::after {
+  width: 44px;
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+  .footer-brand,
+  .footer-column,
+  .footer-trust-badge::before,
+  .footer-business-icon {
+    animation: none !important;
+  }
+}

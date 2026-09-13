@@ -1848,3 +1848,156 @@
     max-width: 55%;
   }
 }
+
+/* ============================================================
+   PREMIUM ENHANCEMENTS
+   Entrance motion • Gallery zoom • Tabs glide • CTA shine
+   ============================================================ */
+
+@keyframes pd-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.product-gallery {
+  animation: pd-fade-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.product-information,
+.product-purchase-box {
+  animation: pd-fade-up 0.6s 0.08s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.product-details-tabs {
+  animation: pd-fade-up 0.6s 0.14s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+
+/* ---- main image richer hover zoom ---- */
+
+.product-main-image img {
+  transition:
+    transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.25s ease;
+}
+
+.product-main-image:hover img {
+  transform: scale(1.06);
+}
+
+
+/* ---- thumbnail active pulse ---- */
+
+.product-thumbnail--active::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  border: 1px solid rgba(13, 148, 136, 0.35);
+  animation: pd-thumb-pulse 1.8s ease-out infinite;
+  pointer-events: none;
+}
+
+@keyframes pd-thumb-pulse {
+  0% { opacity: 0.7; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.12); }
+}
+
+
+/* ---- price emphasis ---- */
+
+.product-price {
+  transition: color 0.25s ease;
+}
+
+
+/* ---- add to cart button: shine sweep + confident hover ---- */
+
+.product-add-cart-button {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  transition:
+    transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.25s ease,
+    background 0.25s ease;
+}
+
+.product-add-cart-button::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -60%;
+  width: 40%;
+  height: 100%;
+
+  background: linear-gradient(
+    115deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.35) 50%,
+    transparent 100%
+  );
+
+  transform: skewX(-20deg);
+  transition: left 0.65s ease;
+  pointer-events: none;
+}
+
+.product-add-cart-button:hover:not(:disabled)::before {
+  left: 130%;
+}
+
+.product-add-cart-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+
+/* ---- tab underline glide ---- */
+
+.product-tab {
+  position: relative;
+  transition: color 0.25s ease;
+}
+
+.product-tab--active::after {
+  transition: left 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+
+/* ---- quantity control micro-interaction ---- */
+
+.product-quantity-control button,
+.product-quantity-row button {
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.product-quantity-control button:hover,
+.product-quantity-row button:hover {
+  transform: scale(1.06);
+}
+
+
+/* ---- spec / pricing rows subtle hover ---- */
+
+.product-spec-item,
+.product-pricing-table tr {
+  transition: background 0.2s ease;
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+  .product-gallery,
+  .product-information,
+  .product-purchase-box,
+  .product-details-tabs,
+  .product-thumbnail--active::after {
+    animation: none !important;
+  }
+}

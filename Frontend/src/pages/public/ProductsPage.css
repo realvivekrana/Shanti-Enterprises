@@ -1839,3 +1839,153 @@
     animation: none;
   }
 }
+
+/* ============================================================
+   PREMIUM ENHANCEMENTS
+   Entrance motion • Shine • Filter/pagination polish
+   ============================================================ */
+
+@keyframes prod-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.products-hero {
+  animation: prod-fade-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.products-filter-card {
+  animation: prod-fade-up 0.6s 0.06s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.products-result-header {
+  animation: prod-fade-up 0.6s 0.1s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.products-grid > * {
+  animation: prod-fade-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.products-grid > *:nth-child(1) { animation-delay: 0.02s; }
+.products-grid > *:nth-child(2) { animation-delay: 0.06s; }
+.products-grid > *:nth-child(3) { animation-delay: 0.10s; }
+.products-grid > *:nth-child(4) { animation-delay: 0.14s; }
+.products-grid > *:nth-child(5) { animation-delay: 0.18s; }
+.products-grid > *:nth-child(6) { animation-delay: 0.22s; }
+.products-grid > *:nth-child(7) { animation-delay: 0.26s; }
+.products-grid > *:nth-child(8) { animation-delay: 0.30s; }
+.products-grid > *:nth-child(n+9) { animation-delay: 0.34s; }
+
+
+/* ---- filter search button shine ---- */
+
+.products-filter-search-button,
+.products-empty-button {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.products-filter-search-button::before,
+.products-empty-button::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -60%;
+  width: 40%;
+  height: 100%;
+
+  background: linear-gradient(
+    115deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.35) 50%,
+    transparent 100%
+  );
+
+  transform: skewX(-20deg);
+  transition: left 0.65s ease;
+  pointer-events: none;
+}
+
+.products-filter-search-button:hover::before,
+.products-empty-button:hover::before {
+  left: 130%;
+}
+
+
+/* ---- category buttons: smoother active glide ---- */
+
+.products-category-button {
+  transition:
+    background 0.25s ease,
+    border-color 0.25s ease,
+    color 0.25s ease,
+    transform 0.25s ease;
+}
+
+.products-category-button:hover {
+  transform: translateX(2px);
+}
+
+.products-category-button--active {
+  box-shadow: 0 6px 16px rgba(13, 148, 136, 0.16);
+}
+
+
+/* ---- filter chips pop-in ---- */
+
+@keyframes chip-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.products-filter-chip {
+  animation: chip-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+
+/* ---- pagination page hover polish ---- */
+
+.products-pagination-page,
+.products-pagination-button {
+  transition:
+    background 0.25s ease,
+    border-color 0.25s ease,
+    color 0.25s ease,
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.products-pagination-page--active {
+  transition: none;
+}
+
+
+/* ---- sort select subtle focus glow ---- */
+
+.products-sort-select:focus {
+  box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.12);
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+  .products-hero,
+  .products-filter-card,
+  .products-result-header,
+  .products-grid > *,
+  .products-filter-chip {
+    animation: none !important;
+  }
+}

@@ -1589,3 +1589,182 @@
     animation: none;
   }
 }
+
+/* ============================================================
+   PREMIUM ENHANCEMENTS
+   Entrance motion • Item polish • Shine • Summary highlight
+   ============================================================ */
+
+@keyframes cart-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.cart-page-header {
+  animation: cart-fade-up 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.cart-items-section {
+  animation: cart-fade-up 0.55s 0.06s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.cart-summary {
+  animation: cart-fade-up 0.55s 0.12s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.cart-items-list > * {
+  animation: cart-fade-up 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.cart-items-list > *:nth-child(1) { animation-delay: 0.02s; }
+.cart-items-list > *:nth-child(2) { animation-delay: 0.06s; }
+.cart-items-list > *:nth-child(3) { animation-delay: 0.10s; }
+.cart-items-list > *:nth-child(4) { animation-delay: 0.14s; }
+.cart-items-list > *:nth-child(5) { animation-delay: 0.18s; }
+.cart-items-list > *:nth-child(n+6) { animation-delay: 0.22s; }
+
+
+/* ---- cart item hover: image zoom + smoother lift ---- */
+
+.cart-item {
+  transition:
+    background 0.3s ease,
+    transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.3s ease;
+}
+
+.cart-item-image img {
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cart-item:hover .cart-item-image img {
+  transform: scale(1.08);
+}
+
+
+/* ---- quantity control micro-interaction ---- */
+
+.cart-quantity-control button {
+  transition: background 0.2s ease, transform 0.2s ease, color 0.2s ease;
+}
+
+.cart-quantity-control button:hover:not(:disabled) {
+  transform: scale(1.08);
+}
+
+
+/* ---- item total emphasis on hover ---- */
+
+.cart-item-total {
+  transition: color 0.25s ease, transform 0.25s ease;
+}
+
+.cart-item:hover .cart-item-total {
+  transform: scale(1.03);
+}
+
+
+/* ---- remove button ---- */
+
+.cart-remove-button {
+  transition:
+    color 0.2s ease,
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.cart-remove-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+
+/* ---- checkout / primary buttons: shine sweep ---- */
+
+.cart-checkout-button,
+.cart-primary-button,
+.cart-summary-products-button {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.cart-checkout-button::before,
+.cart-primary-button::before,
+.cart-summary-products-button::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -60%;
+  width: 40%;
+  height: 100%;
+
+  background: linear-gradient(
+    115deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.35) 50%,
+    transparent 100%
+  );
+
+  transform: skewX(-20deg);
+  transition: left 0.65s ease;
+  pointer-events: none;
+}
+
+.cart-checkout-button:hover:not(:disabled)::before,
+.cart-primary-button:hover::before,
+.cart-summary-products-button:hover::before {
+  left: 130%;
+}
+
+.cart-checkout-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+
+/* ---- summary highlight breathing glow ---- */
+
+@keyframes cart-glow-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(13, 148, 136, 0.0); }
+  50% { box-shadow: 0 0 0 6px rgba(13, 148, 136, 0.06); }
+}
+
+.cart-summary-highlight-icon {
+  animation: cart-glow-pulse 2.6s ease-in-out infinite;
+}
+
+
+/* ---- summary total number pop on change ---- */
+
+.cart-summary-total {
+  transition: transform 0.2s ease;
+}
+
+
+/* ---- empty cart icon float ---- */
+
+@keyframes cart-empty-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+.cart-empty-icon {
+  animation: cart-empty-float 3.2s ease-in-out infinite;
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+  .cart-page-header,
+  .cart-items-section,
+  .cart-summary,
+  .cart-items-list > *,
+  .cart-summary-highlight-icon,
+  .cart-empty-icon {
+    animation: none !important;
+  }
+}

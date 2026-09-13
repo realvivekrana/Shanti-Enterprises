@@ -874,3 +874,241 @@
     transition: none;
   }
 }
+
+/* ============================================================
+   26. PREMIUM ENHANCEMENTS
+   Scroll-aware shell • Cart badge • Shine • Nav polish
+   ============================================================ */
+
+/* ---- scroll-aware header shell ---- */
+
+.site-header {
+  transition:
+    box-shadow 0.3s ease,
+    background-color 0.3s ease,
+    border-color 0.3s ease;
+}
+
+.site-header-scrolled {
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+}
+
+.dark .site-header-scrolled {
+  background: rgba(15, 23, 42, 0.85);
+}
+
+
+/* ---- logo mark: shine sweep + lift ---- */
+
+.header-logo-mark {
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.35s ease;
+}
+
+.header-logo:hover .header-logo-mark {
+  transform: rotate(-4deg) scale(1.06);
+  box-shadow: 0 10px 24px rgba(13, 148, 136, 0.35);
+}
+
+.header-logo-text {
+  position: relative;
+}
+
+
+/* ---- desktop nav link: animated underline + active glow ---- */
+
+.header-nav-link {
+  position: relative;
+  overflow: hidden;
+}
+
+.header-nav-link::after {
+  content: "";
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 4px;
+  height: 2px;
+  border-radius: 2px;
+
+  background: linear-gradient(90deg, #14b8a6, #0ea5e9);
+
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.header-nav-link:hover::after {
+  transform: scaleX(1);
+}
+
+.header-nav-link-active {
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(13, 148, 136, 0.10);
+}
+
+.header-nav-link-active::after {
+  transform: scaleX(1);
+}
+
+
+/* ---- cart icon + badge ---- */
+
+.header-cart-icon-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.header-cart-badge {
+  position: absolute;
+  top: -7px;
+  right: -10px;
+
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 999px;
+  border: 2px solid var(--bg-surface, #fff);
+
+  background: linear-gradient(135deg, #f59e0b, #ea580c);
+  color: #ffffff;
+
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1;
+
+  animation: header-badge-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.header-mobile-nav-icon {
+  position: relative;
+}
+
+.header-cart-badge-mobile {
+  top: -4px;
+  right: -4px;
+}
+
+@keyframes header-badge-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+
+/* ---- action buttons: shine sweep ---- */
+
+.header-login-button,
+.header-dashboard-button {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.header-login-button::before,
+.header-dashboard-button::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -60%;
+  width: 40%;
+  height: 100%;
+
+  background: linear-gradient(
+    115deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.35) 50%,
+    transparent 100%
+  );
+
+  transform: skewX(-20deg);
+  transition: left 0.65s ease;
+  pointer-events: none;
+}
+
+.header-login-button:hover::before,
+.header-dashboard-button:hover::before {
+  left: 130%;
+}
+
+
+/* ---- user chevron + avatar micro interaction ---- */
+
+.header-user-avatar {
+  transition: transform 0.3s ease;
+}
+
+.header-user:hover .header-user-avatar {
+  transform: scale(1.08);
+}
+
+.header-user-chevron {
+  transition: transform 0.25s ease;
+}
+
+.header-user:hover .header-user-chevron {
+  transform: translateY(1px) rotate(180deg);
+}
+
+
+/* ---- mobile menu button icon transition ---- */
+
+.header-mobile-button svg {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.header-mobile-button:hover svg {
+  transform: scale(1.08);
+}
+
+
+/* ---- mobile nav rows: staggered slide-in ---- */
+
+@keyframes header-mobile-row {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.header-mobile-nav > * {
+  animation: header-mobile-row 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.header-mobile-nav > *:nth-child(1) { animation-delay: 0.02s; }
+.header-mobile-nav > *:nth-child(2) { animation-delay: 0.05s; }
+.header-mobile-nav > *:nth-child(3) { animation-delay: 0.08s; }
+.header-mobile-nav > *:nth-child(4) { animation-delay: 0.11s; }
+.header-mobile-nav > *:nth-child(5) { animation-delay: 0.14s; }
+.header-mobile-nav > *:nth-child(6) { animation-delay: 0.17s; }
+
+
+@media (prefers-reduced-motion: reduce) {
+  .header-cart-badge,
+  .header-mobile-nav > * {
+    animation: none !important;
+  }
+
+  .header-nav-link::after,
+  .header-logo-mark,
+  .header-user-avatar,
+  .header-user-chevron,
+  .header-mobile-button svg,
+  .site-header {
+    transition: none !important;
+  }
+}

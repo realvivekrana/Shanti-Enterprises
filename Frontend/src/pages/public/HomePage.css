@@ -2123,3 +2123,274 @@
   }
 
 }
+
+
+/* ============================================================
+   PREMIUM ENHANCEMENTS
+   Entrance motion • Shine • Floating orbs • Glow polish
+   ============================================================ */
+
+/* ---- entrance choreography ---- */
+
+@keyframes home-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.home-hero-badge {
+  animation: home-fade-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.home-hero-content h1 {
+  animation: home-fade-up 0.7s 0.08s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.home-hero-content > p {
+  animation: home-fade-up 0.7s 0.16s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.home-hero-actions {
+  animation: home-fade-up 0.7s 0.24s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.home-trust-row {
+  animation: home-fade-up 0.7s 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.home-hero-visual {
+  animation: home-fade-up 0.8s 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.home-category-grid > *,
+.home-products-grid > *,
+.home-feature-grid > * {
+  animation: home-fade-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.home-category-grid > *:nth-child(1),
+.home-products-grid > *:nth-child(1),
+.home-feature-grid > *:nth-child(1) { animation-delay: 0.02s; }
+.home-category-grid > *:nth-child(2),
+.home-products-grid > *:nth-child(2),
+.home-feature-grid > *:nth-child(2) { animation-delay: 0.08s; }
+.home-category-grid > *:nth-child(3),
+.home-products-grid > *:nth-child(3),
+.home-feature-grid > *:nth-child(3) { animation-delay: 0.14s; }
+.home-category-grid > *:nth-child(4),
+.home-products-grid > *:nth-child(4),
+.home-feature-grid > *:nth-child(4) { animation-delay: 0.20s; }
+.home-category-grid > *:nth-child(5),
+.home-products-grid > *:nth-child(5) { animation-delay: 0.26s; }
+.home-category-grid > *:nth-child(6),
+.home-products-grid > *:nth-child(6) { animation-delay: 0.32s; }
+.home-products-grid > *:nth-child(7) { animation-delay: 0.38s; }
+.home-products-grid > *:nth-child(8) { animation-delay: 0.44s; }
+
+
+/* ---- floating hero orbs ---- */
+
+@keyframes home-float-a {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(10px, -14px) scale(1.05); }
+}
+
+@keyframes home-float-b {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-12px, 10px) scale(1.08); }
+}
+
+.home-hero::before {
+  animation: home-float-a 9s ease-in-out infinite;
+}
+
+.home-hero-glow {
+  animation: home-float-b 8s ease-in-out infinite;
+}
+
+.home-hero-card::before {
+  animation: home-float-a 10s ease-in-out infinite;
+}
+
+.home-hero-card::after {
+  animation: home-float-b 11s ease-in-out infinite;
+}
+
+.home-hero-card {
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.home-hero-card:hover {
+  transform: translateY(-6px) rotateX(1deg);
+  box-shadow: 0 32px 72px rgba(7, 31, 43, 0.32);
+}
+
+.home-status-dot {
+  position: relative;
+}
+
+.home-status-dot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: inherit;
+  animation: home-pulse-ring 1.8s ease-out infinite;
+}
+
+@keyframes home-pulse-ring {
+  0% {
+    opacity: 0.65;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2.6);
+  }
+}
+
+
+/* ---- button shine sweep ---- */
+
+.home-primary-button,
+.home-cta-button {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.home-primary-button::before,
+.home-cta-button::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -60%;
+  width: 40%;
+  height: 100%;
+
+  background: linear-gradient(
+    115deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.35) 50%,
+    transparent 100%
+  );
+
+  transform: skewX(-20deg);
+  transition: left 0.65s ease;
+  pointer-events: none;
+}
+
+.home-primary-button:hover::before,
+.home-cta-button:hover::before {
+  left: 130%;
+}
+
+
+/* ---- section heading accent ---- */
+
+.home-section-heading h2 {
+  position: relative;
+}
+
+.home-eyebrow {
+  position: relative;
+  padding-left: 16px;
+}
+
+.home-eyebrow::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 10px;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #14b8a6, #0ea5e9);
+}
+
+
+/* ---- category card polish ---- */
+
+.home-category-card {
+  transition:
+    transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.35s ease;
+}
+
+.home-category-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 44px rgba(15, 23, 42, 0.12);
+}
+
+.home-category-image img {
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.home-category-card:hover .home-category-image img {
+  transform: scale(1.08);
+}
+
+
+/* ---- feature card glow on hover ---- */
+
+.home-feature-card {
+  transition:
+    transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.35s ease;
+}
+
+.home-feature-card:hover {
+  transform: translateY(-5px);
+}
+
+.home-feature-icon {
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+    background 0.35s ease, color 0.35s ease;
+}
+
+.home-feature-card:hover .home-feature-icon {
+  transform: scale(1.1) rotate(-4deg);
+}
+
+
+/* ---- final CTA subtle shimmer ---- */
+
+@keyframes home-cta-shimmer {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+.home-final-cta {
+  background-size: 200% 200%;
+  animation: home-cta-shimmer 14s ease infinite;
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+  .home-hero::before,
+  .home-hero-glow,
+  .home-hero-card::before,
+  .home-hero-card::after,
+  .home-status-dot::after,
+  .home-final-cta,
+  .home-hero-badge,
+  .home-hero-content h1,
+  .home-hero-content > p,
+  .home-hero-actions,
+  .home-trust-row,
+  .home-hero-visual,
+  .home-category-grid > *,
+  .home-products-grid > *,
+  .home-feature-grid > * {
+    animation: none !important;
+  }
+}

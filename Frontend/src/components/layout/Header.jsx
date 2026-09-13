@@ -7,6 +7,7 @@
 import "./Header.css";
 
 import {
+  useEffect,
   useState,
 } from "react";
 
@@ -34,6 +35,10 @@ import {
   useAuth,
 } from "../../context/AuthContext";
 
+import {
+  useCart,
+} from "../../context/CartContext";
+
 // ============================================================
 // HEADER
 // ============================================================
@@ -49,6 +54,11 @@ function Header() {
     setLogoutLoading,
   ] = useState(false);
 
+  const [
+    scrolled,
+    setScrolled,
+  ] = useState(false);
+
   const navigate =
     useNavigate();
 
@@ -62,6 +72,39 @@ function Header() {
     isAdmin,
     logout,
   } = useAuth();
+
+  // ==========================================================
+  // CART DATA
+  // ==========================================================
+
+  const {
+    totalItems,
+  } = useCart();
+
+  // ==========================================================
+  // SCROLL AWARE HEADER
+  // ==========================================================
+
+  useEffect(() => {
+    const onScroll = () => {
+      setScrolled(window.scrollY > 6);
+    };
+
+    onScroll();
+
+    window.addEventListener(
+      "scroll",
+      onScroll,
+      { passive: true }
+    );
+
+    return () => {
+      window.removeEventListener(
+        "scroll",
+        onScroll
+      );
+    };
+  }, []);
 
   // ==========================================================
   // LOGOUT
@@ -132,7 +175,11 @@ function Header() {
   // ==========================================================
 
   return (
-    <header className="site-header">
+    <header
+      className={`site-header ${
+        scrolled ? "site-header-scrolled" : ""
+      }`}
+    >
 
       <div className="header-container">
 
@@ -230,10 +277,18 @@ function Header() {
               getNavClass
             }
           >
-            <ShoppingCart
-              size={17}
-              strokeWidth={2}
-            />
+            <span className="header-cart-icon-wrap">
+              <ShoppingCart
+                size={17}
+                strokeWidth={2}
+              />
+
+              {totalItems > 0 && (
+                <span className="header-cart-badge">
+                  {totalItems > 99 ? "99+" : totalItems}
+                </span>
+              )}
+            </span>
 
             <span>
               Cart
@@ -515,6 +570,12 @@ function Header() {
                   <ShoppingCart
                     size={18}
                   />
+
+                  {totalItems > 0 && (
+                    <span className="header-cart-badge header-cart-badge-mobile">
+                      {totalItems > 99 ? "99+" : totalItems}
+                    </span>
+                  )}
                 </span>
 
                 <span>
