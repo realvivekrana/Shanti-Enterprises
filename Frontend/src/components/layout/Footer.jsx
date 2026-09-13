@@ -4,6 +4,8 @@
 // Mobile First • Premium Responsive UI
 // ============================================================
 
+import "./Footer.css";
+
 import {
   Link,
 } from "react-router-dom";
