@@ -724,7 +724,7 @@ function LoginPage() {
           <div className="login-brand-copy">
 
             <span className="login-brand-eyebrow">
-              BUSINESS ACCOUNT
+              Business account
             </span>
 
             <h1>
@@ -836,6 +836,17 @@ function LoginPage() {
 
             <div className="login-tabs">
 
+              <span
+                className="login-tab-indicator"
+                style={{
+                  transform:
+                    loginType === "admin"
+                      ? "translateX(125%)"
+                      : "translateX(0%)",
+                }}
+                aria-hidden="true"
+              />
+
               <button
                 type="button"
                 className={`login-tab ${
@@ -895,8 +906,8 @@ function LoginPage() {
                 <span className="login-heading-badge">
 
                   {loginType === "admin"
-                    ? "ADMIN PORTAL"
-                    : "CUSTOMER PORTAL"}
+                    ? "Admin portal"
+                    : "Customer portal"}
 
                 </span>
 

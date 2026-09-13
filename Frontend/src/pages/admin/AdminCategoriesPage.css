@@ -29,6 +29,12 @@
 
 .admin-categories-heading {
   min-width: 0;
+  animation: catRise .5s ease both;
+}
+
+@keyframes catRise {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .admin-categories-back {
@@ -84,6 +90,7 @@
   align-items: center;
   gap: 11px;
   flex-shrink: 0;
+  animation: catRise .5s ease .08s both;
 }
 
 .admin-categories-refresh,
@@ -118,9 +125,30 @@
 
 .admin-categories-add,
 .admin-categories-empty-action {
+  position: relative;
+  overflow: hidden;
   background: linear-gradient(135deg, #7c3aed, #2563eb);
   color: #fff;
   box-shadow: 0 12px 26px rgba(79, 70, 229, 0.22);
+}
+
+.admin-categories-add::before,
+.admin-categories-empty-action::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -60%;
+  width: 40%;
+  background: linear-gradient(115deg, transparent, rgba(255,255,255,.35), transparent);
+  transform: skewX(-18deg);
+  transition: left 550ms ease;
+  pointer-events: none;
+}
+
+.admin-categories-add:hover::before,
+.admin-categories-empty-action:hover::before {
+  left: 130%;
 }
 
 .admin-categories-refresh:hover,
@@ -153,6 +181,7 @@
   background: rgba(255, 255, 255, 0.82);
   box-shadow: 0 12px 34px rgba(15, 23, 42, 0.045);
   backdrop-filter: blur(14px);
+  animation: catRise .5s ease .12s both;
 }
 
 .admin-categories-search {
@@ -261,6 +290,7 @@
   border: 1px solid rgba(226, 232, 240, 0.9);
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.72);
+  animation: catRise .5s ease .16s both;
 }
 
 .admin-categories-summary-main {
@@ -693,5 +723,17 @@ body.dark .admin-categories-empty,
     flex-direction: column;
     align-items: flex-start;
     gap: 2px;
+  }
+}
+
+/* ============================================================
+   REDUCED MOTION
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-categories-page * {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
   }
 }

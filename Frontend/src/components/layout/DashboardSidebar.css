@@ -47,7 +47,24 @@
 }
 
 .dash-sidebar-admin {
-  background: linear-gradient(180deg, var(--se-navy) 0%, #0f2942 100%);
+  position: relative;
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(13, 148, 136, 0.16), transparent 45%),
+    radial-gradient(circle at 0% 100%, rgba(14, 165, 233, 0.1), transparent 50%),
+    linear-gradient(180deg, #0b1425 0%, #0f2942 55%, #0b1c30 100%);
+  border-right: 1px solid rgba(94, 234, 212, 0.08);
+}
+
+.dash-sidebar-admin::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.35) 1px, transparent 1px);
+  background-size: 22px 22px;
+  opacity: 0.05;
+  pointer-events: none;
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -61,6 +78,7 @@
   gap: 10px;
   padding: 20px 18px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .dash-sidebar-user {
@@ -81,10 +99,16 @@
   font-weight: 800;
   font-size: 16px;
   color: #fff;
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.25),
+    0 0 0 3px rgba(255, 255, 255, 0.06);
 }
 
 .dash-sidebar-avatar-admin {
   background: linear-gradient(135deg, #14b8a6, #0ea5e9);
+  box-shadow:
+    0 4px 16px rgba(14, 165, 233, 0.35),
+    0 0 0 3px rgba(94, 234, 212, 0.12);
 }
 
 .dash-sidebar-user-info {
@@ -138,9 +162,21 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+
+.dash-sidebar-nav::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dash-sidebar-nav::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
 }
 
 .dash-sidebar-link {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -150,17 +186,32 @@
   font-size: 14px;
   font-weight: 600;
   text-decoration: none;
-  transition: background var(--tx, 0.2s ease), color var(--tx, 0.2s ease);
+  transition:
+    background var(--tx, 0.2s ease),
+    color var(--tx, 0.2s ease),
+    transform var(--tx, 0.2s ease);
+}
+
+.dash-sidebar-link svg {
+  transition: transform var(--tx, 0.2s ease), color var(--tx, 0.2s ease);
 }
 
 .dash-sidebar-link:hover {
   background: rgba(255, 255, 255, 0.08);
   color: #fff;
+  transform: translateX(2px);
 }
 
 .dash-sidebar-link-active {
-  background: var(--se-teal);
+  background: linear-gradient(90deg, rgba(13, 148, 136, 0.9), rgba(13, 148, 136, 0.65));
   color: #fff;
+  box-shadow:
+    inset 3px 0 0 #5eead4,
+    0 4px 14px rgba(13, 148, 136, 0.25);
+}
+
+.dash-sidebar-link-active svg {
+  color: #ccfbf1;
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -185,11 +236,12 @@
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
-  transition: background var(--tx, 0.2s ease);
+  transition: background var(--tx, 0.2s ease), transform var(--tx, 0.2s ease);
 }
 
 .dash-sidebar-logout:hover {
   background: rgba(220, 38, 38, 0.28);
+  transform: translateX(2px);
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -211,7 +263,9 @@
   align-items: center;
   gap: 12px;
   padding: 12px 16px;
-  background: var(--se-surface, #fff);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--se-border, #e2e8f0);
   position: sticky;
   top: 0;
@@ -229,10 +283,13 @@
   color: var(--se-text, #0f172a);
   cursor: pointer;
   flex-shrink: 0;
+  transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
 }
 
 .dash-layout-menu-btn:hover {
   background: var(--se-surface-2, #f8fafc);
+  border-color: var(--se-teal, #0d9488);
+  transform: translateY(-1px);
 }
 
 .dash-layout-topbar-title {

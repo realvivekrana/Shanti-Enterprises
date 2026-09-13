@@ -132,12 +132,79 @@
   background: rgba(34, 211, 238, 0.06);
 }
 
+.login-decoration-one {
+  animation: loginFloat 9s ease-in-out infinite;
+}
+
+.login-decoration-two {
+  animation: loginFloat 11s ease-in-out infinite reverse;
+}
+
+.login-decoration-three {
+  animation: loginFloat 7.5s ease-in-out infinite;
+}
+
+@keyframes loginFloat {
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate(-8px, 14px) rotate(6deg);
+  }
+}
+
+.login-decoration-three {
+  animation-name: loginFloatTilt;
+}
+
+@keyframes loginFloatTilt {
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(18deg);
+  }
+  50% {
+    transform: translate(6px, -10px) rotate(24deg);
+  }
+}
+
 .login-brand-inner {
   position: relative;
   z-index: 2;
   width: 100%;
   max-width: 650px;
   margin: 0 auto;
+}
+
+@keyframes loginRise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.login-brand-inner > * {
+  animation: loginRise 620ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.login-brand-inner > *:nth-child(1) {
+  animation-delay: 40ms;
+}
+
+.login-brand-inner > *:nth-child(2) {
+  animation-delay: 120ms;
+}
+
+.login-brand-inner > *:nth-child(3) {
+  animation-delay: 200ms;
+}
+
+.login-brand-inner > *:nth-child(4) {
+  animation-delay: 280ms;
 }
 
 .login-brand {
@@ -341,6 +408,7 @@
   text-decoration: none;
   font-size: 14px;
   font-weight: 850;
+  animation: loginRise 620ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .login-mobile-logo {
@@ -351,6 +419,7 @@
 }
 
 .login-card {
+  position: relative;
   width: 100%;
   overflow: hidden;
   border: 1px solid #e1e8f0;
@@ -358,13 +427,40 @@
   background: #ffffff;
   box-shadow:
     0 28px 75px rgba(15, 23, 42, 0.1),
-    0 8px 24px rgba(15, 23, 42, 0.045);
+    0 8px 24px rgba(15, 23, 42, 0.045),
+    0 0 0 1px rgba(37, 99, 235, 0.03);
+  animation: loginRise 620ms cubic-bezier(0.16, 1, 0.3, 1) 160ms both;
+}
+
+.login-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 3;
+  height: 3px;
+  border-radius: 20px 20px 0 0;
+  background: linear-gradient(90deg, #2563eb, #06b6d4, #7c3aed);
 }
 
 .login-tabs {
+  position: relative;
   display: grid;
   grid-template-columns: 1fr 1fr;
   border-bottom: 1px solid #e8edf3;
+}
+
+.login-tab-indicator {
+  position: absolute;
+  bottom: -1px;
+  left: 5%;
+  width: 40%;
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+  background: linear-gradient(90deg, #2563eb, #06b6d4, #7c3aed);
+  transition: transform 280ms cubic-bezier(0.65, 0, 0.35, 1);
+  will-change: transform;
 }
 
 .login-tab {
@@ -392,17 +488,6 @@
 
 .login-tab.is-active {
   color: #155eef;
-}
-
-.login-tab.is-active::after {
-  content: "";
-  position: absolute;
-  right: 10%;
-  bottom: -1px;
-  left: 10%;
-  height: 3px;
-  border-radius: 3px 3px 0 0;
-  background: linear-gradient(90deg, #2563eb, #06b6d4, #7c3aed);
 }
 
 .login-tab-icon {
@@ -483,6 +568,27 @@
   font-size: 11.5px;
   line-height: 1.5;
   font-weight: 650;
+  animation: loginShake 420ms cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+@keyframes loginShake {
+  10%,
+  90% {
+    transform: translateX(-1px);
+  }
+  20%,
+  80% {
+    transform: translateX(2px);
+  }
+  30%,
+  50%,
+  70% {
+    transform: translateX(-4px);
+  }
+  40%,
+  60% {
+    transform: translateX(4px);
+  }
 }
 
 .login-error-icon {
@@ -644,6 +750,8 @@
 }
 
 .login-submit {
+  position: relative;
+  overflow: hidden;
   width: 100%;
   min-height: 54px;
   border: 0;
@@ -664,9 +772,39 @@
     opacity 180ms ease;
 }
 
+.login-submit::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -60%;
+  width: 40%;
+  background: linear-gradient(
+    115deg,
+    transparent,
+    rgba(255, 255, 255, 0.32),
+    transparent
+  );
+  transform: skewX(-18deg);
+  transition: left 550ms ease;
+  pointer-events: none;
+}
+
+.login-submit:hover:not(:disabled)::before {
+  left: 130%;
+}
+
 .login-submit:hover:not(:disabled) {
   transform: translateY(-1px);
   box-shadow: 0 16px 34px rgba(37, 99, 235, 0.28);
+}
+
+.login-submit svg {
+  transition: transform 220ms ease;
+}
+
+.login-submit:hover:not(:disabled) svg {
+  transform: translateX(3px);
 }
 
 .login-submit:active:not(:disabled) {

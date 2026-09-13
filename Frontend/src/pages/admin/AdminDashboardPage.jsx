@@ -23,16 +23,45 @@ const fmtNum = (v) => Number(v || 0).toLocaleString("en-IN");
 const fmtCur = (v) =>
   `₹${Number(v || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
 
+// ─── count-up hook ──────────────────────────────────────────
+function useCountUp(target, duration = 900) {
+  const [value, setValue] = useState(0);
+
+  useEffect(() => {
+    let frame;
+    const to = Number(target) || 0;
+    const start = performance.now();
+
+    const step = (now) => {
+      const progress = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setValue(to * eased);
+      if (progress < 1) frame = requestAnimationFrame(step);
+      else setValue(to);
+    };
+
+    frame = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(frame);
+  }, [target, duration]);
+
+  return value;
+}
+
 // ─── StatCard ─────────────────────────────────────────────────
-function StatCard({ icon, label, value, sub, color, to }) {
+function StatCard({ icon, label, value, format, sub, color, to, delay = 0 }) {
+  const animated = useCountUp(value);
+
   return (
-    <div className="adm-stat" style={{ "--adm-stat-color": color }}>
+    <div
+      className="adm-stat"
+      style={{ "--adm-stat-color": color, "--adm-stat-delay": `${delay}ms` }}
+    >
       <div className="adm-stat-bar" />
       <div className="adm-stat-top">
         <div className="adm-stat-icon">{icon}</div>
         <span className="adm-stat-label">{label}</span>
       </div>
-      <div className="adm-stat-value">{value}</div>
+      <div className="adm-stat-value">{format(Math.round(animated))}</div>
       <div className="adm-stat-sub">{sub}</div>
       {to && <Link to={to} className="adm-stat-link">Manage →</Link>}
     </div>
@@ -148,11 +177,11 @@ function AdminDashboardPage() {
 
         {/* ── STATS ROW ───────────────────────────────── */}
         <div className="adm-stats">
-          <StatCard icon="👥" label="Users"      value={fmtNum(totalUsers)}      sub="Registered customers"   color="#2563EB" to="/admin/users"      />
-          <StatCard icon="📦" label="Products"   value={fmtNum(totalProducts)}   sub="In catalogue"           color="#7C3AED" to="/admin/products"   />
-          <StatCard icon="🛒" label="Orders"     value={fmtNum(totalOrders)}     sub="Total orders"           color="#0891B2" to="/admin/orders"     />
-          <StatCard icon="🗂️" label="Categories" value={fmtNum(totalCategories)} sub="Product categories"     color="#D97706" to="/admin/categories" />
-          <StatCard icon="💰" label="Revenue"    value={fmtCur(totalRevenue)}    sub="Total store revenue"    color="#059669"                        />
+          <StatCard icon="👥" label="Users"      value={totalUsers}      format={fmtNum} sub="Registered customers"   color="#2563EB" to="/admin/users"      delay={0}   />
+          <StatCard icon="📦" label="Products"   value={totalProducts}   format={fmtNum} sub="In catalogue"           color="#7C3AED" to="/admin/products"   delay={60}  />
+          <StatCard icon="🛒" label="Orders"     value={totalOrders}     format={fmtNum} sub="Total orders"           color="#0891B2" to="/admin/orders"     delay={120} />
+          <StatCard icon="🗂️" label="Categories" value={totalCategories} format={fmtNum} sub="Product categories"     color="#D97706" to="/admin/categories" delay={180} />
+          <StatCard icon="💰" label="Revenue"    value={totalRevenue}    format={fmtCur} sub="Total store revenue"    color="#059669"                        delay={240} />
         </div>
 
         {/* ── ORDER OVERVIEW + QUICK ACTIONS ──────────── */}

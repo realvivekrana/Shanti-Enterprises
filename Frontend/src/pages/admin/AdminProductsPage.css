@@ -111,6 +111,7 @@
   right: 8%;
   top: -205px;
   border: 1px solid rgba(255,255,255,.09);
+  animation: ap-drift 10s ease-in-out infinite;
 }
 
 .admin-products-header::after {
@@ -119,6 +120,17 @@
   right: 23%;
   bottom: -112px;
   background: rgba(20,184,166,.07);
+  animation: ap-drift 13s ease-in-out infinite reverse;
+}
+
+@keyframes ap-drift {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(-14px, 12px); }
+}
+
+@keyframes ap-rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .admin-products-back {
@@ -132,6 +144,7 @@
   font-size: 11px;
   font-weight: 750;
   transition: .2s ease;
+  animation: ap-rise .5s ease .02s both;
 }
 
 .admin-products-back:hover {
@@ -148,6 +161,7 @@
   font-size: 8px;
   font-weight: 900;
   letter-spacing: .18em;
+  animation: ap-rise .5s ease .06s both;
 }
 
 .admin-products-header h1 {
@@ -159,6 +173,7 @@
   line-height: 1;
   font-weight: 900;
   letter-spacing: -.05em;
+  animation: ap-rise .5s ease .1s both;
 }
 
 .admin-products-header p {
@@ -169,6 +184,7 @@
   color: #9fb0c0;
   font-size: 12px;
   line-height: 1.55;
+  animation: ap-rise .5s ease .14s both;
 }
 
 .admin-products-header-actions {
@@ -178,6 +194,7 @@
   align-items: center;
   gap: 9px;
   flex-shrink: 0;
+  animation: ap-rise .5s ease .18s both;
 }
 
 .admin-products-refresh,
@@ -203,10 +220,29 @@
 }
 
 .admin-products-add {
+  position: relative;
+  overflow: hidden;
   border: 1px solid rgba(94,234,212,.4);
   background: linear-gradient(135deg, #14b8a6, #0f766e);
   color: #fff;
   box-shadow: 0 8px 20px rgba(20,184,166,.23);
+}
+
+.admin-products-add::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -60%;
+  width: 40%;
+  background: linear-gradient(115deg, transparent, rgba(255,255,255,.35), transparent);
+  transform: skewX(-18deg);
+  transition: left 550ms ease;
+  pointer-events: none;
+}
+
+.admin-products-add:hover::before {
+  left: 130%;
 }
 
 .admin-products-add:hover {
@@ -237,6 +273,7 @@
   border-radius: 16px;
   background: var(--ap-surface);
   box-shadow: 0 4px 18px rgba(15,23,42,.035);
+  animation: ap-rise .45s ease .22s both;
 }
 
 .admin-products-search,
@@ -342,6 +379,7 @@
   border: 1px solid var(--ap-border);
   border-radius: 13px;
   background: var(--ap-surface);
+  animation: ap-rise .45s ease .26s both;
 }
 
 .admin-products-summary > div {
@@ -387,7 +425,15 @@
   background: var(--ap-surface);
   box-shadow: 0 3px 14px rgba(15,23,42,.035);
   transition: .22s ease;
+  animation: ap-rise .4s ease both;
 }
+
+.admin-products-list .admin-product-card:nth-child(1) { animation-delay: 0.30s; }
+.admin-products-list .admin-product-card:nth-child(2) { animation-delay: 0.34s; }
+.admin-products-list .admin-product-card:nth-child(3) { animation-delay: 0.38s; }
+.admin-products-list .admin-product-card:nth-child(4) { animation-delay: 0.42s; }
+.admin-products-list .admin-product-card:nth-child(5) { animation-delay: 0.46s; }
+.admin-products-list .admin-product-card:nth-child(n+6) { animation-delay: 0.5s; }
 
 .admin-product-card:hover {
   border-color: rgba(20,184,166,.28);
@@ -871,5 +917,17 @@
 
   .admin-product-delete {
     grid-column: 1 / -1;
+  }
+}
+
+/* ============================================================
+   REDUCED MOTION
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-products-page * {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
   }
 }
