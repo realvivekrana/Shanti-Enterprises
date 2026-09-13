@@ -600,6 +600,21 @@
   user-select: none;
 }
 
+.login-checkbox {
+  display: none;
+}
+
+.login-bottom-text {
+  margin: 18px 0 0;
+  text-align: center;
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.dark .login-bottom-text {
+  color: #64748b;
+}
+
 .login-remember input {
   appearance: none;
   position: relative;

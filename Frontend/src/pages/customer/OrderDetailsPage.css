@@ -774,6 +774,12 @@
   border-bottom: 1px solid var(--od-border);
 }
 
+.order-details-item-list {
+  border: 1px solid var(--od-border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
 .order-details-item:last-child {
   border-bottom: 0;
 }

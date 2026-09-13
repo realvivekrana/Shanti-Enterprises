@@ -240,6 +240,8 @@
 }
 .customer-dashboard-card:hover { border-color: rgba(8,145,178,.18); box-shadow: var(--cd-shadow); }
 
+.customer-dashboard-account-card { padding-bottom: 8px; }
+
 .customer-dashboard-card-header {
   margin-bottom: 20px;
   display: flex; align-items: center; justify-content: space-between; gap: 14px;

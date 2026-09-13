@@ -305,6 +305,13 @@
   gap: 22px;
 }
 
+.saved-addresses-section {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+}
+
 /* ============================================================
    SECTION HEADING
    ============================================================ */

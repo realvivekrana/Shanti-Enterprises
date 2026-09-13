@@ -513,6 +513,10 @@
   color: #c4b5fd;
 }
 
+.profile-info-icon-email {
+  color: #5eead4;
+}
+
 .profile-info-row > div {
   min-width: 0;
 }
