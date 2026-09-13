@@ -16,6 +16,7 @@ import {
 import Loading from "../../components/common/Loading";
 import ErrorMessage from "../../components/common/ErrorMessage";
 import EmptyState from "../../components/common/EmptyState";
+import PipelineStageNav from "./PipelineStageNav";
 
 import "./AdminOrdersPage.css";
 
@@ -376,6 +377,8 @@ function AdminOrdersPage() {
   return (
     <section className="app-page admin-orders-page">
       <div className="admin-orders-container">
+        <PipelineStageNav active="orders" />
+
         {/* HEADER */}
         <header className="admin-orders-header">
           <div className="admin-orders-heading">

@@ -1,7 +1,7 @@
 // ============================================================
 // SHANTI ENTERPRISES
 // Admin Shipments Page
-// Frontend - Admin Shipment Management
+// Premium UI/UX — Shipment & Tracking Management
 // ============================================================
 
 import {
@@ -23,8 +23,9 @@ import {
 } from "../../api/shipmentApi";
 
 import Loading from "../../components/common/Loading";
-
 import ErrorMessage from "../../components/common/ErrorMessage";
+import EmptyState from "../../components/common/EmptyState";
+import PipelineStageNav from "./PipelineStageNav";
 
 import "./AdminShipmentsPage.css";
 
@@ -56,21 +57,10 @@ const SHIPMENT_STATUSES = [
   "returned",
 ];
 
-const STATUS_STYLE = {
-  pending:           { bg: "#f9fafb", color: "#6b7280",  border: "#e5e7eb" },
-  processing:        { bg: "#eff6ff", color: "#1d4ed8",  border: "#bfdbfe" },
-  packed:            { bg: "#fefce8", color: "#a16207",  border: "#fef08a" },
-  shipped:           { bg: "#f0f9ff", color: "#0369a1",  border: "#bae6fd" },
-  in_transit:        { bg: "#f0f9ff", color: "#0369a1",  border: "#bae6fd" },
-  out_for_delivery:  { bg: "#fef3c7", color: "#b45309",  border: "#fde68a" },
-  delivered:         { bg: "#f0fdf4", color: "#15803d",  border: "#bbf7d0" },
-  failed:            { bg: "#fef2f2", color: "#dc2626",  border: "#fecaca" },
-  cancelled:         { bg: "#f9fafb", color: "#6b7280",  border: "#e5e7eb" },
-  returned:          { bg: "#fdf4ff", color: "#7e22ce",  border: "#e9d5ff" },
-};
-
-const getStatusStyle = (s) =>
-  STATUS_STYLE[s] || { bg: "#f9fafb", color: "#374151", border: "#e5e7eb" };
+const statusClass = (status) =>
+  String(status || "pending")
+    .toLowerCase()
+    .replace(/[^a-z]+/g, "_");
 
 const fmtLabel = (s) =>
   String(s || "").replace(/[-_]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
@@ -148,8 +138,8 @@ function ShipmentDetailView({ shipmentId }) {
 
   if (loading) {
     return (
-      <section className="app-page">
-        <div className="page-container">
+      <section className="admin-shipment-detail-page">
+        <div className="admin-shipment-detail-container">
           <Loading message="Loading shipment..." />
         </div>
       </section>
@@ -158,14 +148,11 @@ function ShipmentDetailView({ shipmentId }) {
 
   if (error || !shipment) {
     return (
-      <section className="app-page">
-        <div className="page-container">
-          <Link
-            to="/admin/shipments"
-            className="btn-secondary"
-            style={{ marginBottom: "16px", display: "inline-block" }}
-          >
-            ← Back to Shipments
+      <section className="admin-shipment-detail-page">
+        <div className="admin-shipment-detail-container">
+          <Link to="/admin/shipments" className="admin-shipments-back">
+            <span aria-hidden="true">←</span>
+            All Shipments
           </Link>
           <ErrorMessage message={error || "Shipment not found."} />
         </div>
@@ -173,157 +160,163 @@ function ShipmentDetailView({ shipmentId }) {
     );
   }
 
-  const statusStyle = getStatusStyle(shipment?.status);
-
   return (
-    <section className="app-page">
-      <div className="page-container">
+    <section className="admin-shipment-detail-page">
+      <div className="admin-shipment-detail-container">
+        <header className="admin-shipments-header">
+          <div className="admin-shipments-heading">
+            <Link to="/admin/shipments" className="admin-shipments-back">
+              <span aria-hidden="true">←</span>
+              All Shipments
+            </Link>
 
-        <div className="page-header">
-          <div>
-            <span className="page-eyebrow">ADMIN · SHIPMENTS</span>
+            <span className="admin-shipments-eyebrow">SHIPMENT DETAILS</span>
+
             <h1>{shipment?.shipmentNumber || `SHP-${shipmentId}`}</h1>
+
             <p>
-              Order: #{shipment?.order?.orderNumber || "—"} ·{" "}
-              Customer: {shipment?.user?.name || "—"}
+              Order #{shipment?.order?.orderNumber || "—"} · Customer:{" "}
+              {shipment?.user?.name || "—"}
             </p>
           </div>
-          <Link to="/admin/shipments" className="btn-secondary">
-            ← All Shipments
-          </Link>
-        </div>
+        </header>
 
-        {successMsg && (
-          <div className="alert-success" role="status" style={{ marginBottom: "16px" }}>
-            {successMsg}
+        {(successMsg || saveError) && (
+          <div className="admin-shipment-detail-alerts">
+            {successMsg && (
+              <div className="alert alert-success" role="status">
+                {successMsg}
+              </div>
+            )}
+            {saveError && (
+              <div className="alert alert-danger" role="alert">
+                {saveError}
+              </div>
+            )}
           </div>
         )}
-        {saveError && (
-          <div className="alert-error" role="alert" style={{ marginBottom: "16px" }}>
-            {saveError}
-          </div>
-        )}
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px", flexWrap: "wrap" }}>
+        <div className="admin-shipment-detail-grid">
+          {/* STATUS PANEL */}
+          <div className="admin-shipment-panel">
+            <h2>Update Status</h2>
 
-          {/* STATUS CARD */}
-          <div
-            style={{
-              background: "#fff",
-              border: "1px solid #e5e7eb",
-              borderRadius: "12px",
-              padding: "24px",
-            }}
-          >
-            <h2 style={{ margin: "0 0 16px", fontSize: "16px", fontWeight: 700 }}>Update Status</h2>
-
-            <div
-              style={{
-                display: "inline-block",
-                background: statusStyle.bg,
-                color: statusStyle.color,
-                border: `1px solid ${statusStyle.border}`,
-                borderRadius: "999px",
-                padding: "4px 14px",
-                fontSize: "13px",
-                fontWeight: 700,
-                marginBottom: "16px",
-              }}
+            <span
+              className={`admin-shipment-current-pill admin-shipment-current-pill--${statusClass(
+                shipment?.status
+              )}`}
             >
+              <span />
               Current: {fmtLabel(shipment?.status)}
+            </span>
+
+            <div className="form-group">
+              <label className="form-label" htmlFor="shipmentStatus">
+                New Status
+              </label>
+              <select
+                id="shipmentStatus"
+                className="form-select"
+                value={newStatus}
+                onChange={(e) => setNewStatus(e.target.value)}
+              >
+                {SHIPMENT_STATUSES.map((s) => (
+                  <option key={s} value={s}>
+                    {fmtLabel(s)}
+                  </option>
+                ))}
+              </select>
             </div>
 
-            <select
-              value={newStatus}
-              onChange={(e) => setNewStatus(e.target.value)}
-              style={{
-                display: "block",
-                width: "100%",
-                padding: "10px 12px",
-                border: "1px solid #d1d5db",
-                borderRadius: "8px",
-                fontSize: "14px",
-                marginBottom: "12px",
-              }}
-            >
-              {SHIPMENT_STATUSES.map((s) => (
-                <option key={s} value={s}>{fmtLabel(s)}</option>
-              ))}
-            </select>
-
-            <button
-              type="button"
-              className="btn-primary"
-              onClick={handleUpdateStatus}
-              disabled={saving || newStatus === shipment?.status}
-            >
-              {saving ? "Saving..." : "Update Status"}
-            </button>
+            <div className="admin-shipment-panel-footer">
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleUpdateStatus}
+                disabled={saving || newStatus === shipment?.status}
+              >
+                {saving ? "Saving..." : "Update Status"}
+              </button>
+            </div>
           </div>
 
-          {/* TRACKING CARD */}
-          <div
-            style={{
-              background: "#fff",
-              border: "1px solid #e5e7eb",
-              borderRadius: "12px",
-              padding: "24px",
-            }}
-          >
-            <h2 style={{ margin: "0 0 16px", fontSize: "16px", fontWeight: 700 }}>Tracking Information</h2>
+          {/* TRACKING PANEL */}
+          <div className="admin-shipment-panel">
+            <h2>Tracking Information</h2>
 
-            {["trackingNumber", "carrier", "trackingUrl"].map((field) => (
-              <div key={field} style={{ marginBottom: "12px" }}>
-                <label style={{ fontSize: "13px", fontWeight: 600, color: "#374151", display: "block", marginBottom: "4px" }}>
-                  {field === "trackingNumber" ? "Tracking Number" : field === "carrier" ? "Carrier" : "Tracking URL"}
-                </label>
-                <input
-                  type={field === "trackingUrl" ? "url" : "text"}
-                  value={trackingData[field]}
-                  onChange={(e) => setTrackingData((prev) => ({ ...prev, [field]: e.target.value }))}
-                  placeholder={field === "trackingUrl" ? "https://..." : ""}
-                  style={{
-                    width: "100%",
-                    padding: "8px 12px",
-                    border: "1px solid #d1d5db",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    boxSizing: "border-box",
-                  }}
-                />
-              </div>
-            ))}
+            <div className="form-group">
+              <label className="form-label" htmlFor="trackingNumber">
+                Tracking Number
+              </label>
+              <input
+                id="trackingNumber"
+                type="text"
+                className="form-input"
+                value={trackingData.trackingNumber}
+                onChange={(e) =>
+                  setTrackingData((prev) => ({
+                    ...prev,
+                    trackingNumber: e.target.value,
+                  }))
+                }
+              />
+            </div>
 
-            <button
-              type="button"
-              className="btn-primary"
-              onClick={handleUpdateTracking}
-              disabled={saving}
-            >
-              {saving ? "Saving..." : "Update Tracking"}
-            </button>
+            <div className="form-group">
+              <label className="form-label" htmlFor="carrier">
+                Carrier
+              </label>
+              <input
+                id="carrier"
+                type="text"
+                className="form-input"
+                value={trackingData.carrier}
+                onChange={(e) =>
+                  setTrackingData((prev) => ({
+                    ...prev,
+                    carrier: e.target.value,
+                  }))
+                }
+              />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label" htmlFor="trackingUrl">
+                Tracking URL
+              </label>
+              <input
+                id="trackingUrl"
+                type="url"
+                className="form-input"
+                placeholder="https://..."
+                value={trackingData.trackingUrl}
+                onChange={(e) =>
+                  setTrackingData((prev) => ({
+                    ...prev,
+                    trackingUrl: e.target.value,
+                  }))
+                }
+              />
+            </div>
+
+            <div className="admin-shipment-panel-footer">
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleUpdateTracking}
+                disabled={saving}
+              >
+                {saving ? "Saving..." : "Update Tracking"}
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* DETAILS */}
-        <div
-          style={{
-            background: "#fff",
-            border: "1px solid #e5e7eb",
-            borderRadius: "12px",
-            padding: "24px",
-            marginTop: "24px",
-          }}
-        >
-          <h2 style={{ margin: "0 0 16px", fontSize: "16px", fontWeight: 700 }}>Shipment Details</h2>
+        {/* DETAILS PANEL */}
+        <div className="admin-shipment-panel">
+          <h2>Shipment Details</h2>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
-              gap: "16px",
-            }}
-          >
+          <div className="admin-shipment-details-list">
             {[
               ["Shipment No.", shipment?.shipmentNumber],
               ["Order No.", `#${shipment?.order?.orderNumber || "—"}`],
@@ -335,13 +328,12 @@ function ShipmentDetailView({ shipmentId }) {
               ["Created", formatDate(shipment?.createdAt)],
             ].map(([label, value]) => (
               <div key={label}>
-                <p style={{ margin: 0, fontSize: "12px", color: "#6b7280" }}>{label}</p>
-                <p style={{ margin: 0, fontSize: "14px", fontWeight: 600 }}>{value || "—"}</p>
+                <span>{label}</span>
+                <strong>{value || "—"}</strong>
               </div>
             ))}
           </div>
         </div>
-
       </div>
     </section>
   );
@@ -393,19 +385,13 @@ function ShipmentsListView() {
   }, [search]);
 
   if (loading && shipments.length === 0) {
-    return (
-      <section className="app-page">
-        <div className="page-container">
-          <Loading message="Loading shipments..." />
-        </div>
-      </section>
-    );
+    return <Loading message="Loading shipments..." />;
   }
 
   if (error && shipments.length === 0) {
     return (
-      <section className="app-page">
-        <div className="page-container">
+      <section className="admin-shipments-page">
+        <div className="admin-shipments-container">
           <ErrorMessage message={error} onRetry={() => loadShipments(1)} />
         </div>
       </section>
@@ -413,169 +399,184 @@ function ShipmentsListView() {
   }
 
   return (
-    <section className="app-page">
-      <div className="page-container">
+    <section className="admin-shipments-page">
+      <div className="admin-shipments-container">
+        <PipelineStageNav active="shipments" />
 
-        <div className="page-header">
-          <div>
-            <span className="page-eyebrow">ADMIN</span>
+        {/* HEADER */}
+        <header className="admin-shipments-header">
+          <div className="admin-shipments-heading">
+            <Link to="/admin" className="admin-shipments-back">
+              <span aria-hidden="true">←</span>
+              Admin Dashboard
+            </Link>
+
+            <span className="admin-shipments-eyebrow">SHIPMENT TRACKING</span>
+
             <h1>Shipments</h1>
-            <p>{total} total shipments</p>
+
+            <p>
+              Track fulfillment, manage carriers and keep customers updated
+              on delivery status.
+            </p>
           </div>
-        </div>
+
+          <div className="admin-shipments-total-badge">
+            <div>
+              <strong>{total}</strong>
+              <span>Total Shipments</span>
+            </div>
+          </div>
+        </header>
 
         {error && (
-          <div className="alert-error" role="alert" style={{ marginBottom: "16px" }}>{error}</div>
+          <div className="admin-orders-error">
+            <ErrorMessage message={error} onRetry={() => loadShipments(page)} />
+          </div>
         )}
 
         {/* TOOLBAR */}
-        <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", marginBottom: "24px" }}>
-          <input
-            type="search"
-            placeholder="Search by tracking or shipment number..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            style={{
-              flex: 1,
-              minWidth: "220px",
-              padding: "8px 12px",
-              border: "1px solid #d1d5db",
-              borderRadius: "8px",
-              fontSize: "14px",
-            }}
-          />
+        <section className="admin-shipments-toolbar">
+          <div className="admin-shipments-search">
+            <label htmlFor="shipmentSearch">Search Shipments</label>
+            <div className="admin-shipments-search-box">
+              <span className="admin-shipments-search-icon" aria-hidden="true">
+                ⌕
+              </span>
+              <input
+                id="shipmentSearch"
+                type="search"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Tracking number or shipment number"
+              />
+            </div>
+          </div>
 
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            style={{
-              padding: "8px 12px",
-              border: "1px solid #d1d5db",
-              borderRadius: "8px",
-              fontSize: "14px",
-            }}
-          >
-            <option value="">All Statuses</option>
-            {SHIPMENT_STATUSES.map((s) => (
-              <option key={s} value={s}>{fmtLabel(s)}</option>
-            ))}
-          </select>
-        </div>
+          <div className="admin-shipments-filter">
+            <label htmlFor="shipmentStatusFilter">Status</label>
+            <select
+              id="shipmentStatusFilter"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <option value="">All Statuses</option>
+              {SHIPMENT_STATUSES.map((s) => (
+                <option key={s} value={s}>
+                  {fmtLabel(s)}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="admin-shipments-result-count">
+            <strong>{shipments.length}</strong>
+            <span>of {total} shipments</span>
+          </div>
+        </section>
 
         {/* EMPTY */}
-        {shipments.length === 0 && (
-          <div className="empty-state">
-            <div style={{ fontSize: "48px", marginBottom: "16px" }}>🚚</div>
-            <h2>No shipments found</h2>
-            <p>Try a different search or filter.</p>
+        {shipments.length === 0 ? (
+          <div className="admin-shipments-empty">
+            <EmptyState
+              title="No shipments found"
+              message="No shipments match the current search or filter."
+            />
           </div>
-        )}
+        ) : (
+          <section className="admin-shipments-list">
+            {shipments.map((s, index) => {
+              const sId = s?._id || s?.id;
+              const status = s?.status || "pending";
 
-        {/* TABLE */}
-        {shipments.length > 0 && (
-          <div style={{ overflowX: "auto" }}>
-            <table
-              style={{
-                width: "100%",
-                borderCollapse: "collapse",
-                fontSize: "14px",
-                background: "#fff",
-                border: "1px solid #e5e7eb",
-                borderRadius: "12px",
-                overflow: "hidden",
-              }}
-            >
-              <thead>
-                <tr style={{ background: "#f9fafb", textAlign: "left" }}>
-                  {["Shipment No.", "Order", "Customer", "Tracking No.", "Status", "Shipped On", ""].map(
-                    (h) => (
-                      <th
-                        key={h}
-                        style={{
-                          padding: "12px 16px",
-                          fontSize: "12px",
-                          fontWeight: 700,
-                          color: "#6b7280",
-                          letterSpacing: "0.06em",
-                          borderBottom: "1px solid #e5e7eb",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {h}
-                      </th>
-                    )
-                  )}
-                </tr>
-              </thead>
-              <tbody>
-                {shipments.map((s) => {
-                  const sId = s?._id || s?.id;
-                  const style = getStatusStyle(s?.status);
-                  return (
-                    <tr key={sId} style={{ borderBottom: "1px solid #f3f4f6" }}>
-                      <td style={{ padding: "12px 16px", fontWeight: 600 }}>
-                        {s?.shipmentNumber || `SHP-${sId}`}
-                      </td>
-                      <td style={{ padding: "12px 16px" }}>
-                        #{s?.order?.orderNumber || "—"}
-                      </td>
-                      <td style={{ padding: "12px 16px" }}>
-                        {s?.user?.name || "—"}
-                      </td>
-                      <td style={{ padding: "12px 16px", fontFamily: "monospace", fontSize: "13px" }}>
-                        {s?.trackingNumber || "—"}
-                      </td>
-                      <td style={{ padding: "12px 16px" }}>
-                        <span
-                          style={{
-                            background: style.bg,
-                            color: style.color,
-                            border: `1px solid ${style.border}`,
-                            borderRadius: "999px",
-                            padding: "3px 10px",
-                            fontSize: "12px",
-                            fontWeight: 600,
-                          }}
-                        >
-                          {fmtLabel(s?.status)}
+              return (
+                <article className="admin-shipment-card" key={sId}>
+                  <div className="admin-shipment-index">
+                    {String(index + 1).padStart(2, "0")}
+                  </div>
+
+                  <div className="admin-shipment-main">
+                    <div className="admin-shipment-top">
+                      <div>
+                        <span className="admin-shipment-label">
+                          SHIPMENT NO.
                         </span>
-                      </td>
-                      <td style={{ padding: "12px 16px", color: "#6b7280" }}>
-                        {formatDate(s?.shippedAt)}
-                      </td>
-                      <td style={{ padding: "12px 16px" }}>
-                        <button
-                          type="button"
-                          className="btn-primary"
-                          style={{ fontSize: "12px", padding: "4px 12px" }}
-                          onClick={() => navigate(`/admin/shipments/${sId}`)}
-                        >
-                          Manage →
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                        <h2>{s?.shipmentNumber || `SHP-${sId}`}</h2>
+                      </div>
+
+                      <span
+                        className={`admin-shipment-status admin-shipment-status--${statusClass(
+                          status
+                        )}`}
+                      >
+                        <span />
+                        {fmtLabel(status)}
+                      </span>
+                    </div>
+
+                    <div className="admin-shipment-details">
+                      <div className="admin-shipment-detail">
+                        <span>Order</span>
+                        <strong>#{s?.order?.orderNumber || "—"}</strong>
+                      </div>
+
+                      <div className="admin-shipment-detail">
+                        <span>Customer</span>
+                        <strong>{s?.user?.name || "—"}</strong>
+                      </div>
+
+                      <div className="admin-shipment-detail">
+                        <span>Tracking No.</span>
+                        <strong className="mono">
+                          {s?.trackingNumber || "—"}
+                        </strong>
+                      </div>
+
+                      <div className="admin-shipment-detail">
+                        <span>Shipped On</span>
+                        <strong>{formatDate(s?.shippedAt)}</strong>
+                      </div>
+                    </div>
+
+                    <div className="admin-shipment-actions">
+                      <button
+                        type="button"
+                        className="admin-shipment-view"
+                        onClick={() => navigate(`/admin/shipments/${sId}`)}
+                      >
+                        Manage
+                        <span aria-hidden="true">→</span>
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </section>
         )}
 
         {/* PAGINATION */}
         {totalPages > 1 && (
-          <div style={{ display: "flex", justifyContent: "center", gap: "12px", marginTop: "24px" }}>
-            <button type="button" className="btn-secondary" disabled={page <= 1 || loading} onClick={() => loadShipments(page - 1)}>
+          <div className="admin-shipments-pagination">
+            <button
+              type="button"
+              disabled={page <= 1 || loading}
+              onClick={() => loadShipments(page - 1)}
+            >
               ← Previous
             </button>
-            <span style={{ display: "flex", alignItems: "center", fontSize: "14px", color: "#6b7280" }}>
+            <span>
               Page {page} of {totalPages}
             </span>
-            <button type="button" className="btn-secondary" disabled={page >= totalPages || loading} onClick={() => loadShipments(page + 1)}>
+            <button
+              type="button"
+              disabled={page >= totalPages || loading}
+              onClick={() => loadShipments(page + 1)}
+            >
               Next →
             </button>
           </div>
         )}
-
       </div>
     </section>
   );

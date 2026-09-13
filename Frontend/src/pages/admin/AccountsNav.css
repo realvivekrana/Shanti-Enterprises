@@ -1,0 +1,116 @@
+/* ============================================================
+   SHANTI ENTERPRISES
+   Accounts Nav — Premium UI
+   ============================================================ */
+
+.accounts-nav {
+  width: 100%;
+  margin-bottom: 20px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.accounts-nav::-webkit-scrollbar {
+  height: 0;
+}
+
+.accounts-nav-track {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px;
+  border: 1px solid rgba(15, 23, 42, 0.07);
+  border-radius: 16px;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(109, 74, 255, 0.06),
+      rgba(8, 145, 178, 0.06)
+    ),
+    #ffffff;
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.045);
+}
+
+.accounts-nav-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 16px;
+  border-radius: 11px;
+  color: #64748b;
+  font-size: 0.83rem;
+  font-weight: 750;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    background-color 180ms ease,
+    color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.accounts-nav-item:hover {
+  color: #172033;
+  background: rgba(15, 23, 42, 0.04);
+}
+
+.accounts-nav-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.85;
+}
+
+.accounts-nav-item.is-active {
+  color: #ffffff;
+  background: linear-gradient(135deg, #6d4aff, #0891b2);
+  box-shadow: 0 8px 20px rgba(109, 74, 255, 0.28);
+  transform: translateY(-1px);
+}
+
+.accounts-nav-item.is-active .accounts-nav-icon {
+  opacity: 1;
+}
+
+/* ============================================================
+   DARK MODE
+   ============================================================ */
+
+html.dark .accounts-nav-track,
+body.dark .accounts-nav-track,
+[data-theme="dark"] .accounts-nav-track {
+  border-color: rgba(51, 65, 85, 0.72);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(109, 74, 255, 0.14),
+      rgba(8, 145, 178, 0.12)
+    ),
+    #0f172a;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.28);
+}
+
+html.dark .accounts-nav-item,
+body.dark .accounts-nav-item,
+[data-theme="dark"] .accounts-nav-item {
+  color: #94a3b8;
+}
+
+html.dark .accounts-nav-item:hover,
+body.dark .accounts-nav-item:hover,
+[data-theme="dark"] .accounts-nav-item:hover {
+  color: #f8fafc;
+  background: rgba(248, 250, 252, 0.06);
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 520px) {
+  .accounts-nav-item {
+    padding: 0 12px;
+    font-size: 0.78rem;
+  }
+}

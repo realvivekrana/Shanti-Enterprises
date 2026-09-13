@@ -21,6 +21,7 @@ import {
 
 import Loading from "../../components/common/Loading";
 import ErrorMessage from "../../components/common/ErrorMessage";
+import PipelineStageNav from "./PipelineStageNav";
 
 import "./AdminRFQsPage.css";
 
@@ -343,6 +344,8 @@ function AdminRFQsPage() {
 
   return (
     <div className="app-page admin-rfqs-page">
+      <PipelineStageNav active="rfqs" />
+
       {/* ======================================================
           HEADER
           ====================================================== */}

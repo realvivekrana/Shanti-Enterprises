@@ -10,6 +10,7 @@ import { getAdminQuotations } from "../../api/quotationApi";
 import Loading from "../../components/common/Loading";
 import ErrorMessage from "../../components/common/ErrorMessage";
 import EmptyState from "../../components/common/EmptyState";
+import PipelineStageNav from "./PipelineStageNav";
 import "./AdminQuotationsPage.css";
 
 const STATUS_OPTIONS = ["pending", "sent", "accepted", "rejected", "expired"];
@@ -212,6 +213,8 @@ function AdminQuotationsPage() {
 
   return (
     <div className="app-page admin-quotations-page">
+      <PipelineStageNav active="quotations" />
+
       <div className="admin-quotations-hero">
         <div>
           <span className="admin-quotations-eyebrow">WHOLESALE • ADMIN</span>

@@ -1,7 +1,7 @@
 // ============================================================
 // SHANTI ENTERPRISES
 // Admin Profile Page
-// Frontend Phase 5 - Admin
+// Premium UI/UX — Admin Account Management
 // ============================================================
 
 import {
@@ -16,49 +16,61 @@ import {
 import api from "../../api/axios";
 
 import Loading from "../../components/common/Loading";
-
 import ErrorMessage from "../../components/common/ErrorMessage";
+import AccountsNav from "./AccountsNav";
 
 import "./AdminProfilePage.css";
+
+// ============================================================
+// HELPERS
+// ============================================================
+
+const getInitials = (name) => {
+  const trimmed = (name || "").trim();
+  if (!trimmed) return "A";
+
+  const parts = trimmed.split(/\s+/);
+
+  if (parts.length === 1) {
+    return parts[0].charAt(0).toUpperCase();
+  }
+
+  return (
+    parts[0].charAt(0) + parts[parts.length - 1].charAt(0)
+  ).toUpperCase();
+};
+
+const formatDate = (value) => {
+  if (!value) return "N/A";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) return "N/A";
+
+  return date.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+};
 
 // ============================================================
 // ADMIN PROFILE PAGE
 // ============================================================
 
 function AdminProfilePage() {
-  const [
-    profile,
-    setProfile,
-  ] = useState(null);
+  const [profile, setProfile] = useState(null);
 
-  const [
-    form,
-    setForm,
-  ] = useState({
+  const [form, setForm] = useState({
     name: "",
     email: "",
     phone: "",
   });
 
-  const [
-    loading,
-    setLoading,
-  ] = useState(true);
-
-  const [
-    saving,
-    setSaving,
-  ] = useState(false);
-
-  const [
-    error,
-    setError,
-  ] = useState("");
-
-  const [
-    success,
-    setSuccess,
-  ] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   // ==========================================================
   // LOAD PROFILE
@@ -69,10 +81,7 @@ function AdminProfilePage() {
       setLoading(true);
       setError("");
 
-      const response =
-        await api.get(
-          "/auth/me"
-        );
+      const response = await api.get("/auth/me");
 
       const user =
         response?.data?.user ||
@@ -80,35 +89,21 @@ function AdminProfilePage() {
         response?.data;
 
       if (!user) {
-        throw new Error(
-          "Admin profile not found."
-        );
+        throw new Error("Admin profile not found.");
       }
 
       setProfile(user);
 
       setForm({
-        name:
-          user.name ||
-          user.fullName ||
-          "",
-        email:
-          user.email ||
-          "",
-        phone:
-          user.phone ||
-          user.mobile ||
-          "",
+        name: user.name || user.fullName || "",
+        email: user.email || "",
+        phone: user.phone || user.mobile || "",
       });
     } catch (err) {
-      console.error(
-        "Admin profile error:",
-        err
-      );
+      console.error("Admin profile error:", err);
 
       setError(
-        err.response?.data
-          ?.message ||
+        err.response?.data?.message ||
           err.message ||
           "Unable to load admin profile."
       );
@@ -129,20 +124,13 @@ function AdminProfilePage() {
   // HANDLE CHANGE
   // ==========================================================
 
-  const handleChange = (
-    event
-  ) => {
-    const {
-      name,
-      value,
-    } = event.target;
+  const handleChange = (event) => {
+    const { name, value } = event.target;
 
-    setForm(
-      (current) => ({
-        ...current,
-        [name]: value,
-      })
-    );
+    setForm((current) => ({
+      ...current,
+      [name]: value,
+    }));
 
     setError("");
     setSuccess("");
@@ -152,16 +140,11 @@ function AdminProfilePage() {
   // UPDATE PROFILE
   // ==========================================================
 
-  const handleSubmit = async (
-    event
-  ) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
     if (!form.name.trim()) {
-      setError(
-        "Name is required."
-      );
-
+      setError("Name is required.");
       return;
     }
 
@@ -170,16 +153,10 @@ function AdminProfilePage() {
       setError("");
       setSuccess("");
 
-      const response =
-        await api.put(
-          "/auth/profile",
-          {
-            name:
-              form.name.trim(),
-            phone:
-              form.phone.trim(),
-          }
-        );
+      const response = await api.put("/auth/profile", {
+        name: form.name.trim(),
+        phone: form.phone.trim(),
+      });
 
       const updatedUser =
         response?.data?.user ||
@@ -187,37 +164,21 @@ function AdminProfilePage() {
         response?.data;
 
       if (updatedUser) {
-        setProfile(
-          updatedUser
-        );
+        setProfile(updatedUser);
 
         setForm({
-          name:
-            updatedUser.name ||
-            updatedUser.fullName ||
-            form.name,
-          email:
-            updatedUser.email ||
-            form.email,
-          phone:
-            updatedUser.phone ||
-            updatedUser.mobile ||
-            form.phone,
+          name: updatedUser.name || updatedUser.fullName || form.name,
+          email: updatedUser.email || form.email,
+          phone: updatedUser.phone || updatedUser.mobile || form.phone,
         });
       }
 
-      setSuccess(
-        "Profile updated successfully."
-      );
+      setSuccess("Profile updated successfully.");
     } catch (err) {
-      console.error(
-        "Update admin profile error:",
-        err
-      );
+      console.error("Update admin profile error:", err);
 
       setError(
-        err.response?.data
-          ?.message ||
+        err.response?.data?.message ||
           err.message ||
           "Unable to update profile."
       );
@@ -231,11 +192,7 @@ function AdminProfilePage() {
   // ==========================================================
 
   if (loading) {
-    return (
-      <Loading
-        message="Loading admin profile..."
-      />
-    );
+    return <Loading message="Loading admin profile..." />;
   }
 
   // ==========================================================
@@ -244,205 +201,168 @@ function AdminProfilePage() {
 
   if (error && !profile) {
     return (
-      <section className="app-page admin-profile-page">
+      <section className="admin-profile-page">
+        <div className="admin-profile-container">
+          <Link to="/admin" className="admin-profile-back">
+            <span aria-hidden="true">←</span>
+            Admin Dashboard
+          </Link>
 
-        <Link to="/admin">
-          ← Admin Dashboard
-        </Link>
-
-        <ErrorMessage
-          message={error}
-          onRetry={loadProfile}
-        />
-
+          <ErrorMessage message={error} onRetry={loadProfile} />
+        </div>
       </section>
     );
   }
+
+  const displayName = form.name || "Admin";
+  const role = profile?.role || profile?.userRole || "admin";
 
   // ==========================================================
   // PAGE
   // ==========================================================
 
   return (
-    <section className="app-page admin-profile-page">
+    <section className="admin-profile-page">
+      <div className="admin-profile-container">
+        <AccountsNav active="profile" />
 
-      {/* ====================================================
-          HEADER
-          ==================================================== */}
-
-      <div>
-
-        <Link to="/admin">
-          ← Admin Dashboard
-        </Link>
-
-        <h1>
-          Admin Profile
-        </h1>
-
-        <p>
-          Manage your administrator
-          account information.
-        </p>
-
-      </div>
-
-      {/* ====================================================
-          ERROR
-          ==================================================== */}
-
-      {error && (
-        <ErrorMessage
-          message={error}
-          onRetry={loadProfile}
-        />
-      )}
-
-      {/* ====================================================
-          SUCCESS
-          ==================================================== */}
-
-      {success && (
-        <div>
-
-          <strong>
-            Success
-          </strong>
-
-          <p>
-            {success}
-          </p>
-
-        </div>
-      )}
-
-      {/* ====================================================
-          PROFILE INFORMATION
-          ==================================================== */}
-
-      <div>
-
-        <h2>
-          Account Information
-        </h2>
-
-        <p>
-          Role:{" "}
-          {profile?.role ||
-            profile?.userRole ||
-            "admin"}
-        </p>
-
-        <p>
-          Email:{" "}
-          {profile?.email ||
-            "N/A"}
-        </p>
-
-      </div>
-
-      {/* ====================================================
-          EDIT FORM
-          ==================================================== */}
-
-      <form
-        onSubmit={
-          handleSubmit
-        }
-      >
-
-        {/* NAME */}
-
-        <div>
-
-          <label htmlFor="name">
-            Full Name
-          </label>
-
-          <input
-            id="name"
-            name="name"
-            type="text"
-            value={
-              form.name
-            }
-            onChange={
-              handleChange
-            }
-            placeholder="Enter your name"
-          />
-
-        </div>
-
-        {/* EMAIL */}
-
-        <div>
-
-          <label htmlFor="email">
-            Email
-          </label>
-
-          <input
-            id="email"
-            name="email"
-            type="email"
-            value={
-              form.email
-            }
-            disabled
-          />
-
-          <small>
-            Email cannot be changed
-            from this page.
-          </small>
-
-        </div>
-
-        {/* PHONE */}
-
-        <div>
-
-          <label htmlFor="phone">
-            Phone
-          </label>
-
-          <input
-            id="phone"
-            name="phone"
-            type="tel"
-            value={
-              form.phone
-            }
-            onChange={
-              handleChange
-            }
-            placeholder="Enter phone number"
-          />
-
-        </div>
-
-        {/* SUBMIT */}
-
-        <div>
-
-          <button
-            type="submit"
-            disabled={saving}
-          >
-            {saving
-              ? "Saving..."
-              : "Save Changes"}
-          </button>
-
-          <Link to="/admin">
-            Cancel
+        {/* HERO */}
+        <header className="admin-profile-hero">
+          <Link to="/admin" className="admin-profile-back">
+            <span aria-hidden="true">←</span>
+            Admin Dashboard
           </Link>
 
+          <div className="admin-profile-hero-body">
+            <div className="admin-profile-avatar">
+              {getInitials(displayName)}
+            </div>
+
+            <div className="admin-profile-hero-text">
+              <span className="admin-profile-eyebrow">
+                ADMIN ACCOUNT
+              </span>
+
+              <h1>{displayName}</h1>
+
+              <p>Manage your administrator account information.</p>
+
+              <span className="admin-profile-role-pill">
+                {role}
+              </span>
+            </div>
+          </div>
+        </header>
+
+        {/* ALERTS */}
+        {(error || success) && (
+          <div className="admin-profile-alerts">
+            {error && (
+              <div className="alert alert-danger" role="alert">
+                {error}
+              </div>
+            )}
+
+            {success && (
+              <div className="alert alert-success" role="status">
+                {success}
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="admin-profile-grid">
+          {/* ACCOUNT INFORMATION */}
+          <div className="admin-profile-panel">
+            <h2>Account Information</h2>
+
+            <div className="admin-profile-info-list">
+              <div className="admin-profile-info-row">
+                <span>Role</span>
+                <strong>{role}</strong>
+              </div>
+
+              <div className="admin-profile-info-row">
+                <span>Email</span>
+                <strong>{profile?.email || "N/A"}</strong>
+              </div>
+
+              <div className="admin-profile-info-row">
+                <span>Member Since</span>
+                <strong>{formatDate(profile?.createdAt)}</strong>
+              </div>
+            </div>
+          </div>
+
+          {/* EDIT FORM */}
+          <div className="admin-profile-panel">
+            <h2>Edit Profile</h2>
+
+            <form className="admin-profile-form" onSubmit={handleSubmit}>
+              <div className="form-group">
+                <label className="form-label" htmlFor="name">
+                  Full Name
+                </label>
+                <input
+                  id="name"
+                  name="name"
+                  type="text"
+                  className="form-input"
+                  value={form.name}
+                  onChange={handleChange}
+                  placeholder="Enter your name"
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" htmlFor="email">
+                  Email
+                </label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  className="form-input"
+                  value={form.email}
+                  disabled
+                />
+                <span className="form-help">
+                  Email cannot be changed from this page.
+                </span>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" htmlFor="phone">
+                  Phone
+                </label>
+                <input
+                  id="phone"
+                  name="phone"
+                  type="tel"
+                  className="form-input"
+                  value={form.phone}
+                  onChange={handleChange}
+                  placeholder="Enter phone number"
+                />
+              </div>
+
+              <div className="admin-profile-form-footer">
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={saving}
+                >
+                  {saving ? "Saving..." : "Save Changes"}
+                </button>
+
+                <Link to="/admin" className="btn btn-secondary">
+                  Cancel
+                </Link>
+              </div>
+            </form>
+          </div>
         </div>
-
-      </form>
-
+      </div>
     </section>
   );
 }

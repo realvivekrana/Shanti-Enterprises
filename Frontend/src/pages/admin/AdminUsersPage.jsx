@@ -28,6 +28,8 @@ import EmptyState from "../../components/common/EmptyState";
 
 import ConfirmModal from "../../components/common/ConfirmModal";
 
+import AccountsNav from "./AccountsNav";
+
 import "./AdminUsersPage.css";
 
 // ============================================================
@@ -615,6 +617,8 @@ function AdminUsersPage() {
     <section className="admin-users-page">
 
       <div className="admin-users-container">
+
+        <AccountsNav active="users" />
 
         {/* ==================================================
             HEADER
