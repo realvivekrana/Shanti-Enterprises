@@ -162,6 +162,14 @@ function CustomerSidebar({
 
         <div className="dash-sidebar-header">
 
+          <div className="dash-sidebar-brand">
+            <div className="dash-sidebar-brand-mark">SE</div>
+            <div className="dash-sidebar-brand-copy">
+              <strong>Shanti Enterprises</strong>
+              <span>Customer Portal</span>
+            </div>
+          </div>
+
           <div className="dash-sidebar-user">
 
             <div className="dash-sidebar-avatar">

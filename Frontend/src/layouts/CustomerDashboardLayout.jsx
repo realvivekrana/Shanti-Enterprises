@@ -19,6 +19,7 @@ import {
 import CustomerSidebar from "../components/layout/CustomerSidebar";
 
 import "../components/layout/DashboardSidebar.css";
+import "../components/layout/CustomerDashboardPremium.css";
 
 // ============================================================
 // CUSTOMER DASHBOARD LAYOUT
@@ -46,7 +47,7 @@ function CustomerDashboardLayout() {
           CONTENT
           ================================================== */}
 
-      <div className="dash-layout-content">
+      <div className="dash-layout-content customer-dashboard-shell">
 
         {/* MOBILE TOPBAR */}
 

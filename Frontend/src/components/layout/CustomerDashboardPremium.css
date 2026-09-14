@@ -1,0 +1,231 @@
+/* ============================================================
+   SHANTI ENTERPRISES — CUSTOMER PORTAL PREMIUM LAYER
+   Frontend-only visual enhancement for customer dashboard routes
+   ============================================================ */
+
+.customer-dashboard-shell {
+  --portal-bg: #f5f7fb;
+  --portal-surface: rgba(255,255,255,.92);
+  --portal-border: rgba(148,163,184,.20);
+  --portal-ink: #0f172a;
+  --portal-muted: #64748b;
+  --portal-accent: #0d9488;
+  --portal-accent-2: #0891b2;
+  min-height: calc(100vh - 68px);
+  background:
+    radial-gradient(circle at 85% 0%, rgba(13,148,136,.07), transparent 28rem),
+    radial-gradient(circle at 10% 25%, rgba(59,130,246,.045), transparent 25rem),
+    var(--portal-bg);
+}
+
+.customer-dashboard-shell .dash-layout-content {
+  position: relative;
+  min-width: 0;
+}
+
+.customer-dashboard-shell .dash-layout-content > .app-page,
+.customer-dashboard-shell .dash-layout-content > section.app-page {
+  min-height: calc(100vh - 68px);
+  background: transparent;
+}
+
+/* Shared page frame */
+.customer-dashboard-shell .app-page > .page-container,
+.customer-dashboard-shell .app-page > .container,
+.customer-dashboard-shell .app-page > .page-content {
+  width: min(100% - 40px, 1280px);
+  margin-inline: auto;
+}
+
+.customer-dashboard-shell .page-header {
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 24px;
+  padding: 28px 30px;
+  border: 1px solid var(--portal-border);
+  border-radius: 24px;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.98), rgba(248,250,252,.90));
+  box-shadow: 0 12px 36px rgba(15,23,42,.06);
+}
+
+.customer-dashboard-shell .page-header::after {
+  content: "";
+  position: absolute;
+  width: 220px;
+  height: 220px;
+  right: -100px;
+  top: -120px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(13,148,136,.13), transparent 68%);
+  pointer-events: none;
+}
+
+.customer-dashboard-shell .page-header h1 {
+  position: relative;
+  z-index: 1;
+  margin: 4px 0 7px;
+  color: var(--portal-ink);
+  font-size: clamp(1.65rem, 3vw, 2.35rem);
+  font-weight: 850;
+  letter-spacing: -.045em;
+}
+
+.customer-dashboard-shell .page-header p {
+  position: relative;
+  z-index: 1;
+  color: var(--portal-muted);
+}
+
+.customer-dashboard-shell .page-eyebrow {
+  position: relative;
+  z-index: 1;
+  color: var(--portal-accent) !important;
+  font-size: 10px !important;
+  font-weight: 850 !important;
+  letter-spacing: .16em !important;
+}
+
+/* Premium surface treatment for common cards/panels */
+.customer-dashboard-shell .card,
+.customer-dashboard-shell .panel,
+.customer-dashboard-shell .section-card,
+.customer-dashboard-shell .content-card,
+.customer-dashboard-shell .table-card,
+.customer-dashboard-shell .filter-card,
+.customer-dashboard-shell .orders-card,
+.customer-dashboard-shell .invoice-card,
+.customer-dashboard-shell .quotation-card,
+.customer-dashboard-shell .notification-card,
+.customer-dashboard-shell .address-card,
+.customer-dashboard-shell .profile-card,
+.customer-dashboard-shell .wishlist-card,
+.customer-dashboard-shell .return-card,
+.customer-dashboard-shell .shipment-card {
+  border-color: var(--portal-border);
+  border-radius: 20px;
+  background: var(--portal-surface);
+  box-shadow: 0 8px 30px rgba(15,23,42,.055);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.customer-dashboard-shell button,
+.customer-dashboard-shell a,
+.customer-dashboard-shell input,
+.customer-dashboard-shell select,
+.customer-dashboard-shell textarea {
+  transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease, background .2s ease;
+}
+
+.customer-dashboard-shell input,
+.customer-dashboard-shell select,
+.customer-dashboard-shell textarea {
+  border-radius: 12px !important;
+  border-color: #dbe3ec !important;
+  background: #fff !important;
+}
+
+.customer-dashboard-shell input:focus,
+.customer-dashboard-shell select:focus,
+.customer-dashboard-shell textarea:focus {
+  outline: none;
+  border-color: rgba(13,148,136,.62) !important;
+  box-shadow: 0 0 0 4px rgba(13,148,136,.10) !important;
+}
+
+.customer-dashboard-shell .btn-primary,
+.customer-dashboard-shell .btn-secondary,
+.customer-dashboard-shell button[type="submit"] {
+  border-radius: 12px;
+  font-weight: 750;
+}
+
+.customer-dashboard-shell .btn-primary,
+.customer-dashboard-shell button[type="submit"] {
+  box-shadow: 0 8px 20px rgba(13,148,136,.18);
+}
+
+/* Tables feel like a modern B2B console */
+.customer-dashboard-shell table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.customer-dashboard-shell thead th {
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+
+.customer-dashboard-shell tbody tr {
+  transition: background .18s ease;
+}
+
+.customer-dashboard-shell tbody tr:hover {
+  background: rgba(13,148,136,.035);
+}
+
+/* Status badges */
+.customer-dashboard-shell .status,
+.customer-dashboard-shell [class*="status-badge"],
+.customer-dashboard-shell [class*="status-pill"] {
+  border-radius: 999px !important;
+  font-weight: 750 !important;
+}
+
+/* Alerts */
+.customer-dashboard-shell .alert-success,
+.customer-dashboard-shell .alert-error,
+.customer-dashboard-shell .alert-warning,
+.customer-dashboard-shell .alert-info {
+  border-radius: 14px;
+  border-width: 1px;
+  box-shadow: 0 6px 20px rgba(15,23,42,.04);
+}
+
+/* Empty/loading states */
+.customer-dashboard-shell .empty-state {
+  border: 1px dashed #d7e0ea;
+  border-radius: 20px;
+  background: rgba(255,255,255,.72);
+  padding: 48px 24px;
+}
+
+.customer-dashboard-shell .empty-state svg,
+.customer-dashboard-shell .empty-icon {
+  filter: drop-shadow(0 8px 14px rgba(13,148,136,.12));
+}
+
+/* Dashboard sidebar */
+.customer-dashboard-shell ~ * { box-sizing: border-box; }
+
+@media (min-width: 1024px) {
+  .customer-dashboard-shell {
+    min-height: calc(100vh - 68px);
+  }
+}
+
+@media (max-width: 767px) {
+  .customer-dashboard-shell .app-page > .page-container,
+  .customer-dashboard-shell .app-page > .container,
+  .customer-dashboard-shell .app-page > .page-content {
+    width: min(100% - 24px, 1280px);
+  }
+
+  .customer-dashboard-shell .page-header {
+    padding: 22px 20px;
+    border-radius: 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .customer-dashboard-shell * {
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
