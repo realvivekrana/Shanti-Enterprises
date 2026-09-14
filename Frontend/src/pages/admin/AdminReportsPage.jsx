@@ -45,24 +45,12 @@ const fmtLabel = (s) =>
 // STAT CARD
 // ============================================================
 
-function StatCard({ label, value, sub, color = "#2563eb" }) {
+function StatCard({ label, value, sub, accent = "blue" }) {
   return (
-    <div
-      style={{
-        background: "#fff",
-        border: "1px solid #e5e7eb",
-        borderRadius: "12px",
-        padding: "20px 24px",
-        borderLeft: `4px solid ${color}`,
-      }}
-    >
-      <p style={{ margin: "0 0 6px", fontSize: "12px", fontWeight: 700, color: "#6b7280", letterSpacing: "0.06em" }}>
-        {label}
-      </p>
-      <p style={{ margin: 0, fontSize: "24px", fontWeight: 800, color: "#111827" }}>{value}</p>
-      {sub && (
-        <p style={{ margin: "4px 0 0", fontSize: "13px", color: "#6b7280" }}>{sub}</p>
-      )}
+    <div className={`reports-stat-card accent-${accent}`}>
+      <p className="reports-stat-label">{label}</p>
+      <p className="reports-stat-value">{value}</p>
+      {sub && <p className="reports-stat-sub">{sub}</p>}
     </div>
   );
 }
@@ -176,31 +164,13 @@ function AdminReportsPage() {
         </div>
 
         {/* TABS */}
-        <div
-          style={{
-            display: "flex",
-            gap: "4px",
-            marginBottom: "28px",
-            borderBottom: "1px solid #e5e7eb",
-            flexWrap: "wrap",
-          }}
-        >
+        <div className="reports-tabs">
           {TABS.map(({ key, label }) => (
             <button
               key={key}
               type="button"
               onClick={() => setActiveTab(key)}
-              style={{
-                padding: "10px 18px",
-                fontSize: "14px",
-                fontWeight: activeTab === key ? 700 : 500,
-                color: activeTab === key ? "#2563eb" : "#6b7280",
-                background: "none",
-                border: "none",
-                borderBottom: activeTab === key ? "3px solid #2563eb" : "3px solid transparent",
-                cursor: "pointer",
-                whiteSpace: "nowrap",
-              }}
+              className={`reports-tab-btn${activeTab === key ? " active" : ""}`}
             >
               {label}
             </button>
@@ -212,36 +182,29 @@ function AdminReportsPage() {
             ==================================================== */}
         {activeTab === "overview" && overview && (
           <div>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
-                gap: "16px",
-                marginBottom: "24px",
-              }}
-            >
+            <div className="reports-stat-grid">
               <StatCard
                 label="TOTAL CUSTOMERS"
                 value={overview?.customers?.total ?? "—"}
                 sub={`Active: ${overview?.customers?.active ?? 0} · Inactive: ${overview?.customers?.inactive ?? 0}`}
-                color="#2563eb"
+                accent="blue"
               />
               <StatCard
                 label="TOTAL PRODUCTS"
                 value={overview?.products?.total ?? "—"}
                 sub={`Low stock: ${overview?.products?.lowStockProducts ?? 0}`}
-                color="#7c3aed"
+                accent="violet"
               />
               <StatCard
                 label="TOTAL ORDERS"
                 value={overview?.orders?.total ?? "—"}
                 sub={`Avg value: ${formatCurrency(overview?.orders?.averageOrderValue)}`}
-                color="#0891b2"
+                accent="cyan"
               />
               <StatCard
                 label="TOTAL REVENUE"
                 value={formatCurrency(overview?.orders?.totalRevenue)}
-                color="#059669"
+                accent="green"
               />
             </div>
           </div>
@@ -252,55 +215,26 @@ function AdminReportsPage() {
             ==================================================== */}
         {activeTab === "orders" && (
           <div>
-            <h2 style={{ margin: "0 0 16px", fontSize: "16px", fontWeight: 700 }}>
-              Orders by Status
-            </h2>
+            <h2 className="reports-section-title">Orders by Status</h2>
 
             {orderStatus.length === 0 ? (
-              <p style={{ color: "#6b7280" }}>No order data available.</p>
+              <p className="reports-empty">No order data available.</p>
             ) : (
-              <div style={{ overflowX: "auto" }}>
-                <table
-                  style={{
-                    width: "100%",
-                    borderCollapse: "collapse",
-                    fontSize: "14px",
-                    background: "#fff",
-                    border: "1px solid #e5e7eb",
-                    borderRadius: "12px",
-                    overflow: "hidden",
-                  }}
-                >
+              <div className="reports-table-wrap">
+                <table className="reports-table">
                   <thead>
-                    <tr style={{ background: "#f9fafb" }}>
+                    <tr>
                       {["Status", "Orders", "Revenue"].map((h) => (
-                        <th
-                          key={h}
-                          style={{
-                            padding: "12px 20px",
-                            fontSize: "12px",
-                            fontWeight: 700,
-                            color: "#6b7280",
-                            letterSpacing: "0.06em",
-                            borderBottom: "1px solid #e5e7eb",
-                            textAlign: "left",
-                          }}
-                        >
-                          {h}
-                        </th>
+                        <th key={h}>{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {orderStatus.map((row, idx) => (
-                      <tr key={idx} style={{ borderBottom: "1px solid #f3f4f6" }}>
-                        <td style={{ padding: "12px 20px", fontWeight: 600 }}>
-                          {fmtLabel(row?._id || "Unknown")}
-                        </td>
-                        <td style={{ padding: "12px 20px" }}>{row?.count ?? 0}</td>
-                        <td style={{ padding: "12px 20px", fontWeight: 600, color: "#059669" }}>
-                          {formatCurrency(row?.revenue)}
-                        </td>
+                      <tr key={idx}>
+                        <td className="cell-strong">{fmtLabel(row?._id || "Unknown")}</td>
+                        <td>{row?.count ?? 0}</td>
+                        <td className="cell-revenue">{formatCurrency(row?.revenue)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -315,28 +249,15 @@ function AdminReportsPage() {
             ==================================================== */}
         {activeTab === "sales" && (
           <div>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "16px",
-                marginBottom: "24px",
-                flexWrap: "wrap",
-              }}
-            >
-              <h2 style={{ margin: 0, fontSize: "16px", fontWeight: 700 }}>
+            <div className="reports-sales-header">
+              <h2 className="reports-section-title reports-section-title--inline">
                 Monthly Sales
               </h2>
 
               <select
+                className="reports-year-select"
                 value={year}
                 onChange={(e) => setYear(Number(e.target.value))}
-                style={{
-                  padding: "8px 12px",
-                  border: "1px solid #d1d5db",
-                  borderRadius: "8px",
-                  fontSize: "14px",
-                }}
               >
                 {[currentYear - 1, currentYear, currentYear + 1].map((y) => (
                   <option key={y} value={y}>{y}</option>
@@ -345,20 +266,11 @@ function AdminReportsPage() {
             </div>
 
             {monthlySales.length === 0 ? (
-              <p style={{ color: "#6b7280" }}>No sales data for {year}.</p>
+              <p className="reports-empty">No sales data for {year}.</p>
             ) : (
               <div>
                 {/* BAR CHART */}
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "flex-end",
-                    gap: "8px",
-                    height: "160px",
-                    marginBottom: "8px",
-                    padding: "0 4px",
-                  }}
-                >
+                <div className="reports-bar-chart">
                   {MONTHS.map((month, idx) => {
                     const monthNum = idx + 1;
                     const row = monthlySales.find(
@@ -370,76 +282,31 @@ function AdminReportsPage() {
                     return (
                       <div
                         key={month}
-                        style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center" }}
+                        className="reports-bar-column"
                         title={`${month}: ${formatCurrency(revenue)}`}
                       >
                         <div
-                          style={{
-                            width: "100%",
-                            height: `${barHeight}px`,
-                            background: revenue > 0 ? "#2563eb" : "#e5e7eb",
-                            borderRadius: "4px 4px 0 0",
-                            minHeight: "4px",
-                          }}
+                          className={`reports-bar${revenue > 0 ? " has-value" : ""}`}
+                          style={{ height: `${barHeight}px` }}
                         />
                       </div>
                     );
                   })}
                 </div>
 
-                <div
-                  style={{
-                    display: "flex",
-                    gap: "8px",
-                    padding: "0 4px",
-                    marginBottom: "20px",
-                  }}
-                >
+                <div className="reports-bar-labels">
                   {MONTHS.map((m) => (
-                    <div
-                      key={m}
-                      style={{
-                        flex: 1,
-                        textAlign: "center",
-                        fontSize: "10px",
-                        color: "#9ca3af",
-                      }}
-                    >
-                      {m}
-                    </div>
+                    <div key={m} className="reports-bar-label">{m}</div>
                   ))}
                 </div>
 
                 {/* TABLE */}
-                <div style={{ overflowX: "auto" }}>
-                  <table
-                    style={{
-                      width: "100%",
-                      borderCollapse: "collapse",
-                      fontSize: "14px",
-                      background: "#fff",
-                      border: "1px solid #e5e7eb",
-                      borderRadius: "12px",
-                      overflow: "hidden",
-                    }}
-                  >
+                <div className="reports-table-wrap">
+                  <table className="reports-table">
                     <thead>
-                      <tr style={{ background: "#f9fafb" }}>
+                      <tr>
                         {["Month", "Orders", "Revenue"].map((h) => (
-                          <th
-                            key={h}
-                            style={{
-                              padding: "12px 20px",
-                              fontSize: "12px",
-                              fontWeight: 700,
-                              color: "#6b7280",
-                              letterSpacing: "0.06em",
-                              borderBottom: "1px solid #e5e7eb",
-                              textAlign: "left",
-                            }}
-                          >
-                            {h}
-                          </th>
+                          <th key={h}>{h}</th>
                         ))}
                       </tr>
                     </thead>
@@ -447,12 +314,10 @@ function AdminReportsPage() {
                       {monthlySales.map((row, idx) => {
                         const monthName = MONTHS[(row?._id?.month || 1) - 1];
                         return (
-                          <tr key={idx} style={{ borderBottom: "1px solid #f3f4f6" }}>
-                            <td style={{ padding: "12px 20px", fontWeight: 600 }}>{monthName}</td>
-                            <td style={{ padding: "12px 20px" }}>{row?.orders ?? 0}</td>
-                            <td style={{ padding: "12px 20px", fontWeight: 600, color: "#059669" }}>
-                              {formatCurrency(row?.revenue)}
-                            </td>
+                          <tr key={idx}>
+                            <td className="cell-strong">{monthName}</td>
+                            <td>{row?.orders ?? 0}</td>
+                            <td className="cell-revenue">{formatCurrency(row?.revenue)}</td>
                           </tr>
                         );
                       })}
@@ -469,60 +334,27 @@ function AdminReportsPage() {
             ==================================================== */}
         {activeTab === "products" && (
           <div>
-            <h2 style={{ margin: "0 0 16px", fontSize: "16px", fontWeight: 700 }}>
-              Top Products by Quantity Sold
-            </h2>
+            <h2 className="reports-section-title">Top Products by Quantity Sold</h2>
 
             {topProducts.length === 0 ? (
-              <p style={{ color: "#6b7280" }}>No product sales data available.</p>
+              <p className="reports-empty">No product sales data available.</p>
             ) : (
-              <div style={{ overflowX: "auto" }}>
-                <table
-                  style={{
-                    width: "100%",
-                    borderCollapse: "collapse",
-                    fontSize: "14px",
-                    background: "#fff",
-                    border: "1px solid #e5e7eb",
-                    borderRadius: "12px",
-                    overflow: "hidden",
-                  }}
-                >
+              <div className="reports-table-wrap">
+                <table className="reports-table">
                   <thead>
-                    <tr style={{ background: "#f9fafb" }}>
+                    <tr>
                       {["#", "Product ID", "Qty Sold", "Revenue"].map((h) => (
-                        <th
-                          key={h}
-                          style={{
-                            padding: "12px 20px",
-                            fontSize: "12px",
-                            fontWeight: 700,
-                            color: "#6b7280",
-                            letterSpacing: "0.06em",
-                            borderBottom: "1px solid #e5e7eb",
-                            textAlign: "left",
-                          }}
-                        >
-                          {h}
-                        </th>
+                        <th key={h}>{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {topProducts.map((row, idx) => (
-                      <tr key={idx} style={{ borderBottom: "1px solid #f3f4f6" }}>
-                        <td style={{ padding: "12px 20px", color: "#6b7280", fontWeight: 700 }}>
-                          {idx + 1}
-                        </td>
-                        <td style={{ padding: "12px 20px", fontFamily: "monospace", fontSize: "13px" }}>
-                          {row?._id || "—"}
-                        </td>
-                        <td style={{ padding: "12px 20px", fontWeight: 700 }}>
-                          {row?.quantitySold ?? 0}
-                        </td>
-                        <td style={{ padding: "12px 20px", fontWeight: 600, color: "#059669" }}>
-                          {formatCurrency(row?.revenue)}
-                        </td>
+                      <tr key={idx}>
+                        <td className="cell-rank">{idx + 1}</td>
+                        <td className="cell-mono">{row?._id || "—"}</td>
+                        <td className="cell-strong">{row?.quantitySold ?? 0}</td>
+                        <td className="cell-revenue">{formatCurrency(row?.revenue)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -537,73 +369,26 @@ function AdminReportsPage() {
             ==================================================== */}
         {activeTab === "lowstock" && (
           <div>
-            <h2 style={{ margin: "0 0 16px", fontSize: "16px", fontWeight: 700 }}>
+            <h2 className="reports-section-title">
               Low Stock Products
               {lowStock.length > 0 && (
-                <span
-                  style={{
-                    marginLeft: "10px",
-                    background: "#fef2f2",
-                    color: "#dc2626",
-                    border: "1px solid #fecaca",
-                    borderRadius: "999px",
-                    padding: "2px 10px",
-                    fontSize: "13px",
-                    fontWeight: 700,
-                  }}
-                >
-                  {lowStock.length}
-                </span>
+                <span className="reports-count-badge">{lowStock.length}</span>
               )}
             </h2>
 
             {lowStock.length === 0 ? (
-              <div
-                style={{
-                  textAlign: "center",
-                  padding: "40px",
-                  background: "#f0fdf4",
-                  borderRadius: "12px",
-                  color: "#15803d",
-                }}
-              >
-                <div style={{ fontSize: "40px", marginBottom: "12px" }}>✅</div>
-                <h3 style={{ margin: 0, fontWeight: 700 }}>All products are well-stocked!</h3>
+              <div className="reports-allgood">
+                <div className="reports-allgood-icon">✅</div>
+                <h3>All products are well-stocked!</h3>
               </div>
             ) : (
-              <div style={{ overflowX: "auto" }}>
-                <table
-                  style={{
-                    width: "100%",
-                    borderCollapse: "collapse",
-                    fontSize: "14px",
-                    background: "#fff",
-                    border: "1px solid #e5e7eb",
-                    borderRadius: "12px",
-                    overflow: "hidden",
-                  }}
-                >
+              <div className="reports-table-wrap">
+                <table className="reports-table reports-table--danger">
                   <thead>
-                    <tr style={{ background: "#fef2f2" }}>
-                      {["Product", "SKU", "Stock", "Threshold", "Price", "Status"].map(
-                        (h) => (
-                          <th
-                            key={h}
-                            style={{
-                              padding: "12px 16px",
-                              fontSize: "12px",
-                              fontWeight: 700,
-                              color: "#dc2626",
-                              letterSpacing: "0.06em",
-                              borderBottom: "1px solid #fecaca",
-                              textAlign: "left",
-                              whiteSpace: "nowrap",
-                            }}
-                          >
-                            {h}
-                          </th>
-                        )
-                      )}
+                    <tr>
+                      {["Product", "SKU", "Stock", "Threshold", "Price", "Status"].map((h) => (
+                        <th key={h}>{h}</th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody>
@@ -614,40 +399,18 @@ function AdminReportsPage() {
                       const outOfStock = stock === 0;
 
                       return (
-                        <tr key={pId} style={{ borderBottom: "1px solid #f3f4f6" }}>
-                          <td style={{ padding: "12px 16px", fontWeight: 600 }}>
-                            {p?.name || "—"}
-                          </td>
-                          <td style={{ padding: "12px 16px", fontFamily: "monospace", color: "#6b7280" }}>
-                            {p?.sku || "—"}
-                          </td>
-                          <td style={{ padding: "12px 16px" }}>
-                            <span
-                              style={{
-                                fontWeight: 800,
-                                fontSize: "16px",
-                                color: outOfStock ? "#dc2626" : "#d97706",
-                              }}
-                            >
+                        <tr key={pId}>
+                          <td className="cell-strong">{p?.name || "—"}</td>
+                          <td className="cell-mono cell-muted">{p?.sku || "—"}</td>
+                          <td>
+                            <span className={`reports-stock-value${outOfStock ? " out" : " low"}`}>
                               {stock}
                             </span>
                           </td>
-                          <td style={{ padding: "12px 16px", color: "#6b7280" }}>{threshold}</td>
-                          <td style={{ padding: "12px 16px", fontWeight: 600 }}>
-                            {formatCurrency(p?.price)}
-                          </td>
-                          <td style={{ padding: "12px 16px" }}>
-                            <span
-                              style={{
-                                background: outOfStock ? "#fef2f2" : "#fefce8",
-                                color: outOfStock ? "#dc2626" : "#a16207",
-                                border: `1px solid ${outOfStock ? "#fecaca" : "#fef08a"}`,
-                                borderRadius: "999px",
-                                padding: "3px 10px",
-                                fontSize: "12px",
-                                fontWeight: 600,
-                              }}
-                            >
+                          <td className="cell-muted">{threshold}</td>
+                          <td className="cell-strong">{formatCurrency(p?.price)}</td>
+                          <td>
+                            <span className={`reports-status-badge${outOfStock ? " out" : " low"}`}>
                               {outOfStock ? "Out of Stock" : "Low"}
                             </span>
                           </td>
