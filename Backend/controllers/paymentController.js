@@ -10,6 +10,18 @@ const Payment = require("../models/Payment");
 const Order = require("../models/Order");
 
 // ============================================================
+// DEBUG LOGGER
+// Prints only outside production so payment flow logs don't
+// clutter live server logs. No sensitive card/payment secrets
+// were ever logged here — this is purely to reduce noise.
+// ============================================================
+const debugLog = (...args) => {
+  if (process.env.NODE_ENV !== "production") {
+    console.log(...args);
+  }
+};
+
+// ============================================================
 // RAZORPAY
 // ============================================================
 
@@ -149,14 +161,14 @@ const createPaymentOrder = async (
   next
 ) => {
   try {
-    console.log("");
-    console.log(
+    debugLog("");
+    debugLog(
       "================================================"
     );
-    console.log(
+    debugLog(
       "        CREATE RAZORPAY PAYMENT ORDER"
     );
-    console.log(
+    debugLog(
       "================================================"
     );
 
@@ -212,7 +224,7 @@ const createPaymentOrder = async (
     const orderId =
       req.body?.orderId;
 
-    console.log(
+    debugLog(
       "Order ID:",
       orderId
     );
@@ -237,7 +249,7 @@ const createPaymentOrder = async (
       });
 
     if (!order) {
-      console.log(
+      debugLog(
         "Order not found for user:",
         userId
       );
@@ -250,12 +262,12 @@ const createPaymentOrder = async (
       );
     }
 
-    console.log(
+    debugLog(
       "Order found:",
       order._id.toString()
     );
 
-    console.log(
+    debugLog(
       "Order Number:",
       order.orderNumber
     );
@@ -287,7 +299,7 @@ const createPaymentOrder = async (
     const amount =
       getOrderAmount(order);
 
-    console.log(
+    debugLog(
       "Order Amount:",
       amount
     );
@@ -317,7 +329,7 @@ const createPaymentOrder = async (
         amount * 100
       );
 
-    console.log(
+    debugLog(
       "Amount in Paise:",
       amountInPaise
     );
@@ -350,7 +362,7 @@ const createPaymentOrder = async (
         },
       });
 
-    console.log(
+    debugLog(
       "Razorpay Order ID:",
       razorpayOrder.id
     );
@@ -422,12 +434,12 @@ const createPaymentOrder = async (
     // RESPONSE
     // ========================================================
 
-    console.log(
+    debugLog(
       "Payment record:",
       payment._id.toString()
     );
 
-    console.log(
+    debugLog(
       "================================================"
     );
 
@@ -510,14 +522,14 @@ const verifyPayment = async (
   next
 ) => {
   try {
-    console.log("");
-    console.log(
+    debugLog("");
+    debugLog(
       "================================================"
     );
-    console.log(
+    debugLog(
       "          VERIFY RAZORPAY PAYMENT"
     );
-    console.log(
+    debugLog(
       "================================================"
     );
 
@@ -569,12 +581,12 @@ const verifyPayment = async (
       req.body?.razorpay_signature ||
       req.body?.razorpaySignature;
 
-    console.log(
+    debugLog(
       "Razorpay Order ID:",
       razorpayOrderId
     );
 
-    console.log(
+    debugLog(
       "Razorpay Payment ID:",
       razorpayPaymentId
     );
@@ -1032,16 +1044,16 @@ const verifyPayment = async (
     // SUCCESS RESPONSE
     // ========================================================
 
-    console.log(
+    debugLog(
       "Payment successfully verified"
     );
 
-    console.log(
+    debugLog(
       "Order:",
       order._id.toString()
     );
 
-    console.log(
+    debugLog(
       "================================================"
     );
 

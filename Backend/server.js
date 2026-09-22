@@ -7,6 +7,8 @@ const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const dotenv = require("dotenv");
+const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
 
 // Load environment variables before importing application modules.
 // Some modules (for example Cloudinary configuration) read these values
@@ -124,6 +126,38 @@ app.use(
     credentials: true,
   })
 );
+
+app.use(helmet());
+
+// General API rate limiter — protects all routes from abuse.
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 300, // requests per IP per window
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: "Too many requests, please try again later." },
+});
+app.use("/api", generalLimiter);
+
+// Stricter limiter for auth routes — mitigates brute-force login/signup attempts.
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: "Too many auth attempts, please try again later." },
+});
+app.use("/api/auth", authLimiter);
+
+// Stricter limiter for payment routes — mitigates abuse of order/verification endpoints.
+const paymentLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 50,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: "Too many payment requests, please try again later." },
+});
+app.use("/api/payments", paymentLimiter);
 
 // ============================================================
 // HEALTH CHECK
