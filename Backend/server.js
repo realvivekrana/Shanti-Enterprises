@@ -95,6 +95,14 @@ const {
 
 const app = express();
 
+// Render / Vercel proxy ke peeche real client IP (rate limiter ke liye) chahiye.
+// Direct Render URL = 1 proxy hop. Agar Vercel rewrite ke through /api proxy
+// karte ho to TRUST_PROXY=2 set karo.
+app.set(
+  "trust proxy",
+  Number(process.env.TRUST_PROXY) || 1
+);
+
 const PORT = process.env.PORT || 5000;
 
 const FRONTEND_URL =
@@ -105,10 +113,16 @@ const FRONTEND_URL =
 // CORS
 // ============================================================
 
+// FRONTEND_URL comma-separated ho sakta hai:
+// https://shanti.com,https://www.shanti.com
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:3000",
-  process.env.FRONTEND_URL,
+  ...(process.env.FRONTEND_URL || "")
+    .split(",")
+    .map((item) =>
+      item.trim().replace(/\/+$/, "")
+    ),
 ].filter(Boolean);
 
 app.use(
@@ -124,11 +138,13 @@ app.use(
         return callback(null, true);
       }
 
-      return callback(
-        new Error(
-          `CORS blocked for origin: ${origin}`
-        )
+      const corsError = new Error(
+        `CORS blocked for origin: ${origin}`
       );
+
+      corsError.statusCode = 403;
+
+      return callback(corsError);
     },
 
     credentials: true,

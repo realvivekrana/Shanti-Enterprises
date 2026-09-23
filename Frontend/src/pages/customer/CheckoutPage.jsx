@@ -679,8 +679,7 @@ const CheckoutPage = () => {
         paymentData?.keyId ||
         responseData?.keyId ||
         import.meta.env
-          ?.VITE_RAZORPAY_KEY_ID ||
-        "rzp_test_TQ87uv6EO8OzPI";
+          ?.VITE_RAZORPAY_KEY_ID;
 
       if (!razorpayOrderId) {
         console.error(
@@ -804,8 +803,7 @@ const CheckoutPage = () => {
       const razorpayKey =
         razorpayOrder.keyId ||
         import.meta.env
-          ?.VITE_RAZORPAY_KEY_ID ||
-        "rzp_test_TQ87uv6EO8OzPI";
+          ?.VITE_RAZORPAY_KEY_ID;
 
       const options = {
         key:
