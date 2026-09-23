@@ -188,7 +188,12 @@ html {
 html,
 body {
   min-height: 100%;
-  overflow-x: hidden;
+  /* overflow-x: hidden html+body dono pe lagane se body ek scroll
+     container ban jaata tha aur position: sticky (site header, dashboard
+     sidebar) kaam karna band kar deta tha. `clip` wahi horizontal
+     clipping deta hai bina scroll container banaye. */
+  overflow-x: hidden; /* purane browsers ke liye fallback */
+  overflow-x: clip;
   width: 100%;
 }
 
@@ -1162,6 +1167,7 @@ strong {
 
   body {
     overflow-x: hidden;
+    overflow-x: clip;
   }
 
   h1 {

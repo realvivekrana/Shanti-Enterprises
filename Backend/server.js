@@ -233,6 +233,10 @@ const authLimiter = rateLimit({
 
   max: 20,
 
+  // Sirf FAILED login/register attempts count hote hain
+  // (brute-force protection). Successful login count nahi hota.
+  skipSuccessfulRequests: true,
+
   standardHeaders: true,
 
   legacyHeaders: false,
@@ -244,8 +248,15 @@ const authLimiter = rateLimit({
   },
 });
 
-app.use(
-  "/api/auth",
+// IMPORTANT: limiter sirf login/register pe lagta hai.
+// Pehle poore /api/auth pe tha, to har page refresh pe chalne wala
+// GET /api/auth/me bhi count hota tha — 20 refresh ke baad /me 429
+// deta tha aur user achanak logged-out dikhta tha.
+app.post(
+  [
+    "/api/auth/login",
+    "/api/auth/register",
+  ],
   authLimiter
 );
 

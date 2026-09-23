@@ -9,6 +9,19 @@
    01. HEADER SHELL
    ============================================================ */
 
+/* Header ki real height — dashboard sidebar/topbar iske neeche stick hote hain */
+:root {
+  --site-header-h: 70px;
+}
+
+@media (min-width: 640px) {
+  :root { --site-header-h: 76px; }
+}
+
+@media (min-width: 1024px) {
+  :root { --site-header-h: 80px; }
+}
+
 .site-header {
   position: sticky;
   top: 0;
@@ -753,6 +766,19 @@
     font-size: 1.04rem;
   }
 
+}
+
+
+/* ============================================================
+   22. DESKTOP — 1024px+
+   ============================================================ */
+
+@media (min-width: 1024px) {
+  .header-container {
+    min-height: 76px;
+    padding-inline: var(--container-padding);
+  }
+
   .header-desktop-nav {
     display: flex;
   }
@@ -767,18 +793,6 @@
 
   .header-mobile-menu {
     display: none;
-  }
-}
-
-
-/* ============================================================
-   22. DESKTOP — 1024px+
-   ============================================================ */
-
-@media (min-width: 1024px) {
-  .header-container {
-    min-height: 76px;
-    padding-inline: var(--container-padding);
   }
 
   .header-desktop-nav {

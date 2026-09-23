@@ -83,9 +83,12 @@ export function AuthProvider({ children }) {
   // LOGIN
   // ==========================================================
 
+  // loginType: "admin" | "customer" (kaunse login page se aaya).
+  // Backend isse check karta hai taaki galat portal pe cookie set na ho.
   const login = async (
     email,
-    password
+    password,
+    loginType
   ) => {
     try {
       setLoading(true);
@@ -97,6 +100,7 @@ export function AuthProvider({ children }) {
           {
             email,
             password,
+            loginType,
           }
         );
 

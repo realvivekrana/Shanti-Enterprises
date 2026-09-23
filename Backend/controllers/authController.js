@@ -228,6 +228,7 @@ const login = async (
     const {
       email,
       password,
+      loginType,
     } = req.body;
 
     // --------------------------------------------------------
@@ -327,6 +328,43 @@ const login = async (
     }
 
     // --------------------------------------------------------
+    // PORTAL CHECK (admin login vs customer login)
+    // --------------------------------------------------------
+    // Password sahi hone ke BAAD check hota hai (taaki role leak na
+    // ho) aur cookie set karne se PEHLE (taaki galat portal pe
+    // session bane hi nahi).
+    // loginType optional hai — na aaye to purana behaviour rahega.
+    // --------------------------------------------------------
+
+    if (
+      loginType === "admin" &&
+      user.role !== "admin"
+    ) {
+      const error =
+        new Error(
+          "This account is not an admin account. Please use Customer Login."
+        );
+
+      error.statusCode = 403;
+
+      return next(error);
+    }
+
+    if (
+      loginType === "customer" &&
+      user.role === "admin"
+    ) {
+      const error =
+        new Error(
+          "This is an admin account. Please use Admin Login."
+        );
+
+      error.statusCode = 403;
+
+      return next(error);
+    }
+
+    // --------------------------------------------------------
     // CREATE TOKEN
     // --------------------------------------------------------
 
@@ -347,6 +385,11 @@ const login = async (
     // --------------------------------------------------------
     // SUCCESS RESPONSE
     // --------------------------------------------------------
+
+    res.set(
+      "Cache-Control",
+      "no-store"
+    );
 
     return res
       .status(200)
@@ -448,6 +491,11 @@ const getCurrentUser =
 
         return next(error);
       }
+
+      res.set(
+        "Cache-Control",
+        "no-store"
+      );
 
       return res
         .status(200)

@@ -318,6 +318,7 @@ function LoginPage() {
     user,
     loading: authLoading,
     login,
+    logout,
     error: authError,
     clearError,
   } = useAuth();
@@ -327,10 +328,12 @@ function LoginPage() {
   // STATE
   // ==========================================================
 
-  const [
-    loginType,
-    setLoginType,
-  ] = useState("customer");
+  // loginType URL se nikalta hai (state nahi) taaki pehle render se hi
+  // sahi rahe: /admin/login => admin, baaki sab => customer.
+  const loginType =
+    location.pathname === "/admin/login"
+      ? "admin"
+      : "customer";
 
 
   const [
@@ -370,32 +373,29 @@ function LoginPage() {
 
 
   // ==========================================================
-  // DETECT ADMIN URL
+  // EXISTING SESSION vs LOGIN PORTAL
   // ==========================================================
+  // Browser mein sirf ek hi auth cookie ("token") hoti hai, isliye
+  // ek time pe ek hi user (admin YA customer) logged in reh sakta hai.
+  //
+  // Pehle yahan role dekhe bina redirect hota tha: agar admin
+  // pehle se logged in tha to customer login page khulte hi
+  // seedha /admin khul jaata tha. Ab:
+  //   - session portal se match kare  => apne dashboard pe bhejo
+  //   - session portal se match na kare => redirect NAHI, notice dikhao
+  //     ("Sign out & switch" button ke saath)
 
-  useEffect(() => {
+  const sessionMatchesPortal =
+    Boolean(user) &&
+    (loginType === "admin"
+      ? user.role === "admin"
+      : user.role !== "admin");
 
-    setLoginType(
-      location.pathname === "/admin/login"
-        ? "admin"
-        : "customer"
-    );
+  const hasPortalMismatch =
+    Boolean(user) &&
+    !sessionMatchesPortal;
 
-  }, [location.pathname]);
-
-
-  // ==========================================================
-  // REDIRECT ALREADY LOGGED IN USER
-  // ==========================================================
-
-  // Redirect already logged-in users.
-  // If the user was sent to login from a protected page,
-  // keep that destination instead of always sending them to /orders.
-  useEffect(() => {
-    if (!user) {
-      return;
-    }
-
+  const getSafeRedirect = () => {
     const fromLocation = location.state?.from;
 
     const redirectPath =
@@ -405,23 +405,38 @@ function LoginPage() {
           ? `${fromLocation.pathname}${fromLocation.search || ""}${fromLocation.hash || ""}`
           : "";
 
-    const safeRedirect =
-      redirectPath &&
-      redirectPath !== "/login" &&
-      redirectPath !== "/admin/login"
-        ? redirectPath
-        : "";
+    if (
+      !redirectPath ||
+      redirectPath === "/login" ||
+      redirectPath === "/admin/login"
+    ) {
+      return "";
+    }
+
+    return redirectPath;
+  };
+
+  const getDashboardPath = (role) =>
+    role === "admin"
+      ? "/admin"
+      : getSafeRedirect() || "/dashboard";
+
+  useEffect(() => {
+    if (!user || submitting || !sessionMatchesPortal) {
+      return;
+    }
 
     navigate(
-      user.role === "admin"
-        ? "/admin"
-        : safeRedirect || "/orders",
+      getDashboardPath(user.role),
       {
         replace: true,
       }
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     user,
+    submitting,
+    sessionMatchesPortal,
     navigate,
     location.state,
   ]);
@@ -469,8 +484,6 @@ function LoginPage() {
 
   const switchType = (type) => {
 
-    setLoginType(type);
-
     setLocalError("");
 
     if (clearError) {
@@ -486,6 +499,36 @@ function LoginPage() {
       }
     );
 
+  };
+
+
+  // ==========================================================
+  // SESSION NOTICE ACTIONS
+  // ==========================================================
+
+  const handleGoToMyDashboard = () => {
+    if (!user) {
+      return;
+    }
+
+    navigate(
+      user.role === "admin"
+        ? "/admin"
+        : "/dashboard",
+      {
+        replace: true,
+      }
+    );
+  };
+
+  const handleSwitchAccount = async () => {
+    setLocalError("");
+
+    if (clearError) {
+      clearError();
+    }
+
+    await logout();
   };
 
 
@@ -546,7 +589,8 @@ function LoginPage() {
       const response =
         await login(
           cleanEmail,
-          password
+          password,
+          loginType
         );
 
 
@@ -567,13 +611,19 @@ function LoginPage() {
       // ADMIN VALIDATION
       // ------------------------------------------------------
 
+      // (Naya backend ye check khud karta hai aur cookie set hi nahi
+      // karta. Ye sirf purane backend ke liye safety net hai: agar
+      // galat portal pe login ho gaya to session turant hata do.)
+
       if (
         loginType === "admin" &&
         loggedInUser.role !== "admin"
       ) {
 
+        await logout();
+
         setLocalError(
-          "This account is not an admin account."
+          "This account is not an admin account. Please use Customer Login."
         );
 
         return;
@@ -590,8 +640,10 @@ function LoginPage() {
         loggedInUser.role === "admin"
       ) {
 
+        await logout();
+
         setLocalError(
-          "Please use Admin Login for this account."
+          "This is an admin account. Please use Admin Login."
         );
 
         return;
@@ -623,28 +675,10 @@ function LoginPage() {
       // REDIRECT
       // ------------------------------------------------------
 
-      // Return the customer to the protected page that originally
-      // triggered the login redirect (for example /payment/:orderId).
-      const fromLocation = location.state?.from;
-
-      const redirectPath =
-        typeof fromLocation === "string"
-          ? fromLocation
-          : fromLocation?.pathname
-            ? `${fromLocation.pathname}${fromLocation.search || ""}${fromLocation.hash || ""}`
-            : "";
-
-      const safeRedirect =
-        redirectPath &&
-        redirectPath !== "/login" &&
-        redirectPath !== "/admin/login"
-          ? redirectPath
-          : "";
-
+      // Customer ko wahi protected page wapas milta hai jahan se
+      // login redirect hua tha, warna uska /dashboard.
       navigate(
-        loggedInUser.role === "admin"
-          ? "/admin"
-          : safeRedirect || "/orders",
+        getDashboardPath(loggedInUser.role),
         {
           replace: true,
         }
@@ -963,6 +997,56 @@ function LoginPage() {
                     Use your administrator
                     credentials to sign in.
                   </p>
+
+                </div>
+
+              )}
+
+
+              {/* =================================================
+                  ALREADY SIGNED IN (DIFFERENT PORTAL)
+                  ================================================= */}
+
+              {hasPortalMismatch && (
+
+                <div
+                  className="login-session-notice"
+                  role="status"
+                >
+
+                  <p>
+                    <strong>
+                      You are already signed in as{" "}
+                      {user.role === "admin"
+                        ? "an admin"
+                        : "a customer"}
+                    </strong>{" "}
+                    ({user.email}).{" "}
+                    {loginType === "admin"
+                      ? "To use the admin login, sign out of this customer account first."
+                      : "To use the customer login, sign out of this admin account first."}
+                  </p>
+
+                  <div className="login-session-actions">
+
+                    <button
+                      type="button"
+                      className="login-session-btn login-session-btn-primary"
+                      onClick={handleSwitchAccount}
+                      disabled={authLoading}
+                    >
+                      Sign out &amp; switch
+                    </button>
+
+                    <button
+                      type="button"
+                      className="login-session-btn"
+                      onClick={handleGoToMyDashboard}
+                    >
+                      Go to my dashboard
+                    </button>
+
+                  </div>
 
                 </div>
 
