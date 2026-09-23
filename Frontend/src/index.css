@@ -188,6 +188,8 @@ html {
 html,
 body {
   min-height: 100%;
+  overflow-x: hidden;
+  width: 100%;
 }
 
 body {

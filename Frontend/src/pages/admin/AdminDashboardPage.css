@@ -376,8 +376,14 @@
   .adm-stats { grid-template-columns: repeat(2,1fr); gap: 10px; }
   .adm-nav-grid { grid-template-columns: 1fr; }
   .adm-quick-grid { grid-template-columns: repeat(2,1fr); }
+  .adm-order-status-grid { grid-template-columns: repeat(2,1fr); gap: 10px; }
   .adm-hero-inner { flex-direction: column; align-items: flex-start; }
   .adm-hero-actions { width: 100%; }
+}
+
+@media (max-width: 400px) {
+  .adm-stats { grid-template-columns: 1fr; }
+  .adm-order-status-grid { grid-template-columns: 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce) {
