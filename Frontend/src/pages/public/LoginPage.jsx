@@ -450,6 +450,20 @@ function LoginPage() {
 
 
   // ==========================================================
+  // CLEAR STALE AUTH ERROR (e.g. from Register page)
+  // ==========================================================
+
+  useEffect(() => {
+
+    if (clearError) {
+      clearError();
+    }
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+
+  // ==========================================================
   // SWITCH LOGIN TYPE
   // ==========================================================
 
