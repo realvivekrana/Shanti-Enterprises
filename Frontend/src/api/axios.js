@@ -9,9 +9,20 @@ import axios from "axios";
 // API BASE URL
 // ============================================================
 
-const API_URL =
+// VITE_API_URL mein "/api" na bhi likha ho to yahan khud add ho jaata hai.
+// Trailing slash bhi hata diya jaata hai.
+const normalizeApiUrl = (url) => {
+  const clean = String(url).trim().replace(/\/+$/, "");
+
+  return clean.endsWith("/api")
+    ? clean
+    : `${clean}/api`;
+};
+
+const API_URL = normalizeApiUrl(
   import.meta.env.VITE_API_URL ||
-  "http://localhost:5000/api";
+    "http://localhost:5000/api"
+);
 
 // ============================================================
 // AXIOS INSTANCE
