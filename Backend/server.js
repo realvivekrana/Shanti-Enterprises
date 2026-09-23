@@ -10,9 +10,10 @@ const dotenv = require("dotenv");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 
-// Load environment variables before importing application modules.
-// Some modules (for example Cloudinary configuration) read these values
-// as soon as they are imported.
+// ============================================================
+// LOAD ENVIRONMENT VARIABLES
+// ============================================================
+
 dotenv.config();
 
 const connectDatabase = require("./config/db");
@@ -94,15 +95,71 @@ const {
 
 const app = express();
 
-const PORT =
-  process.env.PORT || 5000;
+const PORT = process.env.PORT || 5000;
 
 const FRONTEND_URL =
   process.env.FRONTEND_URL ||
   "http://localhost:5173";
 
 // ============================================================
-// GLOBAL MIDDLEWARE
+// CORS
+// ============================================================
+
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:3000",
+  process.env.FRONTEND_URL,
+].filter(Boolean);
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests without Origin header
+      // such as Postman/server-to-server requests.
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(
+        new Error(
+          `CORS blocked for origin: ${origin}`
+        )
+      );
+    },
+
+    credentials: true,
+
+    methods: [
+      "GET",
+      "POST",
+      "PUT",
+      "PATCH",
+      "DELETE",
+      "OPTIONS",
+    ],
+
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Requested-With",
+    ],
+  })
+);
+
+// ============================================================
+// SECURITY
+// ============================================================
+
+app.use(
+  helmet()
+);
+
+// ============================================================
+// BODY PARSERS
 // ============================================================
 
 app.use(
@@ -118,46 +175,88 @@ app.use(
   })
 );
 
-app.use(cookieParser());
+// ============================================================
+// COOKIE PARSER
+// ============================================================
 
 app.use(
-  cors({
-    origin: FRONTEND_URL,
-    credentials: true,
-  })
+  cookieParser()
 );
 
-app.use(helmet());
+// ============================================================
+// GENERAL API RATE LIMITER
+// ============================================================
 
-// General API rate limiter — protects all routes from abuse.
 const generalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 300, // requests per IP per window
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { success: false, message: "Too many requests, please try again later." },
-});
-app.use("/api", generalLimiter);
+  windowMs: 15 * 60 * 1000,
 
-// Stricter limiter for auth routes — mitigates brute-force login/signup attempts.
+  max: 300,
+
+  standardHeaders: true,
+
+  legacyHeaders: false,
+
+  message: {
+    success: false,
+    message:
+      "Too many requests, please try again later.",
+  },
+});
+
+app.use(
+  "/api",
+  generalLimiter
+);
+
+// ============================================================
+// AUTH RATE LIMITER
+// ============================================================
+
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 20,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { success: false, message: "Too many auth attempts, please try again later." },
-});
-app.use("/api/auth", authLimiter);
 
-// Stricter limiter for payment routes — mitigates abuse of order/verification endpoints.
+  max: 20,
+
+  standardHeaders: true,
+
+  legacyHeaders: false,
+
+  message: {
+    success: false,
+    message:
+      "Too many auth attempts, please try again later.",
+  },
+});
+
+app.use(
+  "/api/auth",
+  authLimiter
+);
+
+// ============================================================
+// PAYMENT RATE LIMITER
+// ============================================================
+
 const paymentLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
+
   max: 50,
+
   standardHeaders: true,
+
   legacyHeaders: false,
-  message: { success: false, message: "Too many payment requests, please try again later." },
+
+  message: {
+    success: false,
+    message:
+      "Too many payment requests, please try again later.",
+  },
 });
-app.use("/api/payments", paymentLimiter);
+
+app.use(
+  "/api/payments",
+  paymentLimiter
+);
 
 // ============================================================
 // HEALTH CHECK
@@ -168,11 +267,16 @@ app.get(
   (req, res) => {
     res.status(200).json({
       success: true,
+
       message:
         "Shanti Enterprises API is running",
+
       environment:
         process.env.NODE_ENV ||
         "development",
+
+      timestamp:
+        new Date().toISOString(),
     });
   }
 );
@@ -186,8 +290,10 @@ app.get(
   (req, res) => {
     res.status(200).json({
       success: true,
+
       message:
         "Welcome to Shanti Enterprises API",
+
       version: "1.0.0",
     });
   }
@@ -340,12 +446,6 @@ app.use(
 // ============================================================
 // IMAGE UPLOAD
 // ============================================================
-// Frontend calls:
-// POST /api/upload/image
-//
-// Therefore uploadRoutes is mounted at:
-// /api/upload
-// ============================================================
 
 app.use(
   "/api/upload",
@@ -434,7 +534,7 @@ app.use(
 );
 
 // ============================================================
-// 404 ROUTE
+// 404
 // ============================================================
 
 app.use(
@@ -459,17 +559,15 @@ const startServer = async () => {
 
     app.listen(
       PORT,
+      "0.0.0.0",
       () => {
         console.log("");
-
         console.log(
           "================================================"
         );
-
         console.log(
           "        SHANTI ENTERPRISES API SERVER"
         );
-
         console.log(
           "================================================"
         );
@@ -486,111 +584,15 @@ const startServer = async () => {
         );
 
         console.log(
-          `API         : http://localhost:${PORT}/api`
+          `Frontend    : ${FRONTEND_URL}`
         );
 
         console.log(
-          `Health      : http://localhost:${PORT}/api/health`
+          `Health      : /api/health`
         );
 
         console.log(
-          `Auth        : http://localhost:${PORT}/api/auth`
-        );
-
-        console.log(
-          `Products    : http://localhost:${PORT}/api/products`
-        );
-
-        console.log(
-          `Categories  : http://localhost:${PORT}/api/categories`
-        );
-
-        console.log(
-          `Cart        : http://localhost:${PORT}/api/cart`
-        );
-
-        console.log(
-          `Orders      : http://localhost:${PORT}/api/orders`
-        );
-
-        console.log(
-          `RFQs        : http://localhost:${PORT}/api/rfqs`
-        );
-
-        console.log(
-          `Quotations  : http://localhost:${PORT}/api/quotations`
-        );
-
-        console.log(
-          `Wishlist    : http://localhost:${PORT}/api/wishlist`
-        );
-
-        console.log(
-          `Profile     : http://localhost:${PORT}/api/profile`
-        );
-
-        console.log(
-          `Addresses   : http://localhost:${PORT}/api/addresses`
-        );
-
-        console.log(
-          `Notifications : http://localhost:${PORT}/api/notifications`
-        );
-
-        console.log(
-          `Bulk Quotes : http://localhost:${PORT}/api/bulk-quotes`
-        );
-
-        console.log(
-          `Payments    : http://localhost:${PORT}/api/payments`
-        );
-
-        console.log(
-          `Invoices    : http://localhost:${PORT}/api/invoices`
-        );
-
-        console.log(
-          `Shipments   : http://localhost:${PORT}/api/shipments`
-        );
-
-        console.log(
-          `Returns     : http://localhost:${PORT}/api/returns`
-        );
-
-        console.log(
-          `Admin       : http://localhost:${PORT}/api/admin/dashboard`
-        );
-
-        console.log(
-          `Admin Products : http://localhost:${PORT}/api/admin/products`
-        );
-
-        console.log(
-          `Admin Orders : http://localhost:${PORT}/api/admin/orders`
-        );
-
-        console.log(
-          `Admin RFQs : http://localhost:${PORT}/api/admin/rfqs`
-        );
-
-        console.log(
-          `Admin Quotations : http://localhost:${PORT}/api/admin/quotations`
-        );
-
-        console.log(
-          `Admin Customers : http://localhost:${PORT}/api/admin/customers`
-        );
-
-        console.log(
-          `Admin Inventory : http://localhost:${PORT}/api/admin/inventory`
-        );
-
-        console.log(
-          `Admin Shipments : http://localhost:${PORT}/api/admin/shipments`
-        );
-
-        console.log(
-          `Admin Reports : http://localhost:${PORT}/api/admin/reports`
+          `API         : /api`
         );
 
         console.log(
@@ -605,7 +607,11 @@ const startServer = async () => {
       "Server was not started because MongoDB is unavailable."
     );
 
-    process.exitCode = 1;
+    console.error(
+      error.message
+    );
+
+    process.exit(1);
   }
 };
 
