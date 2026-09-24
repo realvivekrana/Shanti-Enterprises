@@ -201,6 +201,13 @@ export function AuthProvider({ children }) {
     } finally {
       setUser(null);
       setLoading(false);
+
+      // Cart browser (localStorage) mein hota hai, user-specific
+      // nahi. Logout par clear karo taaki isi browser par login
+      // karne wale agle user ko purana cart na dikhe.
+      window.dispatchEvent(
+        new Event("auth:logout")
+      );
     }
   };
 

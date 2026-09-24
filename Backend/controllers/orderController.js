@@ -11,6 +11,7 @@ const Order = require("../models/Order");
 const Product = require("../models/Product");
 const Cart = require("../models/Cart");
 const Quotation = require("../models/Quotation");
+const BulkQuote = require("../models/BulkQuote");
 
 // ============================================================
 // HELPERS
@@ -1011,6 +1012,547 @@ const createOrderFromQuotation =
   };
 
 // ============================================================
+// CREATE ORDER FROM ACCEPTED BULK QUOTE
+// ============================================================
+
+const createOrderFromBulkQuote =
+  async (
+    req,
+    res
+  ) => {
+    try {
+      const userId =
+        req.user?._id;
+
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          message:
+            "Authentication required.",
+        });
+      }
+
+      // ======================================================
+      // REQUEST DATA
+      // ======================================================
+
+      const {
+        bulkQuoteId,
+        shippingAddress,
+        paymentMethod = "razorpay",
+      } = req.body;
+
+      // ======================================================
+      // VALIDATE BULK QUOTE ID
+      // ======================================================
+
+      if (
+        !bulkQuoteId ||
+        !mongoose.Types.ObjectId.isValid(
+          bulkQuoteId
+        )
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Valid bulk quote ID is required.",
+        });
+      }
+
+      // ======================================================
+      // VALIDATE PAYMENT METHOD
+      // ======================================================
+
+      const normalizedPaymentMethod =
+        String(
+          paymentMethod ||
+            "razorpay"
+        )
+          .trim()
+          .toLowerCase();
+
+      if (
+        ![
+          "razorpay",
+          "cod",
+        ].includes(
+          normalizedPaymentMethod
+        )
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Invalid payment method.",
+        });
+      }
+
+      // ======================================================
+      // VALIDATE SHIPPING ADDRESS
+      // ======================================================
+
+      if (
+        !shippingAddress ||
+        !shippingAddress.name ||
+        !shippingAddress.phone ||
+        !shippingAddress.addressLine1 ||
+        !shippingAddress.city ||
+        !shippingAddress.state ||
+        !shippingAddress.postalCode
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Complete shipping address is required.",
+        });
+      }
+
+      // ======================================================
+      // FIND ACCEPTED BULK QUOTE
+      // ======================================================
+
+      const bulkQuote =
+        await BulkQuote.findOne({
+          _id: bulkQuoteId,
+          user: userId,
+        }).populate(
+          "items.product"
+        );
+
+      if (!bulkQuote) {
+        return res.status(404).json({
+          success: false,
+          message:
+            "Bulk quote not found.",
+        });
+      }
+
+      // ======================================================
+      // ONLY ACCEPTED BULK QUOTES
+      // ======================================================
+
+      if (
+        bulkQuote.status !==
+        "accepted"
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Only accepted bulk quotes can be converted into orders.",
+        });
+      }
+
+      // ======================================================
+      // CHECK BULK QUOTE EXPIRY
+      // ======================================================
+
+      if (
+        bulkQuote.validUntil &&
+        new Date() >
+          bulkQuote.validUntil
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "This bulk quote has expired.",
+        });
+      }
+
+      // ======================================================
+      // CHECK EXISTING ORDER
+      // ======================================================
+
+      const existingOrder =
+        await Order.findOne({
+          bulkQuote:
+            bulkQuote._id,
+          user: userId,
+        });
+
+      if (existingOrder) {
+        return res.status(409).json({
+          success: false,
+          message:
+            "An order has already been created from this bulk quote.",
+          order:
+            existingOrder,
+        });
+      }
+
+      // ======================================================
+      // VALIDATE BULK QUOTE ITEMS
+      // ======================================================
+
+      if (
+        !Array.isArray(
+          bulkQuote.items
+        ) ||
+        bulkQuote.items.length ===
+          0
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Bulk quote does not contain any items.",
+        });
+      }
+
+      // ======================================================
+      // PREPARE WHOLESALE ORDER ITEMS
+      // ======================================================
+
+      const orderItems = [];
+
+      let calculatedSubtotal =
+        0;
+
+      // ======================================================
+      // PROCESS BULK QUOTE ITEMS
+      // ======================================================
+
+      for (
+        const quoteItem of
+          bulkQuote.items
+      ) {
+        const product =
+          quoteItem.product;
+
+        if (!product) {
+          return res.status(404).json({
+            success: false,
+            message:
+              `Product for ${quoteItem.productName} was not found.`,
+          });
+        }
+
+        // ----------------------------------------------------
+        // MINIMUM ORDER QUANTITY CHECK
+        // ----------------------------------------------------
+
+        const minimumOrderQuantity =
+          Math.max(
+            1,
+            Number(
+              product.moq ??
+                product.minimumOrderQuantity ??
+                product.minOrderQuantity ??
+                1
+            ) || 1
+          );
+
+        const quantity =
+          Number(
+            quoteItem.quantity
+          );
+
+        if (
+          !Number.isInteger(
+            quantity
+          ) ||
+          quantity < 1
+        ) {
+          return res.status(400).json({
+            success: false,
+            message:
+              `Invalid quantity for ${quoteItem.productName}.`,
+          });
+        }
+
+        if (
+          quantity <
+          minimumOrderQuantity
+        ) {
+          return res.status(400).json({
+            success: false,
+            message:
+              `${product.name} has a minimum order quantity of ${minimumOrderQuantity}.`,
+          });
+        }
+
+        // ----------------------------------------------------
+        // STOCK CHECK
+        // ----------------------------------------------------
+
+        const availableStock =
+          Number(
+            product.stock ??
+              product.inventory ??
+              product.quantity ??
+              0
+          );
+
+        if (
+          availableStock <
+          quantity
+        ) {
+          return res.status(400).json({
+            success: false,
+            message:
+              `${product.name} does not have enough stock.`,
+          });
+        }
+
+        // ----------------------------------------------------
+        // IMPORTANT:
+        // USE ADMIN-QUOTED PRICE
+        // NOT NORMAL PRODUCT PRICE
+        // ----------------------------------------------------
+
+        const unitPrice =
+          Number(
+            quoteItem.quotedPrice
+          );
+
+        if (
+          !Number.isFinite(
+            unitPrice
+          ) ||
+          unitPrice < 0
+        ) {
+          return res.status(400).json({
+            success: false,
+            message:
+              `Invalid quoted price for ${quoteItem.productName}.`,
+          });
+        }
+
+        const itemTotal =
+          unitPrice *
+          quantity;
+
+        calculatedSubtotal +=
+          itemTotal;
+
+        orderItems.push({
+          product:
+            product._id,
+
+          name:
+            quoteItem.productName ||
+            product.name ||
+            "Product",
+
+          image:
+            product.images?.[0] ||
+            product.image ||
+            "",
+
+          quantity,
+
+          // --------------------------------------------------
+          // AGREED WHOLESALE PRICE
+          // --------------------------------------------------
+
+          price:
+            unitPrice,
+
+          unit:
+            quoteItem.unit ||
+            product.unit ||
+            "piece",
+        });
+      }
+
+      // ======================================================
+      // CALCULATE TOTAL
+      // ======================================================
+
+      const totalAmount =
+        calculatedSubtotal;
+
+      // ======================================================
+      // VERIFY BULK QUOTE TOTAL
+      // ======================================================
+
+      if (
+        Number(
+          bulkQuote.totalAmount
+        ) !==
+        totalAmount
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Bulk quote total does not match its item prices.",
+        });
+      }
+
+      // ======================================================
+      // ORDER STATUS
+      // ======================================================
+
+      const orderStatus =
+        normalizedPaymentMethod ===
+        "cod"
+          ? "confirmed"
+          : "pending";
+
+      // ======================================================
+      // CREATE WHOLESALE ORDER
+      // ======================================================
+
+      const order =
+        await Order.create({
+          orderNumber:
+            generateOrderNumber(),
+
+          user: userId,
+
+          // --------------------------------------------------
+          // WHOLESALE REFERENCE
+          // --------------------------------------------------
+
+          bulkQuote:
+            bulkQuote._id,
+
+          items:
+            orderItems,
+
+          shippingAddress: {
+            name:
+              shippingAddress.name.trim(),
+
+            phone:
+              shippingAddress.phone.trim(),
+
+            addressLine1:
+              shippingAddress.addressLine1.trim(),
+
+            addressLine2:
+              shippingAddress.addressLine2 ||
+              "",
+
+            city:
+              shippingAddress.city.trim(),
+
+            state:
+              shippingAddress.state.trim(),
+
+            postalCode:
+              shippingAddress.postalCode.trim(),
+
+            country:
+              shippingAddress.country ||
+              "India",
+          },
+
+          subtotal:
+            calculatedSubtotal,
+
+          totalAmount,
+
+          paymentMethod:
+            normalizedPaymentMethod,
+
+          paymentStatus:
+            "pending",
+
+          orderStatus,
+        });
+
+      // ======================================================
+      // REDUCE STOCK
+      // ======================================================
+
+      for (
+        const item of orderItems
+      ) {
+        const product =
+          await Product.findById(
+            item.product
+          );
+
+        if (!product) {
+          continue;
+        }
+
+        const currentStock =
+          Number(
+            product.stock ??
+              product.inventory ??
+              product.quantity ??
+              0
+          );
+
+        const newStock =
+          Math.max(
+            0,
+            currentStock -
+              item.quantity
+          );
+
+        if (
+          product.stock !==
+          undefined
+        ) {
+          product.stock =
+            newStock;
+        } else if (
+          product.inventory !==
+          undefined
+        ) {
+          product.inventory =
+            newStock;
+        } else {
+          product.quantity =
+            newStock;
+        }
+
+        await product.save();
+      }
+
+      // ======================================================
+      // CLEAR CART
+      // ======================================================
+
+      try {
+        await Cart.findOneAndUpdate(
+          {
+            user: userId,
+          },
+          {
+            $set: {
+              items: [],
+            },
+          }
+        );
+      } catch (cartError) {
+        console.error(
+          "Cart clear error:",
+          cartError
+        );
+      }
+
+      // ======================================================
+      // RESPONSE
+      // ======================================================
+
+      return res.status(201).json({
+        success: true,
+
+        message:
+          normalizedPaymentMethod ===
+          "cod"
+            ? "Wholesale COD order placed successfully."
+            : "Wholesale order created successfully.",
+
+        order,
+      });
+    } catch (error) {
+      console.error(
+        "Create order from bulk quote error:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+        message:
+          error.message ||
+          "Unable to create order from bulk quote.",
+      });
+    }
+  };
+
+// ============================================================
 // GET MY ORDERS
 // ============================================================
 
@@ -1041,6 +1583,10 @@ const getMyOrders = async (
         .populate(
           "rfq",
           "rfqNumber status"
+        )
+        .populate(
+          "bulkQuote",
+          "quoteNumber status totalAmount"
         )
         .sort({
           createdAt: -1,
@@ -1115,6 +1661,10 @@ const getOrderById = async (
           "rfq",
           "rfqNumber status"
         )
+        .populate(
+          "bulkQuote",
+          "quoteNumber status totalAmount validUntil"
+        )
         .lean();
 
     if (!order) {
@@ -1151,6 +1701,7 @@ const getOrderById = async (
 module.exports = {
   createOrder,
   createOrderFromQuotation,
+  createOrderFromBulkQuote,
   getMyOrders,
   getOrderById,
 };

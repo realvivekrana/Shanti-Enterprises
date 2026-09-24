@@ -41,6 +41,16 @@ const bulkQuoteItemSchema = new mongoose.Schema(
       default: null,
       min: 0,
     },
+
+    // --------------------------------------------------------
+    // ADMIN QUOTED PRICE (set when admin responds)
+    // --------------------------------------------------------
+
+    quotedPrice: {
+      type: Number,
+      default: null,
+      min: 0,
+    },
   },
   {
     _id: false,
@@ -99,6 +109,48 @@ const bulkQuoteSchema = new mongoose.Schema(
       ],
       default: "pending",
       index: true,
+    },
+
+    // --------------------------------------------------------
+    // ADMIN RESPONSE
+    // --------------------------------------------------------
+
+    adminNote: {
+      type: String,
+      default: "",
+      trim: true,
+      maxlength: 1000,
+    },
+
+    totalAmount: {
+      type: Number,
+      default: null,
+      min: 0,
+    },
+
+    validUntil: {
+      type: Date,
+      default: null,
+    },
+
+    quotedAt: {
+      type: Date,
+      default: null,
+    },
+
+    acceptedAt: {
+      type: Date,
+      default: null,
+    },
+
+    rejectedAt: {
+      type: Date,
+      default: null,
+    },
+
+    cancelledAt: {
+      type: Date,
+      default: null,
     },
   },
   {

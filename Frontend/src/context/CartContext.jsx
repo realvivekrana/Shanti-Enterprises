@@ -218,6 +218,35 @@ export function CartProvider({ children }) {
   };
 
   // ==========================================================
+  // CLEAR CART ON LOGOUT
+  // ==========================================================
+  //
+  // AuthContext CartProvider ke andar nahi hai (provider order
+  // ulta hai), isliye direct function call nahi ho sakta.
+  // Logout hone par AuthContext ye event fire karta hai, aur
+  // hum yahan sun ke cart clear kar dete hain - taaki agla user
+  // usi browser par purana cart na dekhe.
+  // ==========================================================
+
+  useEffect(() => {
+    const handleLogout = () => {
+      setCartItems([]);
+    };
+
+    window.addEventListener(
+      "auth:logout",
+      handleLogout
+    );
+
+    return () => {
+      window.removeEventListener(
+        "auth:logout",
+        handleLogout
+      );
+    };
+  }, []);
+
+  // ==========================================================
   // TOTAL ITEMS
   // ==========================================================
 

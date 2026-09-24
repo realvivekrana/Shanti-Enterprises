@@ -76,6 +76,14 @@ const adminShipmentRoutes = require(
   "./routes/adminShipmentRoutes"
 );
 
+const adminReturnRoutes = require(
+  "./routes/adminReturnRoutes"
+);
+
+const adminBulkQuoteRoutes = require(
+  "./routes/adminBulkQuoteRoutes"
+);
+
 const adminReportRoutes = require(
   "./routes/adminReportRoutes"
 );
@@ -549,6 +557,24 @@ app.use(
 app.use(
   "/api/admin/shipments",
   adminShipmentRoutes
+);
+
+// ============================================================
+// ADMIN RETURNS
+// ============================================================
+
+app.use(
+  "/api/admin/returns",
+  adminReturnRoutes
+);
+
+// ============================================================
+// ADMIN BULK QUOTES
+// ============================================================
+
+app.use(
+  "/api/admin/bulk-quotes",
+  adminBulkQuoteRoutes
 );
 
 // ============================================================

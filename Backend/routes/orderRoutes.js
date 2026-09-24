@@ -14,6 +14,7 @@ const {
 const {
   createOrder,
   createOrderFromQuotation,
+  createOrderFromBulkQuote,
   getMyOrders,
   getOrderById,
 } = require("../controllers/orderController");
@@ -185,6 +186,92 @@ const quotationOrderValidation = [
 ];
 
 // ============================================================
+// WHOLESALE BULK QUOTE ORDER VALIDATION
+// ============================================================
+
+const bulkQuoteOrderValidation = [
+  // ----------------------------------------------------------
+  // BULK QUOTE ID
+  // ----------------------------------------------------------
+
+  body("bulkQuoteId")
+    .notEmpty()
+    .withMessage(
+      "Bulk quote ID is required"
+    )
+    .isMongoId()
+    .withMessage(
+      "Invalid bulk quote ID"
+    ),
+
+  // ----------------------------------------------------------
+  // SHIPPING ADDRESS
+  // ----------------------------------------------------------
+
+  body("shippingAddress")
+    .isObject()
+    .withMessage(
+      "Shipping address is required"
+    ),
+
+  body("shippingAddress.name")
+    .trim()
+    .notEmpty()
+    .withMessage(
+      "Name is required"
+    ),
+
+  body("shippingAddress.phone")
+    .trim()
+    .notEmpty()
+    .withMessage(
+      "Phone is required"
+    ),
+
+  body("shippingAddress.addressLine1")
+    .trim()
+    .notEmpty()
+    .withMessage(
+      "Address is required"
+    ),
+
+  body("shippingAddress.city")
+    .trim()
+    .notEmpty()
+    .withMessage(
+      "City is required"
+    ),
+
+  body("shippingAddress.state")
+    .trim()
+    .notEmpty()
+    .withMessage(
+      "State is required"
+    ),
+
+  body("shippingAddress.postalCode")
+    .trim()
+    .notEmpty()
+    .withMessage(
+      "Postal code is required"
+    ),
+
+  // ----------------------------------------------------------
+  // PAYMENT METHOD
+  // ----------------------------------------------------------
+
+  body("paymentMethod")
+    .optional()
+    .isIn([
+      "razorpay",
+      "cod",
+    ])
+    .withMessage(
+      "Invalid payment method"
+    ),
+];
+
+// ============================================================
 // ALL ORDER ROUTES REQUIRE LOGIN
 // ============================================================
 
@@ -222,6 +309,27 @@ router.post(
     quotationOrderValidation
   ),
   createOrderFromQuotation
+);
+
+// ============================================================
+// CREATE ORDER FROM ACCEPTED BULK QUOTE
+// ============================================================
+
+// IMPORTANT:
+// This route must come BEFORE "/:id"
+// otherwise Express may treat "from-bulk-quote"
+// as an order ID.
+
+// ------------------------------------------------------------
+// POST /api/orders/from-bulk-quote
+// ------------------------------------------------------------
+
+router.post(
+  "/from-bulk-quote",
+  validate(
+    bulkQuoteOrderValidation
+  ),
+  createOrderFromBulkQuote
 );
 
 // ============================================================

@@ -165,6 +165,17 @@ const orderSchema = new mongoose.Schema(
     },
 
     // --------------------------------------------------------
+    // WHOLESALE BULK QUOTE REFERENCE
+    // --------------------------------------------------------
+
+    bulkQuote: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "BulkQuote",
+      default: null,
+      index: true,
+    },
+
+    // --------------------------------------------------------
     // ITEMS
     // --------------------------------------------------------
 

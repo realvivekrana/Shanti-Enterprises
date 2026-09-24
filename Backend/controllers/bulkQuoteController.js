@@ -334,8 +334,150 @@ const getBulkQuoteById = async (
   }
 };
 
+// ============================================================
+// ACCEPT BULK QUOTE
+// ============================================================
+
+const acceptBulkQuote = async (
+  req,
+  res,
+  next
+) => {
+  try {
+    const bulkQuote =
+      await BulkQuote.findOne({
+        _id: req.params.id,
+        user: req.user.id,
+      });
+
+    if (!bulkQuote) {
+      const error = new Error(
+        "Bulk quote not found"
+      );
+
+      error.statusCode = 404;
+
+      return next(error);
+    }
+
+    // --------------------------------------------------------
+    // ONLY QUOTED REQUESTS CAN BE ACCEPTED
+    // --------------------------------------------------------
+
+    if (bulkQuote.status !== "quoted") {
+      const error = new Error(
+        "Only quoted bulk quotes can be accepted"
+      );
+
+      error.statusCode = 400;
+
+      return next(error);
+    }
+
+    // --------------------------------------------------------
+    // CHECK EXPIRY
+    // --------------------------------------------------------
+
+    if (
+      bulkQuote.validUntil &&
+      new Date() > bulkQuote.validUntil
+    ) {
+      const error = new Error(
+        "This bulk quote has expired"
+      );
+
+      error.statusCode = 400;
+
+      return next(error);
+    }
+
+    bulkQuote.status = "accepted";
+    bulkQuote.acceptedAt = new Date();
+
+    await bulkQuote.save();
+
+    res.status(200).json({
+      success: true,
+
+      message:
+        "Bulk quote accepted successfully",
+
+      bulkQuote: {
+        id: bulkQuote._id,
+        quoteNumber: bulkQuote.quoteNumber,
+        status: bulkQuote.status,
+        acceptedAt: bulkQuote.acceptedAt,
+        totalAmount: bulkQuote.totalAmount,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ============================================================
+// REJECT BULK QUOTE
+// ============================================================
+
+const rejectBulkQuote = async (
+  req,
+  res,
+  next
+) => {
+  try {
+    const bulkQuote =
+      await BulkQuote.findOne({
+        _id: req.params.id,
+        user: req.user.id,
+      });
+
+    if (!bulkQuote) {
+      const error = new Error(
+        "Bulk quote not found"
+      );
+
+      error.statusCode = 404;
+
+      return next(error);
+    }
+
+    if (bulkQuote.status !== "quoted") {
+      const error = new Error(
+        "Only quoted bulk quotes can be rejected"
+      );
+
+      error.statusCode = 400;
+
+      return next(error);
+    }
+
+    bulkQuote.status = "rejected";
+    bulkQuote.rejectedAt = new Date();
+
+    await bulkQuote.save();
+
+    res.status(200).json({
+      success: true,
+
+      message:
+        "Bulk quote rejected successfully",
+
+      bulkQuote: {
+        id: bulkQuote._id,
+        quoteNumber: bulkQuote.quoteNumber,
+        status: bulkQuote.status,
+        rejectedAt: bulkQuote.rejectedAt,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createBulkQuote,
   getMyBulkQuotes,
   getBulkQuoteById,
+  acceptBulkQuote,
+  rejectBulkQuote,
 };

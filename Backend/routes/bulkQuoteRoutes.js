@@ -14,6 +14,8 @@ const {
   createBulkQuote,
   getMyBulkQuotes,
   getBulkQuoteById,
+  acceptBulkQuote,
+  rejectBulkQuote,
 } = require("../controllers/bulkQuoteController");
 
 const {
@@ -68,6 +70,18 @@ router.post(
   "/",
   validate(bulkQuoteValidation),
   createBulkQuote
+);
+
+// PATCH /api/bulk-quotes/:id/accept
+router.patch(
+  "/:id/accept",
+  acceptBulkQuote
+);
+
+// PATCH /api/bulk-quotes/:id/reject
+router.patch(
+  "/:id/reject",
+  rejectBulkQuote
 );
 
 module.exports = router;
