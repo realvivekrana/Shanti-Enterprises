@@ -5,6 +5,10 @@
 // ============================================================
 
 const Shipment = require("../models/Shipment");
+const Order = require("../models/Order");
+const {
+  applyShipmentStatus,
+} = require("../utils/shipmentSync");
 
 // ============================================================
 // GET ALL SHIPMENTS
@@ -68,7 +72,7 @@ const getAdminShipments = async (req, res, next) => {
           )
           .populate(
             "order",
-            "orderNumber totalAmount status"
+            "orderNumber totalAmount orderStatus paymentStatus"
           )
           .sort({
             createdAt: -1,
@@ -120,7 +124,7 @@ const getAdminShipmentById = async (
         )
         .populate(
           "order",
-          "orderNumber items totalAmount status paymentStatus"
+          "orderNumber items totalAmount orderStatus paymentStatus"
         );
 
     if (!shipment) {
@@ -197,31 +201,33 @@ const updateAdminShipmentStatus = async (
       return next(error);
     }
 
-    shipment.status = status;
-
-    // --------------------------------------------------------
-    // STATUS TIMESTAMPS
-    // --------------------------------------------------------
-
-    if (status === "shipped") {
-      shipment.shippedAt =
-        shipment.shippedAt ||
-        new Date();
-    }
-
-    if (status === "delivered") {
-      shipment.deliveredAt =
-        shipment.deliveredAt ||
-        new Date();
-    }
-
-    if (status === "cancelled") {
-      shipment.cancelledAt =
-        shipment.cancelledAt ||
-        new Date();
+    // status + timestamps + tracking event
+    if (shipment.status !== status) {
+      applyShipmentStatus(shipment, status);
     }
 
     await shipment.save();
+
+    // Order status ko bhi sync rakho
+    const order = await Order.findById(shipment.order);
+
+    if (order && order.orderStatus !== "cancelled") {
+      let nextOrderStatus = null;
+
+      if (
+        ["shipped", "in_transit", "out_for_delivery"].includes(status) &&
+        ["pending", "confirmed", "processing"].includes(order.orderStatus)
+      ) {
+        nextOrderStatus = "shipped";
+      } else if (status === "delivered") {
+        nextOrderStatus = "delivered";
+      }
+
+      if (nextOrderStatus && order.orderStatus !== nextOrderStatus) {
+        order.orderStatus = nextOrderStatus;
+        await order.save();
+      }
+    }
 
     res.status(200).json({
       success: true,

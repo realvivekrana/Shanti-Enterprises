@@ -5,6 +5,24 @@
 // ============================================================
 
 const Order = require("../models/Order");
+const Product = require("../models/Product");
+const {
+  syncShipmentWithOrder,
+} = require("../utils/shipmentSync");
+
+// Cancel hone par order ka stock wapas product me jodo
+const restoreOrderStock = async (order) => {
+  for (const item of order.items || []) {
+    if (!item.product) {
+      continue;
+    }
+
+    await Product.updateOne(
+      { _id: item.product },
+      { $inc: { stock: Number(item.quantity) || 0 } }
+    );
+  }
+};
 
 // ============================================================
 // GET ALL ORDERS - ADMIN
@@ -221,12 +239,39 @@ const updateAdminOrderStatus = async (
     }
 
     // --------------------------------------------------------
-    // UPDATE CORRECT MODEL FIELD
+    // STATUS RULES
     // --------------------------------------------------------
 
-    order.orderStatus = status;
+    if (order.orderStatus === "cancelled" && status !== "cancelled") {
+      const error = new Error(
+        "A cancelled order cannot be reopened"
+      );
+      error.statusCode = 400;
+      return next(error);
+    }
 
+    if (status === "cancelled" && order.orderStatus === "delivered") {
+      const error = new Error(
+        "A delivered order cannot be cancelled"
+      );
+      error.statusCode = 400;
+      return next(error);
+    }
+
+    // --------------------------------------------------------
+    // UPDATE ORDER + STOCK + SHIPMENT
+    // --------------------------------------------------------
+
+    const previousStatus = order.orderStatus;
+
+    order.orderStatus = status;
     await order.save();
+
+    if (status === "cancelled" && previousStatus !== "cancelled") {
+      await restoreOrderStock(order);
+    }
+
+    await syncShipmentWithOrder(order);
 
     // --------------------------------------------------------
     // RESPONSE
@@ -402,13 +447,14 @@ const cancelAdminOrder = async (
     }
 
     // --------------------------------------------------------
-    // CANCEL ORDER
+    // CANCEL ORDER + RESTORE STOCK + SYNC SHIPMENT
     // --------------------------------------------------------
 
-    order.orderStatus =
-      "cancelled";
-
+    order.orderStatus = "cancelled";
     await order.save();
+
+    await restoreOrderStock(order);
+    await syncShipmentWithOrder(order);
 
     // --------------------------------------------------------
     // RESPONSE

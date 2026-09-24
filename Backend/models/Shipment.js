@@ -82,15 +82,25 @@ const shipmentSchema = new mongoose.Schema(
       index: true,
     },
 
+    trackingUrl: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
     status: {
       type: String,
       enum: [
+        "pending",
         "processing",
+        "packed",
         "shipped",
         "in_transit",
         "out_for_delivery",
         "delivered",
+        "failed",
         "cancelled",
+        "returned",
       ],
       default: "processing",
       index: true,
@@ -107,6 +117,11 @@ const shipmentSchema = new mongoose.Schema(
     },
 
     deliveredAt: {
+      type: Date,
+      default: null,
+    },
+
+    cancelledAt: {
       type: Date,
       default: null,
     },
