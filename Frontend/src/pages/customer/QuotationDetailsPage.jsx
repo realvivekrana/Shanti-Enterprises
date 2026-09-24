@@ -1,4 +1,3 @@
-
 // ============================================================
 // SHANTI ENTERPRISES
 // Customer Quotation Details Page
@@ -1604,7 +1603,7 @@ function QuotationDetailsPage() {
                 type="button"
                 onClick={() =>
                   navigate(
-                    `/checkout?quotationId=${quotationId}`
+                    `/checkout/address?quotationId=${quotationId}`
                   )
                 }
                 style={{

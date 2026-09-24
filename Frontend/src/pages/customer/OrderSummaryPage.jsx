@@ -16,9 +16,9 @@ const fmt = (n) =>
   `₹${Number(n || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 // ── step bar (reused from AddressPage style) ──────────────────
-function StepBar({ current = 2 }) {
+function StepBar({ current = 2, addressPath = "/checkout/address" }) {
   const steps = [
-    { n: 1, label: "Address", to: "/checkout/address" },
+    { n: 1, label: "Address", to: addressPath },
     { n: 2, label: "Summary", to: null },
     { n: 3, label: "Payment", to: null },
   ];
@@ -70,6 +70,10 @@ function OrderSummaryPage() {
   const [searchParams] = useSearchParams();
   const quotationId    = searchParams.get("quotationId");
   const isQuote        = Boolean(quotationId);
+  // Address step par wapas jaate waqt quotationId gum na ho
+  const addressPath    = isQuote
+    ? `/checkout/address?quotationId=${encodeURIComponent(quotationId)}`
+    : "/checkout/address";
 
   const { cartItems, totalItems, subtotal, clearCart } = useCart();
   const { selectedAddress } = useAddress();
@@ -126,7 +130,7 @@ function OrderSummaryPage() {
       <div style={{ fontSize: 52, marginBottom: 16 }}>📍</div>
       <h2 style={{ marginBottom: 8 }}>No delivery address</h2>
       <p style={{ marginBottom: 24 }}>Please select a delivery address before continuing.</p>
-      <Link to="/checkout/address" className="btn-primary" style={{ display: "inline-flex" }}>Select Address →</Link>
+      <Link to={addressPath} className="btn-primary" style={{ display: "inline-flex" }}>Select Address →</Link>
     </div>
   );
 
@@ -190,7 +194,7 @@ function OrderSummaryPage() {
 
         {/* STEP BAR */}
         <div style={{ background: "#fff", border: "1px solid var(--se-border)", borderRadius: 14, padding: "20px 28px", marginBottom: 24, boxShadow: "var(--shadow-sm)" }}>
-          <StepBar current={2} />
+          <StepBar current={2} addressPath={addressPath} />
         </div>
 
         {error && <div className="alert-error" role="alert" style={{ marginBottom: 20 }}>⚠ {error}</div>}
@@ -207,7 +211,7 @@ function OrderSummaryPage() {
                   <p style={{ fontSize: 11, fontWeight: 700, color: "var(--se-text-4)", letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 2 }}>Delivery Details</p>
                   <h2 style={{ fontSize: "1rem", fontWeight: 800 }}>Delivery Address</h2>
                 </div>
-                <Link to="/checkout/address" style={{ fontSize: 13, fontWeight: 700, color: "var(--se-teal)" }}>Change →</Link>
+                <Link to={addressPath} style={{ fontSize: 13, fontWeight: 700, color: "var(--se-teal)" }}>Change →</Link>
               </div>
               <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
                 <div style={{ width: 40, height: 40, background: "var(--se-teal-soft)", border: "1px solid var(--se-teal-light)", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>📍</div>
@@ -253,7 +257,7 @@ function OrderSummaryPage() {
               </div>
             </div>
 
-            <Link to="/checkout/address" style={{ fontSize: 13, fontWeight: 600, color: "var(--se-text-3)", display: "inline-flex", alignItems: "center", gap: 6 }}>← Back to Address</Link>
+            <Link to={addressPath} style={{ fontSize: 13, fontWeight: 600, color: "var(--se-text-3)", display: "inline-flex", alignItems: "center", gap: 6 }}>← Back to Address</Link>
           </div>
 
           {/* RIGHT: payment + total */}

@@ -819,11 +819,13 @@ const createOrderFromQuotation =
       // VERIFY QUOTATION TOTAL
       // ======================================================
 
+      // Float rounding se bachne ke liye 1 paise ki tolerance
       if (
-        Number(
-          quotation.totalAmount
-        ) !==
-        totalAmount
+        Math.abs(
+          Number(
+            quotation.totalAmount
+          ) - totalAmount
+        ) > 0.01
       ) {
         return res.status(400).json({
           success: false,
@@ -959,27 +961,8 @@ const createOrderFromQuotation =
         await product.save();
       }
 
-      // ======================================================
-      // CLEAR CART
-      // ======================================================
-
-      try {
-        await Cart.findOneAndUpdate(
-          {
-            user: userId,
-          },
-          {
-            $set: {
-              items: [],
-            },
-          }
-        );
-      } catch (cartError) {
-        console.error(
-          "Cart clear error:",
-          cartError
-        );
-      }
+      // NOTE: quotation order customer ke normal cart se independent hai,
+      // isliye cart yahan clear nahi hota.
 
       // ======================================================
       // RESPONSE

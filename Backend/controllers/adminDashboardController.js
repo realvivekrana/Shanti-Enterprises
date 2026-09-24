@@ -12,6 +12,7 @@ const RFQ = require("../models/RFQ");
 const Quotation = require("../models/Quotation");
 const Shipment = require("../models/Shipment");
 const ReturnRequest = require("../models/ReturnRequest");
+const BulkQuote = require("../models/BulkQuote");
 
 // ============================================================
 // ADMIN DASHBOARD
@@ -32,6 +33,8 @@ const getDashboardStats = async (
       deliveredOrders,
       cancelledOrders,
       revenueResult,
+      openReturns,
+      pendingBulkQuotes,
     ] = await Promise.all([
       User.countDocuments({
         role: "customer",
@@ -70,6 +73,28 @@ const getDashboardStats = async (
           },
         },
       ]),
+
+      // Returns jinpar admin action baaki hai
+      ReturnRequest.countDocuments({
+        status: {
+          $in: [
+            "requested",
+            "approved",
+            "picked_up",
+            "received",
+          ],
+        },
+      }),
+
+      // Bulk quotes jinko admin ko price dena hai
+      BulkQuote.countDocuments({
+        status: {
+          $in: [
+            "pending",
+            "reviewing",
+          ],
+        },
+      }),
     ]);
 
     const totalRevenue =
@@ -91,6 +116,8 @@ const getDashboardStats = async (
         pendingOrders,
         deliveredOrders,
         cancelledOrders,
+        openReturns,
+        pendingBulkQuotes,
       },
     });
   } catch (error) {

@@ -3,7 +3,7 @@
 // ============================================================
 
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAddress } from "../../context/AddressContext";
 import { ConfirmModal } from "../../components/common";
 import "./AddressPage.css";
@@ -55,6 +55,9 @@ function Field({ id, label, required, children }) {
 // ─────────────────────────────────────────────────────────────
 function AddressPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  // Quotation se aaye ho to summary step tak quotationId saath jaati hai
+  const quotationId = searchParams.get("quotationId");
   const { addresses = [], selectedAddressId, addAddress, updateAddress, deleteAddress, selectAddress } = useAddress();
 
   const [editingId, setEditingId] = useState(null);
@@ -124,7 +127,11 @@ function AddressPage() {
 
   const handleContinue = () => {
     if (!selectedAddressId) return setError("Please select a delivery address to continue.");
-    navigate("/checkout/summary");
+    navigate(
+      quotationId
+        ? `/checkout/summary?quotationId=${encodeURIComponent(quotationId)}`
+        : "/checkout/summary"
+    );
   };
 
   return (

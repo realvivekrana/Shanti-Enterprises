@@ -129,6 +129,8 @@ function AdminDashboardPage() {
   const pendingOrders   = getNum(stats?.pendingOrders);
   const deliveredOrders = getNum(stats?.deliveredOrders);
   const cancelledOrders = getNum(stats?.cancelledOrders);
+  const openReturns       = getNum(stats?.openReturns);
+  const pendingBulkQuotes = getNum(stats?.pendingBulkQuotes);
 
   return (
     <div className="adm">
@@ -182,6 +184,13 @@ function AdminDashboardPage() {
           <StatCard icon="🛒" label="Orders"     value={totalOrders}     format={fmtNum} sub="Total orders"           color="#0891B2" to="/admin/orders"     delay={120} />
           <StatCard icon="🗂️" label="Categories" value={totalCategories} format={fmtNum} sub="Product categories"     color="#D97706" to="/admin/categories" delay={180} />
           <StatCard icon="💰" label="Revenue"    value={totalRevenue}    format={fmtCur} sub="Total store revenue"    color="#059669"                        delay={240} />
+        </div>
+
+        {/* ── NEEDS ATTENTION ─────────────────────────── */}
+        <div className="adm-stats adm-stats--attention">
+          <StatCard icon="⏳" label="Pending Orders"     value={pendingOrders}     format={fmtNum} sub="Waiting to be processed"   color="#EA580C" to="/admin/orders"      delay={0}   />
+          <StatCard icon="↩️" label="Open Returns"       value={openReturns}       format={fmtNum} sub="Return requests in progress" color="#DC2626" to="/admin/returns"     delay={60}  />
+          <StatCard icon="📑" label="Bulk Quotes to Price" value={pendingBulkQuotes} format={fmtNum} sub="Awaiting your pricing"     color="#0D9488" to="/admin/bulk-quotes" delay={120} />
         </div>
 
         {/* ── ORDER OVERVIEW + QUICK ACTIONS ──────────── */}
@@ -251,6 +260,8 @@ function AdminDashboardPage() {
             <NavItem to="/admin/quotations" icon="🧾" label="Quotations"  desc="Manage sent quotations"                 />
             <NavItem to="/admin/inventory"  icon="🏷️" label="Inventory"   desc="Monitor and adjust stock levels"        />
             <NavItem to="/admin/shipments"  icon="🚚" label="Shipments"   desc="Track and update shipment status"       />
+            <NavItem to="/admin/returns"    icon="↩️" label="Returns"     desc="Approve, receive and refund returns"    />
+            <NavItem to="/admin/bulk-quotes" icon="📑" label="Bulk Quotes" desc="Price wholesale bulk quote requests"   />
             <NavItem to="/admin/reports"    icon="📊" label="Reports"     desc="Revenue and analytics reports"          />
             <NavItem to="/admin/analytics"  icon="📈" label="Analytics"   desc="Sales trends and performance data"      />
           </div>

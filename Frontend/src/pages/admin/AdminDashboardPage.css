@@ -389,3 +389,17 @@
 @media (prefers-reduced-motion: reduce) {
   .adm * { transition-duration: .01ms !important; animation-duration: .01ms !important; }
 }
+
+/* ── "Needs attention" stat row (pending orders / returns / bulk quotes) ── */
+.adm-stats.adm-stats--attention {
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: 16px;
+}
+
+@media (max-width: 900px) {
+  .adm-stats.adm-stats--attention { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 560px) {
+  .adm-stats.adm-stats--attention { grid-template-columns: 1fr; }
+}
