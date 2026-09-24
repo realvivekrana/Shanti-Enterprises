@@ -29,7 +29,7 @@ import Loading from "../../components/common/Loading";
 
 import ErrorMessage from "../../components/common/ErrorMessage";
 import ConfirmModal from "../../components/common/ConfirmModal";
-import BulkQuoteOrderModal from "../../components/customer/BulkQuoteOrderModal";
+import BulkQuoteOrderModal from "./BulkQuoteOrderModal";
 import "./BulkQuotesPage.css";
 
 // ============================================================
@@ -138,16 +138,64 @@ function BulkQuotesPage() {
 
   const loadProducts = async () => {
     if (allProducts.length > 0) return;
+
     try {
       setLoadingProducts(true);
-      const response = await getProducts({ limit: 100, isWholesale: true });
-      const items =
-        response?.products ||
-        response?.data?.products ||
+
+      const firstResponse = await getProducts({
+        page: 1,
+        limit: 50,
+        isWholesale: true,
+      });
+
+      const firstItems =
+        firstResponse?.products ||
+        firstResponse?.data?.products ||
         [];
-      setAllProducts(items);
+
+      const firstPagination =
+        firstResponse?.pagination ||
+        firstResponse?.data?.pagination ||
+        {};
+
+      const totalPages = Math.max(
+        Number(firstPagination.totalPages) || 1,
+        1
+      );
+
+      if (totalPages === 1) {
+        setAllProducts(Array.isArray(firstItems) ? firstItems : []);
+        return;
+      }
+
+      const remainingResponses = await Promise.all(
+        Array.from(
+          { length: totalPages - 1 },
+          (_, index) =>
+            getProducts({
+              page: index + 2,
+              limit: 50,
+              isWholesale: true,
+            })
+        )
+      );
+
+      const allItems = [
+        ...(Array.isArray(firstItems) ? firstItems : []),
+        ...remainingResponses.flatMap((response) => {
+          const items =
+            response?.products ||
+            response?.data?.products ||
+            [];
+
+          return Array.isArray(items) ? items : [];
+        }),
+      ];
+
+      setAllProducts(allItems);
     } catch {
-      // fallback: still show form, dropdown will be empty
+      // Keep the form usable; the user can retry by reopening it.
+      setAllProducts([]);
     } finally {
       setLoadingProducts(false);
     }

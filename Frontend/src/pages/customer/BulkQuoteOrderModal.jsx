@@ -58,20 +58,23 @@ function BulkQuoteOrderModal({
 
   const addressList = Array.isArray(addresses) ? addresses : [];
 
+  const getAddressId = (address) =>
+    String(address?._id || address?.id || "");
+
   // ==========================================================
   // DEFAULT ADDRESS
   // ==========================================================
 
   useEffect(() => {
-    if (addressId && addressList.some((a) => a.id === addressId)) {
+    if (addressId && addressList.some((a) => getAddressId(a) === String(addressId))) {
       return;
     }
 
     const preferred =
-      addressList.find((a) => a.id === selectedAddressId) ||
+      addressList.find((a) => getAddressId(a) === String(selectedAddressId)) ||
       addressList[0];
 
-    setAddressId(preferred?.id || "");
+    setAddressId(getAddressId(preferred));
   }, [addressList, selectedAddressId, addressId]);
 
   // ==========================================================
@@ -101,7 +104,7 @@ function BulkQuoteOrderModal({
   // ==========================================================
 
   const handlePlaceOrder = async () => {
-    const address = addressList.find((a) => a.id === addressId);
+    const address = addressList.find((a) => getAddressId(a) === String(addressId));
 
     if (!address) {
       setError("Please select a delivery address.");
@@ -276,16 +279,16 @@ function BulkQuoteOrderModal({
               <div className="bqo-options">
                 {addressList.map((address) => (
                   <label
-                    key={address.id}
+                    key={getAddressId(address)}
                     className={`bqo-option ${
-                      addressId === address.id ? "is-selected" : ""
+                      addressId === getAddressId(address) ? "is-selected" : ""
                     }`}
                   >
                     <input
                       type="radio"
                       name="bqo-address"
-                      checked={addressId === address.id}
-                      onChange={() => setAddressId(address.id)}
+                      checked={addressId === getAddressId(address)}
+                      onChange={() => setAddressId(getAddressId(address))}
                       disabled={submitting}
                     />
 
