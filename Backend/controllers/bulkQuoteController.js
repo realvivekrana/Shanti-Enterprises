@@ -6,6 +6,7 @@
 
 const BulkQuote = require("../models/BulkQuote");
 const Product = require("../models/Product");
+const Order = require("../models/Order");
 
 const {
   validateWholesaleQuantity,
@@ -277,10 +278,50 @@ const getMyBulkQuotes = async (
       totalQuotes / perPage
     );
 
+    // --------------------------------------------------------
+    // ATTACH ORDER (if an order was already placed from a quote)
+    // Frontend uses this to show "View Order" instead of
+    // "Place Order" for accepted quotes.
+    // --------------------------------------------------------
+
+    const existingOrders =
+      await Order.find({
+        user: req.user.id,
+        bulkQuote: {
+          $in: bulkQuotes.map(
+            (quote) => quote._id
+          ),
+        },
+      }).select(
+        "_id orderNumber orderStatus bulkQuote"
+      );
+
+    const orderByQuoteId = new Map(
+      existingOrders.map((order) => [
+        String(order.bulkQuote),
+        {
+          _id: order._id,
+          orderNumber:
+            order.orderNumber,
+          orderStatus:
+            order.orderStatus,
+        },
+      ])
+    );
+
+    const bulkQuotesWithOrder =
+      bulkQuotes.map((quote) => ({
+        ...quote.toObject(),
+        order:
+          orderByQuoteId.get(
+            String(quote._id)
+          ) || null,
+      }));
+
     res.status(200).json({
       success: true,
 
-      count: bulkQuotes.length,
+      count: bulkQuotesWithOrder.length,
 
       pagination: {
         page: currentPage,
@@ -289,7 +330,7 @@ const getMyBulkQuotes = async (
         totalPages,
       },
 
-      bulkQuotes,
+      bulkQuotes: bulkQuotesWithOrder,
     });
   } catch (error) {
     next(error);

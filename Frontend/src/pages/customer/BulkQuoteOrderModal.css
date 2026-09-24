@@ -1,0 +1,289 @@
+/* ============================================================
+   SHANTI ENTERPRISES — Bulk Quote Order Modal
+   Mobile first • Dark mode ready
+   ============================================================ */
+
+.bqo-backdrop {
+  --bqo-surface: #ffffff;
+  --bqo-surface-2: #f8fafc;
+  --bqo-border: #e2e8f0;
+  --bqo-text: #0f172a;
+  --bqo-muted: #64748b;
+  --bqo-accent: #0d9488;
+
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(3px);
+}
+
+.dark .bqo-backdrop,
+[data-theme="dark"] .bqo-backdrop {
+  --bqo-surface: #111827;
+  --bqo-surface-2: #172033;
+  --bqo-border: #293548;
+  --bqo-text: #f8fafc;
+  --bqo-muted: #94a3b8;
+}
+
+.bqo-modal {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 560px;
+  max-height: calc(100dvh - 32px);
+  border: 1px solid var(--bqo-border);
+  border-radius: 18px;
+  color: var(--bqo-text);
+  background: var(--bqo-surface);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+}
+
+.bqo-modal * {
+  box-sizing: border-box;
+}
+
+.bqo-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--bqo-border);
+}
+
+.bqo-eyebrow {
+  color: var(--bqo-accent);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.bqo-header h2 {
+  margin: 4px 0 0;
+  font-size: 18px;
+  font-weight: 800;
+  word-break: break-word;
+}
+
+.bqo-close {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--bqo-border);
+  border-radius: 10px;
+  color: var(--bqo-muted);
+  background: transparent;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.bqo-body {
+  flex: 1 1 auto;
+  padding: 18px 20px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.bqo-section {
+  margin-bottom: 20px;
+}
+
+.bqo-section:last-child {
+  margin-bottom: 0;
+}
+
+.bqo-section h3 {
+  margin: 0 0 10px;
+  color: var(--bqo-muted);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.bqo-items {
+  border: 1px solid var(--bqo-border);
+  border-radius: 12px;
+  background: var(--bqo-surface-2);
+}
+
+.bqo-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--bqo-border);
+  font-size: 14px;
+}
+
+.bqo-item:last-child {
+  border-bottom: 0;
+}
+
+.bqo-item span {
+  min-width: 0;
+  word-break: break-word;
+}
+
+.bqo-item strong {
+  white-space: nowrap;
+}
+
+.bqo-total {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.bqo-total strong {
+  color: var(--bqo-accent);
+}
+
+.bqo-options {
+  display: grid;
+  gap: 10px;
+}
+
+.bqo-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 2px solid var(--bqo-border);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: 0.15s ease;
+}
+
+.bqo-option.is-selected {
+  border-color: var(--bqo-accent);
+  background: rgba(13, 148, 136, 0.08);
+}
+
+.bqo-option input {
+  margin-top: 4px;
+  accent-color: var(--bqo-accent);
+}
+
+.bqo-option span {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.bqo-option strong {
+  font-size: 14px;
+}
+
+.bqo-option small {
+  color: var(--bqo-muted);
+  font-size: 13px;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.bqo-muted {
+  margin: 0;
+  color: var(--bqo-muted);
+  font-size: 14px;
+}
+
+.bqo-empty {
+  padding: 16px;
+  border: 1px dashed var(--bqo-border);
+  border-radius: 12px;
+  text-align: center;
+}
+
+.bqo-empty p {
+  margin: 0 0 8px;
+  color: var(--bqo-muted);
+  font-size: 14px;
+}
+
+.bqo-link {
+  color: var(--bqo-accent);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.bqo-error {
+  margin-bottom: 14px;
+  padding: 10px 14px;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  color: #b91c1c;
+  background: #fef2f2;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.dark .bqo-error,
+[data-theme="dark"] .bqo-error {
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+  background: rgba(239, 68, 68, 0.12);
+}
+
+.bqo-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--bqo-border);
+  background: var(--bqo-surface);
+}
+
+.bqo-btn {
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1px solid var(--bqo-border);
+  border-radius: 12px;
+  color: var(--bqo-text);
+  background: var(--bqo-surface);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.bqo-btn--primary {
+  border-color: transparent;
+  color: #ffffff;
+  background: linear-gradient(135deg, #0d9488, #2563eb);
+}
+
+.bqo-btn:disabled,
+.bqo-close:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@media (max-width: 560px) {
+  .bqo-backdrop {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .bqo-modal {
+    max-width: none;
+    max-height: 92dvh;
+    border-radius: 18px 18px 0 0;
+  }
+
+  .bqo-footer {
+    flex-direction: column-reverse;
+  }
+
+  .bqo-btn {
+    width: 100%;
+  }
+}

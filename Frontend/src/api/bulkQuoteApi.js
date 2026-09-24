@@ -43,3 +43,31 @@ export const getBulkQuoteById = async (id) => {
   const response = await api.get(`/bulk-quotes/${id}`);
   return response.data;
 };
+
+// ------------------------------------------------------------
+// ACCEPT QUOTED BULK QUOTE
+// PATCH /api/bulk-quotes/:id/accept
+// ------------------------------------------------------------
+
+export const acceptBulkQuote = async (id) => {
+  if (!id) {
+    throw new Error("Bulk quote ID is required.");
+  }
+
+  const response = await api.patch(`/bulk-quotes/${id}/accept`);
+  return response.data;
+};
+
+// ------------------------------------------------------------
+// REJECT QUOTED BULK QUOTE
+// PATCH /api/bulk-quotes/:id/reject
+// ------------------------------------------------------------
+
+export const rejectBulkQuote = async (id) => {
+  if (!id) {
+    throw new Error("Bulk quote ID is required.");
+  }
+
+  const response = await api.patch(`/bulk-quotes/${id}/reject`);
+  return response.data;
+};

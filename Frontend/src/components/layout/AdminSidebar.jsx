@@ -18,6 +18,8 @@ import {
   LayoutDashboard,
   LogOut,
   Package,
+  PackagePlus,
+  RotateCcw,
   ShoppingCart,
   Truck,
   User,
@@ -76,6 +78,16 @@ const ADMIN_NAV_ITEMS = [
     to: "/admin/shipments",
     label: "Shipments",
     icon: Truck,
+  },
+  {
+    to: "/admin/returns",
+    label: "Returns",
+    icon: RotateCcw,
+  },
+  {
+    to: "/admin/bulk-quotes",
+    label: "Bulk Quotes",
+    icon: PackagePlus,
   },
   {
     to: "/admin/users",

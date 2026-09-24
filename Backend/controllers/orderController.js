@@ -1363,11 +1363,13 @@ const createOrderFromBulkQuote =
       // VERIFY BULK QUOTE TOTAL
       // ======================================================
 
+      // Float rounding se bachne ke liye 1 paise ki tolerance
       if (
-        Number(
-          bulkQuote.totalAmount
-        ) !==
-        totalAmount
+        Math.abs(
+          Number(
+            bulkQuote.totalAmount
+          ) - totalAmount
+        ) > 0.01
       ) {
         return res.status(400).json({
           success: false,
@@ -1500,27 +1502,8 @@ const createOrderFromBulkQuote =
         await product.save();
       }
 
-      // ======================================================
-      // CLEAR CART
-      // ======================================================
-
-      try {
-        await Cart.findOneAndUpdate(
-          {
-            user: userId,
-          },
-          {
-            $set: {
-              items: [],
-            },
-          }
-        );
-      } catch (cartError) {
-        console.error(
-          "Cart clear error:",
-          cartError
-        );
-      }
+      // NOTE: customer ka normal cart yahan clear nahi hota —
+      // bulk quote order cart se independent hai.
 
       // ======================================================
       // RESPONSE

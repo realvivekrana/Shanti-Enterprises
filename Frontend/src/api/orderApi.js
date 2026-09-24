@@ -50,6 +50,28 @@ export const createOrderFromQuotation =
   };
 
 // ============================================================
+// CREATE ORDER FROM ACCEPTED BULK QUOTE
+// POST /api/orders/from-bulk-quote
+// payload: { bulkQuoteId, shippingAddress, paymentMethod }
+// ============================================================
+
+export const createOrderFromBulkQuote =
+  async (orderData) => {
+    if (!orderData) {
+      throw new Error(
+        "Order data is required."
+      );
+    }
+
+    const response = await api.post(
+      "/orders/from-bulk-quote",
+      orderData
+    );
+
+    return response.data;
+  };
+
+// ============================================================
 // GET MY ORDERS
 // GET /api/orders
 // ============================================================

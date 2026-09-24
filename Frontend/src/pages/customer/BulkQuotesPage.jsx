@@ -17,6 +17,8 @@ import {
 import {
   getMyBulkQuotes,
   createBulkQuote,
+  acceptBulkQuote,
+  rejectBulkQuote,
 } from "../../api/bulkQuoteApi";
 
 import {
@@ -26,6 +28,8 @@ import {
 import Loading from "../../components/common/Loading";
 
 import ErrorMessage from "../../components/common/ErrorMessage";
+import ConfirmModal from "../../components/common/ConfirmModal";
+import BulkQuoteOrderModal from "../../components/customer/BulkQuoteOrderModal";
 import "./BulkQuotesPage.css";
 
 // ============================================================
@@ -52,15 +56,27 @@ const formatCurrency = (value) =>
 const STATUS_STYLE = {
   pending:  { bg: "#eff6ff", color: "#1d4ed8", border: "#bfdbfe" },
   reviewed: { bg: "#fefce8", color: "#a16207", border: "#fef08a" },
+  reviewing:{ bg: "#fefce8", color: "#a16207", border: "#fef08a" },
   quoted:   { bg: "#f0fdf4", color: "#15803d", border: "#bbf7d0" },
+  accepted: { bg: "#ecfdf5", color: "#047857", border: "#a7f3d0" },
   rejected: { bg: "#fef2f2", color: "#dc2626", border: "#fecaca" },
+  cancelled:{ bg: "#fef2f2", color: "#dc2626", border: "#fecaca" },
   expired:  { bg: "#f9fafb", color: "#6b7280", border: "#e5e7eb" },
 };
+
+const STATUS_LABEL = {
+  reviewing: "Under Review",
+};
+
+// validUntil nikal chuki hai?
+const isExpired = (quote) =>
+  Boolean(quote?.validUntil) && new Date(quote.validUntil) < new Date();
 
 const getStatusStyle = (s) =>
   STATUS_STYLE[s] || { bg: "#f9fafb", color: "#374151", border: "#e5e7eb" };
 
 const fmtLabel = (s) =>
+  STATUS_LABEL[s] ||
   String(s || "").replace(/[-_]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
 // ============================================================
@@ -88,6 +104,12 @@ function BulkQuotesPage() {
   const [submitting, setSubmitting]   = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [successMsg, setSuccessMsg]   = useState("");
+
+  // ---- quote actions (accept / reject / place order) ----
+  const [actionId, setActionId]         = useState("");
+  const [actionError, setActionError]   = useState("");
+  const [rejectQuote, setRejectQuote]   = useState(null);
+  const [orderQuote, setOrderQuote]     = useState(null);
 
   // ==========================================================
   // LOAD QUOTES
@@ -195,6 +217,57 @@ function BulkQuotesPage() {
       setSubmitError(err.message || "Failed to submit bulk quote.");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  // ==========================================================
+  // ACCEPT / REJECT QUOTED PRICE
+  // ==========================================================
+
+  const handleAccept = async (quote) => {
+    const qId = quote?._id || quote?.id;
+
+    try {
+      setActionId(qId);
+      setActionError("");
+      setSuccessMsg("");
+
+      await acceptBulkQuote(qId);
+
+      setSuccessMsg(
+        "Quote accepted! You can now place your order at the agreed prices."
+      );
+
+      await loadQuotes(page);
+    } catch (err) {
+      setActionError(err.message || "Unable to accept the quote.");
+    } finally {
+      setActionId("");
+    }
+  };
+
+  const handleConfirmReject = async () => {
+    const qId = rejectQuote?._id || rejectQuote?.id;
+
+    if (!qId) {
+      return;
+    }
+
+    try {
+      setActionId(qId);
+      setActionError("");
+      setSuccessMsg("");
+
+      await rejectBulkQuote(qId);
+
+      setSuccessMsg("Quote rejected.");
+
+      await loadQuotes(page);
+    } catch (err) {
+      setActionError(err.message || "Unable to reject the quote.");
+    } finally {
+      setActionId("");
+      setRejectQuote(null);
     }
   };
 
@@ -471,6 +544,10 @@ function BulkQuotesPage() {
           <div className="alert-error" role="alert" style={{ marginBottom: "16px" }}>{error}</div>
         )}
 
+        {actionError && (
+          <div className="alert-error" role="alert" style={{ marginBottom: "16px" }}>{actionError}</div>
+        )}
+
         {quotes.length === 0 && !showForm && (
           <div className="empty-state">
             <div style={{ fontSize: "48px", marginBottom: "16px" }}>📋</div>
@@ -489,6 +566,10 @@ function BulkQuotesPage() {
               const status = quote?.status || "pending";
               const style = getStatusStyle(status);
               const itemCount = Array.isArray(quote?.items) ? quote.items.length : 0;
+              const expired = isExpired(quote);
+              const busy = actionId === qId;
+              const hasQuotedPrices =
+                quote?.totalAmount !== null && quote?.totalAmount !== undefined;
 
               return (
                 <article
@@ -554,10 +635,34 @@ function BulkQuotesPage() {
                       </p>
                     </div>
 
+                    {quote?.validUntil && (status === "quoted" || status === "accepted") && (
+                      <div>
+                        <p style={{ margin: 0, fontSize: "12px", color: "#6b7280" }}>Valid until</p>
+                        <p
+                          style={{
+                            margin: 0,
+                            fontSize: "14px",
+                            fontWeight: 600,
+                            color: expired ? "#dc2626" : undefined,
+                          }}
+                        >
+                          {formatDate(quote.validUntil)}
+                          {expired ? " (expired)" : ""}
+                        </p>
+                      </div>
+                    )}
+
                     {quote?.message && (
                       <div style={{ gridColumn: "1 / -1" }}>
                         <p style={{ margin: 0, fontSize: "12px", color: "#6b7280" }}>Message</p>
                         <p style={{ margin: 0, fontSize: "14px" }}>{quote.message}</p>
+                      </div>
+                    )}
+
+                    {quote?.adminNote && (
+                      <div style={{ gridColumn: "1 / -1" }}>
+                        <p style={{ margin: 0, fontSize: "12px", color: "#6b7280" }}>Note from Shanti Enterprises</p>
+                        <p style={{ margin: 0, fontSize: "14px" }}>{quote.adminNote}</p>
                       </div>
                     )}
                   </div>
@@ -591,16 +696,28 @@ function BulkQuotesPage() {
                             {item?.product?.name || item?.productName || "Product"} × {item?.quantity}
                             {item?.unit ? ` ${item.unit}` : ""}
                           </span>
-                          {item?.requestedPrice != null && (
-                            <span style={{ color: "#6b7280" }}>
-                              Target: {formatCurrency(item.requestedPrice)}
+                          {item?.quotedPrice != null ? (
+                            <span style={{ fontWeight: 600 }}>
+                              {formatCurrency(item.quotedPrice)} / {item?.unit || "unit"}
+                              {" = "}
+                              <span style={{ color: "#059669" }}>
+                                {formatCurrency(
+                                  Number(item.quotedPrice) * Number(item?.quantity || 0)
+                                )}
+                              </span>
                             </span>
+                          ) : (
+                            item?.requestedPrice != null && (
+                              <span style={{ color: "#6b7280" }}>
+                                Target: {formatCurrency(item.requestedPrice)}
+                              </span>
+                            )
                           )}
                         </div>
                       ))}
 
                       {/* Quoted price if available */}
-                      {quote?.quotedTotalAmount != null && (
+                      {hasQuotedPrices && (
                         <div
                           style={{
                             marginTop: "8px",
@@ -614,9 +731,79 @@ function BulkQuotesPage() {
                         >
                           <span>Quoted Total</span>
                           <span style={{ color: "#059669" }}>
-                            {formatCurrency(quote.quotedTotalAmount)}
+                            {formatCurrency(quote.totalAmount)}
                           </span>
                         </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* ==============================================
+                      ACTIONS
+                      ============================================== */}
+
+                  {status === "quoted" && (
+                    <div style={{ marginTop: "16px" }}>
+                      {expired ? (
+                        <p style={{ margin: 0, fontSize: "13px", color: "#dc2626" }}>
+                          This quote has expired. Please submit a new bulk quote request.
+                        </p>
+                      ) : (
+                        <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+                          <button
+                            type="button"
+                            className="btn-primary"
+                            onClick={() => handleAccept(quote)}
+                            disabled={busy}
+                          >
+                            {busy ? "Please wait..." : "Accept Quote"}
+                          </button>
+
+                          <button
+                            type="button"
+                            className="btn-secondary"
+                            onClick={() => setRejectQuote(quote)}
+                            disabled={busy}
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {status === "accepted" && (
+                    <div style={{ marginTop: "16px" }}>
+                      {quote?.order ? (
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            flexWrap: "wrap",
+                            gap: "12px",
+                          }}
+                        >
+                          <span style={{ fontSize: "13px", color: "#059669", fontWeight: 600 }}>
+                            Order placed: {quote.order.orderNumber}
+                          </span>
+
+                          <Link to={`/orders/${quote.order._id}`} className="btn-secondary">
+                            View Order →
+                          </Link>
+                        </div>
+                      ) : expired ? (
+                        <p style={{ margin: 0, fontSize: "13px", color: "#dc2626" }}>
+                          This quote expired before an order was placed. Please submit a new bulk quote request.
+                        </p>
+                      ) : (
+                        <button
+                          type="button"
+                          className="btn-primary"
+                          onClick={() => setOrderQuote(quote)}
+                        >
+                          Place Order →
+                        </button>
                       )}
                     </div>
                   )}
@@ -642,6 +829,26 @@ function BulkQuotesPage() {
         )}
 
       </div>
+
+      {/* REJECT CONFIRM */}
+      <ConfirmModal
+        open={Boolean(rejectQuote)}
+        title="Reject this quote?"
+        message="You will not be able to place an order from this quote. You can always submit a new bulk quote request."
+        confirmText="Yes, reject"
+        variant="danger"
+        loading={Boolean(actionId)}
+        onConfirm={handleConfirmReject}
+        onCancel={() => setRejectQuote(null)}
+      />
+
+      {/* PLACE ORDER */}
+      {orderQuote && (
+        <BulkQuoteOrderModal
+          quote={orderQuote}
+          onClose={() => setOrderQuote(null)}
+        />
+      )}
     </section>
   );
 }

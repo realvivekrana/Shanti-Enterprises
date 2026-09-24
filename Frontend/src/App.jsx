@@ -115,6 +115,15 @@ const AdminShipmentsPage = lazy(() => import("./pages/admin/AdminShipmentsPage")
 const AdminReportsPage = lazy(() => import("./pages/admin/AdminReportsPage"));
 
 // ============================================================
+// ADMIN RETURNS / BULK QUOTES
+// ============================================================
+
+const AdminReturnsPage = lazy(() => import("./pages/admin/AdminReturnsPage"));
+const AdminReturnDetailsPage = lazy(() => import("./pages/admin/AdminReturnDetailsPage"));
+const AdminBulkQuotesPage = lazy(() => import("./pages/admin/AdminBulkQuotesPage"));
+const AdminBulkQuoteDetailsPage = lazy(() => import("./pages/admin/AdminBulkQuoteDetailsPage"));
+
+// ============================================================
 // ADMIN RFQ
 // ============================================================
 
@@ -845,6 +854,42 @@ function App() {
               path="/admin/reports"
               element={
                 <AdminReportsPage />
+              }
+            />
+
+            {/* ==================================================
+                ADMIN RETURNS
+                ================================================== */}
+
+            <Route
+              path="/admin/returns"
+              element={
+                <AdminReturnsPage />
+              }
+            />
+
+            <Route
+              path="/admin/returns/:returnId"
+              element={
+                <AdminReturnDetailsPage />
+              }
+            />
+
+            {/* ==================================================
+                ADMIN BULK QUOTES
+                ================================================== */}
+
+            <Route
+              path="/admin/bulk-quotes"
+              element={
+                <AdminBulkQuotesPage />
+              }
+            />
+
+            <Route
+              path="/admin/bulk-quotes/:quoteId"
+              element={
+                <AdminBulkQuoteDetailsPage />
               }
             />
 
