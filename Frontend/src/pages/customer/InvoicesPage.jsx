@@ -15,7 +15,6 @@ import {
 
 import {
   getMyInvoices,
-  createInvoice,
 } from "../../api/invoiceApi";
 
 import Loading from "../../components/common/Loading";

@@ -57,7 +57,6 @@ const STATUS_OPTIONS = [
 // HELPERS
 // ============================================================
 
-const getRFQId = (rfq) => rfq?._id || rfq?.id || "";
 
 const getRFQNumber = (rfq) => rfq?.rfqNumber || "RFQ";
 

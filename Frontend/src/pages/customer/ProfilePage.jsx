@@ -22,7 +22,6 @@ import {
   updateMyProfile,
 } from "../../api/profileApi";
 
-import Loading from "../../components/common/Loading";
 
 import ErrorMessage from "../../components/common/ErrorMessage";
 

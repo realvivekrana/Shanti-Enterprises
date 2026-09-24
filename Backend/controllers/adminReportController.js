@@ -191,7 +191,7 @@ const getOrderStatusReport = async (
       await Order.aggregate([
         {
           $group: {
-            _id: "$status",
+            _id: "$orderStatus",
 
             count: {
               $sum: 1,

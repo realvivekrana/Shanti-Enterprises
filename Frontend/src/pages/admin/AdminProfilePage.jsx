@@ -153,7 +153,7 @@ function AdminProfilePage() {
       setError("");
       setSuccess("");
 
-      const response = await api.put("/auth/profile", {
+      const response = await api.put("/profile", {
         name: form.name.trim(),
         phone: form.phone.trim(),
       });

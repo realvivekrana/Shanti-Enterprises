@@ -20,7 +20,6 @@ import {
   Phone,
   ShieldCheck,
   ShoppingBag,
-  UserRound,
 } from "lucide-react";
 
 import {

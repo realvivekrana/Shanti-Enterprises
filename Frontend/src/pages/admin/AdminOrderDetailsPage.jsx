@@ -1,138 +1,57 @@
 // ============================================================
 // SHANTI ENTERPRISES
-// Admin RFQ Details + Quotation Page
-// Admin - Wholesale RFQ Management
+// Admin Order Details Page
+// Admin - Order Management
 // ============================================================
 
-import "./AdminRFQDetailsPage.css";
+import "./AdminOrderDetailsPage.css";
 
 import { useCallback, useEffect, useState } from "react";
 
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 
 import {
-  cancelAdminRFQ,
-  getAdminRFQById,
-  updateAdminRFQStatus,
-} from "../../api/rfqApi";
-
-import { createAdminQuotation } from "../../api/quotationApi";
+  cancelAdminOrder,
+  getAdminOrderById,
+  updateOrderStatus,
+  updatePaymentStatus,
+} from "../../api/adminOrderApi";
 
 import Loading from "../../components/common/Loading";
 import ErrorMessage from "../../components/common/ErrorMessage";
 import ConfirmModal from "../../components/common/ConfirmModal";
 
 // ============================================================
-// STATUS CONFIG
+// CONFIG (backend ke enum ke saath match karta hai)
 // ============================================================
 
-const STATUS_OPTIONS = [
-  {
-    value: "pending",
-    label: "Pending",
-  },
-  {
-    value: "reviewing",
-    label: "Under Review",
-  },
-  {
-    value: "quoted",
-    label: "Quoted",
-  },
-  {
-    value: "accepted",
-    label: "Accepted",
-  },
-  {
-    value: "rejected",
-    label: "Rejected",
-  },
-  {
-    value: "cancelled",
-    label: "Cancelled",
-  },
+const ORDER_STATUSES = [
+  "pending",
+  "confirmed",
+  "processing",
+  "shipped",
+  "delivered",
+  "cancelled",
 ];
+
+const PAYMENT_STATUSES = ["pending", "paid", "failed", "refunded"];
 
 // ============================================================
 // HELPERS
 // ============================================================
 
-const getRFQId = (rfq) => rfq?._id || rfq?.id || "";
-
-const getRFQNumber = (rfq) => rfq?.rfqNumber || "RFQ";
-
-const getCustomer = (rfq) =>
-  rfq?.customer || rfq?.user || rfq?.createdBy || null;
-
-const getCustomerName = (rfq) => {
-  const customer = getCustomer(rfq);
-
-  if (typeof customer === "string") {
-    return customer;
-  }
-
-  return (
-    customer?.name || customer?.fullName || customer?.username || "Customer"
-  );
-};
-
-const getCustomerEmail = (rfq) => {
-  const customer = getCustomer(rfq);
-
-  if (typeof customer === "object" && customer) {
-    return customer.email || "";
-  }
-
-  return rfq?.customerEmail || rfq?.email || "";
-};
-
-const getCustomerPhone = (rfq) => {
-  const customer = getCustomer(rfq);
-
-  if (typeof customer === "object" && customer) {
-    return customer.phone || customer.mobile || customer.phoneNumber || "";
-  }
-
-  return rfq?.customerPhone || rfq?.phone || "";
-};
-
-const getProductName = (item) =>
-  item?.product?.name || item?.product?.title || item?.productName || "Product";
-
-const getProductImage = (item) => {
-  const product = item?.product;
-
-  if (!product) {
-    return "";
-  }
-
-  if (Array.isArray(product.images) && product.images.length) {
-    const image = product.images[0];
-
-    if (typeof image === "string") {
-      return image;
-    }
-
-    return image?.url || image?.secure_url || "";
-  }
-
-  if (typeof product.image === "string") {
-    return product.image;
-  }
-
-  return product.image?.url || product.image?.secure_url || "";
-};
+const formatCurrency = (value) =>
+  `₹${Number(value || 0).toLocaleString("en-IN", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  })}`;
 
 const formatDateTime = (value) => {
-  if (!value) {
-    return "—";
-  }
+  if (!value) return "—";
 
   const date = new Date(value);
 
-  if (Number.isNaN(date.getTime())) {
-    return "—";
-  }
+  if (Number.isNaN(date.getTime())) return "—";
 
   return date.toLocaleString("en-IN", {
     day: "2-digit",
@@ -143,67 +62,44 @@ const formatDateTime = (value) => {
   });
 };
 
-const getStatusLabel = (status) =>
-  STATUS_OPTIONS.find((option) => option.value === status)?.label ||
-  status ||
-  "Unknown";
+const capitalize = (value = "") =>
+  String(value).charAt(0).toUpperCase() + String(value).slice(1);
 
-const getTotalQuantity = (items = []) =>
-  items.reduce((total, item) => total + Number(item?.quantity || 0), 0);
+const getItemImage = (item) => {
+  if (item?.image) return item.image;
+
+  const image = item?.product?.image;
+
+  if (typeof image === "string") return image;
+
+  return image?.url || image?.secure_url || "";
+};
 
 // ============================================================
 // COMPONENT
 // ============================================================
 
-function AdminRFQDetailsPage() {
-  const { rfqId } = useParams();
+function AdminOrderDetailsPage() {
+  const { orderId } = useParams();
 
-  const navigate = useNavigate();
-
-  // ==========================================================
-  // STATE
-  // ==========================================================
-
-  const [rfq, setRFQ] = useState(null);
-
+  const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
-
   const [error, setError] = useState("");
-
-  const [selectedStatus, setSelectedStatus] = useState("");
-
-  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
-
-  const [isCancelling, setIsCancelling] = useState(false);
-
-  const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
-
   const [successMessage, setSuccessMessage] = useState("");
 
-  // ==========================================================
-  // QUOTATION STATE
-  // ==========================================================
-
-  const [quotationPrices, setQuotationPrices] = useState({});
-
-  const [quotationNote, setQuotationNote] = useState("");
-
-  const [quotationValidUntil, setQuotationValidUntil] = useState("");
-
-  const [isCreatingQuotation, setIsCreatingQuotation] = useState(false);
-
-  const [createdQuotation, setCreatedQuotation] = useState(null);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [isUpdatingPayment, setIsUpdatingPayment] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
 
   // ==========================================================
-  // LOAD RFQ
+  // LOAD ORDER
   // ==========================================================
 
-  const loadRFQ = useCallback(async () => {
-    if (!rfqId) {
-      setError("RFQ ID is missing.");
-
+  const loadOrder = useCallback(async () => {
+    if (!orderId) {
+      setError("Order ID is missing.");
       setLoading(false);
-
       return;
     }
 
@@ -211,94 +107,71 @@ function AdminRFQDetailsPage() {
       setLoading(true);
       setError("");
 
-      const response = await getAdminRFQById(rfqId);
+      const data = await getAdminOrderById(orderId);
 
-      const receivedRFQ =
-        response?.rfq || response?.data?.rfq || response?.data || null;
-
-      if (!receivedRFQ) {
-        setRFQ(null);
-
-        setError("RFQ could not be found.");
-
-        return;
-      }
-
-      setRFQ(receivedRFQ);
-
-      setSelectedStatus(receivedRFQ.status || "pending");
+      setOrder(data?.order || data?.data || null);
     } catch (err) {
-      console.error("Admin RFQ details error:", err);
+      console.error("Load admin order error:", err);
 
       setError(
-        err?.response?.data?.message ||
-          err?.response?.data?.error ||
-          err?.message ||
-          "Unable to load RFQ details.",
+        err.response?.data?.message ||
+          err.message ||
+          "Unable to load order details."
       );
     } finally {
       setLoading(false);
     }
-  }, [rfqId]);
-
-  // ==========================================================
-  // INITIAL LOAD
-  // ==========================================================
+  }, [orderId]);
 
   useEffect(() => {
-    loadRFQ();
-  }, [loadRFQ]);
+    loadOrder();
+  }, [loadOrder]);
 
   // ==========================================================
-  // UPDATE STATUS
+  // MERGE UPDATED FIELDS
+  // Update APIs sirf chhota order object return karte hain
+  // (id, orderNumber, orderStatus, paymentStatus), isliye
+  // populated user/items ko bachaane ke liye merge karte hain.
   // ==========================================================
 
-  const handleStatusUpdate = async () => {
-    if (!rfqId || !selectedStatus || isUpdatingStatus) {
-      return;
-    }
+  const mergeOrder = (updated) => {
+    if (!updated) return;
 
-    if (selectedStatus === rfq?.status) {
-      setSuccessMessage("RFQ status is already set to this value.");
+    setOrder((current) => ({
+      ...current,
+      orderStatus: updated.orderStatus ?? current?.orderStatus,
+      paymentStatus: updated.paymentStatus ?? current?.paymentStatus,
+    }));
+  };
 
-      return;
-    }
+  // ==========================================================
+  // UPDATE ORDER STATUS
+  // ==========================================================
+
+  const handleStatusChange = async (event) => {
+    const newStatus = event.target.value;
+
+    if (!newStatus || newStatus === order?.orderStatus) return;
 
     try {
       setIsUpdatingStatus(true);
-
       setError("");
       setSuccessMessage("");
 
-      const response = await updateAdminRFQStatus(rfqId, selectedStatus);
+      const data = await updateOrderStatus(orderId, newStatus);
 
-      const updatedRFQ =
-        response?.rfq || response?.data?.rfq || response?.data || null;
+      mergeOrder(data?.order);
 
-      if (updatedRFQ) {
-        setRFQ(updatedRFQ);
-
-        setSelectedStatus(updatedRFQ.status || selectedStatus);
-      } else {
-        setRFQ((currentRFQ) =>
-          currentRFQ
-            ? {
-                ...currentRFQ,
-                status: selectedStatus,
-              }
-            : currentRFQ,
-        );
-      }
-
-      setSuccessMessage("RFQ status updated successfully.");
+      setSuccessMessage(
+        data?.message || "Order status updated successfully."
+      );
     } catch (err) {
-      console.error("Update RFQ status error:", err);
+      console.error("Update order status error:", err);
 
       setError(
-        err?.response?.data?.message ||
-          err?.response?.data?.error ||
-          err?.message ||
-          "Unable to update RFQ status.",
+        err.response?.data?.message ||
+          err.message ||
+          "Unable to update order status."
       );
     } finally {
       setIsUpdatingStatus(false);
@@ -306,53 +179,65 @@ function AdminRFQDetailsPage() {
   };
 
   // ==========================================================
-  // CANCEL RFQ
+  // UPDATE PAYMENT STATUS
   // ==========================================================
 
-  const handleCancelRFQ = async () => {
-    if (!rfqId || isCancelling) {
-      return;
-    }
+  const handlePaymentStatusChange = async (event) => {
+    const newStatus = event.target.value;
+
+    if (!newStatus || newStatus === order?.paymentStatus) return;
 
     try {
-      setIsCancelling(true);
-
+      setIsUpdatingPayment(true);
       setError("");
       setSuccessMessage("");
 
-      const response = await cancelAdminRFQ(rfqId);
+      const data = await updatePaymentStatus(orderId, newStatus);
 
-      const updatedRFQ =
-        response?.rfq || response?.data?.rfq || response?.data || null;
+      mergeOrder(data?.order);
 
-      if (updatedRFQ) {
-        setRFQ(updatedRFQ);
+      setSuccessMessage(
+        data?.message || "Payment status updated successfully."
+      );
+    } catch (err) {
+      console.error("Update payment status error:", err);
 
-        setSelectedStatus(updatedRFQ.status || "cancelled");
-      } else {
-        setRFQ((currentRFQ) =>
-          currentRFQ
-            ? {
-                ...currentRFQ,
-                status: "cancelled",
-              }
-            : currentRFQ,
-        );
+      setError(
+        err.response?.data?.message ||
+          err.message ||
+          "Unable to update payment status."
+      );
+    } finally {
+      setIsUpdatingPayment(false);
+    }
+  };
 
-        setSelectedStatus("cancelled");
-      }
+  // ==========================================================
+  // CANCEL ORDER
+  // ==========================================================
+
+  const handleCancelOrder = async () => {
+    try {
+      setIsCancelling(true);
+      setError("");
+      setSuccessMessage("");
+
+      const data = await cancelAdminOrder(orderId);
+
+      mergeOrder(data?.order);
 
       setShowCancelConfirmation(false);
 
-      setSuccessMessage("RFQ cancelled successfully.");
+      setSuccessMessage(data?.message || "Order cancelled successfully.");
     } catch (err) {
-      console.error("Cancel admin RFQ error:", err);
+      console.error("Cancel order error:", err);
+
+      setShowCancelConfirmation(false);
 
       setError(
-        err?.response?.data?.message ||
-          err?.response?.data?.error ||
-          err?.message ||
-          "Unable to cancel RFQ.",
+        err.response?.data?.message ||
+          err.message ||
+          "Unable to cancel order."
       );
     } finally {
       setIsCancelling(false);
@@ -360,764 +245,421 @@ function AdminRFQDetailsPage() {
   };
 
   // ==========================================================
-  // QUOTATION PRICE CHANGE
-  // ==========================================================
-
-  const handleQuotationPriceChange = (productId, value) => {
-    setQuotationPrices((currentPrices) => ({
-      ...currentPrices,
-      [productId]: value,
-    }));
-  };
-
-  // ==========================================================
-  // QUOTATION TOTAL
-  // ==========================================================
-
-  const getQuotationItemTotal = (item) => {
-    const productId =
-      item?.product?._id || item?.product || item?.productId || "";
-
-    const quantity = Number(item?.quantity || 0);
-
-    const unitPrice = Number(quotationPrices[productId] || 0);
-
-    return quantity * unitPrice;
-  };
-
-  // NOTE: `items` yahin define hona chahiye — pehle ye neeche (DATA section)
-  // mein tha aur upar wale reduce() se pehle use ho jaata tha, jisse
-  // "Cannot access 'items' before initialization" crash aata tha.
-  const items = Array.isArray(rfq?.items) ? rfq.items : [];
-
-  const quotationSubtotal = items.reduce(
-    (total, item) => total + getQuotationItemTotal(item),
-    0,
-  );
-
-  // ==========================================================
-  // CREATE QUOTATION
-  // ==========================================================
-
-  const handleCreateQuotation = async () => {
-    if (!rfqId || !items.length || isCreatingQuotation) {
-      return;
-    }
-
-    setError("");
-    setSuccessMessage("");
-
-    const quotationItems = items.map((item) => {
-      const productId =
-        item?.product?._id || item?.product || item?.productId || "";
-
-      return {
-        productId,
-        quantity: Number(item?.quantity || 0),
-        unitPrice: Number(quotationPrices[productId] || 0),
-      };
-    });
-
-    const invalidItem = quotationItems.find(
-      (item) =>
-        !item.productId ||
-        item.quantity < 1 ||
-        !Number.isFinite(item.unitPrice) ||
-        item.unitPrice < 0,
-    );
-
-    if (invalidItem) {
-      setError("Please enter a valid unit price for every requested product.");
-
-      return;
-    }
-
-    if (!quotationValidUntil) {
-      setError("Please select a quotation validity date.");
-
-      return;
-    }
-
-    const validUntilDate = new Date(`${quotationValidUntil}T23:59:59`);
-
-    if (Number.isNaN(validUntilDate.getTime())) {
-      setError("Please select a valid quotation expiry date.");
-
-      return;
-    }
-
-    if (validUntilDate < new Date()) {
-      setError("Quotation validity date must be in the future.");
-
-      return;
-    }
-
-    try {
-      setIsCreatingQuotation(true);
-
-      const response = await createAdminQuotation({
-        rfqId,
-        items: quotationItems,
-        note: quotationNote.trim(),
-        validUntil: validUntilDate.toISOString(),
-      });
-
-      const quotation =
-        response?.quotation ||
-        response?.data?.quotation ||
-        response?.data ||
-        null;
-
-      setCreatedQuotation(quotation);
-
-      setSuccessMessage(response?.message || "Quotation created successfully.");
-
-      // The backend changes the related RFQ
-      // to quoted when quotation creation succeeds.
-      setRFQ((currentRFQ) =>
-        currentRFQ
-          ? {
-              ...currentRFQ,
-              status: "quoted",
-            }
-          : currentRFQ,
-      );
-
-      setSelectedStatus("quoted");
-    } catch (err) {
-      console.error("Create quotation error:", err);
-
-      setError(
-        err?.response?.data?.message ||
-          err?.response?.data?.error ||
-          err?.message ||
-          "Unable to create quotation.",
-      );
-    } finally {
-      setIsCreatingQuotation(false);
-    }
-  };
-
-  // ==========================================================
-  // LOADING
+  // LOADING / ERROR / NOT FOUND
   // ==========================================================
 
   if (loading) {
-    return (
-      <div className="app-page admin-rfq-details-page">
-        <div className="page-header">
-          <div>
-            <span className="page-eyebrow">ADMIN</span>
-
-            <h1>RFQ Details</h1>
-
-            <p>Loading RFQ...</p>
-          </div>
-        </div>
-
-        <Loading message="Loading RFQ details..." />
-      </div>
-    );
+    return <Loading message="Loading order details..." />;
   }
 
-  // ==========================================================
-  // ERROR
-  // ==========================================================
-
-  if (error && !rfq) {
+  if (!order) {
     return (
-      <div className="app-page admin-rfq-details-page">
-        <div className="page-header">
-          <div>
-            <span className="page-eyebrow">ADMIN</span>
+      <div className="admin-order-details-page">
+        <div className="admin-order-details-container">
+          <div className="admin-order-not-found">
+            <div className="admin-empty-icon">📦</div>
 
-            <h1>RFQ Details</h1>
+            <h1>Order not found</h1>
+
+            <p>{error || "This order does not exist or was removed."}</p>
+
+            <Link to="/admin/orders" className="admin-order-details-back">
+              ← Back to Orders
+            </Link>
           </div>
-        </div>
-
-        <ErrorMessage message={error} onRetry={loadRFQ} />
-
-        <div className="rfq-details-back" style={{ marginTop: "16px" }}>
-          <Link to="/admin/rfqs">← Back to RFQs</Link>
         </div>
       </div>
     );
   }
 
   // ==========================================================
-  // DATA
+  // DERIVED DATA
   // ==========================================================
 
-  const rfqNumber = getRFQNumber(rfq);
+  const items = Array.isArray(order.items) ? order.items : [];
 
-  const currentStatus = rfq?.status || "pending";
+  const orderStatus = order.orderStatus || "pending";
+  const paymentStatus = order.paymentStatus || "pending";
 
-  const totalQuantity = getTotalQuantity(items);
+  const customer =
+    order.user && typeof order.user === "object" ? order.user : null;
 
-  const customerName = getCustomerName(rfq);
+  const address = order.shippingAddress || null;
 
-  const customerEmail = getCustomerEmail(rfq);
+  const subtotal = Number(order.subtotal ?? 0);
+  const total = Number(order.totalAmount ?? subtotal);
+  const shippingAndOther = Math.max(total - subtotal, 0);
 
-  const customerPhone = getCustomerPhone(rfq);
+  const canCancel = !["cancelled", "delivered"].includes(orderStatus);
+  const isCancelled = orderStatus === "cancelled";
 
-  const canCancel = !["cancelled", "accepted", "rejected"].includes(
-    currentStatus,
-  );
+  const isBusy = isUpdatingStatus || isUpdatingPayment || isCancelling;
 
   // ==========================================================
-  // PAGE
+  // RENDER
   // ==========================================================
 
   return (
-    <div className="app-page admin-rfq-details-page">
-      {/* ======================================================
-          HEADER
-          ====================================================== */}
+    <div className="admin-order-details-page">
+      <div className="admin-order-details-container">
+        {/* ---------------- HEADER ---------------- */}
+        <div className="admin-order-details-header">
+          <div className="admin-order-header-copy">
+            <Link to="/admin/orders" className="admin-order-details-back">
+              ← Back to Orders
+            </Link>
 
-      <div className="page-header">
-        <div>
-          <span className="page-eyebrow">ADMIN · WHOLESALE</span>
+            <span className="admin-order-details-eyebrow">Order Details</span>
 
-          <h1>{rfqNumber}</h1>
+            <h1>{order.orderNumber || "Order"}</h1>
 
-          <p>Review customer requirements and manage this RFQ.</p>
+            <p>Placed on {formatDateTime(order.createdAt)}</p>
+          </div>
+
+          <div className={`admin-order-details-status ${orderStatus}`}>
+            <span className="admin-status-dot" />
+            {capitalize(orderStatus)}
+          </div>
         </div>
 
-        <Link className="back-link" to="/admin/rfqs">
-          ← All RFQs
-        </Link>
-      </div>
+        {/* ---------------- MESSAGES ---------------- */}
+        {successMessage && (
+          <div className="admin-order-details-success">
+            <strong>Success:</strong> {successMessage}
+          </div>
+        )}
 
-      {/* ======================================================
-          SUCCESS
-          ====================================================== */}
+        {error && (
+          <ErrorMessage message={error} onRetry={loadOrder} />
+        )}
 
-      {successMessage && (
-        <div
-          role="status"
-          className="alert-success"
-          style={{ marginBottom: "20px" }}
-        >
-          {successMessage}
-        </div>
-      )}
+        {/* ---------------- SUMMARY ---------------- */}
+        <div className="admin-order-details-summary">
+          <div className="admin-summary-item">
+            <span>Order Total</span>
+            <strong>{formatCurrency(total)}</strong>
+          </div>
 
-      {/* ======================================================
-          ERROR
-          ====================================================== */}
+          <div className="admin-summary-divider" />
 
-      {error && <ErrorMessage message={error} />}
+          <div className="admin-summary-item">
+            <span>Items</span>
+            <strong>{items.length}</strong>
+          </div>
 
-      {/* ======================================================
-          TOP SUMMARY
-          ====================================================== */}
+          <div className="admin-summary-divider" />
 
-      <section className="details-grid" style={{ marginBottom: "20px" }}>
-        <div className="detail-card card">
-          <span className="detail-label">Status</span>
-
-          <strong>{getStatusLabel(currentStatus)}</strong>
+          <div className="admin-summary-item">
+            <span>Payment</span>
+            <strong>{capitalize(paymentStatus)}</strong>
+          </div>
         </div>
 
-        <div className="detail-card card">
-          <span className="detail-label">Products</span>
-
-          <strong>{items.length}</strong>
-        </div>
-
-        <div className="detail-card card">
-          <span className="detail-label">Total Quantity</span>
-
-          <strong>{totalQuantity}</strong>
-        </div>
-
-        <div className="detail-card card">
-          <span className="detail-label">Submitted</span>
-
-          <strong>{formatDateTime(rfq?.createdAt)}</strong>
-        </div>
-      </section>
-
-      {/* ======================================================
-          MAIN GRID
-          ====================================================== */}
-
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "minmax(0, 1fr) 340px",
-          gap: "20px",
-          alignItems: "start",
-        }}
-      >
-        {/* ====================================================
-            LEFT
-            ==================================================== */}
-
-        <div>
-          {/* CUSTOMER */}
-
-          <section className="card" style={{ marginBottom: "20px" }}>
-            <h2>Customer Details</h2>
-
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                gap: "16px",
-              }}
-            >
-              <div>
-                <span className="detail-label">Name</span>
-
-                <strong>{customerName}</strong>
+        {/* ---------------- MAIN GRID ---------------- */}
+        <div className="admin-order-details-grid">
+          <div className="admin-order-details-main">
+            {/* STATUS UPDATE */}
+            <section className="admin-details-card">
+              <div className="admin-details-card-header">
+                <span className="admin-card-icon">⚙️</span>
+                <h2>Order Status</h2>
               </div>
 
-              <div>
-                <span className="detail-label">Email</span>
+              <div className="admin-status-update-box">
+                <div className="admin-current-status">
+                  <span>Current status</span>
 
-                <strong>{customerEmail || "—"}</strong>
-              </div>
-
-              <div>
-                <span className="detail-label">Phone</span>
-
-                <strong>{customerPhone || "—"}</strong>
-              </div>
-            </div>
-          </section>
-
-          {/* PRODUCTS */}
-
-          <section className="card" style={{ marginBottom: "20px" }}>
-            <h2>Requested Products</h2>
-
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "14px",
-              }}
-            >
-              {items.length === 0 ? (
-                <div className="empty-state">No products found.</div>
-              ) : (
-                items.map((item, index) => {
-                  const image = getProductImage(item);
-
-                  return (
-                    <article
-                      key={item?._id || item?.productId || index}
-                      className="rfq-product-card"
-                    >
-                      <div className="rfq-product-thumb">
-                        {image ? (
-                          <img src={image} alt={getProductName(item)} />
-                        ) : (
-                          <div className="rfq-product-thumb-placeholder">
-                            No Image
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="rfq-product-info">
-                        <h3>{getProductName(item)}</h3>
-
-                        <p>
-                          Quantity: <strong>{item?.quantity}</strong>
-                        </p>
-
-                        {item?.unit && (
-                          <p>
-                            Unit: <strong>{item.unit}</strong>
-                          </p>
-                        )}
-
-                        {item?.note && (
-                          <div className="rfq-product-note">
-                            <span className="detail-label">
-                              Product Requirement
-                            </span>
-
-                            <p style={{ margin: 0, lineHeight: 1.5 }}>
-                              {item.note}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </article>
-                  );
-                })
-              )}
-            </div>
-          </section>
-
-          {/* ======================================================
-              CREATE QUOTATION
-              ====================================================== */}
-
-          {currentStatus !== "cancelled" &&
-            currentStatus !== "accepted" &&
-            currentStatus !== "rejected" &&
-            !createdQuotation && (
-              <section className="card" style={{ marginBottom: "20px" }}>
-                <div className="section-intro">
-                  <span className="detail-label">ADMIN QUOTATION</span>
-
-                  <h2>Create Quotation</h2>
-
-                  <p>
-                    Enter the wholesale unit price for every requested product.
-                  </p>
+                  <strong className={`admin-order-status-text ${orderStatus}`}>
+                    {capitalize(orderStatus)}
+                  </strong>
                 </div>
 
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "12px",
-                  }}
-                >
+                <div className="admin-status-control">
+                  <label htmlFor="order-status-select">Update status</label>
+
+                  <select
+                    id="order-status-select"
+                    value={orderStatus}
+                    onChange={handleStatusChange}
+                    disabled={isBusy || isCancelled}
+                  >
+                    {ORDER_STATUSES.map((status) => (
+                      <option key={status} value={status}>
+                        {capitalize(status)}
+                      </option>
+                    ))}
+                  </select>
+
+                  {isUpdatingStatus && (
+                    <span className="admin-order-updating-message">
+                      <span className="admin-spinner" /> Updating...
+                    </span>
+                  )}
+                </div>
+              </div>
+            </section>
+
+            {/* ITEMS */}
+            <section className="admin-details-card">
+              <div className="admin-details-card-header">
+                <span className="admin-card-icon">🛒</span>
+                <h2>Order Items</h2>
+                <span className="admin-items-count">
+                  {items.length} {items.length === 1 ? "item" : "items"}
+                </span>
+              </div>
+
+              {items.length === 0 ? (
+                <div className="admin-no-items">
+                  <span>📭</span>
+                  <p>No items found in this order.</p>
+                </div>
+              ) : (
+                <div className="admin-order-items">
                   {items.map((item, index) => {
-                    const productId =
-                      item?.product?._id ||
-                      item?.product ||
-                      item?.productId ||
-                      `item-${index}`;
-
-                    const quantity = Number(item?.quantity || 0);
-
-                    const unitPrice = Number(quotationPrices[productId] || 0);
-
-                    const itemTotal = quantity * unitPrice;
+                    const image = getItemImage(item);
+                    const name =
+                      item.name || item.product?.name || "Product";
+                    const lineTotal =
+                      Number(item.price || 0) * Number(item.quantity || 0);
 
                     return (
-                      <div key={productId} className="quotation-item-row">
-                        <div>
-                          <strong className="item-name">
-                            {getProductName(item)}
-                          </strong>
-
-                          <span className="item-meta">
-                            Requested: {quantity}
-                            {item?.unit ? ` ${item.unit}` : ""}
-                          </span>
+                      <div
+                        className="admin-order-item"
+                        key={`${item.product?._id || item.product || index}-${index}`}
+                      >
+                        <div className="admin-order-item-image">
+                          {image ? (
+                            <img src={image} alt={name} loading="lazy" />
+                          ) : (
+                            <span>📦</span>
+                          )}
                         </div>
 
-                        <div>
-                          <label
-                            htmlFor={`quotation-price-${productId}`}
-                            className="detail-label"
-                          >
-                            Unit Price
-                          </label>
+                        <div className="admin-order-item-info">
+                          <h3>{name}</h3>
 
-                          <input
-                            id={`quotation-price-${productId}`}
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            value={quotationPrices[productId] ?? ""}
-                            onChange={(event) =>
-                              handleQuotationPriceChange(
-                                productId,
-                                event.target.value,
-                              )
-                            }
-                            placeholder="0.00"
-                            disabled={isCreatingQuotation}
-                          />
+                          <div className="admin-item-meta">
+                            <span>
+                              Qty: <strong>{item.quantity}</strong>
+                              {item.unit ? ` ${item.unit}` : ""}
+                            </span>
+                            <span>
+                              Price: <strong>{formatCurrency(item.price)}</strong>
+                            </span>
+                          </div>
                         </div>
 
-                        <div>
-                          <span className="detail-label">Total</span>
-
-                          <strong className="item-total">
-                            ₹
-                            {itemTotal.toLocaleString("en-IN", {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })}
-                          </strong>
+                        <div className="admin-order-item-total">
+                          {formatCurrency(lineTotal)}
                         </div>
                       </div>
                     );
                   })}
                 </div>
+              )}
+            </section>
 
-                {/* QUOTATION NOTE */}
+            {/* PRICE BREAKDOWN */}
+            <section className="admin-details-card">
+              <div className="admin-details-card-header">
+                <span className="admin-card-icon">💰</span>
+                <h2>Price Summary</h2>
+              </div>
 
-                <div style={{ marginTop: "18px" }}>
-                  <label htmlFor="quotation-note" className="field-label">
-                    Quotation Note
-                  </label>
-
-                  <textarea
-                    id="quotation-note"
-                    value={quotationNote}
-                    onChange={(event) => setQuotationNote(event.target.value)}
-                    maxLength={1000}
-                    rows={4}
-                    placeholder="Add pricing terms, delivery information, payment terms or any other note..."
-                    disabled={isCreatingQuotation}
-                  />
-
-                  <div className="char-count">{quotationNote.length}/1000</div>
+              <div className="admin-price-breakdown">
+                <div>
+                  <span>Subtotal</span>
+                  <strong>{formatCurrency(subtotal)}</strong>
                 </div>
 
-                {/* VALID UNTIL */}
+                {shippingAndOther > 0 && (
+                  <div>
+                    <span>Shipping / Other charges</span>
+                    <strong>{formatCurrency(shippingAndOther)}</strong>
+                  </div>
+                )}
 
-                <div style={{ marginTop: "14px", maxWidth: "280px" }}>
-                  <label
-                    htmlFor="quotation-valid-until"
-                    className="field-label"
-                  >
-                    Valid Until
-                  </label>
-
-                  <input
-                    id="quotation-valid-until"
-                    type="date"
-                    value={quotationValidUntil}
-                    min={new Date().toISOString().split("T")[0]}
-                    onChange={(event) =>
-                      setQuotationValidUntil(event.target.value)
-                    }
-                    disabled={isCreatingQuotation}
-                  />
+                <div className="admin-grand-total">
+                  <span>Grand Total</span>
+                  <strong>{formatCurrency(total)}</strong>
                 </div>
+              </div>
+            </section>
+          </div>
 
-                {/* TOTAL */}
+          {/* ---------------- SIDEBAR ---------------- */}
+          <aside className="admin-order-details-sidebar">
+            {/* CUSTOMER */}
+            <section className="admin-details-card">
+              <div className="admin-details-card-header">
+                <span className="admin-card-icon">👤</span>
+                <h2>Customer</h2>
+              </div>
 
-                <div className="quotation-total-row">
-                  <div className="row-inner">
-                    <span>Quotation Total</span>
+              {customer ? (
+                <div className="admin-customer-info">
+                  <div className="admin-customer-avatar">
+                    {(customer.name || "C").charAt(0).toUpperCase()}
+                  </div>
 
-                    <strong>
-                      ₹
-                      {quotationSubtotal.toLocaleString("en-IN", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
-                    </strong>
+                  <div>
+                    <h3>{customer.name || "Customer"}</h3>
+
+                    {customer.email && (
+                      <a href={`mailto:${customer.email}`}>{customer.email}</a>
+                    )}
+
+                    {customer.phone && (
+                      <a href={`tel:${customer.phone}`}>{customer.phone}</a>
+                    )}
+
+                    {customer._id && (
+                      <Link to={`/admin/users/${customer._id}`}>
+                        View customer profile
+                      </Link>
+                    )}
                   </div>
                 </div>
+              ) : (
+                <p className="admin-not-available">
+                  Customer details not available.
+                </p>
+              )}
+            </section>
 
-                {/* CREATE BUTTON */}
+            {/* SHIPPING ADDRESS */}
+            <section className="admin-details-card">
+              <div className="admin-details-card-header">
+                <span className="admin-card-icon">📍</span>
+                <h2>Shipping Address</h2>
+              </div>
 
-                <button
-                  type="button"
-                  className="create-quotation-btn"
-                  onClick={handleCreateQuotation}
-                  disabled={isCreatingQuotation || !items.length}
-                  style={{ width: "100%", marginTop: "16px" }}
-                >
-                  {isCreatingQuotation
-                    ? "Creating Quotation..."
-                    : "Create Quotation"}
-                </button>
-              </section>
-            )}
+              {address ? (
+                <div className="admin-shipping-address">
+                  <strong>{address.name}</strong>
 
-          {/* ======================================================
-              CREATED QUOTATION
-              ====================================================== */}
+                  <p>
+                    {address.addressLine1}
+                    {address.addressLine2 ? `, ${address.addressLine2}` : ""}
+                  </p>
 
-          {createdQuotation && (
-            <section className="quotation-created-panel">
-              <span className="detail-label">QUOTATION CREATED</span>
+                  <p>
+                    {[address.city, address.state, address.postalCode]
+                      .filter(Boolean)
+                      .join(", ")}
+                  </p>
 
-              <h2>{createdQuotation.quotationNumber || "Quotation created"}</h2>
+                  {address.country && <p>{address.country}</p>}
 
-              <div className="quotation-created-grid">
-                <div>
-                  <span className="detail-label">Status</span>
-
-                  <strong>{createdQuotation.status || "sent"}</strong>
+                  {address.phone && <p>📞 {address.phone}</p>}
                 </div>
+              ) : (
+                <p className="admin-not-available">
+                  No shipping address on this order.
+                </p>
+              )}
+            </section>
 
-                <div>
-                  <span className="detail-label">Total Amount</span>
+            {/* PAYMENT */}
+            <section className="admin-details-card">
+              <div className="admin-details-card-header">
+                <span className="admin-card-icon">💳</span>
+                <h2>Payment</h2>
+              </div>
 
+              <div className="admin-payment-info">
+                <div className="admin-payment-row">
+                  <span>Method</span>
                   <strong>
-                    ₹
-                    {Number(
-                      createdQuotation.totalAmount || quotationSubtotal,
-                    ).toLocaleString("en-IN", {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
+                    {order.paymentMethod
+                      ? order.paymentMethod.toUpperCase()
+                      : "—"}
                   </strong>
                 </div>
 
-                <div>
-                  <span className="detail-label">Valid Until</span>
+                <div className="admin-payment-row">
+                  <span>Status</span>
+                  <strong className={`admin-payment-status ${paymentStatus}`}>
+                    {capitalize(paymentStatus)}
+                  </strong>
+                </div>
 
-                  <strong>{formatDateTime(createdQuotation.validUntil)}</strong>
+                <div className="admin-payment-row">
+                  <span>Amount</span>
+                  <strong>{formatCurrency(total)}</strong>
+                </div>
+              </div>
+
+              <div className="admin-status-update-box" style={{ gridTemplateColumns: "1fr" }}>
+                <div className="admin-status-control">
+                  <label htmlFor="payment-status-select">
+                    Update payment status
+                  </label>
+
+                  <select
+                    id="payment-status-select"
+                    value={paymentStatus}
+                    onChange={handlePaymentStatusChange}
+                    disabled={isBusy}
+                  >
+                    {PAYMENT_STATUSES.map((status) => (
+                      <option key={status} value={status}>
+                        {capitalize(status)}
+                      </option>
+                    ))}
+                  </select>
+
+                  {isUpdatingPayment && (
+                    <span className="admin-order-updating-message">
+                      <span className="admin-spinner" /> Updating...
+                    </span>
+                  )}
                 </div>
               </div>
             </section>
-          )}
 
-          {/* OVERALL REQUIREMENT */}
+            {/* CANCEL */}
+            {canCancel && (
+              <section className="admin-details-card">
+                <div className="admin-details-card-header">
+                  <span className="admin-card-icon">⚠️</span>
+                  <h2>Danger Zone</h2>
+                </div>
 
-          {rfq?.message && (
-            <section className="card" style={{ marginBottom: "20px" }}>
-              <h2>Overall Requirement</h2>
+                <div className="admin-status-update-box" style={{ gridTemplateColumns: "1fr" }}>
+                  <p className="admin-not-available">
+                    Cancelling restores product stock and cannot be undone.
+                  </p>
 
-              <p
-                style={{
-                  margin: 0,
-                  lineHeight: 1.7,
-                  whiteSpace: "pre-wrap",
-                }}
-              >
-                {rfq.message}
-              </p>
-            </section>
-          )}
+                  <button
+                    type="button"
+                    className="btn btn-danger"
+                    onClick={() => setShowCancelConfirmation(true)}
+                    disabled={isBusy}
+                  >
+                    Cancel Order
+                  </button>
+                </div>
+              </section>
+            )}
+          </aside>
         </div>
-
-        {/* ====================================================
-            RIGHT SIDEBAR
-            ==================================================== */}
-
-        <aside
-          style={{
-            position: "sticky",
-            top: "20px",
-          }}
-        >
-          {/* STATUS */}
-
-          <section className="card" style={{ marginBottom: "16px" }}>
-            <h2>Manage Status</h2>
-
-            <label
-              htmlFor="admin-rfq-status"
-              style={{
-                display: "block",
-                fontWeight: 600,
-                marginBottom: "8px",
-              }}
-            >
-              RFQ Status
-            </label>
-
-            <select
-              id="admin-rfq-status"
-              value={selectedStatus}
-              onChange={(event) => setSelectedStatus(event.target.value)}
-              disabled={isUpdatingStatus || isCancelling || isCreatingQuotation}
-            >
-              {STATUS_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-
-            <button
-              type="button"
-              onClick={handleStatusUpdate}
-              disabled={
-                isUpdatingStatus ||
-                isCancelling ||
-                selectedStatus === currentStatus
-              }
-              style={{ width: "100%", marginTop: "12px" }}
-            >
-              {isUpdatingStatus ? "Updating..." : "Update Status"}
-            </button>
-          </section>
-
-          {/* QUOTATION STATUS */}
-
-          {createdQuotation && (
-            <section className="card" style={{ marginBottom: "16px" }}>
-              <h2>Quotation</h2>
-
-              <p style={{ margin: "0 0 12px", color: "var(--rfq-muted)" }}>
-                A quotation has been created for this RFQ.
-              </p>
-
-              <strong>{createdQuotation.quotationNumber || "Quotation"}</strong>
-            </section>
-          )}
-
-          {/* RFQ INFORMATION */}
-
-          <section className="card" style={{ marginBottom: "16px" }}>
-            <h2>RFQ Information</h2>
-
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "14px",
-              }}
-            >
-              <div>
-                <span className="detail-label">RFQ Number</span>
-
-                <strong>{rfqNumber}</strong>
-              </div>
-
-              <div>
-                <span className="detail-label">Created</span>
-
-                <strong>{formatDateTime(rfq?.createdAt)}</strong>
-              </div>
-
-              <div>
-                <span className="detail-label">Updated</span>
-
-                <strong>{formatDateTime(rfq?.updatedAt)}</strong>
-              </div>
-            </div>
-          </section>
-
-          {/* CANCEL */}
-
-          {canCancel && (
-            <section className="danger-zone">
-              <h3>Danger Zone</h3>
-
-              <p>Cancel this RFQ if it should no longer be processed.</p>
-
-              <button
-                type="button"
-                onClick={() => setShowCancelConfirmation(true)}
-                disabled={isCancelling || isUpdatingStatus}
-              >
-                Cancel RFQ
-              </button>
-            </section>
-          )}
-        </aside>
       </div>
-
-      {/* ======================================================
-          CANCEL MODAL
-          ====================================================== */}
 
       <ConfirmModal
         open={showCancelConfirmation}
-        title="Cancel RFQ?"
-        message={
-          <>
-            Are you sure you want to cancel <strong>{rfqNumber}</strong>?
-          </>
-        }
-        confirmText={isCancelling ? "Cancelling..." : "Yes, Cancel"}
-        cancelText="Keep RFQ"
+        title="Cancel this order?"
+        message={`Order ${order.orderNumber || ""} will be cancelled and its stock will be restored to inventory.`}
+        confirmText="Yes, cancel order"
+        cancelText="Keep order"
         variant="danger"
         loading={isCancelling}
-        onConfirm={handleCancelRFQ}
+        onConfirm={handleCancelOrder}
         onCancel={() => setShowCancelConfirmation(false)}
       />
     </div>
   );
 }
 
-export default AdminRFQDetailsPage;
+export default AdminOrderDetailsPage;

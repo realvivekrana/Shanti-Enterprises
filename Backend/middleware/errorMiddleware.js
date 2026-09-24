@@ -30,6 +30,17 @@ const errorHandler = (err, req, res, next) => {
   console.error("================================================");
   console.error("");
 
+  // Invalid ObjectId (e.g. /orders/undefined) 500 nahi, 400 hona chahiye
+  if (err.name === "CastError") {
+    err.statusCode = 400;
+    err.message = `Invalid ${err.path || "id"}: ${err.value}`;
+  }
+
+  // Mongoose validation errors client ki galti hain
+  if (err.name === "ValidationError" && !err.statusCode) {
+    err.statusCode = 400;
+  }
+
   const statusCode = err.statusCode || 500;
 
   const response = {

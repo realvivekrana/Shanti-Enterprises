@@ -19,7 +19,6 @@ import {
 
 import Loading from "../../components/common/Loading";
 
-import ErrorMessage from "../../components/common/ErrorMessage";
 
 import "./EditCategoryPage.css";
 
