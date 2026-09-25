@@ -78,15 +78,28 @@
   background:
     radial-gradient(
       circle at 100% 0%,
-      rgba(20, 184, 166, 0.12),
+      rgba(20, 184, 166, 0.18),
       transparent 34%
     ),
     radial-gradient(
       circle at 0% 100%,
-      rgba(14, 165, 233, 0.10),
+      rgba(14, 165, 233, 0.14),
       transparent 30%
     ),
+    linear-gradient(180deg, rgba(247, 250, 252, 0.4), transparent 70%),
     var(--se-bg);
+}
+
+.home-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(15, 23, 42, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 23, 42, 0.035) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: linear-gradient(180deg, rgba(0,0,0,0.55), transparent 85%);
 }
 
 
@@ -175,6 +188,8 @@
 
   color: var(--se-text);
 
+  font-family: var(--font-display, Syne, sans-serif);
+
   font-size: clamp(
     2.35rem,
     10vw,
@@ -183,7 +198,7 @@
 
   line-height: 1.03;
 
-  font-weight: 900;
+  font-weight: 800;
 
   letter-spacing: -0.055em;
 }
@@ -432,23 +447,24 @@
   overflow: hidden;
 
   border: 1px solid
-    rgba(255, 255, 255, 0.10);
+    rgba(255, 255, 255, 0.14);
 
   border-radius: 22px;
 
   background:
     linear-gradient(
       145deg,
-      #0b2836 0%,
-      #0d3040 48%,
-      #111d3a 100%
+      #07202c 0%,
+      #0b3144 48%,
+      #121d3e 100%
     );
 
   color: #ffffff;
 
   box-shadow:
-    0 25px 60px
-    rgba(7, 31, 43, 0.25);
+    0 25px 60px rgba(7, 31, 43, 0.28),
+    0 0 0 1px rgba(20, 184, 166, 0.12),
+    0 20px 50px rgba(14, 165, 233, 0.12);
 }
 
 
@@ -2028,12 +2044,12 @@
   background:
     radial-gradient(
       circle at 100% 0%,
-      rgba(20, 184, 166, 0.10),
+      rgba(20, 184, 166, 0.16),
       transparent 34%
     ),
     radial-gradient(
       circle at 0% 100%,
-      rgba(14, 165, 233, 0.08),
+      rgba(14, 165, 233, 0.12),
       transparent 30%
     ),
     var(--se-bg);
@@ -2079,14 +2095,15 @@
   background:
     radial-gradient(
       circle at 100% 0%,
-      rgba(20, 184, 166, 0.08),
+      rgba(20, 184, 166, 0.16),
       transparent 34%
     ),
     radial-gradient(
       circle at 0% 100%,
-      rgba(14, 165, 233, 0.07),
+      rgba(14, 165, 233, 0.12),
       transparent 30%
     ),
+    linear-gradient(180deg, rgba(247, 250, 252, 0.4), transparent 70%),
     var(--se-bg);
 }
 
